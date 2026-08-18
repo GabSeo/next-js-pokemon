@@ -12,6 +12,13 @@ export type PriceSnapshot = {
   sourceUrl?: string;
 };
 
+export type PriceTrend = {
+  day1: number | null;
+  day7: number | null;
+  day30: number | null;
+  day90: number | null;
+};
+
 export type Card = {
   id: string; // apitcg.com numeric product id, as a string
   slug: string; // URL slug, e.g. "gengar-vmax-271"
@@ -26,6 +33,7 @@ export type Card = {
   asOfDate: string; // ISO date the current price was last updated
   priceHistory: PriceHistoryPoint[];
   recentSnapshots: PriceSnapshot[]; // real daily market-price records, not itemized sales
+  trend: PriceTrend; // average price over trailing windows, derived from priceHistory
   imageUrl?: string; // real card image; falls back to a generated placeholder if absent
   sourceUrl?: string; // real TCGPlayer product page
   description?: string;

@@ -6,6 +6,7 @@ import { AlertSubscribe } from "@/components/alert-subscribe";
 import { CardImage } from "@/components/card-image";
 import { OpenDataLinks } from "@/components/open-data-links";
 import { PriceChart } from "@/components/price-chart";
+import { PriceDataTabs } from "@/components/price-data-tabs";
 import { StructuredData } from "@/components/structured-data";
 import { computeAlertBands, franchiseLabel, getAllCards, getCardBySlug } from "@/lib/cards";
 import { absoluteUrl } from "@/lib/site";
@@ -160,28 +161,7 @@ export default async function ProductPage({ params }: PageProps) {
       <section className="mt-12 space-y-4 border-t border-border pt-8">
         <h2 className="text-lg font-semibold">Price history</h2>
         {card.priceHistory.length > 0 ? (
-          <>
-            <PriceChart history={card.priceHistory} currency={card.currency} className="w-full max-w-2xl" />
-            <table className="w-full max-w-md text-sm">
-              <caption className="sr-only">Price history for {card.name}</caption>
-              <thead>
-                <tr className="text-left text-muted-foreground">
-                  <th className="py-1 font-normal">Date</th>
-                  <th className="py-1 font-normal">Price</th>
-                </tr>
-              </thead>
-              <tbody>
-                {card.priceHistory.map((point) => (
-                  <tr key={point.date} className="border-t border-border">
-                    <td className="py-1.5">{point.date}</td>
-                    <td className="py-1.5">
-                      {card.currency} {point.price}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </>
+          <PriceChart history={card.priceHistory} currency={card.currency} className="w-full max-w-2xl" />
         ) : (
           <p className="text-sm text-muted-foreground">
             No historical data available yet for this card.
@@ -189,47 +169,8 @@ export default async function ProductPage({ params }: PageProps) {
         )}
       </section>
 
-      <section className="mt-12 space-y-4 border-t border-border pt-8">
-        <h2 className="text-lg font-semibold">Recent price snapshots</h2>
-        <p className="text-sm text-muted-foreground">
-          Daily market price records from TCGPlayer — not individual sold
-          listings.
-        </p>
-        {card.recentSnapshots.length > 0 ? (
-          <table className="w-full max-w-2xl text-sm">
-            <caption className="sr-only">Recent price snapshots for {card.name}</caption>
-            <thead>
-              <tr className="text-left text-muted-foreground">
-                <th className="py-1 font-normal">Date</th>
-                <th className="py-1 font-normal">Price</th>
-                <th className="py-1 font-normal">Source</th>
-              </tr>
-            </thead>
-            <tbody>
-              {card.recentSnapshots.map((snap) => (
-                <tr key={snap.date} className="border-t border-border">
-                  <td className="py-1.5">{snap.date}</td>
-                  <td className="py-1.5">
-                    {card.currency} {snap.price}
-                  </td>
-                  <td className="py-1.5">
-                    {snap.sourceUrl ? (
-                      <a href={snap.sourceUrl} className="underline underline-offset-4">
-                        {snap.source}
-                      </a>
-                    ) : (
-                      snap.source
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            No recent snapshots available yet.
-          </p>
-        )}
+      <section className="mt-8 space-y-4">
+        <PriceDataTabs currency={card.currency} recentSnapshots={card.recentSnapshots} trend={card.trend} />
       </section>
 
       <section className="mt-12 space-y-4 border-t border-border pt-8">

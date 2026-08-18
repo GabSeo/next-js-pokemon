@@ -11,6 +11,17 @@ export function cardToMarkdown(card: Card): string {
     .map((s) => `| ${s.date} | ${card.currency} ${s.price} | ${s.source} |`)
     .join("\n");
 
+  const trendRows = (
+    [
+      { label: "1 day", price: card.trend.day1 },
+      { label: "7 days", price: card.trend.day7 },
+      { label: "30 days", price: card.trend.day30 },
+      { label: "3 months", price: card.trend.day90 },
+    ] satisfies { label: string; price: number | null }[]
+  )
+    .map((row) => `| ${row.label} | ${row.price === null ? "—" : `${card.currency} ${row.price}`} |`)
+    .join("\n");
+
   return `# ${card.name} — ${card.set} (${card.number ?? ""})
 
 Franchise: ${franchiseLabel(card.franchise)}
@@ -40,6 +51,12 @@ Daily market price records (not itemized individual sales):
 | Date | Price | Source |
 | --- | --- | --- |
 ${snapshots || "| - | - | - |"}
+
+## Price trend (average price by window)
+
+| Window | Average price |
+| --- | --- |
+${trendRows}
 
 ## Machine-readable data
 
@@ -89,6 +106,17 @@ export function priceCheckResultMarkdown(card: Card): string {
     .map((s) => `| ${s.date} | ${card.currency} ${s.price} | ${s.source} |`)
     .join("\n");
 
+  const trendRows = (
+    [
+      { label: "1 day", price: card.trend.day1 },
+      { label: "7 days", price: card.trend.day7 },
+      { label: "30 days", price: card.trend.day30 },
+      { label: "3 months", price: card.trend.day90 },
+    ] satisfies { label: string; price: number | null }[]
+  )
+    .map((row) => `| ${row.label} | ${row.price === null ? "—" : `${card.currency} ${row.price}`} |`)
+    .join("\n");
+
   return `# Price checker result — ${card.name} (${card.number ?? ""})
 
 Card ID: ${card.id}
@@ -108,6 +136,12 @@ ${bandRows}
 | Date | Price | Source |
 | --- | --- | --- |
 ${snapshots || "| - | - | - |"}
+
+## Price trend (average price by window)
+
+| Window | Average price |
+| --- | --- |
+${trendRows}
 
 ## Machine-readable data
 

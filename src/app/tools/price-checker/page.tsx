@@ -5,6 +5,7 @@ import { AlertSubscribe } from "@/components/alert-subscribe";
 import { OpenDataLinks } from "@/components/open-data-links";
 import { PriceCheckerForm } from "@/components/price-checker-form";
 import { PriceChart } from "@/components/price-chart";
+import { PriceDataTabs } from "@/components/price-data-tabs";
 import { StructuredData } from "@/components/structured-data";
 import { computeAlertBands, findCard, franchiseLabel, getAllCards } from "@/lib/cards";
 import { SITE_NAME, absoluteUrl } from "@/lib/site";
@@ -100,38 +101,7 @@ export default async function PriceCheckerPage({ searchParams }: PageProps) {
             <PriceChart history={card.priceHistory} currency={card.currency} className="w-full max-w-xl" />
           )}
 
-          <div>
-            <h3 className="text-sm font-semibold">Recent price snapshots</h3>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Daily market price records from TCGPlayer — not individual sold listings.
-            </p>
-            <table className="mt-2 w-full max-w-xl text-sm">
-              <thead>
-                <tr className="text-left text-muted-foreground">
-                  <th className="py-1 font-normal">Date</th>
-                  <th className="py-1 font-normal">Price</th>
-                  <th className="py-1 font-normal">Source</th>
-                </tr>
-              </thead>
-              <tbody>
-                {card.recentSnapshots.map((snap) => (
-                  <tr key={snap.date} className="border-t border-border">
-                    <td className="py-1.5">{snap.date}</td>
-                    <td className="py-1.5">{card.currency} {snap.price}</td>
-                    <td className="py-1.5">
-                      {snap.sourceUrl ? (
-                        <a href={snap.sourceUrl} className="underline underline-offset-4">
-                          {snap.source}
-                        </a>
-                      ) : (
-                        snap.source
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <PriceDataTabs currency={card.currency} recentSnapshots={card.recentSnapshots} trend={card.trend} />
 
           <AddToCollectionButton cardId={card.id} />
 

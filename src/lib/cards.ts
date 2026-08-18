@@ -6,10 +6,38 @@ import {
   type ApitcgProduct,
 } from "@/lib/apitcg";
 import { absoluteUrl } from "@/lib/site";
-import type { AlertBand, Card, Franchise, PriceHistoryPoint, PriceSnapshot } from "@/lib/types";
+import type {
+  AlertBand,
+  Card,
+  Franchise,
+  PriceHistoryPoint,
+  PriceSnapshot,
+  PriceTrend,
+} from "@/lib/types";
 
 function stripHtml(input: string): string {
   return input.replace(/<[^>]*>/g, "").trim();
+}
+
+/** Average price over the trailing N days of real daily history. */
+function averageOverLastDays(history: PriceHistoryPoint[], days: number): number | null {
+  if (history.length === 0) return null;
+  const cutoff = new Date();
+  cutoff.setUTCDate(cutoff.getUTCDate() - days);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  const window = history.filter((p) => p.date >= cutoffStr);
+  const pool = window.length > 0 ? window : history.slice(-1);
+  const sum = pool.reduce((total, p) => total + p.price, 0);
+  return Math.round((sum / pool.length) * 100) / 100;
+}
+
+function computeTrend(history: PriceHistoryPoint[]): PriceTrend {
+  return {
+    day1: averageOverLastDays(history, 1),
+    day7: averageOverLastDays(history, 7),
+    day30: averageOverLastDays(history, 30),
+    day90: averageOverLastDays(history, 90),
+  };
 }
 
 function marketPrice(markets: ApitcgProduct["markets"]): number | undefined {
@@ -46,7 +74,7 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
 
   const recentSnapshots: PriceSnapshot[] = [...priceHistory]
     .reverse()
-    .slice(0, 8)
+    .slice(0, 10)
     .map((p) => ({
       date: p.date,
       price: p.price,
@@ -70,6 +98,7 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
     asOfDate: (product.updatedAt ?? new Date().toISOString()).slice(0, 10),
     priceHistory,
     recentSnapshots,
+    trend: computeTrend(priceHistory),
     imageUrl: product.images?.[0]?.large ?? product.images?.[0]?.medium,
     sourceUrl: product.markets?.tcgplayer?.url,
     description: rawDescription ? stripHtml(rawDescription) : undefined,
@@ -154,6 +183,7 @@ export function toPublicCard(card: Card) {
     asOfDate: card.asOfDate,
     priceHistory: card.priceHistory,
     recentSnapshots: card.recentSnapshots,
+    trend: card.trend,
     imageUrl: card.imageUrl,
     sourceUrl: card.sourceUrl,
     productUrl: absoluteUrl(`/products/${card.slug}`),
