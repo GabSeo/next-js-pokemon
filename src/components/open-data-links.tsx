@@ -1,0 +1,36 @@
+type OpenDataLinksProps = {
+  markdownHref: string;
+  jsonHref: string;
+  className?: string;
+};
+
+/**
+ * Visible (not sr-only) links to the machine-readable mirrors of the current
+ * page. Same URL and content for humans and bots — deliberately not hidden,
+ * to stay clear of cloaking. See PLAN.md §4.2.
+ */
+export function OpenDataLinks({
+  markdownHref,
+  jsonHref,
+  className,
+}: OpenDataLinksProps) {
+  return (
+    <div
+      className={`flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground ${className ?? ""}`}
+    >
+      <span>Open data for AI agents:</span>
+      <a
+        href={markdownHref}
+        className="inline-flex items-center gap-1 underline-offset-4 hover:text-foreground hover:underline"
+      >
+        Markdown
+      </a>
+      <a
+        href={jsonHref}
+        className="inline-flex items-center gap-1 underline-offset-4 hover:text-foreground hover:underline"
+      >
+        JSON
+      </a>
+    </div>
+  );
+}
