@@ -13,7 +13,10 @@ export const metadata: Metadata = {
   title: "Price checker",
   description:
     "Enter a Pokémon or One Piece card ID to see last-sold prices, price history, and set a price alert.",
-  alternates: { canonical: "/tools/price-checker" },
+  alternates: {
+    canonical: "/tools/price-checker",
+    types: { "text/markdown": "/tools/price-checker.md" },
+  },
 };
 
 type PageProps = { searchParams: Promise<{ cardId?: string }> };

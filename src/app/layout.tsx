@@ -4,7 +4,7 @@ import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { StructuredData } from "@/components/structured-data";
-import { SITE_DESCRIPTION, SITE_NAME, SITE_URL, absoluteUrl } from "@/lib/site";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     template: `%s — ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
-  alternates: { canonical: "/" },
+  alternates: { canonical: "/", types: { "text/markdown": "/index.md" } },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -43,7 +43,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <head>
         <StructuredData data={organizationJsonLd} />
-        <link rel="alternate" type="text/markdown" href={absoluteUrl("/index.md")} />
       </head>
       <body className="min-h-full flex flex-col">
         <SiteHeader />

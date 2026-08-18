@@ -27,7 +27,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `${label} card collection`,
     description: `Browse the ${label} card collection with live last-sold prices.`,
-    alternates: { canonical: `/collections/${franchise}` },
+    alternates: {
+      canonical: `/collections/${franchise}`,
+      types: { "text/markdown": `/collections/${franchise}/index.md` },
+    },
   };
 }
 

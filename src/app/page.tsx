@@ -9,7 +9,7 @@ import { SITE_DESCRIPTION, SITE_NAME, absoluteUrl } from "@/lib/site";
 export const metadata: Metadata = {
   title: `${SITE_NAME} — Pokémon & One Piece card prices`,
   description: SITE_DESCRIPTION,
-  alternates: { canonical: "/" },
+  alternates: { canonical: "/", types: { "text/markdown": "/index.md" } },
 };
 
 export default function HomePage() {
