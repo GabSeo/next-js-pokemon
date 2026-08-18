@@ -35,10 +35,10 @@ export function AlertSubscribe({ cardId, currency, bands }: AlertSubscribeProps)
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground">
-        Get notified when the price crosses one of these bands (±50% steps,
-        up to ±150% of the current price):
+        Get notified when the price crosses one of these bands (25% steps,
+        from -75% to +150% of the current price):
       </p>
-      <ul className="grid grid-cols-3 gap-2 text-sm sm:grid-cols-6">
+      <ul className="grid grid-cols-3 gap-2 text-sm sm:grid-cols-5 lg:grid-cols-9">
         {bands.map((band) => (
           <li
             key={band.pct}

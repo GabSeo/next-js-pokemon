@@ -87,8 +87,8 @@ export default async function HomePage() {
             the price-checker page
           </Link>{" "}
           directly, to see price history, recent daily price snapshots, add
-          the card to your collection, and subscribe to alerts at ±50% price
-          bands.
+          the card to your collection, and subscribe to alerts at price
+          bands from -75% to +150% in 25% steps.
         </p>
       </section>
     </div>

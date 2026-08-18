@@ -9,7 +9,7 @@ type Body = { cardId?: unknown; email?: unknown };
  * MVP stub: validates the request and confirms subscription, but does not
  * send email or persist anywhere yet. Phase 7 (see PLAN.md) wires this to
  * Resend + Upstash/Supabase so alerts actually fire when a card's price
- * crosses one of its ±50% bands.
+ * crosses one of its alert bands.
  */
 export async function POST(request: Request) {
   let body: Body;

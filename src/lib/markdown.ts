@@ -97,7 +97,7 @@ Current price: ${card.currency} ${card.currentPrice} as of ${card.asOfDate}
 Product page (canonical): ${absoluteUrl(`/products/${card.slug}`)}
 Product markdown: ${absoluteUrl(`/products/${card.slug}/index.md`)}
 
-## Alert bands (±50% steps from current price)
+## Alert bands (25% steps, -75% to +150% of current price)
 
 | Band | Trigger price |
 | --- | --- |
@@ -127,8 +127,8 @@ Human page: ${absoluteUrl("/tools/price-checker")}
 API: GET ${absoluteUrl("/api/price-check")}?cardId=<card id>
 
 Call the API with a card ID to receive JSON containing current price,
-recent daily price snapshots, price history, and the ±50% alert bands
-(from -150% to +150% of the current price).
+recent daily price snapshots, price history, and alert bands in 25% steps
+from -75% to +150% of the current price.
 
 ## Available card IDs
 

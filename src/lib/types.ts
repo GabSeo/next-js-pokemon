@@ -32,6 +32,6 @@ export type Card = {
 };
 
 export type AlertBand = {
-  pct: -150 | -100 | -50 | 50 | 100 | 150;
+  pct: number;
   price: number;
 };

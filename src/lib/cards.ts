@@ -123,7 +123,10 @@ export async function findCard(query: string): Promise<Card | undefined> {
   );
 }
 
-const ALERT_PCTS = [-150, -100, -50, 50, 100, 150] as const;
+// -100% is the floor (price can't drop below $0); anything past that is
+// meaningless, so the downside stops at -75%. Upside is uncapped, so it
+// runs further, in the same 25% steps.
+const ALERT_PCTS = [-75, -50, -25, 25, 50, 75, 100, 125, 150] as const;
 
 export function computeAlertBands(basePrice: number): AlertBand[] {
   return ALERT_PCTS.map((pct) => ({

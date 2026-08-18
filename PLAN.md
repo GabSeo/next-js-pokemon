@@ -130,7 +130,7 @@ Crawl-log evidence (cited in source research) shows AI bots largely don't execut
 - Price chart — last-sold history over time
 - List of individual last-sold items (date, price, condition, source link)
 - "Add to my collection" — no auth for MVP; cookie/localStorage-based watchlist (upgradeable to real accounts later)
-- Price alert subscription — notify when price moves in ±50% bands off the baseline, up to ±150% (i.e. trigger points at −150/−100/−50/+50/+100/+150%)
+- Price alert subscription — notify when price moves in 25% bands off the baseline, from −75% (the floor before hitting $0) to +150% (i.e. trigger points at −75/−50/−25/+25/+50/+75/+100/+125/+150%)
 
 **Agent-exploitability (beyond the dual-file pattern above):**
 - Documented REST endpoint: `GET /api/price-check?cardId=...` returning clean JSON (price, currency, last-updated, sold-comps array, canonical product URL) — mirrors the container-rental doc's `app/api/devis/route.ts` pattern exactly
@@ -171,7 +171,7 @@ This JSON is the **single source of truth** — `page.tsx`, the `.md` route, the
 3. Data layer: build `/data/pokemon/index.json` + `/data/one-piece/index.json`, wire all pages to read from them
 4. AI-accessibility layer: `.md` route mirrors, `/api/*.json` routes, JSON-LD, `llms.txt`, `robots.txt`, `sitemap.xml`, visible open-data links (§4.2), triple-placement internal linking (§4.3)
 5. Price-checker tool UI against seed/mock data (chart, sold list, add-to-collection, alert opt-in) + its own `.md`/`.json` mirrors
-6. Real data integration: PriceCharting API + Upstash/Supabase for history + Vercel Cron refresh
-7. Email alerts via Resend for the ±50%-band triggers
+6. Real data integration: apitcg.com (products + real daily price history for both franchises in one API) + Next.js ISR (`revalidate`) instead of a custom cron/Supabase pipeline — done for the 6 tracked cards; see §6 note below
+7. Email alerts via Resend for the alert-band triggers
 8. Agent-exploitability layer: finalize documented REST contract, stretch MCP server exposure
 9. SEO/GEO polish: metadata, Core Web Vitals pass, schema validation, sanity-test by asking Claude/ChatGPT/Perplexity to look up one of the 3 seeded Pokémon cards
