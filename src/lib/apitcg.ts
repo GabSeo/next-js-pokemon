@@ -84,6 +84,10 @@ export async function findProductByCode(
 /**
  * Name + set-name search. Used for Pokémon, whose internal `code` format
  * isn't documented — matches on set name and attributes.Number instead.
+ *
+ * apitcg.com quirks confirmed against the live API: set names carry a set-
+ * code prefix (e.g. "SWSH08: Fusion Strike"), and attributes.Number is a
+ * full fraction (e.g. "271/264") rather than just the card number.
  */
 export async function findProductByNameAndSet(
   tcg: string,
@@ -93,11 +97,11 @@ export async function findProductByNameAndSet(
 ): Promise<ApitcgProduct | undefined> {
   const qs = new URLSearchParams({ tcg, type: "card", name, limit: "25" });
   const { data } = await apitcgFetch<ProductsResponse>(`/products?${qs}`, 3600);
-  return data.find(
-    (p) =>
-      p.set?.name?.toLowerCase() === setName.toLowerCase() &&
-      p.attributes?.Number === number
-  );
+  return data.find((p) => {
+    const setMatches = p.set?.name?.toLowerCase().includes(setName.toLowerCase());
+    const cardNumber = p.attributes?.Number?.split("/")[0];
+    return setMatches && cardNumber === number;
+  });
 }
 
 export async function getHistoryPrices(
