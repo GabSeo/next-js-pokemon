@@ -15,7 +15,7 @@ export async function GET(
   if (!isFranchise(franchise)) {
     return new Response("Not found", { status: 404 });
   }
-  return new Response(collectionToMarkdown(franchise), {
+  return new Response(await collectionToMarkdown(franchise), {
     headers: { "Content-Type": "text/markdown; charset=utf-8" },
   });
 }

@@ -12,7 +12,7 @@ import { SITE_NAME, absoluteUrl } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Price checker",
   description:
-    "Enter a Pokémon or One Piece card ID to see last-sold prices, price history, and set a price alert.",
+    "Enter a Pokémon or One Piece card ID to see current market prices, price history, and set a price alert.",
   alternates: {
     canonical: "/tools/price-checker",
     types: { "text/markdown": "/tools/price-checker.md" },
@@ -23,8 +23,9 @@ type PageProps = { searchParams: Promise<{ cardId?: string }> };
 
 export default async function PriceCheckerPage({ searchParams }: PageProps) {
   const { cardId } = await searchParams;
-  const card = cardId ? findCard(cardId) : undefined;
+  const card = cardId ? await findCard(cardId) : undefined;
   const bands = card ? computeAlertBands(card.currentPrice) : [];
+  const allCards = await getAllCards();
 
   const webAppJsonLd = {
     "@context": "https://schema.org",
@@ -32,7 +33,7 @@ export default async function PriceCheckerPage({ searchParams }: PageProps) {
     name: `${SITE_NAME} price checker`,
     url: absoluteUrl("/tools/price-checker"),
     applicationCategory: "Price tracking tool",
-    offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
+    offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
     potentialAction: {
       "@type": "SearchAction",
       target: `${absoluteUrl("/tools/price-checker")}?cardId={cardId}`,
@@ -48,9 +49,8 @@ export default async function PriceCheckerPage({ searchParams }: PageProps) {
         Price checker
       </h1>
       <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-        Enter a card ID (e.g. <code>base1-4</code> or <code>op01-025</code>)
-        to see last-sold prices. Works without JavaScript — this is a
-        standard HTML form.
+        Enter a card ID (see the list below) to see current market prices.
+        Works without JavaScript — this is a standard HTML form.
       </p>
 
       <div className="mt-6">
@@ -78,38 +78,45 @@ export default async function PriceCheckerPage({ searchParams }: PageProps) {
                 {card.name}
               </Link>{" "}
               <span className="font-normal text-muted-foreground">
-                — {franchiseLabel(card.franchise)}, {card.set} ({card.number})
+                — {franchiseLabel(card.franchise)}, {card.set} ({card.number ?? ""})
               </span>
             </h2>
             <p className="mt-1 text-sm">
-              Last sold for <strong>{card.currency} {card.lastSoldPrice}</strong> on{" "}
-              <strong>{card.lastSoldDate}</strong>.
+              Current market price: <strong>{card.currency} {card.currentPrice}</strong> as of{" "}
+              <strong>{card.asOfDate}</strong>.
             </p>
           </div>
 
-          <PriceChart history={card.priceHistory} currency={card.currency} className="w-full max-w-xl" />
+          {card.priceHistory.length > 0 && (
+            <PriceChart history={card.priceHistory} currency={card.currency} className="w-full max-w-xl" />
+          )}
 
           <div>
-            <h3 className="text-sm font-semibold">Last sold items</h3>
+            <h3 className="text-sm font-semibold">Recent price snapshots</h3>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Daily market price records from TCGPlayer — not individual sold listings.
+            </p>
             <table className="mt-2 w-full max-w-xl text-sm">
               <thead>
                 <tr className="text-left text-muted-foreground">
                   <th className="py-1 font-normal">Date</th>
                   <th className="py-1 font-normal">Price</th>
-                  <th className="py-1 font-normal">Condition</th>
                   <th className="py-1 font-normal">Source</th>
                 </tr>
               </thead>
               <tbody>
-                {card.recentSales.map((sale) => (
-                  <tr key={`${sale.date}-${sale.price}`} className="border-t border-border">
-                    <td className="py-1.5">{sale.date}</td>
-                    <td className="py-1.5">{card.currency} {sale.price}</td>
-                    <td className="py-1.5">{sale.condition}</td>
+                {card.recentSnapshots.map((snap) => (
+                  <tr key={snap.date} className="border-t border-border">
+                    <td className="py-1.5">{snap.date}</td>
+                    <td className="py-1.5">{card.currency} {snap.price}</td>
                     <td className="py-1.5">
-                      <a href={sale.url} className="underline underline-offset-4">
-                        {sale.source}
-                      </a>
+                      {snap.sourceUrl ? (
+                        <a href={snap.sourceUrl} className="underline underline-offset-4">
+                          {snap.source}
+                        </a>
+                      ) : (
+                        snap.source
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -131,7 +138,7 @@ export default async function PriceCheckerPage({ searchParams }: PageProps) {
       <div className="mt-12 border-t border-border pt-6">
         <h3 className="text-sm font-semibold">Available card IDs</h3>
         <ul className="mt-2 grid grid-cols-2 gap-1 text-sm text-muted-foreground sm:grid-cols-3">
-          {getAllCards().map((c) => (
+          {allCards.map((c) => (
             <li key={c.id}>
               <Link href={`/tools/price-checker?cardId=${c.id}`} className="hover:text-foreground hover:underline">
                 {c.id} — {c.name}

@@ -10,6 +10,8 @@ import type { Franchise } from "@/lib/types";
 
 const FRANCHISES: Franchise[] = ["pokemon", "one-piece"];
 
+export const revalidate = 3600;
+
 export function generateStaticParams() {
   return FRANCHISES.map((franchise) => ({ franchise }));
 }
@@ -26,7 +28,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const label = franchiseLabel(franchise);
   return {
     title: `${label} card collection`,
-    description: `Browse the ${label} card collection with live last-sold prices.`,
+    description: `Browse the ${label} card collection with live market prices.`,
     alternates: {
       canonical: `/collections/${franchise}`,
       types: { "text/markdown": `/collections/${franchise}/index.md` },
@@ -38,7 +40,7 @@ export default async function CollectionPage({ params }: PageProps) {
   const { franchise } = await params;
   if (!isFranchise(franchise)) notFound();
 
-  const cards = getCardsByFranchise(franchise);
+  const cards = await getCardsByFranchise(franchise);
   const label = franchiseLabel(franchise);
   const other: Franchise = franchise === "pokemon" ? "one-piece" : "pokemon";
   const otherLabel = franchiseLabel(other);
@@ -73,8 +75,8 @@ export default async function CollectionPage({ params }: PageProps) {
         {label} collection
       </h1>
       <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-        {cards.length} cards tracked in this catalog, each with live
-        last-sold pricing. Looking for something else? See the{" "}
+        {cards.length} cards tracked in this catalog, each with live market
+        pricing. Looking for something else? See the{" "}
         <Link href={`/collections/${other}`} className="underline underline-offset-4">
           {otherLabel} collection
         </Link>{" "}

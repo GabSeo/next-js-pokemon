@@ -3,7 +3,7 @@ import { getCardsByFranchise, toPublicCard } from "@/lib/cards";
 import { absoluteUrl } from "@/lib/site";
 
 export async function GET() {
-  const cards = getCardsByFranchise("pokemon");
+  const cards = await getCardsByFranchise("pokemon");
   return NextResponse.json({
     franchise: "pokemon",
     canonicalUrl: absoluteUrl("/collections/pokemon"),

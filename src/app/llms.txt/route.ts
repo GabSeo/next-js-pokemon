@@ -2,7 +2,7 @@ import { getAllCards } from "@/lib/cards";
 import { SITE_DESCRIPTION, SITE_NAME, absoluteUrl } from "@/lib/site";
 
 export async function GET() {
-  const cards = getAllCards();
+  const cards = await getAllCards();
   const cardLines = cards
     .map((c) => `- ${c.name} (${c.id}): ${absoluteUrl(`/products/${c.slug}/index.md`)}`)
     .join("\n");
@@ -28,7 +28,7 @@ ${cardLines}
 ## Tools
 
 - Price checker — Markdown: ${absoluteUrl("/tools/price-checker.md")} — API: GET ${absoluteUrl("/api/price-check")}?cardId={cardId}
-  Returns current price, last-sold date, price history, recent sales, and
+  Returns current price, recent daily price snapshots, price history, and
   ±50% alert bands (from -150% to +150% of current price) as JSON.
 
 ## Sitemap

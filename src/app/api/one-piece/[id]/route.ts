@@ -6,9 +6,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const card = getCardsByFranchise("one-piece").find(
-    (c) => c.id === id || c.slug === id
-  );
+  const cards = await getCardsByFranchise("one-piece");
+  const card = cards.find((c) => c.id === id || c.slug === id);
 
   if (!card) {
     return NextResponse.json(

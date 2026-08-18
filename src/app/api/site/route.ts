@@ -3,6 +3,7 @@ import { getAllCards, toPublicCard } from "@/lib/cards";
 import { SITE_DESCRIPTION, SITE_NAME, absoluteUrl } from "@/lib/site";
 
 export async function GET() {
+  const cards = await getAllCards();
   return NextResponse.json({
     name: SITE_NAME,
     description: SITE_DESCRIPTION,
@@ -27,6 +28,6 @@ export async function GET() {
         api: absoluteUrl("/api/price-check?cardId={cardId}"),
       },
     ],
-    cards: getAllCards().map(toPublicCard),
+    cards: cards.map(toPublicCard),
   });
 }

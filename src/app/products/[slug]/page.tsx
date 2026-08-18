@@ -10,19 +10,22 @@ import { StructuredData } from "@/components/structured-data";
 import { computeAlertBands, franchiseLabel, getAllCards, getCardBySlug } from "@/lib/cards";
 import { absoluteUrl } from "@/lib/site";
 
-export function generateStaticParams() {
-  return getAllCards().map((card) => ({ slug: card.slug }));
+export const revalidate = 3600;
+
+export async function generateStaticParams() {
+  const cards = await getAllCards();
+  return cards.map((card) => ({ slug: card.slug }));
 }
 
 type PageProps = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const card = getCardBySlug(slug);
+  const card = await getCardBySlug(slug);
   if (!card) return {};
   return {
-    title: `${card.name} (${card.number}) price`,
-    description: `${card.name} — ${card.set} ${card.number}. Last sold for ${card.currency} ${card.lastSoldPrice} on ${card.lastSoldDate}.`,
+    title: `${card.name} (${card.number ?? ""}) price`,
+    description: `${card.name} — ${card.set} ${card.number ?? ""}. Current market price: ${card.currency} ${card.currentPrice} as of ${card.asOfDate}.`,
     alternates: {
       canonical: `/products/${card.slug}`,
       types: { "text/markdown": `/products/${card.slug}/index.md` },
@@ -32,7 +35,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ProductPage({ params }: PageProps) {
   const { slug } = await params;
-  const card = getCardBySlug(slug);
+  const card = await getCardBySlug(slug);
   if (!card) notFound();
 
   const label = franchiseLabel(card.franchise);
@@ -44,13 +47,13 @@ export default async function ProductPage({ params }: PageProps) {
     name: card.name,
     sku: card.id,
     category: label,
-    description: card.description,
+    description: card.description ?? `${card.name} — ${card.set} ${card.number ?? ""}`,
     url: absoluteUrl(`/products/${card.slug}`),
     offers: {
       "@type": "Offer",
-      price: card.lastSoldPrice,
+      price: card.currentPrice,
       priceCurrency: card.currency,
-      priceValidUntil: card.lastSoldDate,
+      priceValidUntil: card.asOfDate,
       availability: "https://schema.org/InStock",
       url: absoluteUrl(`/products/${card.slug}`),
     },
@@ -82,10 +85,10 @@ export default async function ProductPage({ params }: PageProps) {
     mainEntity: [
       {
         "@type": "Question",
-        name: `How much is ${card.name} (${card.number}) worth right now?`,
+        name: `How much is ${card.name} (${card.number ?? ""}) worth right now?`,
         acceptedAnswer: {
           "@type": "Answer",
-          text: `The last recorded sale for ${card.name} (${card.set}, ${card.number}) was ${card.currency} ${card.lastSoldPrice} on ${card.lastSoldDate}.`,
+          text: `The current market price for ${card.name} (${card.set}, ${card.number ?? ""}) is ${card.currency} ${card.currentPrice} as of ${card.asOfDate}, sourced from TCGPlayer.`,
         },
       },
     ],
@@ -110,7 +113,7 @@ export default async function ProductPage({ params }: PageProps) {
       </nav>
 
       <div className="grid grid-cols-1 gap-8 sm:grid-cols-[280px_1fr]">
-        <CardImage card={card} className="w-full max-w-[280px] rounded-xl" />
+        <CardImage card={card} className="w-full max-w-[280px] rounded-xl object-cover" />
 
         <div className="space-y-4">
           <div>
@@ -118,20 +121,32 @@ export default async function ProductPage({ params }: PageProps) {
               {card.name}
             </h1>
             <p className="text-sm text-muted-foreground">
-              {card.set} ({card.setCode}) · {card.number} · {card.rarity} ·
-              Card ID: {card.id}
+              {card.set}
+              {card.setCode ? ` (${card.setCode})` : ""} · {card.number ?? ""}
+              {card.rarity ? ` · ${card.rarity}` : ""} · Card ID: {card.id}
             </p>
           </div>
 
           <p className="max-w-2xl text-sm">
-            The last recorded sale for {card.name} ({card.set}, {card.number})
-            was <strong>{card.currency} {card.lastSoldPrice}</strong> on{" "}
-            <strong>{card.lastSoldDate}</strong>.
+            The current market price for {card.name} ({card.set}, {card.number ?? ""})
+            is <strong>{card.currency} {card.currentPrice}</strong> as of{" "}
+            <strong>{card.asOfDate}</strong>
+            {card.sourceUrl ? (
+              <>
+                , sourced from{" "}
+                <a href={card.sourceUrl} className="underline underline-offset-4">
+                  TCGPlayer
+                </a>
+              </>
+            ) : null}
+            .
           </p>
 
-          <p className="max-w-2xl text-sm text-muted-foreground">
-            {card.description}
-          </p>
+          {card.description && (
+            <p className="max-w-2xl text-sm text-muted-foreground">
+              {card.description}
+            </p>
+          )}
 
           <OpenDataLinks
             markdownHref={`/products/${card.slug}/index.md`}
@@ -144,57 +159,77 @@ export default async function ProductPage({ params }: PageProps) {
 
       <section className="mt-12 space-y-4 border-t border-border pt-8">
         <h2 className="text-lg font-semibold">Price history</h2>
-        <PriceChart history={card.priceHistory} currency={card.currency} className="w-full max-w-2xl" />
-        <table className="w-full max-w-md text-sm">
-          <caption className="sr-only">Monthly price history for {card.name}</caption>
-          <thead>
-            <tr className="text-left text-muted-foreground">
-              <th className="py-1 font-normal">Date</th>
-              <th className="py-1 font-normal">Price</th>
-            </tr>
-          </thead>
-          <tbody>
-            {card.priceHistory.map((point) => (
-              <tr key={point.date} className="border-t border-border">
-                <td className="py-1.5">{point.date}</td>
-                <td className="py-1.5">
-                  {card.currency} {point.price}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {card.priceHistory.length > 0 ? (
+          <>
+            <PriceChart history={card.priceHistory} currency={card.currency} className="w-full max-w-2xl" />
+            <table className="w-full max-w-md text-sm">
+              <caption className="sr-only">Price history for {card.name}</caption>
+              <thead>
+                <tr className="text-left text-muted-foreground">
+                  <th className="py-1 font-normal">Date</th>
+                  <th className="py-1 font-normal">Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                {card.priceHistory.map((point) => (
+                  <tr key={point.date} className="border-t border-border">
+                    <td className="py-1.5">{point.date}</td>
+                    <td className="py-1.5">
+                      {card.currency} {point.price}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No historical data available yet for this card.
+          </p>
+        )}
       </section>
 
       <section className="mt-12 space-y-4 border-t border-border pt-8">
-        <h2 className="text-lg font-semibold">Last sold items</h2>
-        <table className="w-full max-w-2xl text-sm">
-          <caption className="sr-only">Most recent sales for {card.name}</caption>
-          <thead>
-            <tr className="text-left text-muted-foreground">
-              <th className="py-1 font-normal">Date</th>
-              <th className="py-1 font-normal">Price</th>
-              <th className="py-1 font-normal">Condition</th>
-              <th className="py-1 font-normal">Source</th>
-            </tr>
-          </thead>
-          <tbody>
-            {card.recentSales.map((sale) => (
-              <tr key={`${sale.date}-${sale.price}`} className="border-t border-border">
-                <td className="py-1.5">{sale.date}</td>
-                <td className="py-1.5">
-                  {card.currency} {sale.price}
-                </td>
-                <td className="py-1.5">{sale.condition}</td>
-                <td className="py-1.5">
-                  <a href={sale.url} className="underline underline-offset-4">
-                    {sale.source}
-                  </a>
-                </td>
+        <h2 className="text-lg font-semibold">Recent price snapshots</h2>
+        <p className="text-sm text-muted-foreground">
+          Daily market price records from TCGPlayer — not individual sold
+          listings.
+        </p>
+        {card.recentSnapshots.length > 0 ? (
+          <table className="w-full max-w-2xl text-sm">
+            <caption className="sr-only">Recent price snapshots for {card.name}</caption>
+            <thead>
+              <tr className="text-left text-muted-foreground">
+                <th className="py-1 font-normal">Date</th>
+                <th className="py-1 font-normal">Price</th>
+                <th className="py-1 font-normal">Source</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {card.recentSnapshots.map((snap) => (
+                <tr key={snap.date} className="border-t border-border">
+                  <td className="py-1.5">{snap.date}</td>
+                  <td className="py-1.5">
+                    {card.currency} {snap.price}
+                  </td>
+                  <td className="py-1.5">
+                    {snap.sourceUrl ? (
+                      <a href={snap.sourceUrl} className="underline underline-offset-4">
+                        {snap.source}
+                      </a>
+                    ) : (
+                      snap.source
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No recent snapshots available yet.
+          </p>
+        )}
       </section>
 
       <section className="mt-12 space-y-4 border-t border-border pt-8">

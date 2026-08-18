@@ -6,7 +6,7 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
-  const card = getCardBySlug(slug);
+  const card = await getCardBySlug(slug);
   if (!card) {
     return new Response("Not found", { status: 404 });
   }

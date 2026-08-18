@@ -5,25 +5,45 @@ type CardImageProps = {
   className?: string;
 };
 
+const PALETTE: [string, string][] = [
+  ["#f97316", "#dc2626"],
+  ["#38bdf8", "#1d4ed8"],
+  ["#facc15", "#f59e0b"],
+  ["#ef4444", "#7f1d1d"],
+  ["#22c55e", "#14532d"],
+  ["#fb923c", "#ea580c"],
+];
+
+function paletteFor(id: string): [string, string] {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  return PALETTE[hash % PALETTE.length];
+}
+
 /**
- * Generated placeholder artwork (no licensed card artwork is shipped in this
- * prototype). Still carries real alt text describing the card, since the
- * image is a genuine data point for both humans and bots (see PLAN.md §4.7).
+ * Renders the real card image from apitcg.com when available. Falls back to
+ * a generated placeholder (deterministic color per card id) if the image is
+ * missing — e.g. a source lookup partially failed. Alt text always describes
+ * the card, since the image is a genuine data point for both humans and bots
+ * (see PLAN.md §4.7).
  */
 export function CardImage({ card, className }: CardImageProps) {
+  const alt = `${card.name}, ${card.set}${card.number ? ` ${card.number}` : ""}${card.rarity ? `, ${card.rarity}` : ""}`;
+
+  if (card.imageUrl) {
+    // eslint-disable-next-line @next/next/no-img-element -- external CDN image, domain not yet allowlisted for next/image
+    return <img src={card.imageUrl} alt={alt} className={className} loading="lazy" />;
+  }
+
+  const [from, to] = paletteFor(card.id);
   const gradientId = `grad-${card.id}`;
   return (
-    <svg
-      viewBox="0 0 300 420"
-      role="img"
-      aria-label={`${card.name}, ${card.set} ${card.number}, ${card.rarity}`}
-      className={className}
-    >
-      <title>{`${card.name} — ${card.set} (${card.number})`}</title>
+    <svg viewBox="0 0 300 420" role="img" aria-label={alt} className={className}>
+      <title>{`${card.name} — ${card.set} (${card.number ?? ""})`}</title>
       <defs>
         <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor={card.gradientFrom} />
-          <stop offset="100%" stopColor={card.gradientTo} />
+          <stop offset="0%" stopColor={from} />
+          <stop offset="100%" stopColor={to} />
         </linearGradient>
       </defs>
       <rect width="300" height="420" rx="18" fill={`url(#${gradientId})`} />
@@ -56,7 +76,8 @@ export function CardImage({ card, className }: CardImageProps) {
         fillOpacity="0.85"
         style={{ fontFamily: "var(--font-sans, sans-serif)" }}
       >
-        {card.set} · {card.number}
+        {card.set}
+        {card.number ? ` · ${card.number}` : ""}
       </text>
       <text
         x="24"
@@ -66,7 +87,7 @@ export function CardImage({ card, className }: CardImageProps) {
         fillOpacity="0.75"
         style={{ fontFamily: "var(--font-sans, sans-serif)" }}
       >
-        {card.rarity}
+        {card.rarity ?? ""}
       </text>
     </svg>
   );

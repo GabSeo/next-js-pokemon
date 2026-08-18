@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 import { getAllCards } from "@/lib/cards";
 import { absoluteUrl } from "@/lib/site";
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const cards = getAllCards();
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const cards = await getAllCards();
 
   const staticEntries: MetadataRoute.Sitemap = [
     { url: absoluteUrl("/") },

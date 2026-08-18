@@ -5,32 +5,30 @@ export type PriceHistoryPoint = {
   price: number;
 };
 
-export type SaleRecord = {
+export type PriceSnapshot = {
   date: string; // ISO date
   price: number;
-  condition: string;
-  source: string;
-  url: string;
+  source: string; // e.g. "TCGPlayer"
+  sourceUrl?: string;
 };
 
 export type Card = {
-  id: string; // stable card id, e.g. "base1-4"
-  slug: string; // URL slug, e.g. "charizard-base-set-4"
+  id: string; // apitcg.com numeric product id, as a string
+  slug: string; // URL slug, e.g. "gengar-vmax-271"
   franchise: Franchise;
   name: string;
   set: string;
-  setCode: string;
-  number: string; // e.g. "4/102"
-  rarity: string;
-  currency: "EUR";
+  setCode?: string;
+  number?: string; // e.g. "271" or "OP07-113"
+  rarity?: string;
+  currency: "USD";
   currentPrice: number;
-  lastSoldDate: string;
-  lastSoldPrice: number;
+  asOfDate: string; // ISO date the current price was last updated
   priceHistory: PriceHistoryPoint[];
-  recentSales: SaleRecord[];
-  gradientFrom: string;
-  gradientTo: string;
-  description: string;
+  recentSnapshots: PriceSnapshot[]; // real daily market-price records, not itemized sales
+  imageUrl?: string; // real card image; falls back to a generated placeholder if absent
+  sourceUrl?: string; // real TCGPlayer product page
+  description?: string;
 };
 
 export type AlertBand = {

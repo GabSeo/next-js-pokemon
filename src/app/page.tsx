@@ -12,8 +12,10 @@ export const metadata: Metadata = {
   alternates: { canonical: "/", types: { "text/markdown": "/index.md" } },
 };
 
-export default function HomePage() {
-  const cards = getAllCards();
+export const revalidate = 3600;
+
+export default async function HomePage() {
+  const cards = await getAllCards();
 
   const websiteJsonLd = {
     "@context": "https://schema.org",
@@ -32,10 +34,10 @@ export default function HomePage() {
           A card shop built to be read by humans and AI agents alike
         </h1>
         <p className="max-w-2xl text-muted-foreground">
-          {SITE_NAME} catalogs Pokémon and One Piece trading cards with a
-          live last-sold price tracker. Every page also ships as a plain
-          Markdown and JSON mirror, so an AI agent can read exact prices
-          without ever rendering the page.
+          {SITE_NAME} catalogs Pokémon and One Piece trading cards with live
+          market pricing. Every page also ships as a plain Markdown and JSON
+          mirror, so an AI agent can read exact prices without ever
+          rendering the page.
         </p>
         <div className="flex flex-wrap gap-3 pt-2">
           <Link
@@ -84,9 +86,9 @@ export default function HomePage() {
           <Link href="/tools/price-checker" className="underline underline-offset-4">
             the price-checker page
           </Link>{" "}
-          directly, to see the last-sold price history, the most recent
-          individual sales, add the card to your collection, and subscribe to
-          alerts at ±50% price bands.
+          directly, to see price history, recent daily price snapshots, add
+          the card to your collection, and subscribe to alerts at ±50% price
+          bands.
         </p>
       </section>
     </div>

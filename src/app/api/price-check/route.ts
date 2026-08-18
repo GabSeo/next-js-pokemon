@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     );
   }
 
-  const card = findCard(cardId);
+  const card = await findCard(cardId);
   if (!card) {
     return NextResponse.json(
       { error: `No card found for cardId "${cardId}"` },
