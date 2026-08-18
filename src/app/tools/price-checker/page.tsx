@@ -9,17 +9,26 @@ import { StructuredData } from "@/components/structured-data";
 import { computeAlertBands, findCard, franchiseLabel, getAllCards } from "@/lib/cards";
 import { SITE_NAME, absoluteUrl } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "Price checker",
-  description:
-    "Enter a Pokémon or One Piece card ID to see current market prices, price history, and set a price alert.",
-  alternates: {
-    canonical: "/tools/price-checker",
-    types: { "text/markdown": "/tools/price-checker.md" },
-  },
-};
-
 type PageProps = { searchParams: Promise<{ cardId?: string }> };
+
+export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
+  const { cardId } = await searchParams;
+  const card = cardId ? await findCard(cardId) : undefined;
+  const markdownHref = card
+    ? `/tools/price-checker.md?cardId=${encodeURIComponent(cardId!)}`
+    : "/tools/price-checker.md";
+
+  return {
+    title: card ? `${card.name} price checker` : "Price checker",
+    description: card
+      ? `${card.name} — current market price ${card.currency} ${card.currentPrice} as of ${card.asOfDate}.`
+      : "Enter a Pokémon or One Piece card ID to see current market prices, price history, and set a price alert.",
+    alternates: {
+      canonical: "/tools/price-checker",
+      types: { "text/markdown": markdownHref },
+    },
+  };
+}
 
 export default async function PriceCheckerPage({ searchParams }: PageProps) {
   const { cardId } = await searchParams;
@@ -58,7 +67,7 @@ export default async function PriceCheckerPage({ searchParams }: PageProps) {
       </div>
 
       <OpenDataLinks
-        markdownHref="/tools/price-checker.md"
+        markdownHref={`/tools/price-checker.md${cardId ? `?cardId=${encodeURIComponent(cardId)}` : ""}`}
         jsonHref={`/api/price-check${cardId ? `?cardId=${encodeURIComponent(cardId)}` : ""}`}
         className="mt-4"
       />

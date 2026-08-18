@@ -29,7 +29,9 @@ ${cardLines}
 
 - Price checker — Markdown: ${absoluteUrl("/tools/price-checker.md")} — API: GET ${absoluteUrl("/api/price-check")}?cardId={cardId}
   Returns current price, recent daily price snapshots, price history, and
-  ±50% alert bands (from -150% to +150% of current price) as JSON.
+  ±50% alert bands (from -150% to +150% of current price) as JSON. The
+  Markdown mirror also accepts ?cardId={cardId} and returns that same
+  data as Markdown instead of JSON.
 
 ## Sitemap
 

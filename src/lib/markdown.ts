@@ -1,4 +1,4 @@
-import { getAllCards, getCardsByFranchise, franchiseLabel } from "@/lib/cards";
+import { computeAlertBands, getAllCards, getCardsByFranchise, franchiseLabel } from "@/lib/cards";
 import { absoluteUrl, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 import type { Card, Franchise } from "@/lib/types";
 
@@ -69,6 +69,49 @@ JSON: ${absoluteUrl(`/api/${franchise}`)}
 ## Cards (${cards.length})
 
 ${rows}
+`;
+}
+
+/**
+ * Markdown mirror of a single /tools/price-checker?cardId=X result. Mirrors
+ * the shape of the /api/price-check JSON response (includes alert bands),
+ * rather than duplicating cardToMarkdown verbatim — the tool's answer is a
+ * distinct thing from the plain product record. Points back to the product
+ * page as the canonical source for the card itself.
+ */
+export function priceCheckResultMarkdown(card: Card): string {
+  const bands = computeAlertBands(card.currentPrice);
+  const bandRows = bands
+    .map((b) => `| ${b.pct > 0 ? "+" : ""}${b.pct}% | ${card.currency} ${b.price} |`)
+    .join("\n");
+
+  const snapshots = card.recentSnapshots
+    .map((s) => `| ${s.date} | ${card.currency} ${s.price} | ${s.source} |`)
+    .join("\n");
+
+  return `# Price checker result — ${card.name} (${card.number ?? ""})
+
+Card ID: ${card.id}
+Franchise: ${franchiseLabel(card.franchise)}
+Current price: ${card.currency} ${card.currentPrice} as of ${card.asOfDate}
+Product page (canonical): ${absoluteUrl(`/products/${card.slug}`)}
+Product markdown: ${absoluteUrl(`/products/${card.slug}/index.md`)}
+
+## Alert bands (±50% steps from current price)
+
+| Band | Trigger price |
+| --- | --- |
+${bandRows}
+
+## Recent price snapshots
+
+| Date | Price | Source |
+| --- | --- | --- |
+${snapshots || "| - | - | - |"}
+
+## Machine-readable data
+
+JSON: ${absoluteUrl(`/api/price-check?cardId=${card.id}`)}
 `;
 }
 
