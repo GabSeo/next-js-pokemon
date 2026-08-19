@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { cardRefs, type CardRef } from "@/data/card-refs";
 import {
   findProductByCode,
@@ -105,7 +106,19 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
   };
 }
 
-async function resolveCardSafe(ref: CardRef): Promise<Card | undefined> {
+/**
+ * cache()-wrapped so every caller resolving the same ref within one request
+ * shares a single in-flight/completed attempt — including a *failed* one.
+ * Confirmed via production logs: a product page's generateMetadata and its
+ * page body both call getCardBySlug(slug) independently, and plain fetch()
+ * memoization doesn't reliably collapse that pair when the underlying call
+ * is erroring (a 429 from apitcg, in the log that prompted this), so a
+ * single visit was making two real apitcg requests instead of one. cache()
+ * keys on the `ref` object itself, which is safe here because every caller
+ * gets it from the same module-level `cardRefs` array (same object
+ * reference for the same slug every time), not a freshly constructed one.
+ */
+const resolveCardSafe = cache(async (ref: CardRef): Promise<Card | undefined> => {
   try {
     const card = await resolveCard(ref);
     if (!card) {
@@ -116,7 +129,7 @@ async function resolveCardSafe(ref: CardRef): Promise<Card | undefined> {
     console.error(`[cards] failed to resolve ${ref.slug}:`, err);
     return undefined;
   }
-}
+});
 
 export async function getAllCards(): Promise<Card[]> {
   const cards = await Promise.all(cardRefs.map(resolveCardSafe));
