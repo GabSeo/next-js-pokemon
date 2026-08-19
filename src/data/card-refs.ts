@@ -8,6 +8,8 @@ export type CardRef = {
   tcg: "pokemon" | "one-piece";
   slug: string;
   displayName: string;
+  /** The real-world character this card depicts — the EntityMap entity it's evidence for. Two cards can share a character (see the two Luffy cards below); that's the point, not a duplicate. */
+  character: string;
   lookup: CodeLookup | NameSetLookup;
 };
 
@@ -22,6 +24,7 @@ export const cardRefs: CardRef[] = [
     tcg: "pokemon",
     slug: "gengar-vmax-271",
     displayName: "Gengar VMAX",
+    character: "Gengar",
     lookup: { by: "nameSet", name: "Gengar VMAX", setName: "Fusion Strike", number: "271" },
   },
   {
@@ -29,6 +32,7 @@ export const cardRefs: CardRef[] = [
     tcg: "pokemon",
     slug: "lugia-v-186",
     displayName: "Lugia V",
+    character: "Lugia",
     lookup: { by: "nameSet", name: "Lugia V", setName: "Silver Tempest", number: "186" },
   },
   {
@@ -36,6 +40,7 @@ export const cardRefs: CardRef[] = [
     tcg: "pokemon",
     slug: "ethans-typhlosion-190",
     displayName: "Ethan's Typhlosion",
+    character: "Typhlosion",
     lookup: { by: "nameSet", name: "Ethan's Typhlosion", setName: "Destined Rivals", number: "190" },
   },
   {
@@ -43,6 +48,7 @@ export const cardRefs: CardRef[] = [
     tcg: "one-piece",
     slug: "roronoa-zoro-op07-113",
     displayName: "Roronoa Zoro",
+    character: "Roronoa Zoro",
     lookup: { by: "code", code: "OP07-113" },
   },
   {
@@ -50,6 +56,7 @@ export const cardRefs: CardRef[] = [
     tcg: "one-piece",
     slug: "monkey-d-luffy-st01-001",
     displayName: "Monkey.D.Luffy",
+    character: "Monkey D. Luffy",
     lookup: { by: "code", code: "ST01-001" },
   },
   {
@@ -57,6 +64,7 @@ export const cardRefs: CardRef[] = [
     tcg: "one-piece",
     slug: "monkey-d-luffy-op05-119",
     displayName: "Monkey.D.Luffy",
+    character: "Monkey D. Luffy",
     lookup: { by: "code", code: "OP05-119" },
   },
 ];
