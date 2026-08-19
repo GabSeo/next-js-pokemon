@@ -132,7 +132,11 @@ function smoothPath(points: Point[]): string {
  *    default" state here for a no-JS visitor to get stuck in.
  */
 export function PriceChart({ history, currency, trend, className }: PriceChartProps) {
-  const [activeRange, setActiveRange] = useState<RangeId>("90d");
+  // Defaults to "all" (not "90d") so the chart's own visible low/high always
+  // matches PriceDataTabs' "Price range" stat, which is computed over the
+  // full fetched history (100 days) — with the 90d default, a low/high
+  // outside the trailing 90 days would show in the stat but not on screen.
+  const [activeRange, setActiveRange] = useState<RangeId>("all");
 
   if (history.length === 0) return null;
 
