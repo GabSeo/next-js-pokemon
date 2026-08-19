@@ -7,8 +7,9 @@ import { PriceCheckerForm } from "@/components/price-checker-form";
 import { PriceChart } from "@/components/price-chart";
 import { PriceDataTabs } from "@/components/price-data-tabs";
 import { StructuredData } from "@/components/structured-data";
-import { computeAlertBands, findCard, franchiseLabel, getAllCards } from "@/lib/cards";
+import { computeAlertBands, findCard, franchiseLabel } from "@/lib/cards";
 import { SITE_NAME, absoluteUrl } from "@/lib/site";
+import { cardRefs } from "@/data/card-refs";
 
 type PageProps = { searchParams: Promise<{ cardId?: string }> };
 
@@ -35,7 +36,6 @@ export default async function PriceCheckerPage({ searchParams }: PageProps) {
   const { cardId } = await searchParams;
   const card = cardId ? await findCard(cardId) : undefined;
   const bands = card ? computeAlertBands(card.currentPrice) : [];
-  const allCards = await getAllCards();
 
   const webAppJsonLd = {
     "@context": "https://schema.org",
@@ -122,10 +122,10 @@ export default async function PriceCheckerPage({ searchParams }: PageProps) {
       <div className="mt-12 border-t border-border pt-6">
         <h3 className="text-sm font-semibold">Available card IDs</h3>
         <ul className="mt-2 grid grid-cols-2 gap-1 text-sm text-muted-foreground sm:grid-cols-3">
-          {allCards.map((c) => (
-            <li key={c.id}>
-              <Link href={`/tools/price-checker?cardId=${c.id}`} className="hover:text-foreground hover:underline">
-                {c.id} — {c.name}
+          {cardRefs.map((ref) => (
+            <li key={ref.slug}>
+              <Link href={`/tools/price-checker?cardId=${ref.slug}`} className="hover:text-foreground hover:underline">
+                {ref.slug} — {ref.displayName}
               </Link>
             </li>
           ))}

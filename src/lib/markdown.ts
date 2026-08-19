@@ -1,4 +1,5 @@
 import { computeAlertBands, getAllCards, getCardsByFranchise, franchiseLabel } from "@/lib/cards";
+import { cardRefs } from "@/data/card-refs";
 import { absoluteUrl, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 import type { Card, Franchise } from "@/lib/types";
 
@@ -149,10 +150,15 @@ JSON: ${absoluteUrl(`/api/price-check?cardId=${card.id}`)}
 `;
 }
 
+/**
+ * Just an id+name index — doesn't need live price data, so it's built
+ * straight from cardRefs instead of resolving the whole catalog against
+ * apitcg.com (this route has no ?cardId, so nothing else on the page would
+ * need a live call either).
+ */
 export async function priceCheckerMarkdown(): Promise<string> {
-  const cards = await getAllCards();
-  const rows = cards
-    .map((c) => `- ${c.id} — ${c.name} (${franchiseLabel(c.franchise)})`)
+  const rows = cardRefs
+    .map((ref) => `- ${ref.slug} — ${ref.displayName} (${franchiseLabel(ref.franchise)})`)
     .join("\n");
 
   return `# Price checker tool

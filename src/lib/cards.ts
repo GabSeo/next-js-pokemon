@@ -162,6 +162,14 @@ export async function getCardById(id: string): Promise<Card | undefined> {
 
 export async function findCard(query: string): Promise<Card | undefined> {
   const q = query.trim().toLowerCase();
+
+  // Fast path: query matches a statically-known slug — resolve just that
+  // one card (2 apitcg calls) instead of the whole catalog.
+  const bySlug = cardRefs.find((r) => r.slug.toLowerCase() === q);
+  if (bySlug) return resolveCardSafe(bySlug);
+
+  // Slow path: query only matches a resolve-time field (live apitcg id,
+  // display name, or card number) — has to scan the full catalog.
   const cards = await getAllCards();
   return cards.find(
     (card) =>

@@ -1,10 +1,13 @@
-import { getAllCards } from "@/lib/cards";
+import { cardRefs } from "@/data/card-refs";
 import { SITE_DESCRIPTION, SITE_NAME, absoluteUrl } from "@/lib/site";
 
 export async function GET() {
-  const cards = await getAllCards();
-  const cardLines = cards
-    .map((c) => `- ${c.name} (${c.id}): ${absoluteUrl(`/products/${c.slug}/index.md`)}`)
+  // Just names + links to the per-card Markdown mirrors — doesn't need live
+  // price data, so built from cardRefs instead of resolving the whole
+  // catalog against apitcg.com. Matters more than most routes: llms.txt is
+  // the entry point AI crawlers check first, so it gets hit disproportionately often.
+  const cardLines = cardRefs
+    .map((ref) => `- ${ref.displayName}: ${absoluteUrl(`/products/${ref.slug}/index.md`)}`)
     .join("\n");
 
   const body = `# ${SITE_NAME}
