@@ -161,7 +161,12 @@ export default async function ProductPage({ params }: PageProps) {
       <section className="mt-12 space-y-4 border-t border-border pt-8">
         <h2 className="text-lg font-semibold">Price history</h2>
         {card.priceHistory.length > 0 ? (
-          <PriceChart history={card.priceHistory} currency={card.currency} className="w-full max-w-2xl" />
+          <PriceChart
+            history={card.priceHistory}
+            currency={card.currency}
+            trendDay90={card.trend.day90}
+            className="w-full max-w-2xl"
+          />
         ) : (
           <p className="text-sm text-muted-foreground">
             No historical data available yet for this card.

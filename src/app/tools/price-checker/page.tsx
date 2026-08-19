@@ -98,7 +98,12 @@ export default async function PriceCheckerPage({ searchParams }: PageProps) {
           </div>
 
           {card.priceHistory.length > 0 && (
-            <PriceChart history={card.priceHistory} currency={card.currency} className="w-full max-w-xl" />
+            <PriceChart
+              history={card.priceHistory}
+              currency={card.currency}
+              trendDay90={card.trend.day90}
+              className="w-full max-w-xl"
+            />
           )}
 
           <PriceDataTabs currency={card.currency} recentSnapshots={card.recentSnapshots} trend={card.trend} />
