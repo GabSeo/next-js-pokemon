@@ -1,3 +1,6 @@
+"use client";
+
+import { motion, useReducedMotion } from "motion/react";
 import type { PriceHistoryPoint } from "@/lib/types";
 
 type PriceChartProps = {
@@ -42,18 +45,21 @@ function smoothPath(points: Point[]): string {
 }
 
 /**
- * Pure server-rendered SVG line chart — no client JS, no charting library.
- * Styling follows the dataviz skill: status-colored trend line (green/red by
- * direction, gray if flat), a light area wash, smoothed curve, recessive
- * gridlines, and sparse direct labels (endpoint + extremes only — never a
- * label on every point). All of this is static markup, so it's identical
- * for a human browser and a non-JS-executing crawler.
+ * Server-rendered SVG line chart, with a Motion-animated reveal layered on
+ * top for JS-enabled visitors. The rule that keeps this agent-safe: only
+ * decorative marks (line, area wash, end-dot) are animated via opacity /
+ * pathLength / scale — properties that never remove content from the DOM.
+ * Every text label (prices, dates) renders immediately, unanimated, exactly
+ * as before. A crawler that never executes JS still sees the exact same
+ * final SVG markup; a human with JS sees it draw in.
  *
  * The underlying numbers are also present as plain text elsewhere on the
  * page (the price-data tabs), so the data isn't locked inside SVG path
  * coordinates for anything trying to read it as text.
  */
 export function PriceChart({ history, currency, className }: PriceChartProps) {
+  const reduceMotion = useReducedMotion();
+
   if (history.length === 0) return null;
 
   const prices = history.map((p) => p.price);
@@ -86,6 +92,9 @@ export function PriceChart({ history, currency, className }: PriceChartProps) {
     { y: baselineY, label: min },
   ];
 
+  const t = (delay: number, duration: number, extra?: Record<string, unknown>) =>
+    reduceMotion ? { duration: 0 } : { delay, duration, ...extra };
+
   return (
     <svg
       viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
@@ -111,12 +120,39 @@ export function PriceChart({ history, currency, className }: PriceChartProps) {
         </g>
       ))}
 
-      <path d={areaPath} fill={trendColor} fillOpacity={0.1} stroke="none" />
-      <path d={linePath} fill="none" stroke={trendColor} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+      <motion.path
+        d={areaPath}
+        fill={trendColor}
+        fillOpacity={0.1}
+        stroke="none"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={t(1.0, 0.6)}
+      />
+      <motion.path
+        d={linePath}
+        fill="none"
+        stroke={trendColor}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        initial={{ pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={t(0, 1.2, { ease: "easeInOut" })}
+      />
 
       {/* endpoint marker, with a surface-color ring so it stays legible crossing gridlines */}
       <circle cx={last.x} cy={last.y} r={6} fill="var(--background, #fff)" />
-      <circle cx={last.x} cy={last.y} r={4} fill={trendColor} />
+      <motion.circle
+        cx={last.x}
+        cy={last.y}
+        r={4}
+        fill={trendColor}
+        style={{ transformOrigin: `${last.x}px ${last.y}px` }}
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={t(1.3, 0.4, { type: "spring", stiffness: 300, damping: 20 })}
+      />
 
       <text x={last.x} y={last.y - 12} textAnchor="end" fontSize="12" fontWeight={600} fill="var(--foreground, #0b0b0b)">
         {currency} {last.price}
