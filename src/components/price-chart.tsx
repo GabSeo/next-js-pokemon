@@ -16,7 +16,7 @@ type PriceChartProps = {
 // wide/flat aspect ratio (~5:1), matching a full-width dashboard-style chart
 const WIDTH = 1000;
 const HEIGHT = 190;
-const PAD_LEFT = 104; // room for axis labels like "USD 1048.09" without clipping the left edge
+const PAD_LEFT = 16; // no left-axis price labels anymore, so minimal margin like the reference
 const PAD_RIGHT = 16;
 const PAD_TOP = 20;
 const PAD_BOTTOM = 28;
@@ -27,6 +27,14 @@ const COLOR_CRITICAL = "#d03b3b";
 const COLOR_NEUTRAL = "#898781"; // dataviz "muted" ink
 
 type Point = { x: number; y: number; date: string; price: number };
+
+function formatShortDate(iso: string): string {
+  return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+}
 
 /** Uniform Catmull-Rom to cubic-Bezier conversion — smooths the line without a library. */
 function smoothPath(points: Point[]): string {
@@ -50,22 +58,26 @@ function smoothPath(points: Point[]): string {
 }
 
 /**
- * Full-width dashboard-style price chart: title/subtitle + a current-price
- * stat callout in the header, a wide/flat server-rendered SVG line below,
- * with a Motion-animated reveal and hover crosshair layered on top for
+ * Full-width dashboard-style price chart, styled to closely match a
+ * reference design (shadcn's "Line Chart - Interactive"): bordered card,
+ * title/subtitle + a bordered current-price stat box in the header, a
+ * wide/flat server-rendered SVG line with evenly-spaced date ticks below,
+ * a Motion-animated reveal, and a hover crosshair layered on top for
  * JS-enabled visitors. Agent-safety rules kept:
  *
  * 1. Only decorative marks (line, end-dot) animate via opacity / pathLength
  *    / scale — properties that never remove content from the DOM.
- * 2. Every static label (title, subtitle, stat callout, prices, dates) is
- *    plain HTML/SVG text, unanimated, un-gated — present in the raw server
- *    HTML immediately.
+ * 2. Every static label (title, subtitle, stat box, dates) is plain HTML/
+ *    SVG text, unanimated, un-gated — present in the raw server HTML
+ *    immediately. Dropping the left-axis price labels and on-line min/max
+ *    callouts (to match the reference's clean look) doesn't remove any
+ *    data from the site — it's still fully in the JSON/Markdown mirrors,
+ *    the stat box, and the hover tooltip; this only changes what's shown
+ *    by default on the human page.
  * 3. The hover crosshair/tooltip IS conditionally rendered (only while the
  *    mouse is over the chart) — safe specifically because the per-point
  *    data it reveals is already fully available elsewhere (the JSON/
- *    Markdown mirrors and the "Last sold" tab carry the complete series),
- *    so hiding it by default doesn't hide anything that isn't already
- *    public in full.
+ *    Markdown mirrors and the "Last sold" tab carry the complete series).
  */
 export function PriceChart({ history, currency, trendDay90, className }: PriceChartProps) {
   const reduceMotion = useReducedMotion();
@@ -79,9 +91,10 @@ export function PriceChart({ history, currency, trendDay90, className }: PriceCh
   const max = Math.max(...prices);
   const range = max - min || 1;
   const baselineY = HEIGHT - PAD_BOTTOM;
+  const usableWidth = WIDTH - PAD_LEFT - PAD_RIGHT;
 
   const points: Point[] = history.map((p, i) => ({
-    x: PAD_LEFT + (i / (history.length - 1 || 1)) * (WIDTH - PAD_LEFT - PAD_RIGHT),
+    x: PAD_LEFT + (i / (history.length - 1 || 1)) * usableWidth,
     y: baselineY - ((p.price - min) / range) * (baselineY - PAD_TOP),
     date: p.date,
     price: p.price,
@@ -94,14 +107,17 @@ export function PriceChart({ history, currency, trendDay90, className }: PriceCh
 
   const linePath = smoothPath(points);
 
-  const minPoint = points.reduce((a, b) => (b.price < a.price ? b : a));
-  const maxPoint = points.reduce((a, b) => (b.price > a.price ? b : a));
-  const midPrice = Math.round(((min + max) / 2) * 100) / 100;
-  const gridlines = [
-    { y: PAD_TOP, label: max },
-    { y: PAD_TOP + (baselineY - PAD_TOP) / 2, label: midPrice },
-    { y: baselineY, label: min },
-  ];
+  const midY = PAD_TOP + (baselineY - PAD_TOP) / 2;
+  const gridlineYs = [PAD_TOP, midY, baselineY];
+
+  // evenly-spaced x-axis date ticks (by index, not raw pixels) — aim for
+  // roughly one label per ~90px so they never collide, matching the
+  // reference's "Apr 5, Apr 10, Apr 15..." cadence instead of just the
+  // two endpoints.
+  const tickCount = Math.max(2, Math.min(points.length, Math.floor(usableWidth / 90) + 1));
+  const tickIndices = [...new Set(
+    Array.from({ length: tickCount }, (_, i) => Math.round((i / (tickCount - 1 || 1)) * (points.length - 1)))
+  )];
 
   const t = (delay: number, duration: number, extra?: Record<string, unknown>) =>
     reduceMotion ? { duration: 0 } : { delay, duration, ...extra };
@@ -111,7 +127,6 @@ export function PriceChart({ history, currency, trendDay90, className }: PriceCh
     if (!svg) return;
     const rect = svg.getBoundingClientRect();
     const relX = ((e.clientX - rect.left) / rect.width) * WIDTH;
-    const usableWidth = WIDTH - PAD_LEFT - PAD_RIGHT;
     const fraction = (relX - PAD_LEFT) / usableWidth;
     const index = Math.round(fraction * (points.length - 1));
     setHoverIndex(Math.max(0, Math.min(points.length - 1, index)));
@@ -128,15 +143,15 @@ export function PriceChart({ history, currency, trendDay90, className }: PriceCh
   const badgeColor = isBullish ? COLOR_GOOD : isBearish ? COLOR_CRITICAL : COLOR_NEUTRAL;
 
   return (
-    <div className={className ?? "w-full"}>
+    <div className={`${className ?? "w-full"} rounded-xl border border-border bg-card p-6`}>
       <div className="mb-4 flex items-start justify-between gap-4">
         <div>
           <h2 className="text-base font-semibold">Price history</h2>
           <p className="text-sm text-muted-foreground">
-            Showing price history from {first.date} to {last.date}
+            Showing price history from {formatShortDate(first.date)} to {formatShortDate(last.date)}
           </p>
         </div>
-        <div className="text-right">
+        <div className="rounded-lg border border-border px-4 py-2 text-right">
           <div className="text-xs text-muted-foreground">Current price</div>
           <div className="text-xl font-bold tabular-nums">
             {currency} {last.price}
@@ -165,13 +180,8 @@ export function PriceChart({ history, currency, trendDay90, className }: PriceCh
       >
         <title>Price history</title>
 
-        {gridlines.map((g) => (
-          <g key={g.y}>
-            <line x1={PAD_LEFT} y1={g.y} x2={WIDTH - PAD_RIGHT} y2={g.y} stroke="#e1e0d9" strokeWidth={1} />
-            <text x={PAD_LEFT - 8} y={g.y + 4} textAnchor="end" fontSize="11" fill={COLOR_NEUTRAL}>
-              {currency} {g.label}
-            </text>
-          </g>
+        {gridlineYs.map((y) => (
+          <line key={y} x1={PAD_LEFT} y1={y} x2={WIDTH - PAD_RIGHT} y2={y} stroke="#e1e0d9" strokeWidth={1} />
         ))}
 
         <motion.path
@@ -199,23 +209,15 @@ export function PriceChart({ history, currency, trendDay90, className }: PriceCh
           transition={t(1.3, 0.4, { type: "spring", stiffness: 300, damping: 20 })}
         />
 
-        {minPoint.price !== last.price && minPoint.price !== first.price && (
-          <text x={minPoint.x} y={minPoint.y + 16} textAnchor="middle" fontSize="10" fill={COLOR_NEUTRAL}>
-            low {currency} {minPoint.price}
-          </text>
-        )}
-        {maxPoint.price !== last.price && maxPoint.price !== first.price && (
-          <text x={maxPoint.x} y={maxPoint.y - 8} textAnchor="middle" fontSize="10" fill={COLOR_NEUTRAL}>
-            high {currency} {maxPoint.price}
-          </text>
-        )}
-
-        <text x={first.x} y={HEIGHT - 6} textAnchor="start" fontSize="10" fill={COLOR_NEUTRAL}>
-          {first.date}
-        </text>
-        <text x={last.x} y={HEIGHT - 6} textAnchor="end" fontSize="10" fill={COLOR_NEUTRAL}>
-          {last.date}
-        </text>
+        {tickIndices.map((i, tickPos) => {
+          const p = points[i];
+          const anchor = tickPos === 0 ? "start" : tickPos === tickIndices.length - 1 ? "end" : "middle";
+          return (
+            <text key={p.date} x={p.x} y={HEIGHT - 6} textAnchor={anchor} fontSize="10" fill={COLOR_NEUTRAL}>
+              {formatShortDate(p.date)}
+            </text>
+          );
+        })}
 
         {/* hover crosshair + tooltip — additive convenience layer, see doc comment above */}
         {hovered && (
@@ -231,7 +233,7 @@ export function PriceChart({ history, currency, trendDay90, className }: PriceCh
             />
             <circle cx={hovered.x} cy={hovered.y} r={5} fill="var(--background, #fff)" stroke={trendColor} strokeWidth={2} />
             {(() => {
-              const tooltipText = `${hovered.date}  ${currency} ${hovered.price}`;
+              const tooltipText = `${formatShortDate(hovered.date)}  ${currency} ${hovered.price}`;
               const tooltipWidth = tooltipText.length * 6 + 16;
               const flip = hovered.x + tooltipWidth > WIDTH - PAD_RIGHT;
               const tx = flip ? hovered.x - tooltipWidth : hovered.x;
