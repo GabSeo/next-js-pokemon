@@ -60,6 +60,15 @@ function formatShortDate(iso: string): string {
   });
 }
 
+function formatLongDate(iso: string): string {
+  return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
 /** Uniform Catmull-Rom to cubic-Bezier conversion — smooths the line without a library. */
 function smoothPath(points: Point[]): string {
   if (points.length < 2) return "";
@@ -331,18 +340,38 @@ function PriceChartSvg({ history, currency }: { history: PriceHistoryPoint[]; cu
           />
           <circle cx={hovered.x} cy={hovered.y} r={5} fill="var(--background, #fff)" stroke={trendColor} strokeWidth={2} />
           {(() => {
-            const tooltipText = `${formatShortDate(hovered.date)}  ${currency} ${hovered.price}`;
-            const tooltipWidth = tooltipText.length * 6 + 16;
+            const tooltipWidth = 168;
+            const tooltipHeight = 54;
             const flip = hovered.x + tooltipWidth > WIDTH - PAD_RIGHT;
-            const tx = flip ? hovered.x - tooltipWidth : hovered.x;
-            const ty = Math.max(PAD_TOP, hovered.y - 34);
+            const tx = flip ? hovered.x - tooltipWidth : hovered.x + 10;
+            const ty = Math.max(PAD_TOP, hovered.y - tooltipHeight - 10);
             return (
-              <g>
-                <rect x={tx} y={ty} width={tooltipWidth} height={22} rx={4} fill="var(--foreground, #0b0b0b)" fillOpacity={0.92} />
-                <text x={tx + 8} y={ty + 15} fontSize="11" fill="var(--background, #fff)">
-                  {tooltipText}
-                </text>
-              </g>
+              <foreignObject x={tx} y={ty} width={tooltipWidth} height={tooltipHeight} style={{ pointerEvents: "none", overflow: "visible" }}>
+                <div
+                  style={{
+                    width: tooltipWidth,
+                    height: tooltipHeight,
+                    boxSizing: "border-box",
+                    borderRadius: 10,
+                    border: "1px solid var(--border, #e5e5e1)",
+                    background: "var(--popover, #fff)",
+                    boxShadow: "0 6px 16px rgba(0,0,0,0.14)",
+                    padding: "8px 10px",
+                    fontFamily: "inherit",
+                  }}
+                >
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "var(--popover-foreground, #0b0b0b)" }}>
+                    {formatLongDate(hovered.date)}
+                  </div>
+                  <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: 2, background: trendColor, flexShrink: 0 }} />
+                    <span style={{ fontSize: 12, color: "var(--muted-foreground, #737373)", flex: 1 }}>Price</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: "var(--popover-foreground, #0b0b0b)" }}>
+                      {currency} {hovered.price}
+                    </span>
+                  </div>
+                </div>
+              </foreignObject>
             );
           })()}
         </g>

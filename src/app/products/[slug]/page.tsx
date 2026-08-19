@@ -114,7 +114,12 @@ export default async function ProductPage({ params }: PageProps) {
       </nav>
 
       <div className="grid grid-cols-1 gap-8 sm:grid-cols-[280px_1fr]">
-        <CardImage card={card} className="w-full max-w-[280px] rounded-xl object-cover" />
+        <CardImage
+          card={card}
+          className="w-full max-w-[280px] rounded-xl"
+          priority
+          showCaption
+        />
 
         <div className="space-y-4">
           <div>
