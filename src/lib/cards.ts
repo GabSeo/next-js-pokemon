@@ -17,11 +17,11 @@ import type {
   PriceTrend,
 } from "@/lib/types";
 
-// How many daily records to ask apitcg for per card. 400 is a request, not a
-// guarantee — apitcg's actual retention for a given product may be shorter,
-// which is exactly why computePriceRange() reports the real from/to bounds
-// of whatever comes back instead of assuming a full year.
-const HISTORY_LOOKBACK_LIMIT = 400;
+// How many daily records to ask apitcg for per card. Kept modest for a
+// prototype — priceRange is computed over whatever this actually returns,
+// and computePriceRange() reports the real from/to bounds of that window
+// rather than implying a longer (e.g. 1-year) history than we're fetching.
+const HISTORY_LOOKBACK_LIMIT = 100;
 
 function stripHtml(input: string): string {
   return input.replace(/<[^>]*>/g, "").trim();

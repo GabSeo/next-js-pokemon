@@ -116,7 +116,7 @@ export async function findProductByNameAndSet(
 
 export async function getHistoryPrices(
   productId: number,
-  limit = 400
+  limit = 100
 ): Promise<ApitcgHistoryPrice[]> {
   return apitcgFetch<ApitcgHistoryPrice[]>(
     `/history-prices/${productId}?limit=${limit}`,
