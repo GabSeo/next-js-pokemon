@@ -106,7 +106,12 @@ export default async function PriceCheckerPage({ searchParams }: PageProps) {
             />
           )}
 
-          <PriceDataTabs currency={card.currency} recentSnapshots={card.recentSnapshots} trend={card.trend} />
+          <PriceDataTabs
+            currency={card.currency}
+            recentSnapshots={card.recentSnapshots}
+            trend={card.trend}
+            priceRange={card.priceRange}
+          />
 
           <AddToCollectionButton cardId={card.id} />
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { PriceSnapshot, PriceTrend } from "@/lib/types";
+import type { PriceRange, PriceSnapshot, PriceTrend } from "@/lib/types";
 
 type TabId = "sold" | "trend" | "ebay";
 
@@ -22,7 +22,17 @@ type PriceDataTabsProps = {
   currency: string;
   recentSnapshots: PriceSnapshot[];
   trend: PriceTrend;
+  priceRange: PriceRange | null;
 };
+
+function formatShortDate(iso: string): string {
+  return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
 
 /**
  * All three tab panels are always rendered in the DOM — only the active one
@@ -31,7 +41,7 @@ type PriceDataTabsProps = {
  * HTML sees every tab's content regardless of which one a human has open,
  * and a human never sees a loading state when switching tabs.
  */
-export function PriceDataTabs({ currency, recentSnapshots, trend }: PriceDataTabsProps) {
+export function PriceDataTabs({ currency, recentSnapshots, trend, priceRange }: PriceDataTabsProps) {
   const [active, setActive] = useState<TabId>("sold");
 
   return (
@@ -112,6 +122,43 @@ export function PriceDataTabs({ currency, recentSnapshots, trend }: PriceDataTab
               ))}
             </tbody>
           </table>
+
+          {priceRange && (
+            <div className="mt-4">
+              <h3 className="text-sm font-medium">Price range</h3>
+              <p className="text-xs text-muted-foreground">
+                Low and high over the available price history, {formatShortDate(priceRange.from)} to{" "}
+                {formatShortDate(priceRange.to)}.
+              </p>
+              <table className="mt-2 w-full max-w-md text-sm">
+                <caption className="sr-only">
+                  Lowest and highest recorded price from {priceRange.from} to {priceRange.to}
+                </caption>
+                <thead>
+                  <tr className="text-left text-muted-foreground">
+                    <th className="py-1 font-normal">Low</th>
+                    <th className="py-1 font-normal">High</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-t border-border">
+                    <td className="py-1.5">
+                      {currency} {priceRange.low}{" "}
+                      <span className="text-muted-foreground">
+                        ({formatShortDate(priceRange.lowDate)})
+                      </span>
+                    </td>
+                    <td className="py-1.5">
+                      {currency} {priceRange.high}{" "}
+                      <span className="text-muted-foreground">
+                        ({formatShortDate(priceRange.highDate)})
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
 
         <section role="tabpanel" hidden={active !== "ebay"}>

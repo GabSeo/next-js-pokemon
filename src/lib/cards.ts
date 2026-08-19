@@ -12,9 +12,16 @@ import type {
   Card,
   Franchise,
   PriceHistoryPoint,
+  PriceRange,
   PriceSnapshot,
   PriceTrend,
 } from "@/lib/types";
+
+// How many daily records to ask apitcg for per card. 400 is a request, not a
+// guarantee — apitcg's actual retention for a given product may be shorter,
+// which is exactly why computePriceRange() reports the real from/to bounds
+// of whatever comes back instead of assuming a full year.
+const HISTORY_LOOKBACK_LIMIT = 400;
 
 function stripHtml(input: string): string {
   return input.replace(/<[^>]*>/g, "").trim();
@@ -41,6 +48,25 @@ function computeTrend(history: PriceHistoryPoint[]): PriceTrend {
   };
 }
 
+/** Low/high over the full history array. Assumes `history` is sorted ascending by date. */
+function computePriceRange(history: PriceHistoryPoint[]): PriceRange | null {
+  if (history.length === 0) return null;
+  let low = history[0];
+  let high = history[0];
+  for (const point of history) {
+    if (point.price < low.price) low = point;
+    if (point.price > high.price) high = point;
+  }
+  return {
+    low: low.price,
+    high: high.price,
+    lowDate: low.date,
+    highDate: high.date,
+    from: history[0].date,
+    to: history[history.length - 1].date,
+  };
+}
+
 function marketPrice(markets: ApitcgProduct["markets"]): number | undefined {
   const prices = markets?.tcgplayer?.prices;
   return prices?.market ?? prices?.mid ?? prices?.low;
@@ -63,7 +89,7 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
   if (!product) return undefined;
 
   const currentPrice = marketPrice(product.markets) ?? 0;
-  const history = await getHistoryPrices(product._id, 200).catch(() => []);
+  const history = await getHistoryPrices(product._id, HISTORY_LOOKBACK_LIMIT).catch(() => []);
 
   const sortedAsc = [...history].sort((a, b) => a.date.localeCompare(b.date));
   const priceHistory: PriceHistoryPoint[] = sortedAsc
@@ -100,6 +126,7 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
     priceHistory,
     recentSnapshots,
     trend: computeTrend(priceHistory),
+    priceRange: computePriceRange(priceHistory),
     imageUrl: product.images?.[0]?.large ?? product.images?.[0]?.medium,
     sourceUrl: product.markets?.tcgplayer?.url,
     description: rawDescription ? stripHtml(rawDescription) : undefined,
@@ -225,6 +252,7 @@ export function toPublicCard(card: Card) {
     priceHistory: card.priceHistory,
     recentSnapshots: card.recentSnapshots,
     trend: card.trend,
+    priceRange: card.priceRange,
     imageUrl: card.imageUrl,
     sourceUrl: card.sourceUrl,
     productUrl: absoluteUrl(`/products/${card.slug}`),

@@ -3,6 +3,13 @@ import { cardRefs } from "@/data/card-refs";
 import { absoluteUrl, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 import type { Card, Franchise } from "@/lib/types";
 
+function priceRangeMarkdown(card: Card): string {
+  if (!card.priceRange) return "No price range available yet.";
+  const { low, high, lowDate, highDate, from, to } = card.priceRange;
+  return `Low: ${card.currency} ${low} (${lowDate}) · High: ${card.currency} ${high} (${highDate})
+Covers available history from ${from} to ${to}.`;
+}
+
 export function cardToMarkdown(card: Card): string {
   const history = card.priceHistory
     .map((p) => `- ${p.date}: ${card.currency} ${p.price}`)
@@ -58,6 +65,10 @@ ${snapshots || "| - | - | - |"}
 | Window | Average price |
 | --- | --- |
 ${trendRows}
+
+## Price range
+
+${priceRangeMarkdown(card)}
 
 ## Machine-readable data
 
@@ -143,6 +154,10 @@ ${snapshots || "| - | - | - |"}
 | Window | Average price |
 | --- | --- |
 ${trendRows}
+
+## Price range
+
+${priceRangeMarkdown(card)}
 
 ## Machine-readable data
 

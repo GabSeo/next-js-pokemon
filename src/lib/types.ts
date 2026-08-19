@@ -19,6 +19,21 @@ export type PriceTrend = {
   day90: number | null;
 };
 
+/**
+ * Low/high over whatever daily history is actually available — not
+ * hard-labeled "1 year" because apitcg's retention for a given product may
+ * be shorter than that. `from`/`to` are the real bounds of the data behind
+ * the numbers, so nothing claims more coverage than it has.
+ */
+export type PriceRange = {
+  low: number;
+  high: number;
+  lowDate: string;
+  highDate: string;
+  from: string;
+  to: string;
+};
+
 export type Card = {
   id: string; // apitcg.com numeric product id, as a string
   slug: string; // URL slug, e.g. "gengar-vmax-271"
@@ -34,6 +49,7 @@ export type Card = {
   priceHistory: PriceHistoryPoint[];
   recentSnapshots: PriceSnapshot[]; // real daily market-price records, not itemized sales
   trend: PriceTrend; // average price over trailing windows, derived from priceHistory
+  priceRange: PriceRange | null; // low/high over all available history, derived from priceHistory
   imageUrl?: string; // real card image; falls back to a generated placeholder if absent
   sourceUrl?: string; // real TCGPlayer product page
   description?: string;

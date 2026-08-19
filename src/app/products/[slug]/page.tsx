@@ -181,7 +181,12 @@ export default async function ProductPage({ params }: PageProps) {
       </section>
 
       <section className="mt-8 space-y-4">
-        <PriceDataTabs currency={card.currency} recentSnapshots={card.recentSnapshots} trend={card.trend} />
+        <PriceDataTabs
+          currency={card.currency}
+          recentSnapshots={card.recentSnapshots}
+          trend={card.trend}
+          priceRange={card.priceRange}
+        />
       </section>
 
       <section className="mt-12 space-y-4 border-t border-border pt-8">
