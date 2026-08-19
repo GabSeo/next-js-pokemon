@@ -13,11 +13,12 @@ type PriceChartProps = {
   className?: string;
 };
 
-const WIDTH = 640;
-const HEIGHT = 220;
+// wide/flat aspect ratio (~5:1), matching a full-width dashboard-style chart
+const WIDTH = 1000;
+const HEIGHT = 190;
 const PAD_LEFT = 104; // room for axis labels like "USD 1048.09" without clipping the left edge
 const PAD_RIGHT = 16;
-const PAD_TOP = 32; // room for the endpoint price label when the endpoint is also the chart's high
+const PAD_TOP = 20;
 const PAD_BOTTOM = 28;
 
 // dataviz skill's status palette (validated, same hex both light/dark surfaces)
@@ -49,19 +50,22 @@ function smoothPath(points: Point[]): string {
 }
 
 /**
- * Server-rendered SVG line chart, with a Motion-animated reveal and a hover
- * crosshair layered on top for JS-enabled visitors. Agent-safety rules kept:
+ * Full-width dashboard-style price chart: title/subtitle + a current-price
+ * stat callout in the header, a wide/flat server-rendered SVG line below,
+ * with a Motion-animated reveal and hover crosshair layered on top for
+ * JS-enabled visitors. Agent-safety rules kept:
  *
- * 1. Only decorative marks (line, area wash, end-dot) animate via opacity /
- *    pathLength / scale — properties that never remove content from the DOM.
- * 2. Every static label (prices, dates, the trend badge) renders
- *    immediately, unanimated, un-gated — present in the raw server HTML.
+ * 1. Only decorative marks (line, end-dot) animate via opacity / pathLength
+ *    / scale — properties that never remove content from the DOM.
+ * 2. Every static label (title, subtitle, stat callout, prices, dates) is
+ *    plain HTML/SVG text, unanimated, un-gated — present in the raw server
+ *    HTML immediately.
  * 3. The hover crosshair/tooltip IS conditionally rendered (only while the
- *    mouse is over the chart) — that's fine specifically because the data
- *    it reveals per point is already fully available elsewhere (the JSON/
+ *    mouse is over the chart) — safe specifically because the per-point
+ *    data it reveals is already fully available elsewhere (the JSON/
  *    Markdown mirrors and the "Last sold" tab carry the complete series),
  *    so hiding it by default doesn't hide anything that isn't already
- *    public in full. This is a convenience view, not the only copy.
+ *    public in full.
  */
 export function PriceChart({ history, currency, trendDay90, className }: PriceChartProps) {
   const reduceMotion = useReducedMotion();
@@ -89,7 +93,6 @@ export function PriceChart({ history, currency, trendDay90, className }: PriceCh
     last.price > first.price ? COLOR_GOOD : last.price < first.price ? COLOR_CRITICAL : COLOR_NEUTRAL;
 
   const linePath = smoothPath(points);
-  const areaPath = `${linePath} L${last.x.toFixed(1)},${baselineY.toFixed(1)} L${first.x.toFixed(1)},${baselineY.toFixed(1)} Z`;
 
   const minPoint = points.reduce((a, b) => (b.price < a.price ? b : a));
   const maxPoint = points.reduce((a, b) => (b.price > a.price ? b : a));
@@ -122,14 +125,39 @@ export function PriceChart({ history, currency, trendDay90, className }: PriceCh
     trendDay90 && trendDay90 > 0 ? ((last.price - trendDay90) / trendDay90) * 100 : null;
   const isBullish = trendPct !== null && trendPct > 0;
   const isBearish = trendPct !== null && trendPct < 0;
-  const trendBadgeColor = isBullish ? COLOR_GOOD : isBearish ? COLOR_CRITICAL : COLOR_NEUTRAL;
+  const badgeColor = isBullish ? COLOR_GOOD : isBearish ? COLOR_CRITICAL : COLOR_NEUTRAL;
 
   return (
-    <div className="w-full">
+    <div className={className ?? "w-full"}>
+      <div className="mb-4 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-base font-semibold">Price history</h2>
+          <p className="text-sm text-muted-foreground">
+            Showing price history from {first.date} to {last.date}
+          </p>
+        </div>
+        <div className="text-right">
+          <div className="text-xs text-muted-foreground">Current price</div>
+          <div className="text-xl font-bold tabular-nums">
+            {currency} {last.price}
+          </div>
+          {trendPct !== null && (
+            <div
+              className="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+              style={{ color: badgeColor, backgroundColor: `${badgeColor}1a` }}
+            >
+              {isBullish ? <TrendingUp size={12} /> : isBearish ? <TrendingDown size={12} /> : null}
+              {isBullish ? "Bullish" : isBearish ? "Bearish" : "Flat"} {trendPct > 0 ? "+" : ""}
+              {Math.round(trendPct * 10) / 10}% vs 3-month avg
+            </div>
+          )}
+        </div>
+      </div>
+
       <svg
         ref={svgRef}
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-        className={className}
+        className="h-auto w-full"
         role="img"
         aria-label={`Price history chart from ${currency} ${min} to ${currency} ${max}, ${first.date} to ${last.date}`}
         onPointerMove={handlePointerMove}
@@ -139,14 +167,7 @@ export function PriceChart({ history, currency, trendDay90, className }: PriceCh
 
         {gridlines.map((g) => (
           <g key={g.y}>
-            <line
-              x1={PAD_LEFT}
-              y1={g.y}
-              x2={WIDTH - PAD_RIGHT}
-              y2={g.y}
-              stroke="#e1e0d9"
-              strokeWidth={1}
-            />
+            <line x1={PAD_LEFT} y1={g.y} x2={WIDTH - PAD_RIGHT} y2={g.y} stroke="#e1e0d9" strokeWidth={1} />
             <text x={PAD_LEFT - 8} y={g.y + 4} textAnchor="end" fontSize="11" fill={COLOR_NEUTRAL}>
               {currency} {g.label}
             </text>
@@ -154,19 +175,10 @@ export function PriceChart({ history, currency, trendDay90, className }: PriceCh
         ))}
 
         <motion.path
-          d={areaPath}
-          fill={trendColor}
-          fillOpacity={0.1}
-          stroke="none"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={t(1.0, 0.6)}
-        />
-        <motion.path
           d={linePath}
           fill="none"
           stroke={trendColor}
-          strokeWidth={2}
+          strokeWidth={1.75}
           strokeLinecap="round"
           strokeLinejoin="round"
           initial={{ pathLength: 0 }}
@@ -175,21 +187,17 @@ export function PriceChart({ history, currency, trendDay90, className }: PriceCh
         />
 
         {/* endpoint marker, with a surface-color ring so it stays legible crossing gridlines */}
-        <circle cx={last.x} cy={last.y} r={6} fill="var(--background, #fff)" />
+        <circle cx={last.x} cy={last.y} r={5} fill="var(--background, #fff)" />
         <motion.circle
           cx={last.x}
           cy={last.y}
-          r={4}
+          r={3.5}
           fill={trendColor}
           style={{ transformOrigin: `${last.x}px ${last.y}px` }}
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={t(1.3, 0.4, { type: "spring", stiffness: 300, damping: 20 })}
         />
-
-        <text x={last.x} y={last.y - 12} textAnchor="end" fontSize="12" fontWeight={600} fill="var(--foreground, #0b0b0b)">
-          {currency} {last.price}
-        </text>
 
         {minPoint.price !== last.price && minPoint.price !== first.price && (
           <text x={minPoint.x} y={minPoint.y + 16} textAnchor="middle" fontSize="10" fill={COLOR_NEUTRAL}>
@@ -240,19 +248,6 @@ export function PriceChart({ history, currency, trendDay90, className }: PriceCh
           </g>
         )}
       </svg>
-
-      <div className="mt-2 flex items-center justify-end gap-2 text-sm">
-        <span className="font-semibold">
-          {currency} {last.price}
-        </span>
-        {trendPct !== null && (
-          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium" style={{ color: trendBadgeColor, backgroundColor: `${trendBadgeColor}1a` }}>
-            {isBullish ? <TrendingUp size={12} /> : isBearish ? <TrendingDown size={12} /> : null}
-            {isBullish ? "Bullish" : isBearish ? "Bearish" : "Flat"} {trendPct > 0 ? "+" : ""}
-            {Math.round(trendPct * 10) / 10}% vs 3-month avg
-          </span>
-        )}
-      </div>
     </div>
   );
 }

@@ -102,7 +102,7 @@ export default async function PriceCheckerPage({ searchParams }: PageProps) {
               history={card.priceHistory}
               currency={card.currency}
               trendDay90={card.trend.day90}
-              className="w-full max-w-xl"
+              className="w-full"
             />
           )}
 

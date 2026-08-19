@@ -158,14 +158,13 @@ export default async function ProductPage({ params }: PageProps) {
         </div>
       </div>
 
-      <section className="mt-12 space-y-4 border-t border-border pt-8">
-        <h2 className="text-lg font-semibold">Price history</h2>
+      <section className="mt-12 border-t border-border pt-8">
         {card.priceHistory.length > 0 ? (
           <PriceChart
             history={card.priceHistory}
             currency={card.currency}
             trendDay90={card.trend.day90}
-            className="w-full max-w-2xl"
+            className="w-full"
           />
         ) : (
           <p className="text-sm text-muted-foreground">
