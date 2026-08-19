@@ -34,10 +34,10 @@ export function SiteFooter() {
               Entity map
             </Link>
             <Link href="/okf" className="hover:text-foreground hover:underline">
-              Open data for AI agents
+              OKF
             </Link>
           </nav>
-          <OpenDataLinks markdownHref="/index.md" jsonHref="/api/site" />
+          <OpenDataLinks markdownHref="/index.md" jsonHref="/api/site" okfHref="/okf/home" />
         </div>
         <p className="text-xs text-muted-foreground">
           Prototype catalog — placeholder pricing data, not a real business.

@@ -57,7 +57,7 @@ export default async function HomePage() {
             Browse One Piece cards
           </Link>
         </div>
-        <OpenDataLinks markdownHref="/index.md" jsonHref="/api/site" className="pt-2" />
+        <OpenDataLinks markdownHref="/index.md" jsonHref="/api/site" okfHref="/okf/home" className="pt-2" />
       </section>
 
       <section className="mt-14 space-y-4">

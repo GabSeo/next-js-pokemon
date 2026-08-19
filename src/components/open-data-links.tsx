@@ -1,6 +1,8 @@
 type OpenDataLinksProps = {
   markdownHref: string;
   jsonHref: string;
+  /** Href of this page's matching OKF concept, when one exists. */
+  okfHref?: string;
   className?: string;
 };
 
@@ -12,6 +14,7 @@ type OpenDataLinksProps = {
 export function OpenDataLinks({
   markdownHref,
   jsonHref,
+  okfHref,
   className,
 }: OpenDataLinksProps) {
   return (
@@ -31,6 +34,14 @@ export function OpenDataLinks({
       >
         JSON
       </a>
+      {okfHref && (
+        <a
+          href={okfHref}
+          className="inline-flex items-center gap-1 underline-offset-4 hover:text-foreground hover:underline"
+        >
+          OKF
+        </a>
+      )}
     </div>
   );
 }

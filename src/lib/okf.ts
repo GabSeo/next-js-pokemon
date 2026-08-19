@@ -1,5 +1,11 @@
-import { getAllCards, getCardBySlug, getCardsByFranchise, franchiseLabel } from "@/lib/cards";
-import { cardToMarkdown, collectionToMarkdown, homepageMarkdown } from "@/lib/markdown";
+import { findCard, getAllCards, getCardBySlug, getCardsByFranchise, franchiseLabel } from "@/lib/cards";
+import {
+  cardToMarkdown,
+  collectionToMarkdown,
+  homepageMarkdown,
+  priceCheckResultMarkdown,
+  priceCheckerMarkdown,
+} from "@/lib/markdown";
 import { SITE_DESCRIPTION, SITE_NAME, absoluteUrl } from "@/lib/site";
 import type { Franchise } from "@/lib/types";
 
@@ -11,7 +17,7 @@ import type { Franchise } from "@/lib/types";
  * HTML into clean markdown" first. CardTrace solved that months ago.
  */
 
-type OkfConceptType = "WebSite" | "AboutPage" | "CollectionPage" | "Product";
+type OkfConceptType = "WebSite" | "AboutPage" | "CollectionPage" | "Product" | "WebApplication";
 
 type OkfFrontmatter = {
   type: OkfConceptType;
@@ -134,6 +140,31 @@ export async function okfProductConcept(slug: string): Promise<string | undefine
   );
 }
 
+export async function okfPriceCheckerConcept(cardId?: string): Promise<string> {
+  const now = new Date();
+  const card = cardId ? await findCard(cardId) : undefined;
+  const body = card
+    ? priceCheckResultMarkdown(card)
+    : await priceCheckerMarkdown();
+
+  return withFrontmatter(
+    {
+      type: "WebApplication",
+      title: card ? `Price checker — ${card.name}` : "Price checker",
+      description: card
+        ? `Current price, alert bands, and history for ${card.name} via the ${SITE_NAME} price checker.`
+        : "Look up any tracked card by ID to see current price, history, and alert bands.",
+      resource: absoluteUrl(`/tools/price-checker${cardId ? `?cardId=${cardId}` : ""}`),
+      tags: ["tool", "price-checker"],
+      generated: { by: GENERATED_BY, at: now.toISOString() },
+      // Only price-driven once a card is resolved — the bare tool index (no
+      // cardId) is just a list of IDs, as evergreen as the About page.
+      stale_after: addDays(now, card ? 7 : 180),
+    },
+    body
+  );
+}
+
 /** Bundle table of contents — lists every concept before an agent opens any of them, matching the convention Google's own spec examples use. */
 export async function okfIndex(): Promise<string> {
   const cards = await getAllCards();
@@ -149,6 +180,7 @@ One concept per page, plain markdown with YAML frontmatter, cross-linked back to
 
 - [Home](${absoluteUrl("/okf/home")})
 - [About](${absoluteUrl("/okf/about")})
+- [Price checker](${absoluteUrl("/okf/tools/price-checker")})
 
 ## Collections
 

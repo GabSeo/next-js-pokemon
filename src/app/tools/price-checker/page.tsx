@@ -70,6 +70,7 @@ export default async function PriceCheckerPage({ searchParams }: PageProps) {
       <OpenDataLinks
         markdownHref={`/tools/price-checker.md${cardId ? `?cardId=${encodeURIComponent(cardId)}` : ""}`}
         jsonHref={`/api/price-check${cardId ? `?cardId=${encodeURIComponent(cardId)}` : ""}`}
+        okfHref={`/okf/tools/price-checker${cardId ? `?cardId=${encodeURIComponent(cardId)}` : ""}`}
         className="mt-4"
       />
 

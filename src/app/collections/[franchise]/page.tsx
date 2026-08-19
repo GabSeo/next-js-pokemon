@@ -87,6 +87,7 @@ export default async function CollectionPage({ params }: PageProps) {
       <OpenDataLinks
         markdownHref={`/collections/${franchise}/index.md`}
         jsonHref={`/api/${franchise}`}
+        okfHref={`/okf/collections/${franchise}`}
         className="mt-4"
       />
 

@@ -159,6 +159,7 @@ export default async function ProductPage({ params }: PageProps) {
           <OpenDataLinks
             markdownHref={`/products/${card.slug}/index.md`}
             jsonHref={`/api/${card.franchise}/${card.id}`}
+            okfHref={`/okf/products/${card.slug}`}
           />
 
           <AddToCollectionButton cardId={card.id} />
