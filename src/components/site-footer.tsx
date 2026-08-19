@@ -30,6 +30,12 @@ export function SiteFooter() {
             <Link href="/about" className="hover:text-foreground hover:underline">
               About
             </Link>
+            <Link href="/entitymap" className="hover:text-foreground hover:underline">
+              Entity map
+            </Link>
+            <Link href="/okf" className="hover:text-foreground hover:underline">
+              Open data for AI agents
+            </Link>
           </nav>
           <OpenDataLinks markdownHref="/index.md" jsonHref="/api/site" />
         </div>
