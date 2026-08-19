@@ -7,3 +7,8 @@ export const SITE_URL =
 export function absoluteUrl(path: string): string {
   return new URL(path, SITE_URL).toString();
 }
+
+/** Bare hostname (no protocol, no port) — the identifier segment did:web and every ARD URN are built from. */
+export function siteHost(): string {
+  return new URL(SITE_URL).hostname;
+}

@@ -4,7 +4,7 @@ import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { StructuredData } from "@/components/structured-data";
-import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL, absoluteUrl } from "@/lib/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -43,6 +43,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <head>
         <StructuredData data={organizationJsonLd} />
+        <link rel="ai-catalog" href={absoluteUrl("/.well-known/ai-catalog.json")} />
       </head>
       <body className="min-h-full flex flex-col">
         <SiteHeader />

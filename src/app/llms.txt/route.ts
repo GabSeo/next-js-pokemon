@@ -1,5 +1,5 @@
 import { cardRefs } from "@/data/card-refs";
-import { SITE_DESCRIPTION, SITE_NAME, absoluteUrl } from "@/lib/site";
+import { SITE_DESCRIPTION, SITE_NAME, absoluteUrl, siteHost } from "@/lib/site";
 
 export async function GET() {
   // Just names + links to the per-card Markdown mirrors — doesn't need live
@@ -41,6 +41,11 @@ ${cardLines}
 - Remote MCP server (Streamable HTTP, stateless): ${absoluteUrl("/api/mcp")}
   Tools: list_cards, get_price_range, get_card_info — see the server card
   for full descriptions: ${absoluteUrl("/.well-known/mcp/server-card.json")}
+
+## Agentic Resource Discovery
+
+- Catalog: ${absoluteUrl("/.well-known/ai-catalog.json")}
+- Identity: did:web:${siteHost()} — ${absoluteUrl("/.well-known/did.json")}
 
 ## Sitemap
 
