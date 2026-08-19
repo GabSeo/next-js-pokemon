@@ -155,8 +155,14 @@ export function PriceChart({ history, currency, trend, className }: PriceChartPr
   const trendDay90 = trend?.day90 ?? null;
   const trendPct =
     trendDay90 && trendDay90 > 0 ? ((last.price - trendDay90) / trendDay90) * 100 : null;
-  const isBullish = trendPct !== null && trendPct > 0;
-  const isBearish = trendPct !== null && trendPct < 0;
+
+  // Within +/-5% of the 3mo avg reads as noise, not a real move — labeled
+  // "Stable" instead of Bullish/Bearish so a +0.3% blip doesn't look like a
+  // directional signal.
+  const STABLE_THRESHOLD_PCT = 5;
+  const isBullish = trendPct !== null && trendPct > STABLE_THRESHOLD_PCT;
+  const isBearish = trendPct !== null && trendPct < -STABLE_THRESHOLD_PCT;
+  const isStable = trendPct !== null && !isBullish && !isBearish;
   const badgeColor = isBullish ? COLOR_GOOD : isBearish ? COLOR_CRITICAL : COLOR_NEUTRAL;
 
   return (
@@ -191,7 +197,7 @@ export function PriceChart({ history, currency, trend, className }: PriceChartPr
             )}
             <div>
               <div className="text-sm font-semibold" style={{ color: badgeColor }}>
-                {isBullish ? "Bullish" : isBearish ? "Bearish" : "Flat"}
+                {isBullish ? "Bullish" : isBearish ? "Bearish" : isStable ? "Stable" : "Flat"}
               </div>
               <div className="text-xs text-muted-foreground">
                 {trendPct !== null
