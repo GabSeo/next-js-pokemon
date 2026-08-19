@@ -1,6 +1,6 @@
 "use client";
 
-import { TrendingDown, TrendingUp } from "lucide-react";
+import { Minus, TrendingDown, TrendingUp } from "lucide-react";
 import { useRef, useState } from "react";
 import type { PriceHistoryPoint } from "@/lib/types";
 
@@ -150,28 +150,42 @@ export function PriceChart({ history, currency, trendDay90, className }: PriceCh
 
   return (
     <div className={`${className ?? "w-full"} rounded-xl border border-border bg-card p-6`}>
-      <div className="mb-4 flex items-start justify-between gap-4">
-        <div>
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-stretch">
+        <div className="flex-1 rounded-lg border border-border p-4">
           <h2 className="text-base font-semibold">Price history</h2>
           <p className="text-sm text-muted-foreground">
             Showing price history from {formatShortDate(first.date)} to {formatShortDate(last.date)}
           </p>
         </div>
-        <div className="rounded-lg border border-border px-4 py-2 text-right">
-          <div className="text-xs text-muted-foreground">Current price</div>
+
+        <div className="rounded-lg border border-border p-4 sm:w-48">
+          <div className="text-xs text-muted-foreground">Last price</div>
           <div className="text-xl font-bold tabular-nums">
             {currency} {last.price}
           </div>
-          {trendPct !== null && (
-            <div
-              className="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
-              style={{ color: badgeColor, backgroundColor: `${badgeColor}1a` }}
-            >
-              {isBullish ? <TrendingUp size={12} /> : isBearish ? <TrendingDown size={12} /> : null}
-              {isBullish ? "Bullish" : isBearish ? "Bearish" : "Flat"} {trendPct > 0 ? "+" : ""}
-              {Math.round(trendPct * 10) / 10}% vs 3-month avg
+        </div>
+
+        <div className="rounded-lg border border-border p-4 sm:w-56">
+          <div className="text-xs text-muted-foreground">Trend signal</div>
+          <div className="mt-1 flex items-center gap-2">
+            {isBullish ? (
+              <TrendingUp size={32} strokeWidth={2.5} style={{ color: badgeColor }} />
+            ) : isBearish ? (
+              <TrendingDown size={32} strokeWidth={2.5} style={{ color: badgeColor }} />
+            ) : (
+              <Minus size={32} strokeWidth={2.5} style={{ color: badgeColor }} />
+            )}
+            <div>
+              <div className="text-sm font-semibold" style={{ color: badgeColor }}>
+                {isBullish ? "Bullish" : isBearish ? "Bearish" : "Flat"}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {trendPct !== null
+                  ? `${trendPct > 0 ? "+" : ""}${Math.round(trendPct * 10) / 10}% vs 3mo avg`
+                  : "No trend data"}
+              </div>
             </div>
-          )}
+          </div>
         </div>
       </div>
 
