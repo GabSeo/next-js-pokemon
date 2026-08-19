@@ -8,9 +8,9 @@ type PriceChartProps = {
 
 const WIDTH = 640;
 const HEIGHT = 220;
-const PAD_LEFT = 56;
+const PAD_LEFT = 104; // room for axis labels like "USD 1048.09" without clipping the left edge
 const PAD_RIGHT = 16;
-const PAD_TOP = 16;
+const PAD_TOP = 32; // room for the endpoint price label when the endpoint is also the chart's high
 const PAD_BOTTOM = 28;
 
 // dataviz skill's status palette (validated, same hex both light/dark surfaces)
@@ -122,12 +122,12 @@ export function PriceChart({ history, currency, className }: PriceChartProps) {
         {currency} {last.price}
       </text>
 
-      {minPoint !== last && (
+      {minPoint.price !== last.price && minPoint.price !== first.price && (
         <text x={minPoint.x} y={minPoint.y + 16} textAnchor="middle" fontSize="10" fill={COLOR_NEUTRAL}>
           low {currency} {minPoint.price}
         </text>
       )}
-      {maxPoint !== last && (
+      {maxPoint.price !== last.price && maxPoint.price !== first.price && (
         <text x={maxPoint.x} y={maxPoint.y - 8} textAnchor="middle" fontSize="10" fill={COLOR_NEUTRAL}>
           high {currency} {maxPoint.price}
         </text>
