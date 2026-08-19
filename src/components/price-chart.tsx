@@ -115,6 +115,7 @@ export function PriceChart({ history, currency, trendDay90, className }: PriceCh
     last.price > first.price ? COLOR_GOOD : last.price < first.price ? COLOR_CRITICAL : COLOR_NEUTRAL;
 
   const linePath = smoothPath(points);
+  const areaPath = `${linePath} L${last.x.toFixed(1)},${baselineY.toFixed(1)} L${first.x.toFixed(1)},${baselineY.toFixed(1)} Z`;
 
   const midY = PAD_TOP + (baselineY - PAD_TOP) / 2;
   const gridlineYs = [PAD_TOP, midY, baselineY];
@@ -206,6 +207,8 @@ export function PriceChart({ history, currency, trendDay90, className }: PriceCh
         {gridlineYs.map((y) => (
           <line key={y} x1={PAD_LEFT} y1={y} x2={WIDTH - PAD_RIGHT} y2={y} stroke="#e1e0d9" strokeWidth={1} />
         ))}
+
+        <path d={areaPath} fill={trendColor} fillOpacity={0.12} stroke="none" />
 
         <path
           d={linePath}
