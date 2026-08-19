@@ -52,9 +52,9 @@ export function AlertSubscribe({ cardId, currency, bands }: AlertSubscribeProps)
               {band.pct > 0 ? "+" : ""}
               {band.pct}%
             </div>
-            <div className="text-muted-foreground">
+            <data value={String(band.price)} className="block text-muted-foreground">
               {currency} {band.price}
-            </div>
+            </data>
           </li>
         ))}
       </ul>

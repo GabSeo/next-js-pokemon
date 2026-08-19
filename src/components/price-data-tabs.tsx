@@ -82,7 +82,9 @@ export function PriceDataTabs({ currency, recentSnapshots, trend, priceRange }: 
                   <tr key={snap.date} className="border-t border-border">
                     <td className="py-1.5">{snap.date}</td>
                     <td className="py-1.5">
-                      {currency} {snap.price}
+                      <data value={String(snap.price)}>
+                        {currency} {snap.price}
+                      </data>
                     </td>
                     <td className="py-1.5">
                       {snap.sourceUrl ? (
@@ -116,7 +118,13 @@ export function PriceDataTabs({ currency, recentSnapshots, trend, priceRange }: 
                 <tr key={row.id} className="border-t border-border">
                   <td className="py-1.5">{row.label}</td>
                   <td className="py-1.5">
-                    {trend[row.id] !== null ? `${currency} ${trend[row.id]}` : "—"}
+                    {trend[row.id] !== null ? (
+                      <data value={String(trend[row.id])}>
+                        {currency} {trend[row.id]}
+                      </data>
+                    ) : (
+                      "—"
+                    )}
                   </td>
                 </tr>
               ))}
@@ -143,13 +151,17 @@ export function PriceDataTabs({ currency, recentSnapshots, trend, priceRange }: 
                 <tbody>
                   <tr className="border-t border-border">
                     <td className="py-1.5">
-                      {currency} {priceRange.low}{" "}
+                      <data value={String(priceRange.low)}>
+                        {currency} {priceRange.low}
+                      </data>{" "}
                       <span className="text-muted-foreground">
                         ({formatShortDate(priceRange.lowDate)})
                       </span>
                     </td>
                     <td className="py-1.5">
-                      {currency} {priceRange.high}{" "}
+                      <data value={String(priceRange.high)}>
+                        {currency} {priceRange.high}
+                      </data>{" "}
                       <span className="text-muted-foreground">
                         ({formatShortDate(priceRange.highDate)})
                       </span>

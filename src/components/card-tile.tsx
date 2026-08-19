@@ -14,9 +14,9 @@ export function CardTile({ card }: { card: Card }) {
         <p className="text-xs text-muted-foreground">
           {card.set} · {card.number ?? ""} · {card.rarity ?? ""}
         </p>
-        <p className="mt-auto pt-2 text-sm font-medium">
+        <data value={String(card.currentPrice)} className="mt-auto block pt-2 text-sm font-medium">
           {card.currency} {card.currentPrice}
-        </p>
+        </data>
       </div>
     </Link>
   );

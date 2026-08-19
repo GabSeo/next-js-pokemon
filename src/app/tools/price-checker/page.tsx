@@ -92,7 +92,7 @@ export default async function PriceCheckerPage({ searchParams }: PageProps) {
               </span>
             </h2>
             <p className="mt-1 text-sm">
-              Current market price: <strong>{card.currency} {card.currentPrice}</strong> as of{" "}
+              Current market price: <strong><data value={String(card.currentPrice)}>{card.currency} {card.currentPrice}</data></strong> as of{" "}
               <strong>{card.asOfDate}</strong>.
             </p>
           </div>

@@ -137,7 +137,7 @@ export default async function ProductPage({ params }: PageProps) {
 
           <p className="max-w-2xl text-sm">
             The current market price for {card.name} ({card.set}, {card.number ?? ""})
-            is <strong>{card.currency} {card.currentPrice}</strong> as of{" "}
+            is <strong><data value={String(card.currentPrice)}>{card.currency} {card.currentPrice}</data></strong> as of{" "}
             <strong>{card.asOfDate}</strong>
             {card.sourceUrl ? (
               <>

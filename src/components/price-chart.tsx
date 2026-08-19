@@ -184,9 +184,9 @@ export function PriceChart({ history, currency, trend, className }: PriceChartPr
 
         <div className="rounded-lg border border-border p-4 sm:w-48">
           <div className="text-xs text-muted-foreground">Last price</div>
-          <div className="text-xl font-bold tabular-nums">
+          <data value={String(last.price)} className="block text-xl font-bold tabular-nums">
             {currency} {last.price}
-          </div>
+          </data>
         </div>
 
         <div
@@ -232,9 +232,13 @@ export function PriceChart({ history, currency, trend, className }: PriceChartPr
               }`}
             >
               <span className="text-xs text-muted-foreground">{rangeDef.label} avg</span>
-              <span className="text-base font-bold tabular-nums">
-                {value !== null ? `${currency} ${value}` : "—"}
-              </span>
+              {value !== null ? (
+                <data value={String(value)} className="block text-base font-bold tabular-nums">
+                  {currency} {value}
+                </data>
+              ) : (
+                <span className="text-base font-bold tabular-nums">—</span>
+              )}
             </button>
           );
         })}
@@ -383,9 +387,12 @@ function PriceChartSvg({ history, currency }: { history: PriceHistoryPoint[]; cu
                   <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 6 }}>
                     <span style={{ width: 8, height: 8, borderRadius: 2, background: trendColor, flexShrink: 0 }} />
                     <span style={{ fontSize: 12, color: "var(--muted-foreground, #737373)", flex: 1 }}>Price</span>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: "var(--popover-foreground, #0b0b0b)" }}>
+                    <data
+                      value={String(hovered.price)}
+                      style={{ fontSize: 12, fontWeight: 700, color: "var(--popover-foreground, #0b0b0b)" }}
+                    >
                       {currency} {hovered.price}
-                    </span>
+                    </data>
                   </div>
                 </div>
               </foreignObject>
