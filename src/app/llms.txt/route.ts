@@ -36,6 +36,12 @@ ${cardLines}
   The Markdown mirror also accepts ?cardId={cardId} and returns that same
   data as Markdown instead of JSON.
 
+## MCP
+
+- Remote MCP server (Streamable HTTP, stateless): ${absoluteUrl("/api/mcp")}
+  Tools: list_cards, get_price_range, get_card_info — see the server card
+  for full descriptions: ${absoluteUrl("/.well-known/mcp/server-card.json")}
+
 ## Sitemap
 
 ${absoluteUrl("/sitemap.xml")}

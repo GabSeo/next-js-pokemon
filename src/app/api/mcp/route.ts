@@ -1,6 +1,7 @@
 import { createMcpHandler } from "mcp-handler";
 import { z } from "zod";
 import { findCard, getAllCards, getCardsByFranchise, toPublicCard } from "@/lib/cards";
+import { MCP_SERVER_INFO, mcpToolDescription } from "@/lib/mcp";
 import { absoluteUrl } from "@/lib/site";
 
 /**
@@ -20,8 +21,7 @@ const handler = createMcpHandler((server) => {
     "list_cards",
     {
       title: "List cards",
-      description:
-        "List every Pokémon or One Piece card CardTrace tracks, with current price. Omit franchise to list all tracked cards.",
+      description: mcpToolDescription("list_cards"),
       inputSchema: z.object({
         franchise: z
           .enum(["pokemon", "one-piece"])
@@ -76,8 +76,7 @@ const handler = createMcpHandler((server) => {
     "get_price_range",
     {
       title: "Get price range",
-      description:
-        "Get the lowest and highest recorded price for a card over its available price history (currently up to ~100 daily records), plus the exact date range that covers — never assumes a longer window than was actually fetched.",
+      description: mcpToolDescription("get_price_range"),
       inputSchema: z.object({
         cardId: z
           .string()
@@ -132,8 +131,7 @@ const handler = createMcpHandler((server) => {
     "get_card_info",
     {
       title: "Get card info",
-      description:
-        "Get full detail for one card: current price, trend signal, price range, price history, recent snapshots, set/rarity metadata, and canonical page links.",
+      description: mcpToolDescription("get_card_info"),
       inputSchema: z.object({
         cardId: z.string().describe("Card slug, name, number, or CardTrace numeric id."),
       }),
@@ -163,7 +161,7 @@ const handler = createMcpHandler((server) => {
     }
   );
 }, {
-  serverInfo: { name: "CardTrace MCP", version: "0.1.0" },
+  serverInfo: MCP_SERVER_INFO,
 });
 
 export { handler as GET, handler as POST };

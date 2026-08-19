@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
 
 export default function robots(): MetadataRoute.Robots {
-  const dataPaths = ["/api/", "/*.md", "/llms.txt"];
+  const dataPaths = ["/api/", "/*.md", "/llms.txt", "/.well-known/"];
 
   return {
     rules: [
