@@ -11,7 +11,9 @@ import { StructuredData } from "@/components/structured-data";
 import { computeAlertBands, franchiseLabel, getAllCards, getCardBySlug } from "@/lib/cards";
 import { absoluteUrl } from "@/lib/site";
 
-export const revalidate = 3600;
+// 36 hours (must be a literal — Next.js statically parses this export).
+// Kept in sync with apitcg.ts's REVALIDATE_SECONDS.
+export const revalidate = 129600;
 
 export async function generateStaticParams() {
   const cards = await getAllCards();

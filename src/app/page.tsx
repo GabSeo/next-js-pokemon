@@ -12,7 +12,11 @@ export const metadata: Metadata = {
   alternates: { canonical: "/", types: { "text/markdown": "/index.md" } },
 };
 
-export const revalidate = 3600;
+// 36 hours (must be a literal — Next.js statically parses this export).
+// Kept in sync with apitcg.ts's REVALIDATE_SECONDS — see the comment there
+// on why this window is sized around the API's monthly call quota, not just
+// data freshness.
+export const revalidate = 129600;
 
 export default async function HomePage() {
   const cards = await getAllCards();

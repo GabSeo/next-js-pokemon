@@ -1,5 +1,15 @@
 const API_BASE = "https://api.apitcg.com/api";
 
+/**
+ * How long Next.js's fetch cache treats apitcg.com responses as fresh.
+ * apitcg.com's free tier caps at 1000 calls/month; every request that lands
+ * after this window elapses triggers a full-catalog refresh (2 calls per
+ * card — product lookup + history), so this number directly controls quota
+ * burn rate, not just data freshness. 36h keeps a full month of steady
+ * traffic well under budget without needing per-route logic.
+ */
+const REVALIDATE_SECONDS = 60 * 60 * 36;
+
 export type ApitcgImage = { small?: string; medium?: string; large?: string };
 
 export type ApitcgMarketPrices = {
@@ -77,7 +87,7 @@ export async function findProductByCode(
   code: string
 ): Promise<ApitcgProduct | undefined> {
   const qs = new URLSearchParams({ tcg, type: "card", code, limit: "5" });
-  const { data } = await apitcgFetch<ProductsResponse>(`/products?${qs}`, 3600);
+  const { data } = await apitcgFetch<ProductsResponse>(`/products?${qs}`, REVALIDATE_SECONDS);
   return data.find((p) => p.code === code) ?? data[0];
 }
 
@@ -96,7 +106,7 @@ export async function findProductByNameAndSet(
   number: string
 ): Promise<ApitcgProduct | undefined> {
   const qs = new URLSearchParams({ tcg, type: "card", name, limit: "25" });
-  const { data } = await apitcgFetch<ProductsResponse>(`/products?${qs}`, 3600);
+  const { data } = await apitcgFetch<ProductsResponse>(`/products?${qs}`, REVALIDATE_SECONDS);
   return data.find((p) => {
     const setMatches = p.set?.name?.toLowerCase().includes(setName.toLowerCase());
     const cardNumber = p.attributes?.Number?.split("/")[0];
@@ -110,6 +120,6 @@ export async function getHistoryPrices(
 ): Promise<ApitcgHistoryPrice[]> {
   return apitcgFetch<ApitcgHistoryPrice[]>(
     `/history-prices/${productId}?limit=${limit}`,
-    3600
+    REVALIDATE_SECONDS
   );
 }

@@ -135,6 +135,26 @@ export async function getCardBySlug(slug: string): Promise<Card | undefined> {
   return resolveCardSafe(ref);
 }
 
+/**
+ * Single-card lookup by apitcg numeric id OR slug, without resolving the
+ * rest of the franchise. Slugs are known upfront (in cardRefs), so that
+ * case resolves just the one matching ref (2 apitcg calls). The apitcg id
+ * is only known *after* resolving a card, so an id lookup still has to scan
+ * — but slug is the key every internal link/API route actually uses, so
+ * this keeps the common case cheap instead of always paying for the whole
+ * franchise like a plain `getCardsByFranchise(...).find(...)` would.
+ */
+export async function getCardByIdOrSlug(
+  franchise: Franchise,
+  idOrSlug: string
+): Promise<Card | undefined> {
+  const bySlug = cardRefs.find((r) => r.franchise === franchise && r.slug === idOrSlug);
+  if (bySlug) return resolveCardSafe(bySlug);
+
+  const cards = await getCardsByFranchise(franchise);
+  return cards.find((c) => c.id === idOrSlug);
+}
+
 export async function getCardById(id: string): Promise<Card | undefined> {
   const cards = await getAllCards();
   return cards.find((c) => c.id === id);

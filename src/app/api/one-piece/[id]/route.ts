@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
-import { getCardsByFranchise, toPublicCard } from "@/lib/cards";
+import { getCardByIdOrSlug, toPublicCard } from "@/lib/cards";
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const cards = await getCardsByFranchise("one-piece");
-  const card = cards.find((c) => c.id === id || c.slug === id);
+  const card = await getCardByIdOrSlug("one-piece", id);
 
   if (!card) {
     return NextResponse.json(

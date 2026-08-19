@@ -10,7 +10,9 @@ import type { Franchise } from "@/lib/types";
 
 const FRANCHISES: Franchise[] = ["pokemon", "one-piece"];
 
-export const revalidate = 3600;
+// 36 hours (must be a literal — Next.js statically parses this export).
+// Kept in sync with apitcg.ts's REVALIDATE_SECONDS.
+export const revalidate = 129600;
 
 export function generateStaticParams() {
   return FRANCHISES.map((franchise) => ({ franchise }));
