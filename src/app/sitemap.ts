@@ -1,10 +1,11 @@
 import type { MetadataRoute } from "next";
-import { getAllCards } from "@/lib/cards";
+import { cardRefs } from "@/data/card-refs";
 import { absoluteUrl } from "@/lib/site";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const cards = await getAllCards();
-
+  // Only slugs are needed to build URLs — no live price data belongs in a
+  // sitemap, so this is built from cardRefs instead of resolving the whole
+  // catalog against apitcg.com.
   const staticEntries: MetadataRoute.Sitemap = [
     { url: absoluteUrl("/") },
     { url: absoluteUrl("/index.md") },
@@ -18,9 +19,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: absoluteUrl("/llms.txt") },
   ];
 
-  const productEntries: MetadataRoute.Sitemap = cards.flatMap((card) => [
-    { url: absoluteUrl(`/products/${card.slug}`) },
-    { url: absoluteUrl(`/products/${card.slug}/index.md`) },
+  const productEntries: MetadataRoute.Sitemap = cardRefs.flatMap((ref) => [
+    { url: absoluteUrl(`/products/${ref.slug}`) },
+    { url: absoluteUrl(`/products/${ref.slug}/index.md`) },
   ]);
 
   return [...staticEntries, ...productEntries];
