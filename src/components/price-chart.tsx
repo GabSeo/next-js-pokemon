@@ -2,7 +2,6 @@
 
 import { TrendingDown, TrendingUp } from "lucide-react";
 import { useRef, useState } from "react";
-import { motion, useReducedMotion } from "motion/react";
 import type { PriceHistoryPoint } from "@/lib/types";
 
 type PriceChartProps = {
@@ -62,25 +61,35 @@ function smoothPath(points: Point[]): string {
  * reference design (shadcn's "Line Chart - Interactive"): bordered card,
  * title/subtitle + a bordered current-price stat box in the header, a
  * wide/flat server-rendered SVG line with evenly-spaced date ticks below,
- * a Motion-animated reveal, and a hover crosshair layered on top for
- * JS-enabled visitors. Agent-safety rules kept:
+ * and a hover crosshair layered on top for JS-enabled visitors.
  *
- * 1. Only decorative marks (line, end-dot) animate via opacity / pathLength
- *    / scale — properties that never remove content from the DOM.
- * 2. Every static label (title, subtitle, stat box, dates) is plain HTML/
+ * No entrance animation on the line/end-dot, on purpose: an earlier version
+ * animated them in with Motion (pathLength/scale from 0), which is safe for
+ * a text-reading crawler (the numbers are always in the DOM) but NOT safe
+ * for an actual human with JavaScript disabled or failed — Motion renders
+ * the *hidden* initial state server-side and only animates to visible after
+ * hydration, so with no JS the line and dot stayed permanently invisible.
+ * Confirmed by disabling JS and finding an empty chart. Fixed by keeping
+ * the line/dot as plain, always-rendered SVG — they're the actual chart,
+ * not decoration, so they don't get to be conditionally invisible.
+ *
+ * Agent-safety rules kept:
+ * 1. Every static label (title, subtitle, stat box, dates) is plain HTML/
  *    SVG text, unanimated, un-gated — present in the raw server HTML
  *    immediately. Dropping the left-axis price labels and on-line min/max
  *    callouts (to match the reference's clean look) doesn't remove any
  *    data from the site — it's still fully in the JSON/Markdown mirrors,
  *    the stat box, and the hover tooltip; this only changes what's shown
  *    by default on the human page.
- * 3. The hover crosshair/tooltip IS conditionally rendered (only while the
+ * 2. The hover crosshair/tooltip IS conditionally rendered (only while the
  *    mouse is over the chart) — safe specifically because the per-point
  *    data it reveals is already fully available elsewhere (the JSON/
- *    Markdown mirrors and the "Last sold" tab carry the complete series).
+ *    Markdown mirrors and the "Last sold" tab carry the complete series),
+ *    and because hovering is itself a JS-only interaction with no non-JS
+ *    equivalent to preserve — unlike the line/dot, there's no "hidden by
+ *    default" state here for a no-JS visitor to get stuck in.
  */
 export function PriceChart({ history, currency, trendDay90, className }: PriceChartProps) {
-  const reduceMotion = useReducedMotion();
   const svgRef = useRef<SVGSVGElement>(null);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
@@ -118,9 +127,6 @@ export function PriceChart({ history, currency, trendDay90, className }: PriceCh
   const tickIndices = [...new Set(
     Array.from({ length: tickCount }, (_, i) => Math.round((i / (tickCount - 1 || 1)) * (points.length - 1)))
   )];
-
-  const t = (delay: number, duration: number, extra?: Record<string, unknown>) =>
-    reduceMotion ? { duration: 0 } : { delay, duration, ...extra };
 
   function handlePointerMove(e: React.PointerEvent<SVGSVGElement>) {
     const svg = svgRef.current;
@@ -184,30 +190,18 @@ export function PriceChart({ history, currency, trendDay90, className }: PriceCh
           <line key={y} x1={PAD_LEFT} y1={y} x2={WIDTH - PAD_RIGHT} y2={y} stroke="#e1e0d9" strokeWidth={1} />
         ))}
 
-        <motion.path
+        <path
           d={linePath}
           fill="none"
           stroke={trendColor}
           strokeWidth={1.75}
           strokeLinecap="round"
           strokeLinejoin="round"
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: 1 }}
-          transition={t(0, 1.2, { ease: "easeInOut" })}
         />
 
         {/* endpoint marker, with a surface-color ring so it stays legible crossing gridlines */}
         <circle cx={last.x} cy={last.y} r={5} fill="var(--background, #fff)" />
-        <motion.circle
-          cx={last.x}
-          cy={last.y}
-          r={3.5}
-          fill={trendColor}
-          style={{ transformOrigin: `${last.x}px ${last.y}px` }}
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={t(1.3, 0.4, { type: "spring", stiffness: 300, damping: 20 })}
-        />
+        <circle cx={last.x} cy={last.y} r={3.5} fill={trendColor} />
 
         {tickIndices.map((i, tickPos) => {
           const p = points[i];
