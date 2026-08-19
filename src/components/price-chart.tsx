@@ -49,6 +49,7 @@ const PAD_BOTTOM = 28;
 const COLOR_GOOD = "#0ca30c";
 const COLOR_CRITICAL = "#d03b3b";
 const COLOR_NEUTRAL = "#898781"; // dataviz "muted" ink
+const COLOR_STABLE = "#2a78d6"; // dataviz categorical slot 1 (blue) — reads as "steady", not an alert, so kept out of the good/critical/neutral status set
 
 type Point = { x: number; y: number; date: string; price: number };
 
@@ -163,7 +164,13 @@ export function PriceChart({ history, currency, trend, className }: PriceChartPr
   const isBullish = trendPct !== null && trendPct > STABLE_THRESHOLD_PCT;
   const isBearish = trendPct !== null && trendPct < -STABLE_THRESHOLD_PCT;
   const isStable = trendPct !== null && !isBullish && !isBearish;
-  const badgeColor = isBullish ? COLOR_GOOD : isBearish ? COLOR_CRITICAL : COLOR_NEUTRAL;
+  const badgeColor = isBullish
+    ? COLOR_GOOD
+    : isBearish
+      ? COLOR_CRITICAL
+      : isStable
+        ? COLOR_STABLE
+        : COLOR_NEUTRAL;
 
   return (
     <div className={`${className ?? "w-full"} rounded-xl border border-border bg-card p-6`}>
