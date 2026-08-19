@@ -165,7 +165,10 @@ export function PriceChart({ history, currency, trendDay90, className }: PriceCh
           </div>
         </div>
 
-        <div className="rounded-lg border border-border p-4 sm:w-56">
+        <div
+          className="rounded-lg border p-4 sm:w-56"
+          style={{ backgroundColor: `${badgeColor}1a`, borderColor: `${badgeColor}40` }}
+        >
           <div className="text-xs text-muted-foreground">Trend signal</div>
           <div className="mt-1 flex items-center gap-2">
             {isBullish ? (
