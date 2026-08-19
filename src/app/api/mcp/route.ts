@@ -4,6 +4,11 @@ import { findCard, getAllCards, getCardsByFranchise, toPublicCard } from "@/lib/
 import { MCP_SERVER_INFO, mcpToolDescription } from "@/lib/mcp";
 import { absoluteUrl } from "@/lib/site";
 
+/** Matches the [cards] console convention in cards.ts — enough to root-cause a future quota or usage question from real logs, not full request/response payloads. */
+function logMcpTool(name: string, detail: string) {
+  console.log(`[mcp] ${name}: ${detail}`);
+}
+
 /**
  * Stateless remote MCP server — the three tools this was actually built for
  * (see the agent-layer plan). Deliberately not WebMCP: these are cold,
@@ -46,6 +51,7 @@ const handler = createMcpHandler((server) => {
     },
     async ({ franchise }) => {
       const cards = franchise ? await getCardsByFranchise(franchise) : await getAllCards();
+      logMcpTool("list_cards", `franchise=${franchise ?? "all"} -> ${cards.length} card(s)`);
       const summary = cards.map((c) => ({
         slug: c.slug,
         name: c.name,
@@ -97,6 +103,7 @@ const handler = createMcpHandler((server) => {
     },
     async ({ cardId }) => {
       const card = await findCard(cardId);
+      logMcpTool("get_price_range", `cardId=${cardId} -> ${card?.priceRange ? "found" : "not found"}`);
       if (!card || !card.priceRange) {
         return {
           content: [{ type: "text", text: `No price range available for "${cardId}".` }],
@@ -143,6 +150,7 @@ const handler = createMcpHandler((server) => {
     },
     async ({ cardId }: { cardId: string }) => {
       const card = await findCard(cardId);
+      logMcpTool("get_card_info", `cardId=${cardId} -> ${card ? "found" : "not found"}`);
       if (!card) {
         return {
           content: [{ type: "text", text: `No card found for "${cardId}".` }],
