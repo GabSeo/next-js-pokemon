@@ -46,7 +46,7 @@ export function PriceDataTabs({ currency, recentSnapshots, trend, priceRange }: 
 
   return (
     <div>
-      <div role="tablist" aria-label="Price data" className="flex gap-1 border-b border-border">
+      <div role="tablist" aria-label="Price data" className="flex gap-1 border-b-2 border-black">
         {TABS.map((tab) => (
           <button
             key={tab.id}
@@ -54,10 +54,10 @@ export function PriceDataTabs({ currency, recentSnapshots, trend, priceRange }: 
             role="tab"
             aria-selected={active === tab.id}
             onClick={() => setActive(tab.id)}
-            className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
+            className={`-mb-0.5 border-b-4 px-3.5 py-2.5 text-xs font-black tracking-[0.35px] uppercase transition-colors ${
               active === tab.id
-                ? "border-foreground text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground"
+                ? "border-pokemon-red text-foreground"
+                : "border-transparent text-muted-text hover:text-foreground"
             }`}
           >
             {tab.label}

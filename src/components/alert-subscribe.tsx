@@ -42,7 +42,7 @@ export function AlertSubscribe({ cardId, currency, bands }: AlertSubscribeProps)
         {bands.map((band) => (
           <li
             key={band.pct}
-            className="rounded-md border border-border px-2 py-1.5 text-center"
+            className="rounded-md border-2 border-black px-2 py-1.5 text-center font-bold"
           >
             <div className={band.pct < 0 ? "text-pokemon-red" : "text-success-green"}>
               {band.pct > 0 ? "+" : ""}
@@ -65,7 +65,7 @@ export function AlertSubscribe({ cardId, currency, bands }: AlertSubscribeProps)
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
-          className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="h-10 w-full rounded-md border-2 border-black bg-background px-3 text-sm shadow-hard-sm outline-none placeholder:text-muted-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
         />
         <Button type="submit" size="sm" disabled={status === "sending"}>
           {status === "done" ? "Subscribed ✓" : "Notify me"}
