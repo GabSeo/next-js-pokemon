@@ -54,7 +54,7 @@ export function PriceDataTabs({ currency, recentSnapshots, trend, priceRange }: 
             role="tab"
             aria-selected={active === tab.id}
             onClick={() => setActive(tab.id)}
-            className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
+            className={`-mb-px border-b-2 px-3 py-2 text-xs font-normal uppercase tracking-[0.08em] transition-colors ${
               active === tab.id
                 ? "border-foreground text-foreground"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -68,13 +68,13 @@ export function PriceDataTabs({ currency, recentSnapshots, trend, priceRange }: 
       <div className="pt-4">
         <section role="tabpanel" hidden={active !== "sold"}>
           {recentSnapshots.length > 0 ? (
-            <table className="w-full max-w-xl text-sm">
+            <table className="w-full max-w-xl text-sm tabular-nums">
               <caption className="sr-only">Last 10 price snapshots, most recent first</caption>
               <thead>
                 <tr className="text-left text-muted-foreground">
-                  <th className="py-1 font-normal">Date</th>
-                  <th className="py-1 font-normal">Price</th>
-                  <th className="py-1 font-normal">Source</th>
+                  <th className="py-1 text-[10px] font-normal uppercase tracking-[0.08em]">Date</th>
+                  <th className="py-1 text-[10px] font-normal uppercase tracking-[0.08em]">Price</th>
+                  <th className="py-1 text-[10px] font-normal uppercase tracking-[0.08em]">Source</th>
                 </tr>
               </thead>
               <tbody>
@@ -105,12 +105,12 @@ export function PriceDataTabs({ currency, recentSnapshots, trend, priceRange }: 
         </section>
 
         <section role="tabpanel" hidden={active !== "trend"}>
-          <table className="w-full max-w-md text-sm">
+          <table className="w-full max-w-md text-sm tabular-nums">
             <caption className="sr-only">Average price by time window</caption>
             <thead>
               <tr className="text-left text-muted-foreground">
-                <th className="py-1 font-normal">Window</th>
-                <th className="py-1 font-normal">Average price</th>
+                <th className="py-1 text-[10px] font-normal uppercase tracking-[0.08em]">Window</th>
+                <th className="py-1 text-[10px] font-normal uppercase tracking-[0.08em]">Average price</th>
               </tr>
             </thead>
             <tbody>
@@ -133,19 +133,19 @@ export function PriceDataTabs({ currency, recentSnapshots, trend, priceRange }: 
 
           {priceRange && (
             <div className="mt-4">
-              <h3 className="text-sm font-medium">Price range</h3>
-              <p className="text-xs text-muted-foreground">
+              <h3 className="text-xs font-normal uppercase tracking-[0.08em]">Price range</h3>
+              <p className="text-[10px] tracking-[0.02em] text-muted-foreground">
                 Low and high over the available price history, {formatShortDate(priceRange.from)} to{" "}
                 {formatShortDate(priceRange.to)}.
               </p>
-              <table className="mt-2 w-full max-w-md text-sm">
+              <table className="mt-2 w-full max-w-md text-sm tabular-nums">
                 <caption className="sr-only">
                   Lowest and highest recorded price from {priceRange.from} to {priceRange.to}
                 </caption>
                 <thead>
                   <tr className="text-left text-muted-foreground">
-                    <th className="py-1 font-normal">Low</th>
-                    <th className="py-1 font-normal">High</th>
+                    <th className="py-1 text-[10px] font-normal uppercase tracking-[0.08em]">Low</th>
+                    <th className="py-1 text-[10px] font-normal uppercase tracking-[0.08em]">High</th>
                   </tr>
                 </thead>
                 <tbody>

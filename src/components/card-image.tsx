@@ -26,13 +26,16 @@ function imageCaption(card: Card): string {
   return `${card.name} — ${card.set}${card.number ? ` ${card.number}` : ""}${card.rarity ? `, ${card.rarity}` : ""}.`;
 }
 
+/* Monochrome gradient pairs only — no hue outside the FireRed/Sapphire/
+   Emerald triad is permitted anywhere on the site, and this placeholder is
+   decoration, not franchise/category identity, so it stays grayscale. */
 const PALETTE: [string, string][] = [
-  ["#f97316", "#dc2626"],
-  ["#38bdf8", "#1d4ed8"],
-  ["#facc15", "#f59e0b"],
-  ["#ef4444", "#7f1d1d"],
-  ["#22c55e", "#14532d"],
-  ["#fb923c", "#ea580c"],
+  ["#3a3a3a", "#101010"],
+  ["#555555", "#1c1c1c"],
+  ["#454545", "#151515"],
+  ["#606060", "#232323"],
+  ["#4a4a4a", "#181818"],
+  ["#6a6a6a", "#2a2a2a"],
 ];
 
 function paletteFor(id: string): [string, string] {
@@ -62,7 +65,9 @@ function paletteFor(id: string): [string, string] {
 export function CardImage({ card, className, priority = false, showCaption = false }: CardImageProps) {
   const alt = `${card.name}, ${card.set}${card.number ? ` ${card.number}` : ""}${card.rarity ? `, ${card.rarity}` : ""}`;
   const title = imageTitle(card);
-  const figcaptionClassName = showCaption ? "mt-2 text-sm text-muted-foreground" : "sr-only";
+  const figcaptionClassName = showCaption
+    ? "mt-2 text-[10px] tracking-[0.02em] text-muted-foreground"
+    : "sr-only";
 
   if (card.imageUrl) {
     return (
@@ -108,9 +113,9 @@ export function CardImage({ card, className, priority = false, showCaption = fal
           x="24"
           y="48"
           fontSize="20"
-          fontWeight="700"
+          fontWeight="400"
           fill="white"
-          style={{ fontFamily: "var(--font-sans, sans-serif)" }}
+          style={{ fontFamily: "var(--font-sans, ui-monospace, monospace)" }}
         >
           {card.name}
         </text>
@@ -120,7 +125,7 @@ export function CardImage({ card, className, priority = false, showCaption = fal
           fontSize="13"
           fill="white"
           fillOpacity="0.85"
-          style={{ fontFamily: "var(--font-sans, sans-serif)" }}
+          style={{ fontFamily: "var(--font-sans, ui-monospace, monospace)" }}
         >
           {card.set}
           {card.number ? ` · ${card.number}` : ""}
@@ -131,7 +136,7 @@ export function CardImage({ card, className, priority = false, showCaption = fal
           fontSize="12"
           fill="white"
           fillOpacity="0.75"
-          style={{ fontFamily: "var(--font-sans, sans-serif)" }}
+          style={{ fontFamily: "var(--font-sans, ui-monospace, monospace)" }}
         >
           {card.rarity ?? ""}
         </text>

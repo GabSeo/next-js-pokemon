@@ -34,21 +34,17 @@ export function AlertSubscribe({ cardId, currency, bands }: AlertSubscribeProps)
 
   return (
     <div className="space-y-3">
-      <p className="text-sm text-muted-foreground">
+      <p className="text-base leading-[1.2] text-muted-foreground">
         Get notified when the price crosses one of these bands (25% steps,
         from -75% to +150% of the current price):
       </p>
-      <ul className="grid grid-cols-3 gap-2 text-sm sm:grid-cols-5 lg:grid-cols-9">
+      <ul className="grid grid-cols-3 gap-2 text-sm tabular-nums sm:grid-cols-5 lg:grid-cols-9">
         {bands.map((band) => (
           <li
             key={band.pct}
-            className="rounded-md border border-border px-2 py-1.5 text-center"
+            className="rounded-lg border border-border px-2 py-1.5 text-center transition-colors hover:border-border-hover"
           >
-            <div
-              className={
-                band.pct < 0 ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"
-              }
-            >
+            <div className={band.pct < 0 ? "text-firered" : "text-emerald-accent"}>
               {band.pct > 0 ? "+" : ""}
               {band.pct}%
             </div>
@@ -69,14 +65,14 @@ export function AlertSubscribe({ cardId, currency, bands }: AlertSubscribeProps)
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
-          className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         />
         <Button type="submit" size="sm" disabled={status === "sending"}>
           {status === "done" ? "Subscribed ✓" : "Notify me"}
         </Button>
       </form>
       {status === "error" && (
-        <p className="text-xs text-destructive">
+        <p className="text-xs uppercase tracking-[0.08em] text-destructive">
           Something went wrong — try again.
         </p>
       )}

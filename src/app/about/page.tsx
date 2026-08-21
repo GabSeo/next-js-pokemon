@@ -10,10 +10,10 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-12">
-      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+      <h1 className="text-[40px] font-normal leading-none tracking-[0.025em] sm:text-[48px] lg:text-[54px]">
         About {SITE_NAME}
       </h1>
-      <div className="mt-4 space-y-4 text-sm text-muted-foreground">
+      <div className="mt-3 space-y-3 text-base leading-[1.2] text-muted-foreground">
         <p>
           {SITE_NAME} is a prototype card catalog for Pokémon and One Piece
           trading cards, built to demonstrate a commerce site that is equally

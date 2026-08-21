@@ -103,7 +103,7 @@ export default async function ProductPage({ params }: PageProps) {
       <StructuredData data={breadcrumbJsonLd} />
       <StructuredData data={faqJsonLd} />
 
-      <nav aria-label="Breadcrumb" className="mb-6 text-sm text-muted-foreground">
+      <nav aria-label="Breadcrumb" className="mb-3 text-xs uppercase tracking-[0.08em] text-muted-foreground">
         <Link href="/" className="hover:text-foreground hover:underline">
           Home
         </Link>
@@ -115,29 +115,29 @@ export default async function ProductPage({ params }: PageProps) {
         <span>{card.name}</span>
       </nav>
 
-      <div className="grid grid-cols-1 gap-8 sm:grid-cols-[280px_1fr]">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[280px_1fr] sm:gap-8">
         <CardImage
           card={card}
-          className="w-full max-w-[280px] rounded-xl"
+          className="w-full max-w-[280px] rounded-lg"
           priority
           showCaption
         />
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            <h1 className="text-[40px] font-normal leading-none tracking-[0.025em] sm:text-[48px] lg:text-[54px]">
               {card.name}
             </h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="mt-3 text-xs uppercase tracking-[0.08em] text-muted-foreground">
               {card.set}
               {card.setCode ? ` (${card.setCode})` : ""} · {card.number ?? ""}
               {card.rarity ? ` · ${card.rarity}` : ""} · Card ID: {card.id}
             </p>
           </div>
 
-          <p className="max-w-2xl text-sm">
+          <p className="max-w-2xl text-base leading-[1.2]">
             The current market price for {card.name} ({card.set}, {card.number ?? ""})
-            is <strong><data value={String(card.currentPrice)}>{card.currency} {card.currentPrice}</data></strong> as of{" "}
+            is <strong><data value={String(card.currentPrice)} className="tabular-nums">{card.currency} {card.currentPrice}</data></strong> as of{" "}
             <strong>{card.asOfDate}</strong>
             {card.sourceUrl ? (
               <>
@@ -151,7 +151,7 @@ export default async function ProductPage({ params }: PageProps) {
           </p>
 
           {card.description && (
-            <p className="max-w-2xl text-sm text-muted-foreground">
+            <p className="max-w-2xl text-base leading-[1.2] text-muted-foreground">
               {card.description}
             </p>
           )}
@@ -166,7 +166,7 @@ export default async function ProductPage({ params }: PageProps) {
         </div>
       </div>
 
-      <section className="mt-12 border-t border-border pt-8">
+      <section className="mt-20 border-t border-border">
         {card.priceHistory.length > 0 ? (
           <PriceChart
             history={card.priceHistory}
@@ -175,13 +175,13 @@ export default async function ProductPage({ params }: PageProps) {
             className="w-full"
           />
         ) : (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-base leading-[1.2] text-muted-foreground">
             No historical data available yet for this card.
           </p>
         )}
       </section>
 
-      <section className="mt-8 space-y-4">
+      <section className="mt-20 space-y-3">
         <PriceDataTabs
           currency={card.currency}
           recentSnapshots={card.recentSnapshots}
@@ -190,8 +190,8 @@ export default async function ProductPage({ params }: PageProps) {
         />
       </section>
 
-      <section className="mt-12 space-y-4 border-t border-border pt-8">
-        <h2 className="text-lg font-semibold">Price alerts</h2>
+      <section className="mt-20 space-y-3 border-t border-border">
+        <h2 className="text-[26px] font-medium uppercase leading-[1.2] tracking-[0.18em]">Price alerts</h2>
         <AlertSubscribe cardId={card.id} currency={card.currency} bands={bands} />
       </section>
     </div>
