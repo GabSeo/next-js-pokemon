@@ -82,7 +82,7 @@ export default async function PriceCheckerPage({ searchParams }: PageProps) {
       )}
 
       {card && (
-        <div className="mt-20 space-y-3 border-t border-border">
+        <div className="mt-20 space-y-3 border-t border-border pt-3">
           <div>
             <h2 className="text-[26px] font-medium uppercase leading-[1.2] tracking-[0.18em]">
               <Link href={`/products/${card.slug}`} className="hover:underline">
@@ -125,7 +125,7 @@ export default async function PriceCheckerPage({ searchParams }: PageProps) {
         </div>
       )}
 
-      <div className="mt-20 border-t border-border">
+      <div className="mt-20 border-t border-border pt-3">
         <h3 className="text-[26px] font-medium uppercase leading-[1.2] tracking-[0.18em]">Available card IDs</h3>
         <ul className="mt-3 grid grid-cols-2 gap-3 text-sm tabular-nums text-muted-foreground sm:grid-cols-3">
           {cardRefs.map((ref) => (

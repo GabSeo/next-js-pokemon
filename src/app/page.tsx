@@ -85,7 +85,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="mt-20 space-y-3 border-t border-border">
+      <section className="mt-20 space-y-3 border-t border-border pt-3">
         <h2 className="text-[26px] font-medium uppercase leading-[1.2] tracking-[0.18em]">
           How the price checker works
         </h2>

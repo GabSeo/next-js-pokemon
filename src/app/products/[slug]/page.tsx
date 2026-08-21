@@ -166,7 +166,7 @@ export default async function ProductPage({ params }: PageProps) {
         </div>
       </div>
 
-      <section className="mt-20 border-t border-border">
+      <section className="mt-20 border-t border-border pt-3">
         {card.priceHistory.length > 0 ? (
           <PriceChart
             history={card.priceHistory}
@@ -190,7 +190,7 @@ export default async function ProductPage({ params }: PageProps) {
         />
       </section>
 
-      <section className="mt-20 space-y-3 border-t border-border">
+      <section className="mt-20 space-y-3 border-t border-border pt-3">
         <h2 className="text-[26px] font-medium uppercase leading-[1.2] tracking-[0.18em]">Price alerts</h2>
         <AlertSubscribe cardId={card.id} currency={card.currency} bands={bands} />
       </section>
