@@ -1,11 +1,17 @@
 import { absoluteUrl } from "@/lib/site";
 
 /**
- * Manual route instead of Next's typed robots() metadata convention — that
- * convention's type only supports rules/sitemap/host, with no escape hatch
- * for a custom top-level directive. Agentmap: (the ARD discovery signal)
- * needs exactly that, so this builds the file by hand. Output is otherwise
- * identical to what the typed convention produced.
+ * Manual route instead of Next's typed robots() metadata convention, kept
+ * for the explicit per-bot Allow blocks below (the typed convention can
+ * express this too, but this was already hand-built before that was
+ * confirmed, and there's no reason to churn it back).
+ *
+ * Previously also emitted a custom "Agentmap:" directive pointing at the
+ * ARD catalog — not part of RFC 9309 (robots.txt only defines User-agent/
+ * Allow/Disallow/Sitemap/Crawl-delay), and real validators flag unknown
+ * directives as errors. Dropped: the same catalog URL is already
+ * discoverable two spec-compliant ways — llms.txt's "ARD catalog" entry,
+ * and the <link rel="ai-catalog"> tag in every page's <head> (layout.tsx).
  */
 const dataPaths = ["/api/", "/*.md", "/llms.txt", "/.well-known/"];
 const NAMED_BOTS = ["Googlebot", "GPTBot", "ClaudeBot", "PerplexityBot"];
@@ -29,7 +35,6 @@ export async function GET() {
   lines.push("");
 
   lines.push(`Sitemap: ${absoluteUrl("/sitemap.xml")}`);
-  lines.push(`Agentmap: ${absoluteUrl("/.well-known/ai-catalog.json")}`);
 
   return new Response(lines.join("\n") + "\n", {
     headers: { "Content-Type": "text/plain; charset=utf-8" },
