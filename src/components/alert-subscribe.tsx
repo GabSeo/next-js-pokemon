@@ -33,7 +33,7 @@ export function AlertSubscribe({ cardId, currency, bands }: AlertSubscribeProps)
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-6">
       <p className="text-base leading-[1.2] text-muted-foreground">
         Get notified when the price crosses one of these bands (25% steps,
         from -75% to +150% of the current price):

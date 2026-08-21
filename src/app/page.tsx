@@ -33,7 +33,7 @@ export default async function HomePage() {
     <div className="mx-auto max-w-5xl px-4 py-12">
       <StructuredData data={websiteJsonLd} />
 
-      <section className="space-y-3">
+      <section className="space-y-6">
         <h1 className="text-[40px] font-normal leading-none tracking-[0.025em] sm:text-[48px] lg:text-[54px]">
           A card shop built to be read by humans and AI agents alike
         </h1>
@@ -60,7 +60,7 @@ export default async function HomePage() {
         <OpenDataLinks markdownHref="/index.md" jsonHref="/api/site" okfHref="/okf/home" />
       </section>
 
-      <section className="mt-20 space-y-3">
+      <section className="mt-20 space-y-6">
         <div className="flex items-baseline justify-between">
           <h2 className="text-[26px] font-medium uppercase leading-[1.2] tracking-[0.18em]">
             All cards ({cards.length})
