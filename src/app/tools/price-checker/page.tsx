@@ -55,15 +55,15 @@ export default async function PriceCheckerPage({ searchParams }: PageProps) {
     <div className="mx-auto max-w-3xl px-4 py-12">
       <StructuredData data={webAppJsonLd} />
 
-      <h1 className="text-[40px] font-normal leading-none tracking-[0.025em] sm:text-[48px] lg:text-[54px]">
+      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
         Price checker
       </h1>
-      <p className="mt-3 max-w-xl text-base leading-[1.2] text-muted-foreground">
+      <p className="mt-2 max-w-xl text-sm text-muted-foreground">
         Enter a card ID (see the list below) to see current market prices.
         Works without JavaScript — this is a standard HTML form.
       </p>
 
-      <div className="mt-3">
+      <div className="mt-6">
         <PriceCheckerForm defaultValue={cardId} />
       </div>
 
@@ -71,29 +71,29 @@ export default async function PriceCheckerPage({ searchParams }: PageProps) {
         markdownHref={`/tools/price-checker.md${cardId ? `?cardId=${encodeURIComponent(cardId)}` : ""}`}
         jsonHref={`/api/price-check${cardId ? `?cardId=${encodeURIComponent(cardId)}` : ""}`}
         okfHref={`/okf/tools/price-checker${cardId ? `?cardId=${encodeURIComponent(cardId)}` : ""}`}
-        className="mt-3"
+        className="mt-4"
       />
 
       {cardId && !card && (
-        <p className="mt-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+        <p className="mt-8 rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
           No card found for &ldquo;{cardId}&rdquo;. Try one of the IDs listed
           below.
         </p>
       )}
 
       {card && (
-        <div className="mt-20 space-y-3 border-t border-border">
+        <div className="mt-8 space-y-8 border-t border-border pt-8">
           <div>
-            <h2 className="text-[26px] font-medium uppercase leading-[1.2] tracking-[0.18em]">
+            <h2 className="text-lg font-semibold">
               <Link href={`/products/${card.slug}`} className="hover:underline">
                 {card.name}
               </Link>{" "}
-              <span className="text-sm font-normal normal-case tracking-normal text-muted-foreground">
+              <span className="font-normal text-muted-foreground">
                 — {franchiseLabel(card.franchise)}, {card.set} ({card.number ?? ""})
               </span>
             </h2>
-            <p className="mt-3 text-base leading-[1.2]">
-              Current market price: <strong><data value={String(card.currentPrice)} className="tabular-nums">{card.currency} {card.currentPrice}</data></strong> as of{" "}
+            <p className="mt-1 text-sm">
+              Current market price: <strong><data value={String(card.currentPrice)}>{card.currency} {card.currentPrice}</data></strong> as of{" "}
               <strong>{card.asOfDate}</strong>.
             </p>
           </div>
@@ -117,17 +117,17 @@ export default async function PriceCheckerPage({ searchParams }: PageProps) {
           <AddToCollectionButton cardId={card.id} />
 
           <div>
-            <h3 className="text-[26px] font-medium uppercase leading-[1.2] tracking-[0.18em]">Price alerts</h3>
-            <div className="mt-3">
+            <h3 className="text-sm font-semibold">Price alerts</h3>
+            <div className="mt-2">
               <AlertSubscribe cardId={card.id} currency={card.currency} bands={bands} />
             </div>
           </div>
         </div>
       )}
 
-      <div className="mt-20 border-t border-border">
-        <h3 className="text-[26px] font-medium uppercase leading-[1.2] tracking-[0.18em]">Available card IDs</h3>
-        <ul className="mt-3 grid grid-cols-2 gap-3 text-sm tabular-nums text-muted-foreground sm:grid-cols-3">
+      <div className="mt-12 border-t border-border pt-6">
+        <h3 className="text-sm font-semibold">Available card IDs</h3>
+        <ul className="mt-2 grid grid-cols-2 gap-1 text-sm text-muted-foreground sm:grid-cols-3">
           {cardRefs.map((ref) => (
             <li key={ref.slug}>
               <Link href={`/tools/price-checker?cardId=${ref.slug}`} className="hover:text-foreground hover:underline">

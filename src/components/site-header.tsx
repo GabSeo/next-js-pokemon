@@ -11,10 +11,10 @@ export function SiteHeader() {
   return (
     <header className="border-b border-border">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-        <Link href="/" className="text-sm font-normal uppercase tracking-[0.08em]">
+        <Link href="/" className="text-base font-semibold tracking-tight">
           {SITE_NAME}
         </Link>
-        <nav aria-label="Primary" className="flex items-center gap-3 text-xs uppercase tracking-[0.08em]">
+        <nav aria-label="Primary" className="flex items-center gap-5 text-sm">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}

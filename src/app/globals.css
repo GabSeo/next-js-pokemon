@@ -7,10 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  /* Geist Mono is the only typeface on the site — headings and body alike. */
-  --font-sans: var(--font-geist-mono);
+  --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -27,8 +26,6 @@
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
-  --color-border-hover: var(--border-hover);
-  --color-border-emphasis: var(--border-emphasis);
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
@@ -42,53 +39,40 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  /* FireRed/Sapphire/Emerald triad — the site's one chromatic system.
-     Same hex values as price-chart.tsx's trend palette (dataviz-skill
-     validated for both light and dark surfaces). */
-  --color-firered: #d03b3b;
-  --color-sapphire: #2a78d6;
-  --color-emerald-accent: #0ca30c;
-  --color-triad-neutral: #898781;
-  /* Two-value radius system: pill buttons, 8px everything else. */
-  --radius-sm: var(--radius);
-  --radius-md: var(--radius);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
-  --radius-xl: var(--radius);
-  --radius-2xl: var(--radius);
-  --radius-3xl: var(--radius);
-  --radius-4xl: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
 :root {
-  /* CardTrace design system — monochrome structure, see design-system.md */
-  --background: #ffffff;
-  --foreground: #101010;
-  --card: #ffffff;
-  --card-foreground: #101010;
-  --popover: #ffffff;
-  --popover-foreground: #101010;
-  --primary: #101010;
-  --primary-foreground: #ffffff;
-  --secondary: #f5f5f5;
-  --secondary-foreground: #101010;
-  --muted: #f5f5f5;
-  --muted-foreground: #555555;
-  --accent: #f5f5f5;
-  --accent-foreground: #101010;
-  /* FireRed doubles as the "attention" accent for destructive/error states. */
-  --destructive: #d03b3b;
-  --border: #e0e0e0;
-  --border-hover: #999999;
-  --border-emphasis: #101010;
-  --input: #e0e0e0;
-  /* Sapphire is the site's one primary interactive accent (focus ring). */
-  --ring: #2a78d6;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.5rem;
+  --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -100,28 +84,24 @@
 }
 
 .dark {
-  /* Inverse of the same monochrome token set — trend/accent colors (ring,
-     destructive) stay identical, validated on both surfaces already. */
-  --background: #101010;
-  --foreground: #ffffff;
-  --card: #101010;
-  --card-foreground: #ffffff;
-  --popover: #101010;
-  --popover-foreground: #ffffff;
-  --primary: #ffffff;
-  --primary-foreground: #101010;
-  --secondary: #1c1c1c;
-  --secondary-foreground: #ffffff;
-  --muted: #1c1c1c;
-  --muted-foreground: #999999;
-  --accent: #1c1c1c;
-  --accent-foreground: #ffffff;
-  --destructive: #d03b3b;
-  --border: #2a2a2a;
-  --border-hover: #555555;
-  --border-emphasis: #ffffff;
-  --input: #2a2a2a;
-  --ring: #2a78d6;
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);

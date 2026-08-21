@@ -19,7 +19,7 @@ export function OpenDataLinks({
 }: OpenDataLinksProps) {
   return (
     <div
-      className={`flex flex-wrap items-center gap-x-4 gap-y-1 text-xs uppercase tracking-[0.08em] text-muted-foreground ${className ?? ""}`}
+      className={`flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground ${className ?? ""}`}
     >
       <span>Open data for AI agents:</span>
       <a

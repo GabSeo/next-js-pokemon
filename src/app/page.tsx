@@ -33,40 +33,38 @@ export default async function HomePage() {
     <div className="mx-auto max-w-5xl px-4 py-12">
       <StructuredData data={websiteJsonLd} />
 
-      <section className="space-y-3">
-        <h1 className="text-[40px] font-normal leading-none tracking-[0.025em] sm:text-[48px] lg:text-[54px]">
+      <section className="space-y-4">
+        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
           A card shop built to be read by humans and AI agents alike
         </h1>
-        <p className="max-w-2xl text-base leading-[1.2] text-muted-foreground">
+        <p className="max-w-2xl text-muted-foreground">
           {SITE_NAME} catalogs Pokémon and One Piece trading cards with live
           market pricing. Every page also ships as a plain Markdown and JSON
           mirror, so an AI agent can read exact prices without ever
           rendering the page.
         </p>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-3 pt-2">
           <Link
             href="/collections/pokemon"
-            className="rounded-full bg-primary px-4 py-2 text-xs font-normal uppercase tracking-[0.08em] text-primary-foreground hover:bg-primary/80"
+            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/80"
           >
             Browse Pokémon cards
           </Link>
           <Link
             href="/collections/one-piece"
-            className="rounded-full border border-border px-4 py-2 text-xs font-normal uppercase tracking-[0.08em] hover:border-border-hover hover:bg-muted"
+            className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted"
           >
             Browse One Piece cards
           </Link>
         </div>
-        <OpenDataLinks markdownHref="/index.md" jsonHref="/api/site" okfHref="/okf/home" />
+        <OpenDataLinks markdownHref="/index.md" jsonHref="/api/site" okfHref="/okf/home" className="pt-2" />
       </section>
 
-      <section className="mt-20 space-y-3">
+      <section className="mt-14 space-y-4">
         <div className="flex items-baseline justify-between">
-          <h2 className="text-[26px] font-medium uppercase leading-[1.2] tracking-[0.18em]">
-            All cards ({cards.length})
-          </h2>
+          <h2 className="text-lg font-semibold">All cards ({cards.length})</h2>
         </div>
-        <p className="text-base leading-[1.2] text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Two separate catalogs — Pokémon and One Piece are tracked as
           distinct groups, each with its own{" "}
           <Link href="/collections/pokemon" className="underline underline-offset-4">
@@ -78,18 +76,16 @@ export default async function HomePage() {
           </Link>
           .
         </p>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6">
           {cards.map((card) => (
             <CardTile key={card.id} card={card} />
           ))}
         </div>
       </section>
 
-      <section className="mt-20 space-y-3 border-t border-border">
-        <h2 className="text-[26px] font-medium uppercase leading-[1.2] tracking-[0.18em]">
-          How the price checker works
-        </h2>
-        <p className="max-w-2xl text-base leading-[1.2] text-muted-foreground">
+      <section className="mt-14 space-y-3 border-t border-border pt-8">
+        <h2 className="text-lg font-semibold">How the price checker works</h2>
+        <p className="max-w-2xl text-sm text-muted-foreground">
           Enter any card ID in the tool at the bottom of every page, or visit{" "}
           <Link href="/tools/price-checker" className="underline underline-offset-4">
             the price-checker page

@@ -65,7 +65,7 @@ export default async function CollectionPage({ params }: PageProps) {
     <div className="mx-auto max-w-5xl px-4 py-12">
       <StructuredData data={itemListJsonLd} />
 
-      <nav aria-label="Breadcrumb" className="mb-3 text-xs uppercase tracking-[0.08em] text-muted-foreground">
+      <nav aria-label="Breadcrumb" className="mb-6 text-sm text-muted-foreground">
         <Link href="/" className="hover:text-foreground hover:underline">
           Home
         </Link>
@@ -73,10 +73,10 @@ export default async function CollectionPage({ params }: PageProps) {
         <span>{label}</span>
       </nav>
 
-      <h1 className="text-[40px] font-normal leading-none tracking-[0.025em] sm:text-[48px] lg:text-[54px]">
+      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
         {label} collection
       </h1>
-      <p className="mt-3 max-w-2xl text-base leading-[1.2] text-muted-foreground">
+      <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
         {cards.length} cards tracked in this catalog, each with live market
         pricing. Looking for something else? See the{" "}
         <Link href={`/collections/${other}`} className="underline underline-offset-4">
@@ -88,10 +88,10 @@ export default async function CollectionPage({ params }: PageProps) {
         markdownHref={`/collections/${franchise}/index.md`}
         jsonHref={`/api/${franchise}`}
         okfHref={`/okf/collections/${franchise}`}
-        className="mt-3"
+        className="mt-4"
       />
 
-      <div className="mt-20 grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3">
         {cards.map((card) => (
           <CardTile key={card.id} card={card} />
         ))}

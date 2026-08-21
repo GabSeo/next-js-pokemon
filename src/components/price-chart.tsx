@@ -173,18 +173,18 @@ export function PriceChart({ history, currency, trend, className }: PriceChartPr
         : COLOR_NEUTRAL;
 
   return (
-    <div className={`${className ?? "w-full"} rounded-lg border border-border bg-card p-6`}>
+    <div className={`${className ?? "w-full"} rounded-xl border border-border bg-card p-6`}>
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-stretch">
         <div className="flex-1 rounded-lg border border-border p-4">
-          <h2 className="text-xs font-normal uppercase tracking-[0.08em]">Price history</h2>
-          <p className="mt-1 text-[10px] tracking-[0.02em] text-muted-foreground">
+          <h2 className="text-base font-semibold">Price history</h2>
+          <p className="text-sm text-muted-foreground">
             Showing price history from {formatShortDate(first.date)} to {formatShortDate(last.date)}
           </p>
         </div>
 
         <div className="rounded-lg border border-border p-4 sm:w-48">
-          <div className="text-xs uppercase tracking-[0.08em] text-muted-foreground">Last price</div>
-          <data value={String(last.price)} className="block text-xl font-normal tabular-nums">
+          <div className="text-xs text-muted-foreground">Last price</div>
+          <data value={String(last.price)} className="block text-xl font-bold tabular-nums">
             {currency} {last.price}
           </data>
         </div>
@@ -193,7 +193,7 @@ export function PriceChart({ history, currency, trend, className }: PriceChartPr
           className="rounded-lg border p-4 sm:w-56"
           style={{ backgroundColor: `${badgeColor}1a`, borderColor: `${badgeColor}40` }}
         >
-          <div className="text-xs uppercase tracking-[0.08em] text-muted-foreground">Trend signal</div>
+          <div className="text-xs text-muted-foreground">Trend signal</div>
           <div className="mt-1 flex items-center gap-2">
             {isBullish ? (
               <TrendingUp size={32} strokeWidth={2.5} style={{ color: badgeColor }} />
@@ -203,10 +203,10 @@ export function PriceChart({ history, currency, trend, className }: PriceChartPr
               <Minus size={32} strokeWidth={2.5} style={{ color: badgeColor }} />
             )}
             <div>
-              <div className="text-sm font-normal" style={{ color: badgeColor }}>
+              <div className="text-sm font-semibold" style={{ color: badgeColor }}>
                 {isBullish ? "Bullish" : isBearish ? "Bearish" : isStable ? "Stable" : "Flat"}
               </div>
-              <div className="text-[10px] tracking-[0.02em] text-muted-foreground">
+              <div className="text-xs text-muted-foreground">
                 {trendPct !== null
                   ? `${trendPct > 0 ? "+" : ""}${Math.round(trendPct * 10) / 10}% vs 3mo avg`
                   : "No trend data"}
@@ -231,13 +231,13 @@ export function PriceChart({ history, currency, trend, className }: PriceChartPr
                 i > 0 ? "border-l border-border" : ""
               }`}
             >
-              <span className="text-xs uppercase tracking-[0.08em] text-muted-foreground">{rangeDef.label} avg</span>
+              <span className="text-xs text-muted-foreground">{rangeDef.label} avg</span>
               {value !== null ? (
-                <data value={String(value)} className="block text-base font-normal tabular-nums">
+                <data value={String(value)} className="block text-base font-bold tabular-nums">
                   {currency} {value}
                 </data>
               ) : (
-                <span className="text-base font-normal tabular-nums">—</span>
+                <span className="text-base font-bold tabular-nums">—</span>
               )}
             </button>
           );

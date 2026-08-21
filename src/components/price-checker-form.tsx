@@ -3,6 +3,7 @@ import { cardRefs } from "@/data/card-refs";
 
 type PriceCheckerFormProps = {
   defaultValue?: string;
+  compact?: boolean;
 };
 
 // Real example slugs instead of made-up ones, so the placeholder and the
@@ -22,6 +23,7 @@ const EXAMPLE_SLUGS = cardRefs.slice(0, 2).map((r) => r.slug).join(" or ");
  */
 export function PriceCheckerForm({
   defaultValue,
+  compact,
 }: PriceCheckerFormProps) {
   return (
     <form
@@ -42,12 +44,12 @@ export function PriceCheckerForm({
         aria-describedby="cardId-hint"
         defaultValue={defaultValue}
         placeholder={`Card ID, e.g. ${EXAMPLE_SLUGS}`}
-        className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
       />
       <p id="cardId-hint" className="sr-only">
         Enter a card slug, name, number, or numeric id — for example {EXAMPLE_SLUGS}. Leave blank and submit to see every available card ID.
       </p>
-      <Button type="submit" size="sm">
+      <Button type="submit" size={compact ? "sm" : "default"}>
         Check price
       </Button>
     </form>
