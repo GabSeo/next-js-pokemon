@@ -123,7 +123,7 @@ export default async function ProductPage({ params }: PageProps) {
           showCaption
         />
 
-        <div className="space-y-6">
+        <div className="space-y-3">
           <div>
             <h1 className="text-[40px] font-normal leading-none tracking-[0.025em] sm:text-[48px] lg:text-[54px]">
               {card.name}
@@ -190,7 +190,7 @@ export default async function ProductPage({ params }: PageProps) {
         />
       </section>
 
-      <section className="mt-20 space-y-6 border-t border-border pt-3">
+      <section className="mt-20 space-y-3 border-t border-border pt-3">
         <h2 className="text-[26px] font-medium uppercase leading-[1.2] tracking-[0.18em]">Price alerts</h2>
         <AlertSubscribe cardId={card.id} currency={card.currency} bands={bands} />
       </section>

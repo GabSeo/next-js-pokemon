@@ -53,20 +53,19 @@ Weight 400 by default. Weight 500 reserved for exactly one heading tier (the Sec
 
 ## Spacing
 
-099 SUPPLY documents exactly two spacing *tokens* — Section gap and Element gap — because its reference is a gallery of isolated component tiles: nothing in it ever stacks more than two things. CardTrace is a real multi-section product with product pages that stack 4-6 distinct blocks (title, meta, price, description, links, actions) in a row — forcing all of that through one 12px "element gap" is what made the shipped site read as cramped once real content rendered (round-1 critics never caught it: they only ever saw "0 cards" locally). A rigid two-value system doesn't survive contact with real content density, so the rhythm scale below has **three** tiers instead of two, following the standard 8-point grid practice (Material Design, IBM Carbon): round to the nearest 8px, with a smaller step allowed for the tightest tier.
+099 SUPPLY documents exactly two spacing *tokens* — Section gap and Element gap — because its reference is a gallery of isolated component tiles with no page shell to speak of. CardTrace is a real multi-section product, so the rule below has the same two tokens but a stated scope: it governs page rhythm, not every pixel of padding on the site.
 
-**Rhythm — three tiers, chosen by how related the things being spaced actually are:**
+**Rhythm (bound by the two-token rule — no third value invented here):**
 
-- **Tight (12px):** exactly two elements that function almost as one unit — a heading immediately followed by its own single short line (a heading + the one paragraph that belongs only to it, a label + its value, an icon + its text). If there's a third distinct thing in the stack, it's not this tier.
-- **Group (24px):** three or more distinct, independently-meaningful blocks stacked within one section — a title, a meta line, a price sentence, a description, a links row, and a button all belonging to one card; a description, a band grid, and a form; a heading followed by a large, self-contained widget (a chart, a data table, a whole form) rather than a short line of text. This is the tier that was missing before — most of what read as "everything's too close" was Tight (12px) doing a Group's job across 4+ elements.
-- **Section (80px):** between major page sections (hero → card grid → "how it works"; chart → data tabs → alerts). Where a section starts with a `border-t` divider, the 80px sits *above* the divider as margin, and the divider is followed by its own small gap before content starts — never zero, never a fourth invented value: use the Tight token (12px, `pt-3`) after every such divider, consistently.
+- **Section gap:** exactly 80px between major page sections (hero → card grid → "how it works", product's chart → data tabs → alerts, etc.). Where a section is introduced with a `border-t` divider, the divider itself carries the full 80px — don't stack an additional top-padding value on top of it (e.g. an `mt-20` gap plus a separate `pt-8` after the border is two rhythm values pretending to be one; collapse to a single 80px gap).
+- **Element gap:** exactly 12px between elements grouped within one section — a heading and the paragraph under it, a breadcrumb and the H1 below it, items in a stack. Any smaller ad hoc gap here (8px, 16px, 24px) that isn't actually a section transition should collapse to 12px.
 
-**Not bound by the rhythm scale (a separate, legitimate category):**
+**Not bound by the two-token rule (a separate, legitimate category):**
 
 - Page-shell container padding (`mx-auto max-w-* px-4 py-12`-style wrapper margins) — every page needs edge margins; the reference never specifies this because it has no page shell.
-- Component-internal padding (button/input/card interior padding, icon-to-label gaps inside one small component) and grid gutters between repeated homogeneous items (card tiles, list rows) — ordinary Tailwind spacing (commonly 8-12px) is fine here.
+- Component-internal padding (button/input/card interior padding, icon-to-label gaps inside one small component) — ordinary Tailwind spacing is fine here.
 
-If you're unsure which category a given gap falls into: does it separate two sections/elements from each other (rhythm — pick Tight/Group/Section by the test above), or does it sit *inside* one component/container, or between repeated items of the same kind (padding/gutter — unrestricted)? That question resolves it.
+If you're unsure which category a given gap falls into: does it separate two sections/elements from each other (rhythm — must be 80 or 12), or does it sit *inside* one component/container (padding — unrestricted)? That question resolves it.
 
 ## Border radius
 

@@ -82,7 +82,7 @@ export default async function PriceCheckerPage({ searchParams }: PageProps) {
       )}
 
       {card && (
-        <div className="mt-20 space-y-6 border-t border-border pt-3">
+        <div className="mt-20 space-y-3 border-t border-border pt-3">
           <div>
             <h2 className="text-[26px] font-medium uppercase leading-[1.2] tracking-[0.18em]">
               <Link href={`/products/${card.slug}`} className="hover:underline">

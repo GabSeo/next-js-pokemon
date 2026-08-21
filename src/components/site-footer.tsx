@@ -6,8 +6,8 @@ import { SITE_NAME } from "@/lib/site";
 export function SiteFooter() {
   return (
     <footer className="mt-auto border-t border-border">
-      <div className="mx-auto max-w-5xl space-y-6 px-4 py-8">
-        <div className="space-y-6">
+      <div className="mx-auto max-w-5xl space-y-3 px-4 py-8">
+        <div className="space-y-3">
           <h2 className="text-[26px] font-medium uppercase leading-[1.2] tracking-[0.18em]">Price checker</h2>
           <p className="text-base leading-[1.2] text-muted-foreground">
             Look up any of the {SITE_NAME} cards by ID to see last-sold

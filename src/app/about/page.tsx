@@ -13,7 +13,7 @@ export default function AboutPage() {
       <h1 className="text-[40px] font-normal leading-none tracking-[0.025em] sm:text-[48px] lg:text-[54px]">
         About {SITE_NAME}
       </h1>
-      <div className="mt-3 space-y-6 text-base leading-[1.2] text-muted-foreground">
+      <div className="mt-3 space-y-3 text-base leading-[1.2] text-muted-foreground">
         <p>
           {SITE_NAME} is a prototype card catalog for Pokémon and One Piece
           trading cards, built to demonstrate a commerce site that is equally
