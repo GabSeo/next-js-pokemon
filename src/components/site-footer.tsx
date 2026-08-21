@@ -16,7 +16,7 @@ export function SiteFooter() {
           <PriceCheckerForm />
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-border pt-3 text-xs uppercase tracking-[0.08em] sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-t border-border text-xs uppercase tracking-[0.08em] sm:flex-row sm:items-center sm:justify-between">
           <nav aria-label="Footer" className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground">
             <Link href="/collections/pokemon" className="hover:text-foreground hover:underline">
               Pokémon collection

@@ -45,6 +45,3 @@ Bar: [bar.md](bar.md) (099 SUPPLY, craft) · [design-system.md](design-system.md
 ## Piece 1 — total: 4 rounds, 3 spec fixes (heading range → fixed 26px, spacing rhythm/padding split, H1 responsive-exception documented), 2 real code fixes (heading-size split, duplicate button size).
 
 **Carried forward (non-blocking, optional):** unify the "Check price" button and brand/link text onto the documented type scale instead of inherited 12.8px/14px values.
-
-### Round 5 (post-ship, live user feedback — not part of the automated loop)
-User reported the deployed site (https://next-js-pokemon-alpha.vercel.app, real card data via their API key) feels cramped top-to-bottom — something none of the 4 rounds' critics could catch, since they only ever saw "0 cards" locally. Diagnosed via `getBoundingClientRect()` on the live deployment: every `border-t` section divider (chart section, Price alerts, "How the price checker works," "Available card IDs", footer bottom row) had exactly **1px** between the divider and the heading below it — round 3's cleanup removed the old `pt-8` but never replaced it with the small rhythm token. Fixed by adding `pt-3` (12px) after all 6 dividers. `tsc`/`build` pass. Not yet pushed/reverified live — pending.
