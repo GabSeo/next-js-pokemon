@@ -173,7 +173,7 @@ export function PriceChart({ history, currency, trend, className }: PriceChartPr
         : COLOR_NEUTRAL;
 
   return (
-    <div className={`${className ?? "w-full"} rounded-xl border border-border bg-card p-6`}>
+    <div className={`${className ?? "w-full"} rounded-lg border-2 border-black bg-card p-6 shadow-hard-sm`}>
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-stretch">
         <div className="flex-1 rounded-lg border border-border p-4">
           <h2 className="text-base font-semibold">Price history</h2>

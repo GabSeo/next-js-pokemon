@@ -4,127 +4,116 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * "MintDex" retro-brutalism — ported from the design.md / CSS / JSON tokens
+ * and the mintdex-mvp-mockup.html reference under
+ * C:\Users\dinca\Desktop\Claudy\design\mvp pokemon next js retro brutalism\.
+ * Values here are copied verbatim from that source, not re-derived — this
+ * file should stay a 1:1 mirror of the mockup's :root block.
+ */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --color-card-surface: var(--card-surface);
+  --color-pokemon-red: var(--pokemon-red);
+  --color-pokemon-yellow: var(--pokemon-yellow);
+  --color-pokemon-blue: var(--pokemon-blue);
+  --color-border-subtle: var(--border-subtle);
+  --color-muted-surface: var(--muted-surface);
+  --color-muted-text: var(--muted-text);
+  --color-success-green: var(--success-green);
+  --color-nav-dark: var(--nav-dark);
+
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-inter);
+
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+
+  --shadow-hard-sm: var(--shadow-sm);
+  --shadow-hard-md: var(--shadow-md);
+  --shadow-hard-lg: var(--shadow-lg);
+  --shadow-hard-xl: var(--shadow-xl);
+
+  /* shadcn/ui primitives (Button, etc.) still read these names */
+  --color-border: var(--border-subtle);
+  --color-input: var(--border-subtle);
+  --color-ring: var(--pokemon-blue);
+  --color-destructive: var(--pokemon-red);
+  --color-muted: var(--muted-surface);
+  --color-muted-foreground: var(--muted-text);
+  --color-primary: var(--foreground);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: var(--muted-surface);
+  --color-secondary-foreground: var(--foreground);
+  --color-accent: var(--muted-surface);
+  --color-accent-foreground: var(--foreground);
+  --color-card: var(--card-surface);
+  --color-card-foreground: var(--foreground);
+  --color-popover: var(--card-surface);
+  --color-popover-foreground: var(--foreground);
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --background: #ffffff;
+  --foreground: #0a0a0a;
+  --card-surface: #ffffff;
+  --pokemon-red: #ee2b2b;
+  --pokemon-yellow: #ffcd05;
+  --pokemon-blue: #3d5ca4;
+  --border-subtle: #e4e4e4;
+  --muted-surface: #f0f0f0;
+  --muted-text: #555555;
+  --success-green: #21c45d;
+  --nav-dark: #121212;
+
+  /* Spacing scale, spacing-1..17 (design.md) — used as arbitrary values,
+     not exposed as a Tailwind spacing override, so the framework's own
+     scale stays intact for anything not deliberately using a token. */
+  --sp-2: 4px; --sp-4: 8px; --sp-6: 12px; --sp-7: 16px; --sp-8: 20px;
+  --sp-9: 24px; --sp-10: 32px; --sp-11: 40px; --sp-12: 48px; --sp-13: 56px;
+  --sp-14: 64px; --sp-15: 80px; --sp-16: 96px; --sp-17: 128px;
+
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 8px;
+
+  --shadow-sm: 2px 2px 0px 0px #000;
+  --shadow-md: 4px 4px 0px 0px #000;
+  --shadow-lg: 6px 6px 0px 0px #000;
+  --shadow-xl: 8px 8px 0px 0px #000;
+
+  --radius: 0.375rem;
 }
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
-}
+/* No dark-mode block: the mockup this ports from is a single, deliberately
+   light retro-brutalist look (dark navbar/CTA banner are structural, not a
+   theme switch) — same call the reference itself makes. */
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border-subtle outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-inter), "Inter", sans-serif;
   }
-  html {
-    @apply font-sans;
-  }
+}
+
+/* Diagonal glare sweep on the PSA hero card, matching the mockup exactly —
+   kept as plain CSS since Tailwind has no utility for a custom-stop
+   gradient at an arbitrary angle. */
+.psa-glare {
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.55) 45%,
+    rgba(255, 255, 255, 0.05) 55%,
+    transparent 70%
+  );
+  mix-blend-mode: overlay;
+}
+.psa-card-wrap:hover .psa-glare {
+  opacity: 1;
 }

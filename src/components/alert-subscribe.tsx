@@ -44,11 +44,7 @@ export function AlertSubscribe({ cardId, currency, bands }: AlertSubscribeProps)
             key={band.pct}
             className="rounded-md border border-border px-2 py-1.5 text-center"
           >
-            <div
-              className={
-                band.pct < 0 ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"
-              }
-            >
+            <div className={band.pct < 0 ? "text-pokemon-red" : "text-success-green"}>
               {band.pct > 0 ? "+" : ""}
               {band.pct}%
             </div>

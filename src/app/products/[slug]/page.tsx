@@ -98,12 +98,12 @@ export default async function ProductPage({ params }: PageProps) {
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-12">
+    <div className="mx-auto max-w-[1180px] px-6 py-16">
       <StructuredData data={productJsonLd} />
       <StructuredData data={breadcrumbJsonLd} />
       <StructuredData data={faqJsonLd} />
 
-      <nav aria-label="Breadcrumb" className="mb-6 text-sm text-muted-foreground">
+      <nav aria-label="Breadcrumb" className="mb-6 text-sm font-bold text-muted-text">
         <Link href="/" className="hover:text-foreground hover:underline">
           Home
         </Link>
@@ -112,37 +112,37 @@ export default async function ProductPage({ params }: PageProps) {
           {label}
         </Link>
         <span className="px-1.5">/</span>
-        <span>{card.name}</span>
+        <span className="text-foreground">{card.name}</span>
       </nav>
 
-      <div className="grid grid-cols-1 gap-8 sm:grid-cols-[280px_1fr]">
+      <div className="grid grid-cols-1 gap-9 sm:grid-cols-[280px_1fr]">
         <CardImage
           card={card}
-          className="w-full max-w-[280px] rounded-xl"
+          className="w-full max-w-[280px] rounded-lg border-2 border-black shadow-hard-md"
           priority
           showCaption
         />
 
         <div className="space-y-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            <h1 className="text-[32px] leading-tight font-black tracking-[-1px] sm:text-[40px]">
               {card.name}
             </h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm font-bold text-muted-text">
               {card.set}
               {card.setCode ? ` (${card.setCode})` : ""} · {card.number ?? ""}
               {card.rarity ? ` · ${card.rarity}` : ""} · Card ID: {card.id}
             </p>
           </div>
 
-          <p className="max-w-2xl text-sm">
+          <p className="max-w-2xl text-base leading-6">
             The current market price for {card.name} ({card.set}, {card.number ?? ""})
-            is <strong><data value={String(card.currentPrice)}>{card.currency} {card.currentPrice}</data></strong> as of{" "}
+            is <strong><data value={String(card.currentPrice)} className="tabular-nums">{card.currency} {card.currentPrice}</data></strong> as of{" "}
             <strong>{card.asOfDate}</strong>
             {card.sourceUrl ? (
               <>
                 , sourced from{" "}
-                <a href={card.sourceUrl} className="underline underline-offset-4">
+                <a href={card.sourceUrl} className="font-bold underline underline-offset-4">
                   TCGPlayer
                 </a>
               </>
@@ -151,7 +151,7 @@ export default async function ProductPage({ params }: PageProps) {
           </p>
 
           {card.description && (
-            <p className="max-w-2xl text-sm text-muted-foreground">
+            <p className="max-w-2xl text-sm text-muted-text">
               {card.description}
             </p>
           )}
@@ -166,7 +166,7 @@ export default async function ProductPage({ params }: PageProps) {
         </div>
       </div>
 
-      <section className="mt-12 border-t border-border pt-8">
+      <section className="mt-16 border-t-2 border-black pt-8">
         {card.priceHistory.length > 0 ? (
           <PriceChart
             history={card.priceHistory}
@@ -175,13 +175,13 @@ export default async function ProductPage({ params }: PageProps) {
             className="w-full"
           />
         ) : (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-text">
             No historical data available yet for this card.
           </p>
         )}
       </section>
 
-      <section className="mt-8 space-y-4">
+      <section className="mt-10 space-y-4">
         <PriceDataTabs
           currency={card.currency}
           recentSnapshots={card.recentSnapshots}
@@ -190,8 +190,8 @@ export default async function ProductPage({ params }: PageProps) {
         />
       </section>
 
-      <section className="mt-12 space-y-4 border-t border-border pt-8">
-        <h2 className="text-lg font-semibold">Price alerts</h2>
+      <section className="mt-16 space-y-4 border-t-2 border-black pt-8">
+        <h2 className="text-2xl font-black tracking-[-0.6px]">Price alerts</h2>
         <AlertSubscribe cardId={card.id} currency={card.currency} bands={bands} />
       </section>
     </div>

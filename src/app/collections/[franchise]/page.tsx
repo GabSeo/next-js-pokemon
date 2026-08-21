@@ -62,24 +62,24 @@ export default async function CollectionPage({ params }: PageProps) {
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-12">
+    <div className="mx-auto max-w-[1180px] px-6 py-16">
       <StructuredData data={itemListJsonLd} />
 
-      <nav aria-label="Breadcrumb" className="mb-6 text-sm text-muted-foreground">
+      <nav aria-label="Breadcrumb" className="mb-6 text-sm font-bold text-muted-text">
         <Link href="/" className="hover:text-foreground hover:underline">
           Home
         </Link>
         <span className="px-1.5">/</span>
-        <span>{label}</span>
+        <span className="text-foreground">{label}</span>
       </nav>
 
-      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+      <h1 className="text-[32px] leading-tight font-black tracking-[-1px] sm:text-[40px]">
         {label} collection
       </h1>
-      <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+      <p className="mt-3 max-w-2xl text-base leading-6 text-muted-text">
         {cards.length} cards tracked in this catalog, each with live market
         pricing. Looking for something else? See the{" "}
-        <Link href={`/collections/${other}`} className="underline underline-offset-4">
+        <Link href={`/collections/${other}`} className="font-bold underline underline-offset-4">
           {otherLabel} collection
         </Link>{" "}
         instead.
@@ -88,10 +88,10 @@ export default async function CollectionPage({ params }: PageProps) {
         markdownHref={`/collections/${franchise}/index.md`}
         jsonHref={`/api/${franchise}`}
         okfHref={`/okf/collections/${franchise}`}
-        className="mt-4"
+        className="mt-5"
       />
 
-      <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3">
+      <div className="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-3">
         {cards.map((card) => (
           <CardTile key={card.id} card={card} />
         ))}

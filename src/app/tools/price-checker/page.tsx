@@ -52,13 +52,13 @@ export default async function PriceCheckerPage({ searchParams }: PageProps) {
   };
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12">
+    <div className="mx-auto max-w-3xl px-6 py-16">
       <StructuredData data={webAppJsonLd} />
 
-      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+      <h1 className="text-[32px] leading-tight font-black tracking-[-1px] sm:text-[40px]">
         Price checker
       </h1>
-      <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+      <p className="mt-3 max-w-xl text-base leading-6 text-muted-text">
         Enter a card ID (see the list below) to see current market prices.
         Works without JavaScript — this is a standard HTML form.
       </p>
@@ -71,29 +71,29 @@ export default async function PriceCheckerPage({ searchParams }: PageProps) {
         markdownHref={`/tools/price-checker.md${cardId ? `?cardId=${encodeURIComponent(cardId)}` : ""}`}
         jsonHref={`/api/price-check${cardId ? `?cardId=${encodeURIComponent(cardId)}` : ""}`}
         okfHref={`/okf/tools/price-checker${cardId ? `?cardId=${encodeURIComponent(cardId)}` : ""}`}
-        className="mt-4"
+        className="mt-5"
       />
 
       {cardId && !card && (
-        <p className="mt-8 rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+        <p className="mt-8 rounded-lg border-2 border-black bg-pokemon-red/10 px-4 py-3 text-sm font-bold text-pokemon-red shadow-hard-sm">
           No card found for &ldquo;{cardId}&rdquo;. Try one of the IDs listed
           below.
         </p>
       )}
 
       {card && (
-        <div className="mt-8 space-y-8 border-t border-border pt-8">
+        <div className="mt-10 space-y-8 border-t-2 border-black pt-8">
           <div>
-            <h2 className="text-lg font-semibold">
+            <h2 className="text-2xl font-black tracking-[-0.6px]">
               <Link href={`/products/${card.slug}`} className="hover:underline">
                 {card.name}
               </Link>{" "}
-              <span className="font-normal text-muted-foreground">
+              <span className="font-bold text-muted-text">
                 — {franchiseLabel(card.franchise)}, {card.set} ({card.number ?? ""})
               </span>
             </h2>
-            <p className="mt-1 text-sm">
-              Current market price: <strong><data value={String(card.currentPrice)}>{card.currency} {card.currentPrice}</data></strong> as of{" "}
+            <p className="mt-2 text-sm">
+              Current market price: <strong><data value={String(card.currentPrice)} className="tabular-nums">{card.currency} {card.currentPrice}</data></strong> as of{" "}
               <strong>{card.asOfDate}</strong>.
             </p>
           </div>
@@ -117,17 +117,17 @@ export default async function PriceCheckerPage({ searchParams }: PageProps) {
           <AddToCollectionButton cardId={card.id} />
 
           <div>
-            <h3 className="text-sm font-semibold">Price alerts</h3>
-            <div className="mt-2">
+            <h3 className="text-lg font-black tracking-[-0.5px]">Price alerts</h3>
+            <div className="mt-3">
               <AlertSubscribe cardId={card.id} currency={card.currency} bands={bands} />
             </div>
           </div>
         </div>
       )}
 
-      <div className="mt-12 border-t border-border pt-6">
-        <h3 className="text-sm font-semibold">Available card IDs</h3>
-        <ul className="mt-2 grid grid-cols-2 gap-1 text-sm text-muted-foreground sm:grid-cols-3">
+      <div className="mt-16 border-t-2 border-black pt-8">
+        <h3 className="text-lg font-black tracking-[-0.5px]">Available card IDs</h3>
+        <ul className="mt-3 grid grid-cols-2 gap-2 text-sm font-bold text-muted-text sm:grid-cols-3">
           {cardRefs.map((ref) => (
             <li key={ref.slug}>
               <Link href={`/tools/price-checker?cardId=${ref.slug}`} className="hover:text-foreground hover:underline">
