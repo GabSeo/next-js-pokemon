@@ -17,7 +17,20 @@ import { CARDMARKET_HOMEPAGE_URL } from "@/lib/cardmarket-search";
 import type { EbayLanguage } from "@/lib/ebay-browse";
 import type { Card } from "@/lib/types";
 
-export type LocaleLink = { code: string; flag: string; href: string; active: boolean };
+/** `code` is a real ISO 3166-1 alpha-2 country code (e.g. "US", "FR", "JP") — used both as the visible label and, lowercased, to build the flag image URL below. */
+export type LocaleLink = { code: string; href: string; active: boolean };
+
+/**
+ * Flag *emoji* are unreliable cross-platform — Windows in particular often
+ * has no real flag glyph for the regional-indicator-letter pairs they're
+ * built from, rendering as blank/tofu instead of a flag picture even though
+ * the emoji itself is correct. flagcdn.com (the static-asset CDN for the
+ * well-known open-source flag-icons project) serves real PNGs by ISO code,
+ * no key needed — verified live to resolve for every code this site uses.
+ */
+function flagPngUrl(isoCode: string): string {
+  return `https://flagcdn.com/h20/${isoCode.toLowerCase()}.png`;
+}
 
 type ProductPageContentProps = {
   /** Source of truth for every number, search query, and history point — always the real English-identity Card, never a localized clone (see graded-market.ts's `card.tcgdexId`-based French search override). */
@@ -88,7 +101,8 @@ export function ProductPageContent({
                       i > 0 ? "border-l-2 border-black" : ""
                     } ${l.active ? "bg-pokemon-red text-white" : "bg-white text-foreground hover:bg-muted-surface"}`}
                   >
-                    <span aria-hidden="true">{l.flag}</span>
+                    {/* eslint-disable-next-line @next/next/no-img-element -- external CDN image, domain not allowlisted for next/image */}
+                    <img src={flagPngUrl(l.code)} alt="" className="h-3 w-4 rounded-[1px] object-cover" />
                     {l.code}
                   </Link>
                 ))}

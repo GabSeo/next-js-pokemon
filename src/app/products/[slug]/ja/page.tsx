@@ -54,9 +54,9 @@ export default async function ProductPageJapan({ params }: PageProps) {
   const fr = await getFrenchCardText(card);
 
   const localeLinks: LocaleLink[] = [
-    { code: "US", flag: "🇺🇸", href: `/products/${card.slug}`, active: false },
-    ...(fr.translated ? [{ code: "FR", flag: "🇫🇷", href: `/products/${card.slug}/fr`, active: false }] : []),
-    { code: "JP", flag: "🇯🇵", href: `/products/${card.slug}/ja`, active: true },
+    { code: "US", href: `/products/${card.slug}`, active: false },
+    ...(fr.translated ? [{ code: "FR", href: `/products/${card.slug}/fr`, active: false }] : []),
+    { code: "JP", href: `/products/${card.slug}/ja`, active: true },
   ];
 
   return (
