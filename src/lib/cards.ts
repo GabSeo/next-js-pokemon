@@ -151,8 +151,14 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
         name: tcgdexCard.name,
         set: tcgdexCard.set.name,
         setCode: tcgdexCard.set.id,
-        number: tcgdexCard.localId,
+        // The full printed fraction (e.g. "271/264") when the set's base
+        // print-run size is known, falling back to the bare localId
+        // otherwise — see TcgdexSetBrief's doc comment on `cardCount`.
+        number: tcgdexCard.set.cardCount?.official
+          ? `${tcgdexCard.localId}/${tcgdexCard.set.cardCount.official}`
+          : tcgdexCard.localId,
         rarity: tcgdexCard.rarity,
+        types: tcgdexCard.types,
         imageUrl: tcgdexCard.image ? cardImageUrl(tcgdexCard.image) : undefined,
         // TCGdex has no card-description field at all — rather than
         // borrowing apitcg's generic-catalog description text alongside
@@ -169,6 +175,9 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
         setCode: product.set?.code,
         number: product.attributes?.Number ?? product.code,
         rarity: product.attributes?.Rarity,
+        // apitcg has no energy-type field — One Piece and any unmatched
+        // Pokémon card simply have none, rather than a fabricated guess.
+        types: undefined as string[] | undefined,
         imageUrl: product.images?.[0]?.large ?? product.images?.[0]?.medium,
         description: product.attributes?.Description ? stripHtml(product.attributes.Description) : undefined,
         currentPrice: marketPrice(product.markets) ?? 0,
@@ -196,6 +205,8 @@ export type LocalizedCardText = {
   set: string;
   rarity?: string;
   imageUrl?: string;
+  /** Localized energy-type labels (e.g. "Obscurité" for "Darkness"), same order as `card.types` — color for each badge still comes from the English `card.types[i]`, since color is keyed by the canonical name, not the display label. */
+  types?: string[];
   /** True only when a real TCGdex French match was found — false means every field above is just the English original echoed back, never a fabricated translation. */
   translated: boolean;
 };
@@ -217,7 +228,14 @@ export type LocalizedCardText = {
  * same non-fatal resilience shape as resolveTcgdexCard above.
  */
 export async function getFrenchCardText(card: Card): Promise<LocalizedCardText> {
-  const fallback: LocalizedCardText = { name: card.name, set: card.set, rarity: card.rarity, imageUrl: card.imageUrl, translated: false };
+  const fallback: LocalizedCardText = {
+    name: card.name,
+    set: card.set,
+    rarity: card.rarity,
+    imageUrl: card.imageUrl,
+    types: card.types,
+    translated: false,
+  };
   if (!card.tcgdexId) return fallback;
   try {
     const localized = await getCard(card.tcgdexId, "fr");
@@ -227,6 +245,7 @@ export async function getFrenchCardText(card: Card): Promise<LocalizedCardText> 
       set: localized.set.name,
       rarity: localized.rarity ?? card.rarity,
       imageUrl: localized.image ? cardImageUrl(localized.image) : card.imageUrl,
+      types: localized.types ?? card.types,
       translated: true,
     };
   } catch (err) {

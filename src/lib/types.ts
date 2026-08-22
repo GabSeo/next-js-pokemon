@@ -41,8 +41,10 @@ export type Card = {
   name: string;
   set: string;
   setCode?: string;
-  number?: string; // e.g. "271" or "OP07-113"
+  number?: string; // e.g. "271/264" (Pokémon, TCGdex-matched, "localId/set official count"), "190" (bare fallback), or "OP07-113" (One Piece)
   rarity?: string;
+  /** Pokémon TCG energy types (Fire, Water, Darkness, ...) — TCGdex-only, Pokémon-category cards only. See lib/pokemon-types.ts. */
+  types?: string[];
   currency: "USD";
   currentPrice: number;
   asOfDate: string; // ISO date the current price was last updated

@@ -43,6 +43,15 @@ export type TcgdexCardBrief = {
 export type TcgdexSetBrief = {
   id: string;
   name: string;
+  /**
+   * `official` is the set's base print-run size — the denominator printed
+   * on the card itself (e.g. Gengar VMAX prints as "271/264": localId 271,
+   * `cardCount.official` 264 — a secret rare numbered past the base count).
+   * `total` includes secret rares and isn't what's printed on the card.
+   * Confirmed against all 3 currently-tracked cards: `official` reproduces
+   * apitcg's own full-fraction number exactly (271/264, 190/182, 186/195).
+   */
+  cardCount?: { official?: number; total?: number };
 };
 
 /**
@@ -89,6 +98,15 @@ export type TcgdexCard = {
   rarity?: string;
   set: TcgdexSetBrief;
   pricing?: TcgdexPricing;
+  /**
+   * Only present on `category: "Pokemon"` cards (a Trainer/Energy card has
+   * none) — and these are the Pokémon *TCG*'s own 11-type set, not the
+   * video games' 18: confirmed live, TCGdex returns "Darkness" (not "Dark")
+   * and "Fire". The TCG also uses "Lightning" (not Electric), "Metal" (not
+   * Steel), and folds every game type outside its 11 into "Colorless" — see
+   * lib/pokemon-types.ts for the full mapping this feeds into.
+   */
+  types?: string[];
 };
 
 /**

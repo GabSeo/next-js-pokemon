@@ -67,7 +67,7 @@ export default async function ProductPageFrench({ params }: PageProps) {
   if (!resolved) notFound();
   const { card, fr } = resolved;
 
-  const displayCard: Card = { ...card, name: fr.name, set: fr.set, rarity: fr.rarity, imageUrl: fr.imageUrl };
+  const displayCard: Card = { ...card, name: fr.name, set: fr.set, rarity: fr.rarity, imageUrl: fr.imageUrl, types: fr.types };
   const label = franchiseLabel(card.franchise);
 
   const productJsonLd = {

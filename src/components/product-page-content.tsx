@@ -12,6 +12,7 @@ import { IllustrativeTag } from "@/components/retro/illustrative-tag";
 import { InternationalPricesPanel } from "@/components/retro/international-prices-panel";
 import { PopulationPanel } from "@/components/retro/population-panel";
 import { PsaTiltCard } from "@/components/retro/psa-tilt-card";
+import { TypeBadge } from "@/components/retro/type-badge";
 import { computeAlertBands } from "@/lib/cards";
 import { CARDMARKET_HOMEPAGE_URL } from "@/lib/cardmarket-search";
 import type { EbayLanguage } from "@/lib/ebay-browse";
@@ -123,6 +124,9 @@ export function ProductPageContent({
         <div className="mt-5 mb-8 flex flex-wrap items-center justify-between gap-3 rounded-lg border-2 border-black bg-card-surface p-6 shadow-hard-md">
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-2xl font-black tracking-[-0.6px] uppercase">{displayCard.name}</h1>
+            {card.types?.map((englishType, i) => (
+              <TypeBadge key={englishType} colorKey={englishType} label={displayCard.types?.[i] ?? englishType} />
+            ))}
             <span className="rounded-full border-2 border-black bg-pokemon-blue px-3.5 py-1 text-xs font-black tracking-[0.35px] text-white uppercase">
               {displayCard.set}
               {card.setCode ? ` · ${card.setCode}` : ""}
@@ -130,6 +134,11 @@ export function ProductPageContent({
             {card.number && (
               <span className="rounded-full border-2 border-black bg-white px-3.5 py-1 text-xs font-black tracking-[0.35px] uppercase">
                 #{card.number}
+              </span>
+            )}
+            {displayCard.rarity && (
+              <span className="rounded-full border-2 border-black bg-pokemon-yellow px-3.5 py-1 text-xs font-black tracking-[0.35px] uppercase">
+                {displayCard.rarity}
               </span>
             )}
           </div>
