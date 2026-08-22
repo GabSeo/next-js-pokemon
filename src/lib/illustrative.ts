@@ -78,3 +78,22 @@ export function illustrativeInternational(card: Card): IllustrativeIntlPrice[] {
 
 /** Condition tiers the price-history chart's filter chips reference — every one currently maps to the same real Near Mint series, since that's the only condition apitcg.com tracks. */
 export const ILLUSTRATIVE_CONDITIONS = ["Damaged", "Heavily Played", "Moderately Played", "Near Mint"] as const;
+
+export type IllustrativeSoldListing = { grade: string; price: number; daysAgo: number };
+
+/**
+ * Stand-ins for `GET /{game}/ebay-sold-offers?id=&per_page=3` (see
+ * tcggo-integration-plan.md §2.4) — deliberately carries NO `url` field.
+ * A fabricated eBay item link would be an actually-broken/misleading link,
+ * not just a placeholder number, which is a different and worse kind of
+ * dishonesty than an illustrative price. Real per-item links only appear
+ * once this is backed by the real endpoint.
+ */
+export function illustrativeSoldListings(card: Card): IllustrativeSoldListing[] {
+  const base = card.currentPrice;
+  return [
+    { grade: "PSA 10", price: Math.round(base * (7 + seedFraction(card.id, 11) * 3)), daysAgo: 2 + Math.round(seedFraction(card.id, 12) * 5) },
+    { grade: "PSA 9", price: Math.round(base * (1.8 + seedFraction(card.id, 13) * 0.8)), daysAgo: 6 + Math.round(seedFraction(card.id, 14) * 10) },
+    { grade: "Raw · NM", price: Math.round(base * (0.9 + seedFraction(card.id, 15) * 0.3)), daysAgo: 1 + Math.round(seedFraction(card.id, 16) * 4) },
+  ];
+}

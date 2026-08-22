@@ -8,11 +8,13 @@ import { OpenDataLinks } from "@/components/open-data-links";
 import { PriceChart } from "@/components/price-chart";
 import { PriceDataTabs } from "@/components/price-data-tabs";
 import { StructuredData } from "@/components/structured-data";
+import { ActiveListingsPanel } from "@/components/retro/active-listings-panel";
 import { ConditionFilterChips } from "@/components/retro/condition-filter-chips";
 import { InternationalPricesPanel } from "@/components/retro/international-prices-panel";
 import { PopulationPanel } from "@/components/retro/population-panel";
 import { PsaGradedPanel } from "@/components/retro/psa-graded-panel";
 import { PsaTiltCard } from "@/components/retro/psa-tilt-card";
+import { SoldListingsPanel } from "@/components/retro/sold-listings-panel";
 import { computeAlertBands, franchiseLabel, getAllCards, getCardBySlug } from "@/lib/cards";
 import { absoluteUrl } from "@/lib/site";
 
@@ -172,45 +174,74 @@ export default async function ProductPage({ params }: PageProps) {
             />
           </div>
 
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              <div className="rounded-lg border-2 border-black bg-card-surface p-6 shadow-hard-md">
-                <div className="mb-3 flex items-center gap-2 text-xs font-black tracking-[0.6px] text-muted-text uppercase">
-                  🛒 TCGplayer
-                  <span className="ml-auto font-bold text-[#999] normal-case">{card.asOfDate}</span>
-                </div>
-                <span className="mb-1 inline-block rounded-full border-2 border-black bg-muted-surface px-2.5 py-0.5 text-[11px] font-black tracking-[0.35px] uppercase">
-                  Market price
-                </span>
-                <data value={String(card.currentPrice)} className="block text-4xl font-black tracking-[-1px] tabular-nums">
-                  {card.currency} {card.currentPrice}
-                </data>
+          <div className="space-y-10">
+            {/* Real-time market data — everything here is either already
+                live (TCGplayer/history) or has a real TCGGO endpoint lined
+                up in tcggo-integration-plan.md §1/§2.4, once that's wired
+                in. Kept together and clearly labeled so the split with the
+                still-illustrative section below is legible, not implied. */}
+            <section>
+              <div className="mb-4 flex items-center gap-2">
+                <h2 className="text-xs font-black tracking-[0.6px] text-pokemon-blue uppercase">Real-time market data</h2>
+                <span className="h-px flex-1 bg-border-subtle" />
               </div>
 
-              <InternationalPricesPanel card={card} />
-            </div>
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                  <div className="rounded-lg border-2 border-black bg-card-surface p-6 shadow-hard-md">
+                    <div className="mb-3 flex items-center gap-2 text-xs font-black tracking-[0.6px] text-muted-text uppercase">
+                      🛒 TCGplayer
+                      <span className="ml-auto font-bold text-[#999] normal-case">{card.asOfDate}</span>
+                    </div>
+                    <span className="mb-1 inline-block rounded-full border-2 border-black bg-muted-surface px-2.5 py-0.5 text-[11px] font-black tracking-[0.35px] uppercase">
+                      Market price
+                    </span>
+                    <data value={String(card.currentPrice)} className="block text-4xl font-black tracking-[-1px] tabular-nums">
+                      {card.currency} {card.currentPrice}
+                    </data>
+                  </div>
 
-            <PsaGradedPanel card={card} />
-            <PopulationPanel card={card} />
+                  <InternationalPricesPanel card={card} />
+                </div>
 
-            <div>
-              <h2 className="mb-3 flex items-center gap-2 text-lg font-black tracking-[-0.45px]">📈 Raw Card Price History</h2>
-              <ConditionFilterChips />
-              {card.priceHistory.length > 0 ? (
-                <PriceChart history={card.priceHistory} currency={card.currency} trend={card.trend} className="w-full" />
-              ) : (
-                <p className="text-sm text-muted-text">No historical data available yet for this card.</p>
-              )}
-            </div>
+                <PsaGradedPanel card={card} />
 
-            <div className="rounded-lg border-2 border-black bg-card-surface p-6 shadow-hard-md">
-              <PriceDataTabs
-                currency={card.currency}
-                recentSnapshots={card.recentSnapshots}
-                trend={card.trend}
-                priceRange={card.priceRange}
-              />
-            </div>
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                  <SoldListingsPanel card={card} />
+                  <ActiveListingsPanel card={card} />
+                </div>
+
+                <div>
+                  <h3 className="mb-3 flex items-center gap-2 text-lg font-black tracking-[-0.45px]">📈 Raw Card Price History</h3>
+                  <ConditionFilterChips />
+                  {card.priceHistory.length > 0 ? (
+                    <PriceChart history={card.priceHistory} currency={card.currency} trend={card.trend} className="w-full" />
+                  ) : (
+                    <p className="text-sm text-muted-text">No historical data available yet for this card.</p>
+                  )}
+                </div>
+
+                <div className="rounded-lg border-2 border-black bg-card-surface p-6 shadow-hard-md">
+                  <PriceDataTabs
+                    currency={card.currency}
+                    recentSnapshots={card.recentSnapshots}
+                    trend={card.trend}
+                    priceRange={card.priceRange}
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* Grading & population — no real source exists yet for either
+                (see tcggo-integration-plan.md §1). Kept visually separate
+                on purpose, not just below the fold by coincidence. */}
+            <section>
+              <div className="mb-4 flex items-center gap-2">
+                <h2 className="text-xs font-black tracking-[0.6px] text-muted-text uppercase">Grading &amp; population — still illustrative</h2>
+                <span className="h-px flex-1 bg-border-subtle" />
+              </div>
+              <PopulationPanel card={card} />
+            </section>
 
             <div className="rounded-lg border-2 border-black bg-card-surface p-6 shadow-hard-md">
               <h2 className="mb-4 text-lg font-black tracking-[-0.45px]">Price alerts</h2>
