@@ -90,3 +90,33 @@ export function illustrativeSoldListings(card: Card): IllustrativeSoldListing[] 
     { grade: "Raw", price: Math.round(base * (0.9 + seedFraction(card.id, 15) * 0.3)), daysAgo: 1 + Math.round(seedFraction(card.id, 16) * 4) },
   ];
 }
+
+const ACTIVE_MULTIPLIER_RANGE: Record<"PSA 10" | "PSA 9" | "PSA 8" | "Raw", [number, number]> = {
+  "PSA 10": [7, 10],
+  "PSA 9": [1.8, 2.6],
+  "PSA 8": [1.1, 1.6],
+  Raw: [0.9, 1.2],
+};
+const ACTIVE_SALT: Record<"PSA 10" | "PSA 9" | "PSA 8" | "Raw", number> = {
+  "PSA 10": 20,
+  "PSA 9": 21,
+  "PSA 8": 22,
+  Raw: 23,
+};
+
+/**
+ * UI preview for GradedMarketPanel's active-listing column before
+ * EBAY_CLIENT_ID/SECRET exist — lets the panel's full layout (3 prices per
+ * tier, median, ROI) be reviewed in the browser ahead of the real API being
+ * wired in, same reasoning as everything else in this file. Deliberately
+ * returns bare numbers, no fake listing metadata or URLs — see
+ * illustrativeSoldListings' comment on why a fabricated eBay link would be
+ * worse than an illustrative price. GradedMarketPanel swaps this out
+ * automatically the moment a real eBay fetch for that tier succeeds.
+ */
+export function illustrativeActivePrices(card: Card, condition: "PSA 10" | "PSA 9" | "PSA 8" | "Raw"): number[] {
+  const base = card.currentPrice;
+  const [lo, hi] = ACTIVE_MULTIPLIER_RANGE[condition];
+  const salt = ACTIVE_SALT[condition];
+  return [0, 1, 2].map((i) => Math.round(base * (lo + seedFraction(card.id, salt * 10 + i) * (hi - lo))));
+}

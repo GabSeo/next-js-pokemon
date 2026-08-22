@@ -112,13 +112,22 @@ type BrowseSearchResponse = {
   }[];
 };
 
-/** Last 3 active listings for one condition tier, newest-listed first. */
+/**
+ * Last 3 active listings for one condition tier, newest-listed first.
+ *
+ * Restricted to buyingOptions:FIXED_PRICE on purpose: an auction listing's
+ * `price` in the Browse API response is the current bid (or starting bid if
+ * no one's bid yet), not a real asking price — mixing that into a price
+ * comparison or the ROI median would be comparing incompatible numbers, not
+ * a data-quality nicety.
+ */
 export async function searchActiveListings(card: Card, condition: EbayCondition): Promise<EbayActiveListing[]> {
   const token = await getAccessToken();
   const query = `${card.name} ${card.set}${card.number ? ` ${card.number}` : ""}`.trim();
   const qs = new URLSearchParams({
     q: query,
     category_ids: CCG_INDIVIDUAL_CARDS_CATEGORY,
+    filter: "buyingOptions:{FIXED_PRICE}",
     aspect_filter: conditionAspectFilter(condition),
     sort: "newlyListed",
     limit: "3",
@@ -135,11 +144,15 @@ export async function searchActiveListings(card: Card, condition: EbayCondition)
     throw new Error(`ebay browse search failed (${res.status}) for "${query}" [${condition}]: ${await res.text()}`);
   }
   const data = (await res.json()) as BrowseSearchResponse;
-  return (data.itemSummaries ?? []).map((item) => ({
-    title: item.title,
-    price: Number(item.price?.value ?? 0),
-    currency: item.price?.currency ?? "USD",
-    url: item.itemWebUrl,
-    imageUrl: item.image?.imageUrl,
-  }));
+  return (data.itemSummaries ?? [])
+    .map((item) => ({
+      title: item.title,
+      price: Number(item.price?.value ?? 0),
+      currency: item.price?.currency ?? "USD",
+      url: item.itemWebUrl,
+      imageUrl: item.image?.imageUrl,
+    }))
+    // Defensive: never let a listing with no real price into the median —
+    // a $0 entry would silently drag it down instead of erroring loudly.
+    .filter((listing) => listing.price > 0);
 }
