@@ -10,7 +10,7 @@ export async function GET(
   if (!card) {
     return new Response("Not found", { status: 404 });
   }
-  return new Response(cardToMarkdown(card), {
+  return new Response(await cardToMarkdown(card), {
     headers: { "Content-Type": "text/markdown; charset=utf-8" },
   });
 }

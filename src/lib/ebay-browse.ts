@@ -40,60 +40,83 @@ function credentials(): { id: string; secret: string } {
 type TokenResponse = { access_token: string; expires_in: number };
 
 // Module-level cache, not per-request — a client_credentials app token is
-// shared across all callers, not tied to any one user or request.
+// shared across all callers, not tied to any one user or request. Only
+// helps within one warm serverless instance (doesn't survive cold starts),
+// which is why inFlightTokenRequest below matters more in practice: every
+// GradedMarketPanel render fires 4 concurrent searchActiveListings calls via
+// Promise.all, and without de-duping the in-flight request, all 4 would
+// call getAccessToken() at nearly the same instant, before any of them had
+// set cachedToken yet — a stampede of 4 separate OAuth token requests for
+// one page view instead of 1.
 let cachedToken: { token: string; expiresAt: number } | null = null;
+let inFlightTokenRequest: Promise<string> | null = null;
 
 async function getAccessToken(): Promise<string> {
   if (cachedToken && cachedToken.expiresAt > Date.now()) return cachedToken.token;
+  if (inFlightTokenRequest) return inFlightTokenRequest;
 
-  const { id, secret } = credentials();
-  const basic = Buffer.from(`${id}:${secret}`).toString("base64");
-  const res = await fetch(TOKEN_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${basic}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({
-      grant_type: "client_credentials",
-      scope: "https://api.ebay.com/oauth/api_scope",
-    }),
-    cache: "no-store", // token endpoint, never cache
-  });
-  if (!res.ok) {
-    throw new Error(`ebay oauth token request failed (${res.status}): ${await res.text()}`);
+  inFlightTokenRequest = (async () => {
+    const { id, secret } = credentials();
+    const basic = Buffer.from(`${id}:${secret}`).toString("base64");
+    const res = await fetch(TOKEN_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${basic}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        grant_type: "client_credentials",
+        scope: "https://api.ebay.com/oauth/api_scope",
+      }),
+      cache: "no-store", // token endpoint — never let Next's Data Cache serve a stale one
+    });
+    if (!res.ok) {
+      throw new Error(`ebay oauth token request failed (${res.status}): ${await res.text()}`);
+    }
+    const data = (await res.json()) as TokenResponse;
+    cachedToken = { token: data.access_token, expiresAt: Date.now() + (data.expires_in - 60) * 1000 };
+    return cachedToken.token;
+  })();
+
+  try {
+    return await inFlightTokenRequest;
+  } finally {
+    inFlightTokenRequest = null;
   }
-  const data = (await res.json()) as TokenResponse;
-  cachedToken = { token: data.access_token, expiresAt: Date.now() + (data.expires_in - 60) * 1000 };
-  return cachedToken.token;
 }
 
 export type EbayCondition = "PSA 10" | "PSA 9" | "PSA 8" | "Raw";
 
 /**
- * aspect_filter values for each condition tier, as name/value TEXT pairs
- * (e.g. "Professional Grader" / "Professional Sports Authenticator"), not
- * eBay's separate numeric condition-descriptor IDs (27501/27502/etc) — those
- * numeric IDs are documented for *listing* trading cards via the Inventory
- * API, and it's unconfirmed whether Browse API's search-side aspect_filter
- * accepts the same numeric system or needs the text form instead. This
- * follows the text-pair syntax from a real (if unresolved) attempted query
- * in eBay's own developer community, since that's the closest thing to
- * verified real-world usage found — TEST THIS against a live account before
- * trusting it; the numeric-ID form may turn out to be required instead.
+ * eBay's documented, verified condition IDs for trading cards (Metadata
+ * API's getItemConditionPolicies / eBay's condition-ID reference): 2750 =
+ * "Graded", 4000 = "Ungraded". This replaces an earlier attempt at
+ * grade-specific filtering via aspect_filter's conditionDescriptors
+ * (Professional Grader/Grade) — that syntax was never confirmed against
+ * eBay's own docs and, confirmed by live testing, silently matched with no
+ * filtering effect at all (every condition tab returned identical results).
+ * conditionIds is the one part of this that's actually documented and
+ * confirmed working (`filter=conditionIds:{1000}` is a real eBay example).
  */
-function conditionAspectFilter(condition: EbayCondition): string {
-  if (condition === "Raw") {
-    return `categoryId:${CCG_INDIVIDUAL_CARDS_CATEGORY}`;
-  }
-  const grade = condition.replace("PSA ", "");
-  return [
-    `categoryId:${CCG_INDIVIDUAL_CARDS_CATEGORY}`,
-    `conditionDescriptors.name:{Professional Grader}`,
-    `conditionDescriptors.values.content:{Professional Sports Authenticator}`,
-    `conditionDescriptors.name:{Grade}`,
-    `conditionDescriptors.values.content:{${grade}}`,
-  ].join(",");
+const CONDITION_ID = { graded: "2750", ungraded: "4000" } as const;
+
+function conditionFilter(condition: EbayCondition): string {
+  const id = condition === "Raw" ? CONDITION_ID.ungraded : CONDITION_ID.graded;
+  return `buyingOptions:{FIXED_PRICE},conditionIds:{${id}}`;
+}
+
+/**
+ * conditionIds only tells eBay "graded" vs "ungraded" — it can't distinguish
+ * PSA 10 from PSA 9 from PSA 8 (no confirmed structured filter for that
+ * exists). Grade-specific precision instead comes from appending the grade
+ * as a keyword to the text query (e.g. "Gengar VMAX 271 PSA 10") — real
+ * seller-written listing titles overwhelmingly include the grade as text
+ * (confirmed in live search results), so eBay's own title-text matching
+ * does the disambiguation eBay's structured filters won't.
+ */
+function conditionQuery(card: Card, condition: EbayCondition): string {
+  const base = cardSearchTerms(card);
+  return condition === "Raw" ? base : `${base} ${condition}`;
 }
 
 export type EbayActiveListing = {
@@ -136,12 +159,11 @@ type BrowseSearchResponse = {
  */
 export async function searchActiveListings(card: Card, condition: EbayCondition): Promise<EbaySearchResult> {
   const token = await getAccessToken();
-  const query = cardSearchTerms(card);
+  const query = conditionQuery(card, condition);
   const qs = new URLSearchParams({
     q: query,
     category_ids: CCG_INDIVIDUAL_CARDS_CATEGORY,
-    filter: "buyingOptions:{FIXED_PRICE}",
-    aspect_filter: conditionAspectFilter(condition),
+    filter: conditionFilter(condition),
     sort: "newlyListed",
     limit: "3",
   });

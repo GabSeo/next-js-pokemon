@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   if (cardId) {
     const card = await findCard(cardId);
     const body = card
-      ? priceCheckResultMarkdown(card)
+      ? await priceCheckResultMarkdown(card)
       : `# Price checker tool\n\nNo card found for "${cardId}".\n`;
     return new Response(body, {
       headers: { "Content-Type": "text/markdown; charset=utf-8" },

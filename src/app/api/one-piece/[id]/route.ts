@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCardByIdOrSlug, toPublicCard } from "@/lib/cards";
+import { getGradedMarketData } from "@/lib/graded-market";
 
 export async function GET(
   _request: Request,
@@ -15,5 +16,6 @@ export async function GET(
     );
   }
 
-  return NextResponse.json(toPublicCard(card));
+  const gradedMarket = await getGradedMarketData(card);
+  return NextResponse.json({ ...toPublicCard(card), gradedMarket });
 }

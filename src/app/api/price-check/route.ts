@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { computeAlertBands, findCard, toPublicCard } from "@/lib/cards";
+import { getGradedMarketData } from "@/lib/graded-market";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -20,8 +21,10 @@ export async function GET(request: Request) {
     );
   }
 
+  const gradedMarket = await getGradedMarketData(card);
   return NextResponse.json({
     ...toPublicCard(card),
     alertBands: computeAlertBands(card.currentPrice),
+    gradedMarket,
   });
 }

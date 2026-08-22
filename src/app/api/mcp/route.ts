@@ -1,6 +1,7 @@
 import { createMcpHandler } from "mcp-handler";
 import { z } from "zod";
 import { findCard, getAllCards, getCardsByFranchise, toPublicCard } from "@/lib/cards";
+import { getGradedMarketData } from "@/lib/graded-market";
 import { MCP_SERVER_INFO, mcpToolDescription } from "@/lib/mcp";
 import { absoluteUrl } from "@/lib/site";
 
@@ -165,6 +166,80 @@ const handler = createMcpHandler((server) => {
           },
         ],
         structuredContent: { found: true, card: toPublicCard(card) },
+      };
+    }
+  );
+
+  const gradedMarketListingSchema = z.object({
+    date: z.string(),
+    description: z.string(),
+    price: z.number(),
+    currency: z.string(),
+    url: z.string().optional(),
+  });
+  const gradedMarketTypeSchema = z.object({
+    isReal: z.boolean(),
+    medianPrice: z.number(),
+    currency: z.string(),
+    count: z.number(),
+    seeAllUrl: z.string(),
+    rows: z.array(gradedMarketListingSchema),
+  });
+
+  server.registerTool(
+    "get_graded_market",
+    {
+      title: "Get graded market",
+      description: mcpToolDescription("get_graded_market"),
+      inputSchema: z.object({
+        cardId: z.string().describe("Card slug, name, number, or CardTrace numeric id."),
+      }),
+      outputSchema: z.object({
+        found: z.boolean(),
+        conditions: z
+          .array(
+            z.object({
+              condition: z.enum(["PSA 10", "PSA 9", "PSA 8", "Raw"]),
+              active: gradedMarketTypeSchema,
+              sold: gradedMarketTypeSchema,
+            })
+          )
+          .optional(),
+        roi: z
+          .object({
+            isReal: z.boolean(),
+            percent: z.number(),
+            psa10Median: z.number(),
+            rawMedian: z.number(),
+            gradingCostUsd: z.number(),
+            currency: z.string(),
+          })
+          .optional(),
+      }),
+    },
+    async ({ cardId }: { cardId: string }) => {
+      const card = await findCard(cardId);
+      logMcpTool("get_graded_market", `cardId=${cardId} -> ${card ? "found" : "not found"}`);
+      if (!card) {
+        return {
+          content: [{ type: "text", text: `No card found for "${cardId}".` }],
+          structuredContent: { found: false },
+        };
+      }
+      const data = await getGradedMarketData(card);
+      const psa10 = data.conditions.find((c) => c.condition === "PSA 10")!;
+      return {
+        content: [
+          {
+            type: "text",
+            text: `${card.name}: PSA 10 active median ${psa10.active.currency} ${psa10.active.medianPrice} (${
+              psa10.active.isReal ? "real, eBay" : "preview, eBay not connected"
+            }). Grading ROI raw -> PSA 10: ${data.roi.percent >= 0 ? "+" : ""}${data.roi.percent.toFixed(0)}% (${
+              data.roi.isReal ? "real" : "preview"
+            }).`,
+          },
+        ],
+        structuredContent: { found: true, conditions: data.conditions, roi: data.roi },
       };
     }
   );

@@ -125,7 +125,7 @@ export async function okfProductConcept(slug: string): Promise<string | undefine
   const card = await getCardBySlug(slug);
   if (!card) return undefined;
   const now = new Date();
-  const body = cardToMarkdown(card);
+  const body = await cardToMarkdown(card);
   return withFrontmatter(
     {
       type: "Product",
@@ -144,7 +144,7 @@ export async function okfPriceCheckerConcept(cardId?: string): Promise<string> {
   const now = new Date();
   const card = cardId ? await findCard(cardId) : undefined;
   const body = card
-    ? priceCheckResultMarkdown(card)
+    ? await priceCheckResultMarkdown(card)
     : await priceCheckerMarkdown();
 
   return withFrontmatter(

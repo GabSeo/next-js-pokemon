@@ -1,5 +1,6 @@
 import { computeAlertBands, getAllCards, getCardsByFranchise, franchiseLabel } from "@/lib/cards";
 import { cardRefs } from "@/data/card-refs";
+import { getGradedMarketData } from "@/lib/graded-market";
 import { absoluteUrl, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 import type { Card, Franchise } from "@/lib/types";
 
@@ -10,7 +11,37 @@ function priceRangeMarkdown(card: Card): string {
 Covers available history from ${from} to ${to}.`;
 }
 
-export function cardToMarkdown(card: Card): string {
+/**
+ * Same data as GradedMarketPanel (components/retro/graded-market-panel.tsx)
+ * via lib/graded-market.ts's shared getGradedMarketData — one fetch path,
+ * so the markdown mirror can never show different numbers than the HTML
+ * page. Every value is explicitly marked Real or Preview so an agent
+ * reading this file doesn't need to guess.
+ */
+async function gradedMarketMarkdown(card: Card): Promise<string> {
+  const data = await getGradedMarketData(card);
+  const rows = data.conditions
+    .map((c) => {
+      const activeSource = c.active.isReal ? `Real, eBay (${c.active.count} total)` : `Preview (${c.active.count} est.)`;
+      return `| ${c.condition} | ${c.active.currency} ${c.active.medianPrice} | ${activeSource} | ${c.sold.currency} ${c.sold.medianPrice} |`;
+    })
+    .join("\n");
+
+  const { roi } = data;
+  const roiSource = roi.isReal ? "real active listings" : "preview numbers, eBay not connected yet";
+
+  return `## Graded market (last 3 active listings + illustrative sold, per condition)
+
+| Condition | Active median | Active source | Sold median (illustrative) |
+| --- | --- | --- | --- |
+${rows}
+
+Grading ROI, raw → PSA 10: ${roi.percent >= 0 ? "+" : ""}${roi.percent.toFixed(0)}% (${roiSource}). ${roi.currency} ${roi.rawMedian} raw + ${roi.currency} ${roi.gradingCostUsd} grading vs ${roi.currency} ${roi.psa10Median} PSA 10.
+
+Sold data is always illustrative: eBay's sold/completed-listing API (Marketplace Insights) is restricted and closed to new applicants — see lib/ebay-browse.ts.`;
+}
+
+export async function cardToMarkdown(card: Card): Promise<string> {
   const history = card.priceHistory
     .map((p) => `- ${p.date}: ${card.currency} ${p.price}`)
     .join("\n");
@@ -29,6 +60,8 @@ export function cardToMarkdown(card: Card): string {
   )
     .map((row) => `| ${row.label} | ${row.price === null ? "—" : `${card.currency} ${row.price}`} |`)
     .join("\n");
+
+  const gradedMarket = await gradedMarketMarkdown(card);
 
   return `# ${card.name} — ${card.set} (${card.number ?? ""})
 
@@ -70,6 +103,8 @@ ${trendRows}
 
 ${priceRangeMarkdown(card)}
 
+${gradedMarket}
+
 ## Machine-readable data
 
 JSON: ${absoluteUrl(`/api/${card.franchise}/${card.id}`)}
@@ -108,7 +143,7 @@ ${rows}
  * distinct thing from the plain product record. Points back to the product
  * page as the canonical source for the card itself.
  */
-export function priceCheckResultMarkdown(card: Card): string {
+export async function priceCheckResultMarkdown(card: Card): Promise<string> {
   const bands = computeAlertBands(card.currentPrice);
   const bandRows = bands
     .map((b) => `| ${b.pct > 0 ? "+" : ""}${b.pct}% | ${card.currency} ${b.price} |`)
@@ -128,6 +163,8 @@ export function priceCheckResultMarkdown(card: Card): string {
   )
     .map((row) => `| ${row.label} | ${row.price === null ? "—" : `${card.currency} ${row.price}`} |`)
     .join("\n");
+
+  const gradedMarket = await gradedMarketMarkdown(card);
 
   return `# Price checker result — ${card.name} (${card.number ?? ""})
 
@@ -158,6 +195,8 @@ ${trendRows}
 ## Price range
 
 ${priceRangeMarkdown(card)}
+
+${gradedMarket}
 
 ## Machine-readable data
 

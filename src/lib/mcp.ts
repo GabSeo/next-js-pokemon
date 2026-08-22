@@ -25,6 +25,11 @@ export const MCP_TOOLS = [
     description:
       "Get full detail for one card: current price, trend signal, price range, price history, recent snapshots, set/rarity metadata, and canonical page links.",
   },
+  {
+    name: "get_graded_market",
+    description:
+      "Get graded-market data for a card, by condition tier (PSA 10, PSA 9, PSA 8, Raw): the last 3 real active eBay listings and their median (falls back to a clearly-marked illustrative preview if eBay isn't reachable), illustrative sold-listing estimates (eBay's sold-data API is restricted and unavailable), and a grading ROI estimate (raw -> PSA 10) computed from active-listing medians only.",
+  },
 ] as const;
 
 type McpToolName = (typeof MCP_TOOLS)[number]["name"];
