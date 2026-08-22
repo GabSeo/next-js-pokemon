@@ -125,7 +125,7 @@ export default async function ProductPage({ params }: PageProps) {
           <span className="text-foreground">{card.name}</span>
         </nav>
 
-        <div className="my-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border-2 border-black bg-card-surface p-6 shadow-hard-md">
+        <div className="mt-5 mb-8 flex flex-wrap items-center justify-between gap-3 rounded-lg border-2 border-black bg-card-surface p-6 shadow-hard-md">
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-2xl font-black tracking-[-0.6px] uppercase">{card.name}</h1>
             <span className="rounded-full border-2 border-black bg-pokemon-blue px-3.5 py-1 text-xs font-black tracking-[0.35px] text-white uppercase">
@@ -180,7 +180,9 @@ export default async function ProductPage({ params }: PageProps) {
               ↗
             </a>
 
-            <AddToCollectionButton cardId={card.id} />
+            <div className="mt-4">
+              <AddToCollectionButton cardId={card.id} />
+            </div>
 
             <OpenDataLinks
               markdownHref={`/products/${card.slug}/index.md`}
