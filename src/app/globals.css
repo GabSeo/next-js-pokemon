@@ -117,3 +117,20 @@
 .psa-card-wrap:hover .psa-glare {
   opacity: 1;
 }
+
+/* Cursor-following spotlight, layered on top of the diagonal glare —
+   --spot-x/--spot-y are written every frame by PsaTiltCard's existing
+   rAF-batched pointer handler (same one driving the tilt), same "circle at
+   var(--x) var(--y)" technique as scrydex.com's card_holo_controller.js. */
+.psa-spotlight {
+  background: radial-gradient(
+    circle at var(--spot-x, 50%) var(--spot-y, 50%),
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(255, 255, 255, 0.16) 30%,
+    transparent 60%
+  );
+  mix-blend-mode: overlay;
+}
+.psa-card-wrap:hover .psa-spotlight {
+  opacity: 1;
+}

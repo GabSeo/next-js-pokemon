@@ -11,7 +11,10 @@ import { useEffect, useRef } from "react";
  * animate() on every raw mousemove queues up competing tweens instead of
  * following the cursor 1:1); mouseleave hands off to an actual Motion
  * spring back to flat; a slow y-bob loop runs continuously so the card
- * feels alive at rest.
+ * feels alive at rest. The same rAF-batched handler also writes --spot-x/
+ * --spot-y custom properties, which the .psa-spotlight radial-gradient
+ * layer in globals.css reads to light up the area under the cursor — same
+ * "circle at var(--x) var(--y)" technique as scrydex.com's card holo effect.
  *
  * `children` is the real card image/content — always rendered, unconditional
  * on JS. This component only ever adds transform styling on top of it.
@@ -28,11 +31,15 @@ export function PsaTiltCard({ children }: { children: React.ReactNode }) {
 
     let targetRotateX = 0;
     let targetRotateY = 0;
+    let targetSpotX = 50;
+    let targetSpotY = 50;
     let rafId: number | null = null;
 
     function applyTilt() {
       if (card) {
         card.style.transform = `rotateY(${targetRotateY}deg) rotateX(${targetRotateX}deg) scale(1.05)`;
+        card.style.setProperty("--spot-x", `${targetSpotX}%`);
+        card.style.setProperty("--spot-y", `${targetSpotY}%`);
       }
       rafId = null;
     }
@@ -43,6 +50,8 @@ export function PsaTiltCard({ children }: { children: React.ReactNode }) {
       const py = (e.clientY - rect.top) / rect.height;
       targetRotateY = (px - 0.5) * 26;
       targetRotateX = (0.5 - py) * 26;
+      targetSpotX = px * 100;
+      targetSpotY = py * 100;
       if (rafId === null) rafId = requestAnimationFrame(applyTilt);
     }
 
@@ -52,6 +61,8 @@ export function PsaTiltCard({ children }: { children: React.ReactNode }) {
         rafId = null;
       }
       animate(card!, { rotateY: 0, rotateX: 0, scale: 1 }, { type: "spring", stiffness: 180, damping: 14 });
+      card!.style.setProperty("--spot-x", "50%");
+      card!.style.setProperty("--spot-y", "50%");
     }
 
     wrap.addEventListener("mousemove", handleMouseMove);
@@ -79,6 +90,7 @@ export function PsaTiltCard({ children }: { children: React.ReactNode }) {
       >
         {children}
         <div className="psa-glare pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300" />
+        <div className="psa-spotlight pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300" />
       </div>
     </div>
   );
