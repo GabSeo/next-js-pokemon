@@ -4,10 +4,29 @@ import type { Card } from "@/lib/types";
 /** eBay's "CCG Individual Cards" category — matches ebay-browse.ts's CCG_INDIVIDUAL_CARDS_CATEGORY. */
 const CCG_INDIVIDUAL_CARDS_CATEGORY = "183454";
 
-function ebaySearchUrl(params: Record<string, string>): string {
+function ebaySearchUrl(params: Record<string, string>, extraRawParam?: string): string {
   const qs = new URLSearchParams(params);
-  return `https://www.ebay.com/sch/i.html?${qs}`;
+  const extra = extraRawParam ? `&${extraRawParam}` : "";
+  return `https://www.ebay.com/sch/i.html?${qs}${extra}`;
 }
+
+/**
+ * The "Professional Grader" facet param, exactly as it appears in a real,
+ * hand-verified working eBay search URL — double percent-encoded
+ * (`Professional%2520Grader=...%2528PSA%2529`, i.e. `%25` + `20`/`28`/`29`,
+ * not the single-encoded `%20`/`28`/`29` a standard URLSearchParams would
+ * produce). Confirmed by direct testing: the standard single-encoded form
+ * does not trigger eBay's filter at all — only this exact double-encoded
+ * string does, apparently a quirk of how eBay's frontend parses this
+ * specific ad-hoc facet param. Hardcoded verbatim rather than re-derived
+ * through nested encodeURIComponent/URLSearchParams calls, since a naive
+ * two-pass encode doesn't reproduce it correctly (encodeURIComponent alone
+ * never touches parentheses, so composing it with URLSearchParams' own
+ * encoding only double-encodes the spaces, not the parens — the actual
+ * confirmed string double-encodes both).
+ */
+const PROFESSIONAL_GRADER_PARAM =
+  "Professional%2520Grader=Professional%2520Sports%2520Authenticator%2520%2528PSA%2529";
 
 /**
  * Search terms shared by the real eBay Browse API query (lib/ebay-browse.ts)
@@ -48,10 +67,9 @@ export function conditionSearchLink(card: Card, condition: EbayCondition, langua
   };
   if (condition === "Raw") {
     params.Graded = "No";
-  } else {
-    params.Grade = condition.replace("PSA ", "");
-    params["Professional Grader"] = "Professional Sports Authenticator (PSA)";
-    params._fsrp = "1";
+    return ebaySearchUrl(params);
   }
-  return ebaySearchUrl(params);
+  params.Grade = condition.replace("PSA ", "");
+  params._fsrp = "1";
+  return ebaySearchUrl(params, PROFESSIONAL_GRADER_PARAM);
 }
