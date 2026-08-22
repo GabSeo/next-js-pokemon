@@ -75,7 +75,7 @@ async function fetchActiveTier(card: Card, condition: EbayCondition, language: E
         medianPrice: med,
         currency: card.currency,
         count: total,
-        seeAllUrl: conditionSearchLink(card, condition),
+        seeAllUrl: conditionSearchLink(card, condition, language),
         rows: listings.map((listing) => ({
           date: listing.listedDate
             ? new Date(listing.listedDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
@@ -97,7 +97,7 @@ async function fetchActiveTier(card: Card, condition: EbayCondition, language: E
     medianPrice: median(rows.map((r) => r.price))!,
     currency: card.currency,
     count: total,
-    seeAllUrl: conditionSearchLink(card, condition),
+    seeAllUrl: conditionSearchLink(card, condition, language),
     rows: rows.map((row) => ({ ...row, currency: card.currency })),
   };
 }
@@ -105,19 +105,20 @@ async function fetchActiveTier(card: Card, condition: EbayCondition, language: E
 /**
  * Always illustrative — see lib/illustrative.ts's comment on why sold data
  * can't be real here (eBay's sold-data API is restricted, closed to new
- * applicants). Doesn't vary by language (the generator has no language
- * input) — still generated per-language for a uniform data shape, but the
- * numbers are the same regardless of which language tab is open, which is
- * fine since it's clearly tagged illustrative either way.
+ * applicants). The illustrative numbers don't vary by language (the
+ * generator has no language input) — still generated per-language for a
+ * uniform data shape, and the see-all link is still language-specific so
+ * clicking through matches whichever language tab is open, even though the
+ * illustrative price shown doesn't change.
  */
-function buildSoldTier(card: Card, condition: EbayCondition): GradedMarketTypeData {
+function buildSoldTier(card: Card, condition: EbayCondition, language: EbayLanguage): GradedMarketTypeData {
   const { rows, total } = illustrativeSoldListings(card, condition);
   return {
     isReal: false,
     medianPrice: median(rows.map((r) => r.price))!,
     currency: card.currency,
     count: total,
-    seeAllUrl: conditionSearchLink(card, condition),
+    seeAllUrl: conditionSearchLink(card, condition, language),
     rows: rows.map((row) => ({ ...row, currency: card.currency })),
   };
 }
@@ -159,7 +160,7 @@ export async function getGradedMarketData(card: Card): Promise<GradedMarketData>
     languages: GRADED_MARKET_LANGUAGES.map((language) => ({
       language,
       active: activeByKey.get(`${condition}:${language}`)!,
-      sold: buildSoldTier(card, condition),
+      sold: buildSoldTier(card, condition, language),
     })),
   }));
 

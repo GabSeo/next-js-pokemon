@@ -123,27 +123,31 @@ function conditionQuery(card: Card, condition: EbayCondition, language?: EbayLan
 export type EbayLanguage = "English" | "Japanese" | "French";
 
 /**
- * eBay's own search UI ("Popular Filters") shows "Grade: 10"/"Grade: 9" and
- * "English"/"Japanese" as separate facet pills for this category — a plain,
- * flat item aspect (`Grade`, `Language`), not the nested condition-
- * descriptor path (`conditionDescriptors.name`/`.values.content`) used
- * above for conditionFilter, and not the same mechanism that failed
- * earlier. This is the classic, long-established Browse API aspect_filter
- * form used for Brand/Color/etc. across every eBay category, so it's more
- * likely to actually work — but still unverified against this specific
- * category's real response, so it's applied ADDITIVELY on top of the
+ * Aspect names and values here are copied from a real, hand-verified
+ * "perfect results" eBay search URL (see lib/ebay-search.ts's
+ * conditionSearchLink comment for the decoded params), not guessed: `Grade`
+ * (bare number) + `Professional Grader` (exact value "Professional Sports
+ * Authenticator (PSA)") for graded tiers, `Graded:No` for Raw, `Language`
+ * for card language. That URL confirms these are eBay's website-facet
+ * names, not the nested condition-descriptor path
+ * (`conditionDescriptors.name`/`.values.content`) that failed earlier — but
+ * the website's facet system and the Browse API's aspect_filter, while
+ * usually built on the same underlying item-aspect taxonomy, aren't
+ * guaranteed identical, so this is still applied ADDITIVELY on top of the
  * already-confirmed-working conditionIds+keyword approach above, not in
- * place of it: if this aspect_filter turns out to have no effect (or eBay
- * silently ignores an aspect name it doesn't recognize), results degrade to
- * exactly what already works today, not a second broken state.
+ * place of it: if aspect_filter has no effect via the API, results degrade
+ * to exactly what already works today, not a second broken state.
  */
-function precisionAspectFilter(condition: EbayCondition, language?: EbayLanguage): string | undefined {
+function precisionAspectFilter(condition: EbayCondition, language?: EbayLanguage): string {
   const parts: string[] = [`categoryId:${CCG_INDIVIDUAL_CARDS_CATEGORY}`];
-  if (condition !== "Raw") parts.push(`Grade:{${condition.replace("PSA ", "")}}`);
+  if (condition === "Raw") {
+    parts.push(`Graded:{No}`);
+  } else {
+    parts.push(`Grade:{${condition.replace("PSA ", "")}}`);
+    parts.push(`Professional Grader:{Professional Sports Authenticator (PSA)}`);
+  }
   if (language) parts.push(`Language:{${language}}`);
-  // Only categoryId present means nothing to actually filter on — omit
-  // aspect_filter entirely rather than send a no-op parameter.
-  return parts.length > 1 ? parts.join(",") : undefined;
+  return parts.join(",");
 }
 
 export type EbayActiveListing = {
@@ -195,11 +199,10 @@ export async function searchActiveListings(
     q: query,
     category_ids: CCG_INDIVIDUAL_CARDS_CATEGORY,
     filter: conditionFilter(condition),
+    aspect_filter: precisionAspectFilter(condition, language),
     sort: "newlyListed",
     limit: "3",
   });
-  const aspectFilter = precisionAspectFilter(condition, language);
-  if (aspectFilter) qs.set("aspect_filter", aspectFilter);
 
   const res = await fetch(`${SEARCH_URL}?${qs}`, {
     headers: {
