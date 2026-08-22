@@ -103,8 +103,9 @@ export default async function ProductPage({ params }: PageProps) {
   };
 
   const localeLinks: LocaleLink[] = [
-    ...(fr.translated ? [{ label: "🇫🇷 Français", href: `/products/${card.slug}/fr`, active: false }] : []),
-    { label: "🇯🇵 Japan market data", href: `/products/${card.slug}/ja`, active: false },
+    { code: "US", flag: "🇺🇸", href: `/products/${card.slug}`, active: true },
+    ...(fr.translated ? [{ code: "FR", flag: "🇫🇷", href: `/products/${card.slug}/fr`, active: false }] : []),
+    { code: "JP", flag: "🇯🇵", href: `/products/${card.slug}/ja`, active: false },
   ];
 
   return (

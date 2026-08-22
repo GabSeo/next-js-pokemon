@@ -124,9 +124,9 @@ export default async function ProductPageFrench({ params }: PageProps) {
   };
 
   const localeLinks: LocaleLink[] = [
-    { label: "🇬🇧 English", href: `/products/${card.slug}`, active: false },
-    { label: "🇫🇷 Français", href: `/products/${card.slug}/fr`, active: true },
-    { label: "🇯🇵 Japan market data", href: `/products/${card.slug}/ja`, active: false },
+    { code: "US", flag: "🇺🇸", href: `/products/${card.slug}`, active: false },
+    { code: "FR", flag: "🇫🇷", href: `/products/${card.slug}/fr`, active: true },
+    { code: "JP", flag: "🇯🇵", href: `/products/${card.slug}/ja`, active: false },
   ];
 
   return (

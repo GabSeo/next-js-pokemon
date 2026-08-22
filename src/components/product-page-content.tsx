@@ -17,7 +17,7 @@ import { CARDMARKET_HOMEPAGE_URL } from "@/lib/cardmarket-search";
 import type { EbayLanguage } from "@/lib/ebay-browse";
 import type { Card } from "@/lib/types";
 
-export type LocaleLink = { label: string; href: string; active: boolean };
+export type LocaleLink = { code: string; flag: string; href: string; active: boolean };
 
 type ProductPageContentProps = {
   /** Source of truth for every number, search query, and history point — always the real English-identity Card, never a localized clone (see graded-market.ts's `card.tcgdexId`-based French search override). */
@@ -29,7 +29,7 @@ type ProductPageContentProps = {
   markdownHref: string;
   jsonHref: string;
   okfHref: string;
-  /** The visible "no orphan pages" cross-links between locale/market variants (PLAN.md §4.3) — empty on a card with no French translation. */
+  /** The visible "no orphan pages" cross-links between market variants (PLAN.md §4.3). Framed as *market* focus (US/FR/JP), not *language* — honest either way: /fr is real translated content, /ja isn't (see that route's own doc comment), but both are legitimately a different market's data for this card. */
   localeLinks: LocaleLink[];
   /** Which Graded Market tab opens by default — English unless a locale page overrides it. */
   defaultGradedMarketLanguage?: EbayLanguage;
@@ -62,37 +62,40 @@ export function ProductPageContent({
       )}
 
       <div className="mx-auto max-w-[1180px] px-6 py-16">
-        <nav aria-label="Breadcrumb" className="text-sm font-bold text-muted-text">
-          <Link href="/" className="hover:text-foreground hover:underline">
-            Home
-          </Link>
-          <span className="px-1.5">/</span>
-          <Link href={collectionHref} className="hover:text-foreground hover:underline">
-            {franchiseLabel}
-          </Link>
-          <span className="px-1.5">/</span>
-          <span className="text-foreground">{displayCard.name}</span>
-        </nav>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <nav aria-label="Breadcrumb" className="text-sm font-bold text-muted-text">
+            <Link href="/" className="hover:text-foreground hover:underline">
+              Home
+            </Link>
+            <span className="px-1.5">/</span>
+            <Link href={collectionHref} className="hover:text-foreground hover:underline">
+              {franchiseLabel}
+            </Link>
+            <span className="px-1.5">/</span>
+            <span className="text-foreground">{displayCard.name}</span>
+          </nav>
 
-        {localeLinks.length > 0 && (
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-bold text-muted-text">
-            <span className="uppercase tracking-[0.3px]">Also available:</span>
-            {localeLinks.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                aria-current={l.active ? "page" : undefined}
-                className={`rounded-full border-2 px-2.5 py-0.5 ${
-                  l.active
-                    ? "border-black bg-pokemon-blue text-white"
-                    : "border-border-subtle hover:border-black hover:text-foreground"
-                }`}
-              >
-                {l.label}
-              </Link>
-            ))}
-          </div>
-        )}
+          {localeLinks.length > 0 && (
+            <div className="flex items-center gap-2" role="group" aria-label="Market">
+              <span className="text-xs font-black tracking-[0.3px] text-muted-text uppercase">Market</span>
+              <div className="flex overflow-hidden rounded-md border-2 border-black">
+                {localeLinks.map((l, i) => (
+                  <Link
+                    key={l.href}
+                    href={l.href}
+                    aria-current={l.active ? "page" : undefined}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-black tracking-[0.3px] uppercase transition-colors ${
+                      i > 0 ? "border-l-2 border-black" : ""
+                    } ${l.active ? "bg-pokemon-red text-white" : "bg-white text-foreground hover:bg-muted-surface"}`}
+                  >
+                    <span aria-hidden="true">{l.flag}</span>
+                    {l.code}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
 
         <div className="mt-5 mb-8 flex flex-wrap items-center justify-between gap-3 rounded-lg border-2 border-black bg-card-surface p-6 shadow-hard-md">
           <div className="flex flex-wrap items-center gap-3">

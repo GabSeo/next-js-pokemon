@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductPageContent, type LocaleLink } from "@/components/product-page-content";
-import { franchiseLabel, getAllCards, getCardBySlug } from "@/lib/cards";
+import { franchiseLabel, getAllCards, getCardBySlug, getFrenchCardText } from "@/lib/cards";
 
 // Same window as the base product page — see its own comment.
 export const revalidate = 129600;
@@ -51,10 +51,12 @@ export default async function ProductPageJapan({ params }: PageProps) {
   if (!card) notFound();
 
   const label = franchiseLabel(card.franchise);
+  const fr = await getFrenchCardText(card);
 
   const localeLinks: LocaleLink[] = [
-    { label: "🇬🇧 English", href: `/products/${card.slug}`, active: false },
-    { label: "🇯🇵 Japan market data", href: `/products/${card.slug}/ja`, active: true },
+    { code: "US", flag: "🇺🇸", href: `/products/${card.slug}`, active: false },
+    ...(fr.translated ? [{ code: "FR", flag: "🇫🇷", href: `/products/${card.slug}/fr`, active: false }] : []),
+    { code: "JP", flag: "🇯🇵", href: `/products/${card.slug}/ja`, active: true },
   ];
 
   return (
