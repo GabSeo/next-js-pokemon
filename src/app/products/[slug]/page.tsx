@@ -16,6 +16,7 @@ import { PsaGradedPanel } from "@/components/retro/psa-graded-panel";
 import { PsaTiltCard } from "@/components/retro/psa-tilt-card";
 import { SoldListingsPanel } from "@/components/retro/sold-listings-panel";
 import { computeAlertBands, franchiseLabel, getAllCards, getCardBySlug } from "@/lib/cards";
+import { cardmarketSearchLink } from "@/lib/cardmarket-search";
 import { absoluteUrl } from "@/lib/site";
 
 // 36 hours (must be a literal — Next.js statically parses this export).
@@ -50,6 +51,7 @@ export default async function ProductPage({ params }: PageProps) {
 
   const label = franchiseLabel(card.franchise);
   const bands = computeAlertBands(card.currentPrice);
+  const cardmarketHref = cardmarketSearchLink(card);
 
   const productJsonLd = {
     "@context": "https://schema.org",
@@ -159,6 +161,21 @@ export default async function ProductPage({ params }: PageProps) {
                 <span className="flex items-center gap-2.5">
                   <span className="h-2.5 w-2.5 rounded-full border-2 border-black bg-pokemon-blue" />
                   TCGplayer
+                </span>
+                ↗
+              </a>
+            )}
+
+            {cardmarketHref && (
+              <a
+                href={cardmarketHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 flex items-center justify-between rounded-md border-2 border-black bg-card-surface px-4 py-3 text-sm font-black shadow-hard-sm transition-[transform,box-shadow] duration-100 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-md"
+              >
+                <span className="flex items-center gap-2.5">
+                  <span className="h-2.5 w-2.5 rounded-full border-2 border-black bg-pokemon-yellow" />
+                  Cardmarket
                 </span>
                 ↗
               </a>
