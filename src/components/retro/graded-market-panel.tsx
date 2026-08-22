@@ -56,39 +56,40 @@ function ConditionTabContent({
         <data value={String(active.median)} className="block text-3xl font-black tracking-[-0.5px] tabular-nums">
           {card.currency} {active.median.toLocaleString()}
         </data>
-        <div className="mt-2 flex flex-col gap-1">
-          {active.kind === "real" ? (
-            active.listings.map((listing) => (
-              <a
-                key={listing.url}
-                href={listing.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-bold text-pokemon-blue underline underline-offset-2 hover:text-foreground"
-              >
-                {listing.currency} {listing.price.toLocaleString()}
-              </a>
-            ))
-          ) : (
-            <>
-              <div className="flex flex-wrap gap-x-2 gap-y-1">
-                {active.prices.map((price, i) => (
-                  <span key={i} className="text-xs font-bold text-muted-text">
+        <div className="mt-3 flex flex-col gap-2">
+          {active.kind === "real"
+            ? active.listings.map((listing) => (
+                <div key={listing.url} className="flex items-center justify-between gap-3 border-b border-border-subtle pb-2 last:border-0">
+                  <span className="text-sm font-bold tabular-nums">
+                    {listing.currency} {listing.price.toLocaleString()}
+                  </span>
+                  <a
+                    href={listing.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 text-xs font-bold text-pokemon-blue underline underline-offset-2 hover:text-foreground"
+                  >
+                    Shop ↗
+                  </a>
+                </div>
+              ))
+            : active.prices.map((price, i) => (
+                <div key={i} className="flex items-center justify-between gap-3 border-b border-border-subtle pb-2 last:border-0">
+                  <span className="text-sm font-bold tabular-nums text-muted-text">
                     {card.currency} {price.toLocaleString()}
                   </span>
-                ))}
-              </div>
-              <a
-                href={conditionSearchLink(card, condition)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-bold text-pokemon-blue underline underline-offset-2 hover:text-foreground"
-              >
-                Shop real listings ↗
-              </a>
-            </>
-          )}
+                </div>
+              ))}
         </div>
+
+        <a
+          href={conditionSearchLink(card, condition)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-4 inline-block text-xs font-black text-pokemon-red underline underline-offset-2 hover:text-foreground"
+        >
+          See all {condition} listings ↗
+        </a>
       </div>
 
       <div>
