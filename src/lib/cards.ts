@@ -7,6 +7,7 @@ import {
   type ApitcgProduct,
 } from "@/lib/apitcg";
 import { absoluteUrl } from "@/lib/site";
+import { findCardByNameAndSet, cardImageUrl, tcgplayerSnapshot, type TcgdexCard } from "@/lib/tcgdex";
 import type {
   AlertBand,
   Card,
@@ -84,11 +85,35 @@ async function resolveProduct(ref: CardRef): Promise<ApitcgProduct | undefined> 
   );
 }
 
+/**
+ * TCGdex match for a Pokémon ref, non-fatal on any failure — same
+ * resilience shape as the rest of this file's external calls (apitcg,
+ * eBay): a card must still render with apitcg's data if TCGdex is
+ * unreachable or has no match, never take the page down. One Piece isn't
+ * in TCGdex at all, so this is only ever attempted for `tcg === "pokemon"`,
+ * and only for the "nameSet" lookup shape every current Pokémon ref uses
+ * (TCGdex has no equivalent to One Piece's terse set-code lookup).
+ */
+async function resolveTcgdexCard(ref: CardRef): Promise<TcgdexCard | undefined> {
+  if (ref.tcg !== "pokemon" || ref.lookup.by !== "nameSet") return undefined;
+  try {
+    return await findCardByNameAndSet(ref.lookup.name, ref.lookup.setName, ref.lookup.number);
+  } catch (err) {
+    console.error(`[cards] tcgdex lookup failed for ${ref.slug}:`, err);
+    return undefined;
+  }
+}
+
 async function resolveCard(ref: CardRef): Promise<Card | undefined> {
-  const product = await resolveProduct(ref);
+  const [product, tcgdexCard] = await Promise.all([resolveProduct(ref), resolveTcgdexCard(ref)]);
   if (!product) return undefined;
 
-  const currentPrice = marketPrice(product.markets) ?? 0;
+  // TCGdex's TCGplayer snapshot (hourly-refreshed, per its own docs) wins
+  // over apitcg's when a match exists; apitcg's is the fallback for One
+  // Piece and any Pokémon card TCGdex couldn't match. See tcgplayerSnapshot's
+  // doc comment for why apitcg stays wired at all despite this.
+  const { price: tcgdexPrice, updated: tcgdexPriceUpdated } = tcgdexCard ? tcgplayerSnapshot(tcgdexCard) : {};
+  const currentPrice = tcgdexPrice ?? marketPrice(product.markets) ?? 0;
   const history = await getHistoryPrices(product._id, HISTORY_LOOKBACK_LIMIT).catch(() => []);
 
   const sortedAsc = [...history].sort((a, b) => a.date.localeCompare(b.date));
@@ -115,21 +140,27 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
     id: String(product._id),
     slug: ref.slug,
     franchise: ref.franchise,
-    name: product.name,
-    set: product.set?.name ?? "",
-    setCode: product.set?.code,
-    number: product.attributes?.Number ?? product.code,
-    rarity: product.attributes?.Rarity,
+    // TCGdex is the purpose-built Pokémon card database (apitcg's
+    // attributes bag is a generic multi-TCG catch-all), so its fields win
+    // for name/set/number/rarity/image when a match was found; apitcg's own
+    // values are the fallback so nothing regresses when TCGdex has no match
+    // (or for One Piece, where TCGdex has no data at all).
+    name: tcgdexCard?.name ?? product.name,
+    set: tcgdexCard?.set.name ?? product.set?.name ?? "",
+    setCode: tcgdexCard?.set.id ?? product.set?.code,
+    number: tcgdexCard?.localId ?? product.attributes?.Number ?? product.code,
+    rarity: tcgdexCard?.rarity ?? product.attributes?.Rarity,
     currency: "USD",
     currentPrice,
-    asOfDate: (product.updatedAt ?? new Date().toISOString()).slice(0, 10),
+    asOfDate: (tcgdexPriceUpdated ?? product.updatedAt ?? new Date().toISOString()).slice(0, 10),
     priceHistory,
     recentSnapshots,
     trend: computeTrend(priceHistory),
     priceRange: computePriceRange(priceHistory),
-    imageUrl: product.images?.[0]?.large ?? product.images?.[0]?.medium,
+    imageUrl: tcgdexCard?.image ? cardImageUrl(tcgdexCard.image) : product.images?.[0]?.large ?? product.images?.[0]?.medium,
     sourceUrl: product.markets?.tcgplayer?.url,
     description: rawDescription ? stripHtml(rawDescription) : undefined,
+    tcgdexId: tcgdexCard?.id,
   };
 }
 

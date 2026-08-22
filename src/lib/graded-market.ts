@@ -2,6 +2,7 @@ import { conditionSearchLink } from "@/lib/ebay-search";
 import { searchActiveListings, type EbayCondition, type EbayLanguage } from "@/lib/ebay-browse";
 import { illustrativeActiveListings, illustrativeSoldListings } from "@/lib/illustrative";
 import { DEFAULT_PSA_GRADING_COST_USD, gradingRoi, median } from "@/lib/roi";
+import { getLocalizedName } from "@/lib/tcgdex";
 import type { Card } from "@/lib/types";
 
 export const GRADED_MARKET_CONDITIONS: EbayCondition[] = ["PSA 10", "PSA 9", "PSA 8", "Raw"];
@@ -59,9 +60,14 @@ export type GradedMarketData = {
  * to an illustrative preview, same resilience shape lib/cards.ts uses for
  * apitcg.
  */
-async function fetchActiveTier(card: Card, condition: EbayCondition, language: EbayLanguage): Promise<GradedMarketTypeData> {
+async function fetchActiveTier(
+  card: Card,
+  condition: EbayCondition,
+  language: EbayLanguage,
+  nameOverride?: string
+): Promise<GradedMarketTypeData> {
   try {
-    const { listings, total } = await searchActiveListings(card, condition, language);
+    const { listings, total } = await searchActiveListings(card, condition, language, nameOverride);
     if (listings.length === 0) {
       console.warn(
         `[ebay] 0 active listings for ${card.id} [${condition}/${language}] — search succeeded but returned nothing. ` +
@@ -75,7 +81,7 @@ async function fetchActiveTier(card: Card, condition: EbayCondition, language: E
         medianPrice: med,
         currency: card.currency,
         count: total,
-        seeAllUrl: conditionSearchLink(card, condition, language),
+        seeAllUrl: conditionSearchLink(card, condition, language, nameOverride),
         rows: listings.map((listing) => ({
           date: listing.listedDate
             ? new Date(listing.listedDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
@@ -97,7 +103,7 @@ async function fetchActiveTier(card: Card, condition: EbayCondition, language: E
     medianPrice: median(rows.map((r) => r.price))!,
     currency: card.currency,
     count: total,
-    seeAllUrl: conditionSearchLink(card, condition, language),
+    seeAllUrl: conditionSearchLink(card, condition, language, nameOverride),
     rows: rows.map((row) => ({ ...row, currency: card.currency })),
   };
 }
@@ -111,14 +117,19 @@ async function fetchActiveTier(card: Card, condition: EbayCondition, language: E
  * clicking through matches whichever language tab is open, even though the
  * illustrative price shown doesn't change.
  */
-function buildSoldTier(card: Card, condition: EbayCondition, language: EbayLanguage): GradedMarketTypeData {
+function buildSoldTier(
+  card: Card,
+  condition: EbayCondition,
+  language: EbayLanguage,
+  nameOverride?: string
+): GradedMarketTypeData {
   const { rows, total } = illustrativeSoldListings(card, condition);
   return {
     isReal: false,
     medianPrice: median(rows.map((r) => r.price))!,
     currency: card.currency,
     count: total,
-    seeAllUrl: conditionSearchLink(card, condition, language),
+    seeAllUrl: conditionSearchLink(card, condition, language, nameOverride),
     rows: rows.map((row) => ({ ...row, currency: card.currency })),
   };
 }
@@ -140,9 +151,17 @@ function buildSoldTier(card: Card, condition: EbayCondition, language: EbayLangu
  * default limit.
  */
 export async function getGradedMarketData(card: Card): Promise<GradedMarketData> {
+  // Resolved once per card (not once per condition tier) since it's the
+  // same French name for all 4 conditions — TCGdex has no Japanese
+  // coverage (see lib/tcgdex.ts), so the Japanese tab still searches on the
+  // English name, same as before. Failure is non-fatal: undefined just
+  // means fetchActiveTier/buildSoldTier fall back to the English name.
+  const frenchName = card.tcgdexId ? await getLocalizedName(card.tcgdexId, "fr").catch(() => undefined) : undefined;
+  const nameOverrideFor = (language: EbayLanguage) => (language === "French" ? frenchName : undefined);
+
   const activeResults = await Promise.all(
     GRADED_MARKET_CONDITIONS.flatMap((condition) =>
-      GRADED_MARKET_LANGUAGES.map((language) => fetchActiveTier(card, condition, language))
+      GRADED_MARKET_LANGUAGES.map((language) => fetchActiveTier(card, condition, language, nameOverrideFor(language)))
     )
   );
   // flatMap order is condition-major, language-minor — same order as the
@@ -160,7 +179,7 @@ export async function getGradedMarketData(card: Card): Promise<GradedMarketData>
     languages: GRADED_MARKET_LANGUAGES.map((language) => ({
       language,
       active: activeByKey.get(`${condition}:${language}`)!,
-      sold: buildSoldTier(card, condition, language),
+      sold: buildSoldTier(card, condition, language, nameOverrideFor(language)),
     })),
   }));
 

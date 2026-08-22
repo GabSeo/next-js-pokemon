@@ -41,18 +41,41 @@ const PROFESSIONAL_GRADER_PARAM =
  * concern. Stripped here, scoped to the search query only — card.name
  * itself (used in page titles, JSON-LD, breadcrumbs, etc.) is untouched.
  */
-function cleanCardName(card: Card): string {
+/**
+ * apitcg.com's `product.name` bakes the print-variant descriptor into the
+ * name itself for some cards — e.g. "Gengar VMAX (Alternate Art Secret)" —
+ * duplicating what `card.rarity` already carries separately ("Secret Rare"
+ * etc). That parenthetical is real signal for a human reading the card's
+ * own name, but it's noise in a *search query*: comparing two real,
+ * hand-tested eBay search URLs for two different cards, the one WITHOUT a
+ * parenthetical in its name triggered eBay's filters correctly, and the one
+ * WITH one (this Gengar VMAX case) did not — direct evidence that the
+ * parenthetical breaks eBay's own query parsing, not just an aesthetic
+ * concern. Stripped here, scoped to the search query only — card.name
+ * itself (used in page titles, JSON-LD, breadcrumbs, etc.) is untouched.
+ *
+ * Exported so lib/tcgdex.ts can search TCGdex's catalog using the same
+ * clean name — the parenthetical would break TCGdex's own name search the
+ * same way it breaks eBay's.
+ */
+export function cleanCardName(card: Card): string {
   return card.name.replace(/\s*\([^)]*\)\s*$/, "").trim();
 }
 
 /**
  * Search terms shared by the real eBay Browse API query (lib/ebay-browse.ts)
- * and the plain search-link fallback below: "<clean name> <full number>"
- * (e.g. "Gengar VMAX 271/264"), no dash and no repeated number. An earlier
+ * and the plain search-link fallback below: "<name> <full number>" (e.g.
+ * "Gengar VMAX 271/264"), no dash and no repeated number. An earlier
  * version added "- <full number> <primary number>" to match one specific
  * hand-verified working URL, but a second comparison URL for a different
  * card showed that exact pattern isn't what makes eBay's filters fire — the
  * dash/duplication was incidental to that one example, not load-bearing.
+ *
+ * `nameOverride` lets a caller substitute a localized name (e.g. TCGdex's
+ * French translation, "Ectoplasma" for "Gengar") while reusing the same
+ * number-appending logic — French/German/Spanish/Italian prints share the
+ * English print's set numbering (only Japanese/Korean/Chinese don't), so
+ * the number itself never needs to change, only the name.
  *
  * A bare "<name> <number>" query can still false-positive on a different
  * card that shares a name prefix and a loosely-matched number (e.g.
@@ -63,8 +86,8 @@ function cleanCardName(card: Card): string {
  * precision problem. Revisit with a more systematic approach if false
  * positives turn out to matter in practice.
  */
-export function cardSearchTerms(card: Card): string {
-  const name = cleanCardName(card);
+export function cardSearchTerms(card: Card, nameOverride?: string): string {
+  const name = nameOverride ?? cleanCardName(card);
   return card.number ? `${name} ${card.number}` : name;
 }
 
@@ -89,9 +112,18 @@ export function cardSearchTerms(card: Card): string {
  * soon) a buyer browsing "all listings" would most want to catch. The API
  * search's own fixed-price restriction is about keeping *our* displayed
  * median a stable, comparable number, not about what's worth browsing.
+ *
+ * `nameOverride` is threaded straight through to cardSearchTerms — see its
+ * doc comment.
  */
-export function conditionSearchLink(card: Card, condition: EbayCondition, language: EbayLanguage = "English"): string {
-  const nkw = condition === "Raw" ? cardSearchTerms(card) : `${cardSearchTerms(card)} ${condition}`;
+export function conditionSearchLink(
+  card: Card,
+  condition: EbayCondition,
+  language: EbayLanguage = "English",
+  nameOverride?: string
+): string {
+  const terms = cardSearchTerms(card, nameOverride);
+  const nkw = condition === "Raw" ? terms : `${terms} ${condition}`;
   const params: Record<string, string> = {
     _dcat: CCG_INDIVIDUAL_CARDS_CATEGORY,
     _sacat: "0",

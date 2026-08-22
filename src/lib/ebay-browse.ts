@@ -122,9 +122,12 @@ function conditionFilter(condition: EbayCondition): string {
  * "English"/"Japanese"/"French", so appending it to `q` only narrowed (and
  * often broke) the text match — language filtering is precisionAspectFilter's
  * job alone.
+ *
+ * `nameOverride` is threaded straight through to cardSearchTerms — see its
+ * doc comment for why (localized name, e.g. TCGdex's French translation).
  */
-function conditionQuery(card: Card, condition: EbayCondition): string {
-  const base = cardSearchTerms(card);
+function conditionQuery(card: Card, condition: EbayCondition, nameOverride?: string): string {
+  const base = cardSearchTerms(card, nameOverride);
   return condition === "Raw" ? base : `${base} ${condition}`;
 }
 
@@ -234,10 +237,11 @@ async function runSearch(
   card: Card,
   condition: EbayCondition,
   language: EbayLanguage | undefined,
-  sort: "newlyListed" | undefined
+  sort: "newlyListed" | undefined,
+  nameOverride?: string
 ): Promise<EbaySearchResult> {
   const token = await getAccessToken();
-  const query = conditionQuery(card, condition);
+  const query = conditionQuery(card, condition, nameOverride);
   const qs = new URLSearchParams({
     q: query,
     category_ids: CCG_INDIVIDUAL_CARDS_CATEGORY,
@@ -306,13 +310,17 @@ async function runSearch(
  * where "nothing new" and "nothing at all" are very different situations.
  * Only fires when the first attempt is empty, so the common case (a card
  * with real recent activity) costs exactly one request, same as before.
+ *
+ * `nameOverride` is threaded straight through to conditionQuery/cardSearchTerms
+ * — see cardSearchTerms's doc comment (lib/ebay-search.ts) for why.
  */
 export async function searchActiveListings(
   card: Card,
   condition: EbayCondition,
-  language?: EbayLanguage
+  language?: EbayLanguage,
+  nameOverride?: string
 ): Promise<EbaySearchResult> {
-  const primary = await runSearch(card, condition, language, "newlyListed");
+  const primary = await runSearch(card, condition, language, "newlyListed", nameOverride);
   if (primary.listings.length > 0) return primary;
-  return runSearch(card, condition, language, undefined);
+  return runSearch(card, condition, language, undefined, nameOverride);
 }

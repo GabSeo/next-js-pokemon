@@ -53,6 +53,8 @@ export type Card = {
   imageUrl?: string; // real card image; falls back to a generated placeholder if absent
   sourceUrl?: string; // real TCGPlayer product page
   description?: string;
+  /** TCGdex card id (e.g. "swsh3-136"), Pokémon only — lets graded-market.ts fetch a localized name for the French eBay search without re-searching TCGdex. */
+  tcgdexId?: string;
 };
 
 export type AlertBand = {
