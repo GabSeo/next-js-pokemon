@@ -1,6 +1,5 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { MasterballBg } from "@/components/retro/masterball-bg";
 import { PsaTiltCard } from "@/components/retro/psa-tilt-card";
 import { CardImage } from "@/components/card-image";
 import { OpenDataLinks } from "@/components/open-data-links";
@@ -168,7 +167,6 @@ export default async function HomePage() {
   return (
     <div>
       <StructuredData data={websiteJsonLd} />
-      <MasterballBg />
 
       <header className="relative overflow-hidden border-b-2 border-black bg-[radial-gradient(var(--color-border-subtle)_1.5px,transparent_1.5px)] bg-[length:18px_18px] py-20">
         <div className="relative z-[2] mx-auto grid max-w-[1180px] grid-cols-1 items-center gap-16 px-6 lg:grid-cols-[1.1fr_0.9fr]">

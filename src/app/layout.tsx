@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { MasterballBg } from "@/components/retro/masterball-bg";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { StructuredData } from "@/components/structured-data";
@@ -42,6 +43,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <link rel="ai-catalog" href={absoluteUrl("/.well-known/ai-catalog.json")} />
       </head>
       <body className="min-h-full flex flex-col">
+        <MasterballBg />
         <SiteHeader />
         <main className="flex-1">{children}</main>
         <SiteFooter />

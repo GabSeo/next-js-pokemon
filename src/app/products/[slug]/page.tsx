@@ -10,12 +10,14 @@ import { PriceDataTabs } from "@/components/price-data-tabs";
 import { StructuredData } from "@/components/structured-data";
 import { ActiveListingsPanel } from "@/components/retro/active-listings-panel";
 import { ConditionFilterChips } from "@/components/retro/condition-filter-chips";
+import { IllustrativeTag } from "@/components/retro/illustrative-tag";
 import { InternationalPricesPanel } from "@/components/retro/international-prices-panel";
 import { PopulationPanel } from "@/components/retro/population-panel";
 import { PsaGradedPanel } from "@/components/retro/psa-graded-panel";
 import { PsaTiltCard } from "@/components/retro/psa-tilt-card";
 import { SoldListingsPanel } from "@/components/retro/sold-listings-panel";
 import { computeAlertBands, franchiseLabel, getAllCards, getCardBySlug } from "@/lib/cards";
+import { CARDMARKET_HOMEPAGE_URL } from "@/lib/cardmarket-search";
 import { absoluteUrl } from "@/lib/site";
 
 // 36 hours (must be a literal — Next.js statically parses this export).
@@ -163,6 +165,20 @@ export default async function ProductPage({ params }: PageProps) {
                 ↗
               </a>
             )}
+
+            <a
+              href={CARDMARKET_HOMEPAGE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 flex items-center justify-between rounded-md border-2 border-black bg-card-surface px-4 py-3 text-sm font-black shadow-hard-sm transition-[transform,box-shadow] duration-100 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-md"
+            >
+              <span className="flex items-center gap-2.5">
+                <span className="h-2.5 w-2.5 rounded-full border-2 border-black bg-pokemon-yellow" />
+                Cardmarket
+                <IllustrativeTag label="Not connected — links to homepage" />
+              </span>
+              ↗
+            </a>
 
             <AddToCollectionButton cardId={card.id} />
 
