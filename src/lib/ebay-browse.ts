@@ -168,16 +168,29 @@ function precisionAspectFilter(condition: EbayCondition, language?: EbayLanguage
  * clearly-tagged preview — so a listing that doesn't plausibly match the
  * requested tier gets dropped here rather than trusted just because the API
  * returned it in response to a filtered request.
+ *
+ * Checks two independent things: the grade/condition text (as before), and
+ * — new — the card's own number. "sort=newlyListed" surfaces whatever's
+ * newest regardless of match quality, so a text query like "Gengar VMAX
+ * 271/264" can still return a same-name-prefix, wrong-number card (e.g.
+ * "Gengar V 156/264") among the newest results; requiring the card's own
+ * number to literally appear in the title catches that a grade check alone
+ * never would, since a wrong card can still happen to mention the right
+ * grade.
  */
-function titleMatchesCondition(title: string, condition: EbayCondition): boolean {
-  if (condition === "Raw") {
-    // Exclude anything that looks graded at all, rather than trying to
-    // positively confirm "raw" (there's no consistent raw-specific keyword
-    // sellers use the way they consistently write "PSA 10").
-    return !/\b(PSA|BGS|CGC|SGC|CGA|BCCG|HGA|ISA|KSA|GMA)\b/i.test(title);
-  }
-  const grade = condition.replace("PSA ", "");
-  return new RegExp(`\\bPSA\\s*-?\\s*${grade}\\b`, "i").test(title);
+function titleMatchesCard(title: string, card: Card, condition: EbayCondition): boolean {
+  const gradeOk =
+    condition === "Raw"
+      ? // Exclude anything that looks graded at all, rather than trying to
+        // positively confirm "raw" (there's no consistent raw-specific
+        // keyword sellers use the way they consistently write "PSA 10").
+        !/\b(PSA|BGS|CGC|SGC|CGA|BCCG|HGA|ISA|KSA|GMA)\b/i.test(title)
+      : new RegExp(`\\bPSA\\s*-?\\s*${condition.replace("PSA ", "")}\\b`, "i").test(title);
+  if (!gradeOk) return false;
+
+  const primaryNumber = card.number?.split("/")[0];
+  if (!primaryNumber) return true; // nothing to check the number against
+  return new RegExp(`\\b${primaryNumber}\\b`).test(title);
 }
 
 export type EbayActiveListing = {
@@ -208,20 +221,20 @@ type BrowseSearchResponse = {
   }[];
 };
 
+/** Fetched per search — larger than DISPLAY_LIMIT on purpose, so wrong-card/wrong-grade noise (see titleMatchesCard) has real candidates left to filter down from instead of leaving a rare card with nothing. Free: `limit` doesn't cost extra API quota, it's still one call. */
+const FETCH_LIMIT = 10;
+/** Shown to the user (and used for the median) — the first this-many survivors of titleMatchesCard, still newest-first. */
+const DISPLAY_LIMIT = 4;
+
 /**
- * Last 3 active listings for one condition tier (newest-listed first) plus
- * the real total match count, for a "see all N listings" link.
- *
- * Restricted to buyingOptions:FIXED_PRICE on purpose: an auction listing's
- * `price` in the Browse API response is the current bid (or starting bid if
- * no one's bid yet), not a real asking price — mixing that into a price
- * comparison or the ROI median would be comparing incompatible numbers, not
- * a data-quality nicety.
+ * One search attempt at a given sort order. Not exported — searchActiveListings
+ * below is the only caller, and decides whether a second attempt is needed.
  */
-export async function searchActiveListings(
+async function runSearch(
   card: Card,
   condition: EbayCondition,
-  language?: EbayLanguage
+  language: EbayLanguage | undefined,
+  sort: "newlyListed" | undefined
 ): Promise<EbaySearchResult> {
   const token = await getAccessToken();
   const query = conditionQuery(card, condition);
@@ -230,9 +243,9 @@ export async function searchActiveListings(
     category_ids: CCG_INDIVIDUAL_CARDS_CATEGORY,
     filter: conditionFilter(condition),
     aspect_filter: precisionAspectFilter(condition, language),
-    sort: "newlyListed",
-    limit: "3",
+    limit: String(FETCH_LIMIT),
   });
+  if (sort) qs.set("sort", sort);
 
   const res = await fetch(`${SEARCH_URL}?${qs}`, {
     headers: {
@@ -242,7 +255,7 @@ export async function searchActiveListings(
     next: { revalidate: REVALIDATE_SECONDS },
   });
   if (!res.ok) {
-    throw new Error(`ebay browse search failed (${res.status}) for "${query}" [${condition}]: ${await res.text()}`);
+    throw new Error(`ebay browse search failed (${res.status}) for "${query}" [${condition}, sort=${sort ?? "bestMatch"}]: ${await res.text()}`);
   }
   const data = (await res.json()) as BrowseSearchResponse;
   const rawItems = data.itemSummaries ?? [];
@@ -258,14 +271,48 @@ export async function searchActiveListings(
     // Defensive: never let a listing with no real price into the median —
     // a $0 entry would silently drag it down instead of erroring loudly.
     .filter((listing) => listing.price > 0)
-    .filter((listing) => titleMatchesCondition(listing.title, condition));
+    .filter((listing) => titleMatchesCard(listing.title, card, condition))
+    .slice(0, DISPLAY_LIMIT);
 
   if (rawItems.length > 0 && listings.length === 0) {
     console.warn(
-      `[ebay] all ${rawItems.length} result(s) for "${query}" [${condition}] failed the title sanity check — ` +
+      `[ebay] all ${rawItems.length} result(s) for "${query}" [${condition}, sort=${sort ?? "bestMatch"}] failed the title sanity check — ` +
         `the filter likely isn't actually constraining to this tier. Treating as no real match.`
     );
   }
 
   return { listings, total: data.total ?? listings.length };
+}
+
+/**
+ * Last few active listings for one condition tier (newest-listed first,
+ * filtered for quality — see titleMatchesCard) plus the real total match
+ * count, for a "see all N listings" link.
+ *
+ * Restricted to buyingOptions:FIXED_PRICE on purpose: an auction listing's
+ * `price` in the Browse API response is the current bid (or starting bid if
+ * no one's bid yet), not a real asking price — mixing that into a price
+ * comparison or the ROI median would be comparing incompatible numbers, not
+ * a data-quality nicety.
+ *
+ * Falls back from sort=newlyListed to Best Match (no sort param) if the
+ * newest-first search comes back with nothing — confirmed via eBay's own
+ * community reports that "Newly Listed" and "Best Match" can return
+ * genuinely different result *counts* for the same query, not just the same
+ * results reordered (one documented example: 429 vs 490 results). Best
+ * Match isn't recency-biased the way Newly Listed's indexing apparently is,
+ * so it can still surface a real, currently-active listing that's simply
+ * been sitting unsold for a while — which matters most for rare cards,
+ * where "nothing new" and "nothing at all" are very different situations.
+ * Only fires when the first attempt is empty, so the common case (a card
+ * with real recent activity) costs exactly one request, same as before.
+ */
+export async function searchActiveListings(
+  card: Card,
+  condition: EbayCondition,
+  language?: EbayLanguage
+): Promise<EbaySearchResult> {
+  const primary = await runSearch(card, condition, language, "newlyListed");
+  if (primary.listings.length > 0) return primary;
+  return runSearch(card, condition, language, undefined);
 }

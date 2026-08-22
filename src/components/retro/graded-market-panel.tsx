@@ -27,6 +27,7 @@ function toTypeSummary(data: GradedMarketTypeData): TypeSummary {
   return {
     avgLabel: `${data.currency} ${data.medianPrice.toLocaleString()}`,
     count: data.count,
+    rowCount: data.rows.length,
     isReal: data.isReal,
     seeAllHref: data.seeAllUrl,
     rows: (

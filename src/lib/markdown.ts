@@ -32,7 +32,7 @@ async function gradedMarketMarkdown(card: Card): Promise<string> {
   const { roi } = data;
   const roiSource = roi.isReal ? "real active listings, English" : "preview numbers, eBay not connected yet";
 
-  return `## Graded market (last 3 active listings + illustrative sold, per condition x language)
+  return `## Graded market (up to 4 recent active listings + illustrative sold, per condition x language)
 
 | Condition | Language | Active median | Active source | Sold median (illustrative) |
 | --- | --- | --- | --- | --- |

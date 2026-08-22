@@ -53,6 +53,15 @@ function cleanCardName(card: Card): string {
  * hand-verified working URL, but a second comparison URL for a different
  * card showed that exact pattern isn't what makes eBay's filters fire — the
  * dash/duplication was incidental to that one example, not load-bearing.
+ *
+ * A bare "<name> <number>" query can still false-positive on a different
+ * card that shares a name prefix and a loosely-matched number (e.g.
+ * "Gengar VMAX 271/264" surfacing a "Gengar V 156/264" listing) — a keyword
+ * heuristic extracted from the variant parenthetical (e.g. appending "alt")
+ * reduced this for one card in testing, but wasn't kept: hand-picking
+ * per-variant keywords isn't a clean, general way to fix a text-match
+ * precision problem. Revisit with a more systematic approach if false
+ * positives turn out to matter in practice.
  */
 export function cardSearchTerms(card: Card): string {
   const name = cleanCardName(card);
@@ -68,12 +77,18 @@ export function cardSearchTerms(card: Card): string {
  * Every param here is copied from real, hand-verified "perfect results"
  * eBay search URLs (not guessed): `_dcat`/`_sacat` for category, `Language`
  * for card language, `_from=R40` (carried over for fidelity though its
- * exact effect is unconfirmed), and for graded tiers `Graded=Yes` +
- * `Grade` (bare number) + `Professional Grader` (exact value "Professional
- * Sports Authenticator (PSA)") + `_fsrp=1`; for Raw, `Graded=No` instead
- * and none of the grade-specific params. `Graded=Yes` was missing from an
- * earlier version — a second confirmed URL showed graded searches need it
- * explicitly, not just the grade-specific params on their own.
+ * exact effect is unconfirmed), and for graded tiers `Graded=Yes` + `Grade`
+ * (bare number) + `Professional Grader` (exact value "Professional Sports
+ * Authenticator (PSA)") + `_fsrp=1`; for Raw, `Graded=No` instead and none
+ * of the grade-specific params.
+ *
+ * Deliberately NOT restricted to Buy-It-Now (no `LH_BIN=1`), unlike the
+ * real API search in lib/ebay-browse.ts which does restrict to fixed-price
+ * — this is a link a human clicks through to browse, and excluding
+ * auctions would hide exactly the kind of listing (an auction closing
+ * soon) a buyer browsing "all listings" would most want to catch. The API
+ * search's own fixed-price restriction is about keeping *our* displayed
+ * median a stable, comparable number, not about what's worth browsing.
  */
 export function conditionSearchLink(card: Card, condition: EbayCondition, language: EbayLanguage = "English"): string {
   const nkw = condition === "Raw" ? cardSearchTerms(card) : `${cardSearchTerms(card)} ${condition}`;

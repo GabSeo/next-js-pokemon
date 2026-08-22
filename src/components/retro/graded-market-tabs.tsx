@@ -7,6 +7,8 @@ import type { EbayCondition, EbayLanguage } from "@/lib/ebay-browse";
 export type TypeSummary = {
   avgLabel: string;
   count: number;
+  /** How many rows are actually shown — not always the same fixed number: a rare card can turn up fewer real listings after quality filtering (see lib/ebay-browse.ts's titleMatchesCard). */
+  rowCount: number;
   isReal: boolean;
   seeAllHref: string;
   rows: React.ReactNode;
@@ -122,7 +124,9 @@ export function GradedMarketTabs({ entries }: { entries: ConditionEntry[] }) {
         <span className="text-[11px] font-black tracking-[0.5px] text-muted-text uppercase">
           {type === "active" ? "Active listings" : "Sold listings"} · {language}
         </span>
-        <span className="text-[11px] font-black tracking-[0.5px] text-muted-text uppercase">last 3</span>
+        <span className="text-[11px] font-black tracking-[0.5px] text-muted-text uppercase">
+          {selected.rowCount === 1 ? "1 listing" : `last ${selected.rowCount}`}
+        </span>
       </div>
 
       <div className="min-h-[140px]">
