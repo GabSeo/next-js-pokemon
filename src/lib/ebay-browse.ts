@@ -113,11 +113,19 @@ function conditionFilter(condition: EbayCondition): string {
  * seller-written listing titles overwhelmingly include the grade as text
  * (confirmed in live search results), so eBay's own title-text matching
  * does the disambiguation eBay's structured filters won't.
+ *
+ * Language is deliberately NOT appended here, even though it was in an
+ * earlier version of this function — the confirmed-working website search
+ * URL (see lib/ebay-search.ts) keeps `_nkw` grade-only and passes Language
+ * as a wholly separate structured param, never smashed into the free-text
+ * query. Listing titles essentially never contain the literal word
+ * "English"/"Japanese"/"French", so appending it to `q` only narrowed (and
+ * often broke) the text match — language filtering is precisionAspectFilter's
+ * job alone.
  */
-function conditionQuery(card: Card, condition: EbayCondition, language?: EbayLanguage): string {
+function conditionQuery(card: Card, condition: EbayCondition): string {
   const base = cardSearchTerms(card);
-  const parts = [base, condition !== "Raw" ? condition : undefined, language].filter(Boolean);
-  return parts.join(" ");
+  return condition === "Raw" ? base : `${base} ${condition}`;
 }
 
 export type EbayLanguage = "English" | "Japanese" | "French";
@@ -148,6 +156,28 @@ function precisionAspectFilter(condition: EbayCondition, language?: EbayLanguage
   }
   if (language) parts.push(`Language:{${language}}`);
   return parts.join(",");
+}
+
+/**
+ * Sanity check on a returned listing's title, not just trust in the
+ * structured filters — precisionAspectFilter is still unverified against
+ * the API (confirmed working on eBay's website, not confirmed there), and
+ * results have been observed to be correctly filtered for some cards but
+ * not others. Showing an ungraded listing as "PSA 10 active" (or vice
+ * versa) would be actively misleading, worse than falling back to a
+ * clearly-tagged preview — so a listing that doesn't plausibly match the
+ * requested tier gets dropped here rather than trusted just because the API
+ * returned it in response to a filtered request.
+ */
+function titleMatchesCondition(title: string, condition: EbayCondition): boolean {
+  if (condition === "Raw") {
+    // Exclude anything that looks graded at all, rather than trying to
+    // positively confirm "raw" (there's no consistent raw-specific keyword
+    // sellers use the way they consistently write "PSA 10").
+    return !/\b(PSA|BGS|CGC|SGC|CGA|BCCG|HGA|ISA|KSA|GMA)\b/i.test(title);
+  }
+  const grade = condition.replace("PSA ", "");
+  return new RegExp(`\\bPSA\\s*-?\\s*${grade}\\b`, "i").test(title);
 }
 
 export type EbayActiveListing = {
@@ -194,7 +224,7 @@ export async function searchActiveListings(
   language?: EbayLanguage
 ): Promise<EbaySearchResult> {
   const token = await getAccessToken();
-  const query = conditionQuery(card, condition, language);
+  const query = conditionQuery(card, condition);
   const qs = new URLSearchParams({
     q: query,
     category_ids: CCG_INDIVIDUAL_CARDS_CATEGORY,
@@ -215,7 +245,8 @@ export async function searchActiveListings(
     throw new Error(`ebay browse search failed (${res.status}) for "${query}" [${condition}]: ${await res.text()}`);
   }
   const data = (await res.json()) as BrowseSearchResponse;
-  const listings = (data.itemSummaries ?? [])
+  const rawItems = data.itemSummaries ?? [];
+  const listings = rawItems
     .map((item) => ({
       title: item.title,
       price: Number(item.price?.value ?? 0),
@@ -226,6 +257,15 @@ export async function searchActiveListings(
     }))
     // Defensive: never let a listing with no real price into the median —
     // a $0 entry would silently drag it down instead of erroring loudly.
-    .filter((listing) => listing.price > 0);
+    .filter((listing) => listing.price > 0)
+    .filter((listing) => titleMatchesCondition(listing.title, condition));
+
+  if (rawItems.length > 0 && listings.length === 0) {
+    console.warn(
+      `[ebay] all ${rawItems.length} result(s) for "${query}" [${condition}] failed the title sanity check — ` +
+        `the filter likely isn't actually constraining to this tier. Treating as no real match.`
+    );
+  }
+
   return { listings, total: data.total ?? listings.length };
 }
