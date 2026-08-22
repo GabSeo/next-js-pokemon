@@ -114,9 +114,36 @@ function conditionFilter(condition: EbayCondition): string {
  * (confirmed in live search results), so eBay's own title-text matching
  * does the disambiguation eBay's structured filters won't.
  */
-function conditionQuery(card: Card, condition: EbayCondition): string {
+function conditionQuery(card: Card, condition: EbayCondition, language?: EbayLanguage): string {
   const base = cardSearchTerms(card);
-  return condition === "Raw" ? base : `${base} ${condition}`;
+  const parts = [base, condition !== "Raw" ? condition : undefined, language].filter(Boolean);
+  return parts.join(" ");
+}
+
+export type EbayLanguage = "English" | "Japanese" | "French";
+
+/**
+ * eBay's own search UI ("Popular Filters") shows "Grade: 10"/"Grade: 9" and
+ * "English"/"Japanese" as separate facet pills for this category — a plain,
+ * flat item aspect (`Grade`, `Language`), not the nested condition-
+ * descriptor path (`conditionDescriptors.name`/`.values.content`) used
+ * above for conditionFilter, and not the same mechanism that failed
+ * earlier. This is the classic, long-established Browse API aspect_filter
+ * form used for Brand/Color/etc. across every eBay category, so it's more
+ * likely to actually work — but still unverified against this specific
+ * category's real response, so it's applied ADDITIVELY on top of the
+ * already-confirmed-working conditionIds+keyword approach above, not in
+ * place of it: if this aspect_filter turns out to have no effect (or eBay
+ * silently ignores an aspect name it doesn't recognize), results degrade to
+ * exactly what already works today, not a second broken state.
+ */
+function precisionAspectFilter(condition: EbayCondition, language?: EbayLanguage): string | undefined {
+  const parts: string[] = [`categoryId:${CCG_INDIVIDUAL_CARDS_CATEGORY}`];
+  if (condition !== "Raw") parts.push(`Grade:{${condition.replace("PSA ", "")}}`);
+  if (language) parts.push(`Language:{${language}}`);
+  // Only categoryId present means nothing to actually filter on — omit
+  // aspect_filter entirely rather than send a no-op parameter.
+  return parts.length > 1 ? parts.join(",") : undefined;
 }
 
 export type EbayActiveListing = {
@@ -157,9 +184,13 @@ type BrowseSearchResponse = {
  * comparison or the ROI median would be comparing incompatible numbers, not
  * a data-quality nicety.
  */
-export async function searchActiveListings(card: Card, condition: EbayCondition): Promise<EbaySearchResult> {
+export async function searchActiveListings(
+  card: Card,
+  condition: EbayCondition,
+  language?: EbayLanguage
+): Promise<EbaySearchResult> {
   const token = await getAccessToken();
-  const query = conditionQuery(card, condition);
+  const query = conditionQuery(card, condition, language);
   const qs = new URLSearchParams({
     q: query,
     category_ids: CCG_INDIVIDUAL_CARDS_CATEGORY,
@@ -167,6 +198,8 @@ export async function searchActiveListings(card: Card, condition: EbayCondition)
     sort: "newlyListed",
     limit: "3",
   });
+  const aspectFilter = precisionAspectFilter(condition, language);
+  if (aspectFilter) qs.set("aspect_filter", aspectFilter);
 
   const res = await fetch(`${SEARCH_URL}?${qs}`, {
     headers: {
