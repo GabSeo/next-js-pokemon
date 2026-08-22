@@ -108,12 +108,17 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
   const [product, tcgdexCard] = await Promise.all([resolveProduct(ref), resolveTcgdexCard(ref)]);
   if (!product) return undefined;
 
-  // TCGdex's TCGplayer snapshot (hourly-refreshed, per its own docs) wins
-  // over apitcg's when a match exists; apitcg's is the fallback for One
-  // Piece and any Pokémon card TCGdex couldn't match. See tcgplayerSnapshot's
-  // doc comment for why apitcg stays wired at all despite this.
-  const { price: tcgdexPrice, updated: tcgdexPriceUpdated } = tcgdexCard ? tcgplayerSnapshot(tcgdexCard) : {};
-  const currentPrice = tcgdexPrice ?? marketPrice(product.markets) ?? 0;
+  // apitcg's product record is still resolved for every card, every time —
+  // it's the only source with a numeric product id, which price history
+  // below needs regardless of franchise (TCGdex has no history endpoint;
+  // see tcgplayerSnapshot's doc comment). But its *fields* — name, set,
+  // rarity, image, current price, TCGplayer link, description — are used
+  // only when TCGdex has no match for this card (One Piece, always; a
+  // Pokémon card TCGdex couldn't find, rarely). TCGdex is exclusive where
+  // it applies, not blended field-by-field with apitcg's — no more
+  // `tcgdex ?? apitcg` chains, since a mix would mean showing e.g. TCGdex's
+  // French-adjacent English name next to apitcg's own separately-sourced
+  // image, two different snapshots of "the same" card pretending to agree.
   const history = await getHistoryPrices(product._id, HISTORY_LOOKBACK_LIMIT).catch(() => []);
 
   const sortedAsc = [...history].sort((a, b) => a.date.localeCompare(b.date));
@@ -124,6 +129,11 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
     })
     .filter((p): p is PriceHistoryPoint => p !== null);
 
+  // Price history itself (the chart/trend/range/condition-chips section)
+  // stays 100% apitcg-sourced regardless of TCGdex — TCGdex has no
+  // time-series equivalent, so this per-row link describes apitcg's own
+  // data and correctly stays apitcg's URL even on an otherwise
+  // TCGdex-exclusive Pokémon card.
   const recentSnapshots: PriceSnapshot[] = [...priceHistory]
     .reverse()
     .slice(0, 10)
@@ -134,32 +144,49 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
       sourceUrl: product.markets?.tcgplayer?.url,
     }));
 
-  const rawDescription = product.attributes?.Description;
+  const tcgdexPrice = tcgdexCard ? tcgplayerSnapshot(tcgdexCard) : undefined;
+
+  const identity = tcgdexCard
+    ? {
+        name: tcgdexCard.name,
+        set: tcgdexCard.set.name,
+        setCode: tcgdexCard.set.id,
+        number: tcgdexCard.localId,
+        rarity: tcgdexCard.rarity,
+        imageUrl: tcgdexCard.image ? cardImageUrl(tcgdexCard.image) : undefined,
+        // TCGdex has no card-description field at all — rather than
+        // borrowing apitcg's generic-catalog description text alongside
+        // otherwise-exclusively-TCGdex fields, a TCGdex-matched card simply
+        // has none. The page already renders this paragraph conditionally.
+        description: undefined as string | undefined,
+        currentPrice: tcgdexPrice?.price ?? 0,
+        sourceUrl: tcgdexPrice?.url,
+        asOfDate: tcgdexPrice?.updated ?? new Date().toISOString(),
+      }
+    : {
+        name: product.name,
+        set: product.set?.name ?? "",
+        setCode: product.set?.code,
+        number: product.attributes?.Number ?? product.code,
+        rarity: product.attributes?.Rarity,
+        imageUrl: product.images?.[0]?.large ?? product.images?.[0]?.medium,
+        description: product.attributes?.Description ? stripHtml(product.attributes.Description) : undefined,
+        currentPrice: marketPrice(product.markets) ?? 0,
+        sourceUrl: product.markets?.tcgplayer?.url,
+        asOfDate: product.updatedAt ?? new Date().toISOString(),
+      };
 
   return {
     id: String(product._id),
     slug: ref.slug,
     franchise: ref.franchise,
-    // TCGdex is the purpose-built Pokémon card database (apitcg's
-    // attributes bag is a generic multi-TCG catch-all), so its fields win
-    // for name/set/number/rarity/image when a match was found; apitcg's own
-    // values are the fallback so nothing regresses when TCGdex has no match
-    // (or for One Piece, where TCGdex has no data at all).
-    name: tcgdexCard?.name ?? product.name,
-    set: tcgdexCard?.set.name ?? product.set?.name ?? "",
-    setCode: tcgdexCard?.set.id ?? product.set?.code,
-    number: tcgdexCard?.localId ?? product.attributes?.Number ?? product.code,
-    rarity: tcgdexCard?.rarity ?? product.attributes?.Rarity,
+    ...identity,
+    asOfDate: identity.asOfDate.slice(0, 10),
     currency: "USD",
-    currentPrice,
-    asOfDate: (tcgdexPriceUpdated ?? product.updatedAt ?? new Date().toISOString()).slice(0, 10),
     priceHistory,
     recentSnapshots,
     trend: computeTrend(priceHistory),
     priceRange: computePriceRange(priceHistory),
-    imageUrl: tcgdexCard?.image ? cardImageUrl(tcgdexCard.image) : product.images?.[0]?.large ?? product.images?.[0]?.medium,
-    sourceUrl: product.markets?.tcgplayer?.url,
-    description: rawDescription ? stripHtml(rawDescription) : undefined,
     tcgdexId: tcgdexCard?.id,
   };
 }

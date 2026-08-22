@@ -104,15 +104,27 @@ export type TcgdexCard = {
  * cards only have one) with any of market/mid/low defined, then applies the
  * same market ?? mid ?? low fallback apitcg.ts's own `marketPrice()` uses,
  * for consistency between the two sources.
+ *
+ * Also returns a real TCGplayer product URL built from that same variant's
+ * `productId` (`tcgplayer.com/product/{id}`, confirmed live to resolve —
+ * TCGplayer accepts the bare numeric id with no slug) — this is what lets
+ * apitcg's own `markets.tcgplayer.url` stop being needed for a Pokémon card
+ * once TCGdex has matched it.
  */
-export function tcgplayerSnapshot(card: TcgdexCard): { price?: number; updated?: string } {
+export function tcgplayerSnapshot(card: TcgdexCard): { price?: number; updated?: string; url?: string } {
   const tcgplayer = card.pricing?.tcgplayer;
   if (!tcgplayer) return {};
   for (const [key, value] of Object.entries(tcgplayer)) {
     if (key === "unit" || key === "updated") continue;
     if (typeof value !== "object" || value === null) continue;
     const price = value.marketPrice ?? value.midPrice ?? value.lowPrice;
-    if (price !== undefined) return { price, updated: tcgplayer.updated };
+    if (price !== undefined) {
+      return {
+        price,
+        updated: tcgplayer.updated,
+        url: value.productId ? `https://www.tcgplayer.com/product/${value.productId}` : undefined,
+      };
+    }
   }
   return {};
 }
