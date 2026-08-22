@@ -25,11 +25,20 @@ export type LocaleLink = { code: string; href: string; active: boolean };
  * has no real flag glyph for the regional-indicator-letter pairs they're
  * built from, rendering as blank/tofu instead of a flag picture even though
  * the emoji itself is correct. flagcdn.com (the static-asset CDN for the
- * well-known open-source flag-icons project) serves real PNGs by ISO code,
+ * well-known open-source flag-icons project) serves real flags by ISO code,
  * no key needed — verified live to resolve for every code this site uses.
+ *
+ * SVG specifically, not PNG/WebP/JPEG: at this toggle's small render size
+ * (~16×12px) a raster tier would look soft on any 2×/3× display unless a
+ * larger tier were fetched, where SVG stays crisp at any zoom/DPI for free.
+ * It's also the smallest of the four formats for every flag this site
+ * actually uses (verified live: US/FR/JP SVGs are 765/191/160 bytes vs.
+ * 252/109/239 for the equivalent 40px-wide PNGs) — flat-color flags are
+ * exactly what SVG compresses best and JPEG compresses worst (visible
+ * ringing on the hard color edges a flag is made of).
  */
-function flagPngUrl(isoCode: string): string {
-  return `https://flagcdn.com/h20/${isoCode.toLowerCase()}.png`;
+function flagSvgUrl(isoCode: string): string {
+  return `https://flagcdn.com/${isoCode.toLowerCase()}.svg`;
 }
 
 type ProductPageContentProps = {
@@ -102,7 +111,7 @@ export function ProductPageContent({
                     } ${l.active ? "bg-pokemon-red text-white" : "bg-white text-foreground hover:bg-muted-surface"}`}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element -- external CDN image, domain not allowlisted for next/image */}
-                    <img src={flagPngUrl(l.code)} alt="" className="h-3 w-4 rounded-[1px] object-cover" />
+                    <img src={flagSvgUrl(l.code)} alt="" className="h-3 w-4 rounded-[1px] object-cover" />
                     {l.code}
                   </Link>
                 ))}
