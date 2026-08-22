@@ -39,9 +39,18 @@ type ListingType = (typeof TYPES)[number];
  * HTML sees every combination regardless of what a human has selected —
  * same pattern as components/price-data-tabs.tsx.
  */
-export function GradedMarketTabs({ entries }: { entries: ConditionEntry[] }) {
+export function GradedMarketTabs({
+  entries,
+  defaultLanguage,
+}: {
+  entries: ConditionEntry[];
+  /** Lets a locale-specific product page (/products/[slug]/fr, /products/[slug]/ja) open straight to its own market instead of always defaulting to English — falls back to the first available language if the requested one isn't present. */
+  defaultLanguage?: EbayLanguage;
+}) {
   const [conditionId, setConditionId] = useState<EbayCondition>(entries[0].id);
-  const [language, setLanguage] = useState<EbayLanguage>(entries[0].languages[0].language);
+  const [language, setLanguage] = useState<EbayLanguage>(
+    entries[0].languages.find((l) => l.language === defaultLanguage)?.language ?? entries[0].languages[0].language
+  );
   const [type, setType] = useState<ListingType>("active");
 
   const currentCondition = entries.find((e) => e.id === conditionId)!;

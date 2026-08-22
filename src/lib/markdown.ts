@@ -43,7 +43,20 @@ Grading ROI, raw → PSA 10: ${roi.percent >= 0 ? "+" : ""}${roi.percent.toFixed
 Sold data is always illustrative: eBay's sold/completed-listing API (Marketplace Insights) is restricted and closed to new applicants — see lib/ebay-browse.ts.`;
 }
 
-export async function cardToMarkdown(card: Card): Promise<string> {
+/**
+ * `display` overrides only what's actually shown for the identity fields
+ * (name/set/rarity) — everything else (price, history, description,
+ * graded-market data) always comes from `card` itself. This is what backs
+ * the /products/[slug]/fr/index.md mirror: gradedMarketMarkdown(card) below
+ * must keep receiving the real English `card` (its French search term comes
+ * from `card.tcgdexId`, not from the display name — see graded-market.ts),
+ * so a `display` override is layered on top rather than baked into `card`.
+ */
+export async function cardToMarkdown(
+  card: Card,
+  display: Pick<Card, "name" | "set" | "rarity"> = card,
+  pagePath: string = `/products/${card.slug}`
+): Promise<string> {
   const history = card.priceHistory
     .map((p) => `- ${p.date}: ${card.currency} ${p.price}`)
     .join("\n");
@@ -65,19 +78,19 @@ export async function cardToMarkdown(card: Card): Promise<string> {
 
   const gradedMarket = await gradedMarketMarkdown(card);
 
-  return `# ${card.name} — ${card.set} (${card.number ?? ""})
+  return `# ${display.name} — ${display.set} (${card.number ?? ""})
 
 Franchise: ${franchiseLabel(card.franchise)}
 Card ID: ${card.id}
-Set: ${card.set}${card.setCode ? ` (${card.setCode})` : ""}
-Rarity: ${card.rarity ?? "Unknown"}
-Canonical page: ${absoluteUrl(`/products/${card.slug}`)}
-Markdown: ${absoluteUrl(`/products/${card.slug}/index.md`)}
+Set: ${display.set}${card.setCode ? ` (${card.setCode})` : ""}
+Rarity: ${display.rarity ?? "Unknown"}
+Canonical page: ${absoluteUrl(pagePath)}
+Markdown: ${absoluteUrl(`${pagePath}/index.md`)}
 Last updated: ${card.asOfDate}
 
 ## Summary
 
-${card.description ?? `${card.name} — ${card.set} (${card.number ?? ""}).`}
+${card.description ?? `${display.name} — ${display.set} (${card.number ?? ""}).`}
 
 ## Current price
 

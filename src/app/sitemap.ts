@@ -24,5 +24,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: absoluteUrl(`/products/${ref.slug}/index.md`) },
   ]);
 
-  return [...staticEntries, ...productEntries];
+  // French variant — real, canonical-to-itself content (see
+  // /products/[slug]/fr/page.tsx), so it belongs in the sitemap like any
+  // other indexable page. Gated on `tcg === "pokemon"` rather than a live
+  // TCGdex call, matching this file's existing "no live calls" design (the
+  // comment above on why price data doesn't belong here applies the same
+  // way to a translation lookup) — safe today since every current Pokémon
+  // ref is confirmed to resolve a real TCGdex match; a future Pokémon ref
+  // that TCGdex can't translate would need this gate tightened.
+  //
+  // /ja is deliberately NOT listed here: it canonicalizes back to the
+  // English page (see that route's own doc comment) rather than asserting
+  // itself as separately-indexable content, and a sitemap should only ever
+  // list canonical URLs.
+  const frenchEntries: MetadataRoute.Sitemap = cardRefs
+    .filter((ref) => ref.tcg === "pokemon")
+    .flatMap((ref) => [
+      { url: absoluteUrl(`/products/${ref.slug}/fr`) },
+      { url: absoluteUrl(`/products/${ref.slug}/fr/index.md`) },
+    ]);
+
+  return [...staticEntries, ...productEntries, ...frenchEntries];
 }

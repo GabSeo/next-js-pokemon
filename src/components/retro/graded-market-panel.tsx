@@ -1,5 +1,6 @@
 import { GradedMarketTabs, type ConditionEntry, type TypeSummary } from "@/components/retro/graded-market-tabs";
 import { IllustrativeTag } from "@/components/retro/illustrative-tag";
+import type { EbayLanguage } from "@/lib/ebay-browse";
 import { getGradedMarketData, type GradedMarketTypeData } from "@/lib/graded-market";
 import type { Card } from "@/lib/types";
 
@@ -53,7 +54,7 @@ function toTypeSummary(data: GradedMarketTypeData): TypeSummary {
  * component is purely presentational (JSX shaping), not a second place
  * fetch logic or the real/illustrative rules could live.
  */
-export async function GradedMarketPanel({ card }: { card: Card }) {
+export async function GradedMarketPanel({ card, defaultLanguage }: { card: Card; defaultLanguage?: EbayLanguage }) {
   const data = await getGradedMarketData(card);
 
   const entries: ConditionEntry[] = data.conditions.map((c) => ({
@@ -75,7 +76,7 @@ export async function GradedMarketPanel({ card }: { card: Card }) {
         <span className="h-px flex-1 bg-border-subtle" />
       </div>
 
-      <GradedMarketTabs entries={entries} />
+      <GradedMarketTabs entries={entries} defaultLanguage={defaultLanguage} />
 
       <div className="mt-5 rounded-md border-2 border-black bg-muted-surface p-4">
         <div className="mb-1 flex flex-wrap items-center gap-2 text-xs font-black tracking-[0.3px] text-muted-text uppercase">

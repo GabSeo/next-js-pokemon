@@ -7,7 +7,7 @@ import {
   type ApitcgProduct,
 } from "@/lib/apitcg";
 import { absoluteUrl } from "@/lib/site";
-import { findCardByNameAndSet, cardImageUrl, tcgplayerSnapshot, type TcgdexCard } from "@/lib/tcgdex";
+import { findCardByNameAndSet, getCard, cardImageUrl, tcgplayerSnapshot, type TcgdexCard } from "@/lib/tcgdex";
 import type {
   AlertBand,
   Card,
@@ -162,6 +162,50 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
     description: rawDescription ? stripHtml(rawDescription) : undefined,
     tcgdexId: tcgdexCard?.id,
   };
+}
+
+export type LocalizedCardText = {
+  name: string;
+  set: string;
+  rarity?: string;
+  imageUrl?: string;
+  /** True only when a real TCGdex French match was found — false means every field above is just the English original echoed back, never a fabricated translation. */
+  translated: boolean;
+};
+
+/**
+ * French display text for a card's identity fields — name/set/rarity/image
+ * only, never price/history/description, which have no French source and
+ * stay whatever `card` already carries. Deliberately returns a small text
+ * bundle rather than a full spliced `Card`: the /products/[slug]/fr route
+ * needs these fields for what's actually *visible*, but must keep passing
+ * the original English `card` into getGradedMarketData/eBay search — those
+ * already special-case French via `card.tcgdexId` (see graded-market.ts),
+ * and would silently search eBay's English/Japanese tabs for the French
+ * name if a fully-overridden Card leaked into them instead.
+ *
+ * One Piece cards (no tcgdexId — TCGdex has no coverage) and any Pokémon
+ * card TCGdex couldn't match both fall through to `translated: false`,
+ * echoing the English fields back rather than fabricating a translation —
+ * same non-fatal resilience shape as resolveTcgdexCard above.
+ */
+export async function getFrenchCardText(card: Card): Promise<LocalizedCardText> {
+  const fallback: LocalizedCardText = { name: card.name, set: card.set, rarity: card.rarity, imageUrl: card.imageUrl, translated: false };
+  if (!card.tcgdexId) return fallback;
+  try {
+    const localized = await getCard(card.tcgdexId, "fr");
+    if (!localized) return fallback;
+    return {
+      name: localized.name,
+      set: localized.set.name,
+      rarity: localized.rarity ?? card.rarity,
+      imageUrl: localized.image ? cardImageUrl(localized.image) : card.imageUrl,
+      translated: true,
+    };
+  } catch (err) {
+    console.error(`[cards] French TCGdex lookup failed for ${card.slug}:`, err);
+    return fallback;
+  }
 }
 
 /**
