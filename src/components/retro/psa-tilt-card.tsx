@@ -124,9 +124,15 @@ export function PsaTiltCard({ children }: { children: React.ReactNode }) {
       className="psa-card-wrap relative mb-8 w-full max-w-[300px]"
       style={{ perspective: "1000px", transformStyle: "preserve-3d" }}
     >
+      {/* No border here on purpose — real card art has its own corner
+          rounding baked into the source image, at a radius that doesn't
+          reliably match this box's rounded-[14px] clip. A crisp black
+          border drawn exactly along that mismatched edge is what shows the
+          gap; the hard box-shadow duplicate below doesn't have this problem
+          since it's an offset silhouette, not a line traced on the edge. */}
       <div
         ref={cardRef}
-        className="relative overflow-hidden rounded-[14px] border-2 border-black"
+        className="relative overflow-hidden rounded-[14px]"
         style={{ boxShadow: "0 25px 50px -12px rgba(0,0,0,.45), 6px 6px 0px 0px #000", willChange: "transform" }}
       >
         {children}
