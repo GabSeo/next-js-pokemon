@@ -27,18 +27,6 @@ function seedFraction(id: string, salt: number): number {
   return (hash % 1000) / 1000; // 0..1
 }
 
-export type IllustrativeGradedPrice = { grade: string; price: number; sales: number };
-
-/** PSA/eBay-style graded price tiers — real graders charge a premium for higher grades, so the multipliers only reflect that general shape, not any specific card's real graded market. */
-export function illustrativePsaGraded(card: Card): IllustrativeGradedPrice[] {
-  const base = card.currentPrice;
-  return [
-    { grade: "PSA 10", price: Math.round(base * (7 + seedFraction(card.id, 1) * 3)), sales: 2 + Math.round(seedFraction(card.id, 4) * 4) },
-    { grade: "PSA 9", price: Math.round(base * (1.8 + seedFraction(card.id, 2) * 0.8)), sales: 15 + Math.round(seedFraction(card.id, 5) * 40) },
-    { grade: "PSA 8", price: Math.round(base * (1.1 + seedFraction(card.id, 3) * 0.5)), sales: 10 + Math.round(seedFraction(card.id, 6) * 30) },
-  ];
-}
-
 export type IllustrativePopulation = {
   total: number;
   gemRatePct: number;
@@ -88,12 +76,17 @@ export type IllustrativeSoldListing = { grade: string; price: number; daysAgo: n
  * not just a placeholder number, which is a different and worse kind of
  * dishonesty than an illustrative price. Real per-item links only appear
  * once this is backed by the real endpoint.
+ *
+ * Grade labels ("PSA 10"/"PSA 9"/"PSA 8"/"Raw") match lib/ebay-browse.ts's
+ * `EbayCondition` exactly, so GradedMarketPanel can pair each tier's real
+ * active median with this illustrative sold median on the same row.
  */
 export function illustrativeSoldListings(card: Card): IllustrativeSoldListing[] {
   const base = card.currentPrice;
   return [
     { grade: "PSA 10", price: Math.round(base * (7 + seedFraction(card.id, 11) * 3)), daysAgo: 2 + Math.round(seedFraction(card.id, 12) * 5) },
     { grade: "PSA 9", price: Math.round(base * (1.8 + seedFraction(card.id, 13) * 0.8)), daysAgo: 6 + Math.round(seedFraction(card.id, 14) * 10) },
-    { grade: "Raw · NM", price: Math.round(base * (0.9 + seedFraction(card.id, 15) * 0.3)), daysAgo: 1 + Math.round(seedFraction(card.id, 16) * 4) },
+    { grade: "PSA 8", price: Math.round(base * (1.1 + seedFraction(card.id, 17) * 0.5)), daysAgo: 8 + Math.round(seedFraction(card.id, 18) * 12) },
+    { grade: "Raw", price: Math.round(base * (0.9 + seedFraction(card.id, 15) * 0.3)), daysAgo: 1 + Math.round(seedFraction(card.id, 16) * 4) },
   ];
 }

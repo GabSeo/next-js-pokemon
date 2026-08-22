@@ -8,14 +8,12 @@ import { OpenDataLinks } from "@/components/open-data-links";
 import { PriceChart } from "@/components/price-chart";
 import { PriceDataTabs } from "@/components/price-data-tabs";
 import { StructuredData } from "@/components/structured-data";
-import { ActiveListingsPanel } from "@/components/retro/active-listings-panel";
 import { ConditionFilterChips } from "@/components/retro/condition-filter-chips";
+import { GradedMarketPanel } from "@/components/retro/graded-market-panel";
 import { IllustrativeTag } from "@/components/retro/illustrative-tag";
 import { InternationalPricesPanel } from "@/components/retro/international-prices-panel";
 import { PopulationPanel } from "@/components/retro/population-panel";
-import { PsaGradedPanel } from "@/components/retro/psa-graded-panel";
 import { PsaTiltCard } from "@/components/retro/psa-tilt-card";
-import { SoldListingsPanel } from "@/components/retro/sold-listings-panel";
 import { computeAlertBands, franchiseLabel, getAllCards, getCardBySlug } from "@/lib/cards";
 import { CARDMARKET_HOMEPAGE_URL } from "@/lib/cardmarket-search";
 import { absoluteUrl } from "@/lib/site";
@@ -222,12 +220,7 @@ export default async function ProductPage({ params }: PageProps) {
                   <InternationalPricesPanel card={card} />
                 </div>
 
-                <PsaGradedPanel card={card} />
-
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                  <SoldListingsPanel card={card} />
-                  <ActiveListingsPanel card={card} />
-                </div>
+                <GradedMarketPanel card={card} />
 
                 <div>
                   <h3 className="mb-3 flex items-center gap-2 text-lg font-black tracking-[-0.45px]">📈 Raw Card Price History</h3>

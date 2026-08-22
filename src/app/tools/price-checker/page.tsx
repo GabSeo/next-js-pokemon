@@ -7,12 +7,10 @@ import { PriceCheckerForm } from "@/components/price-checker-form";
 import { PriceChart } from "@/components/price-chart";
 import { PriceDataTabs } from "@/components/price-data-tabs";
 import { StructuredData } from "@/components/structured-data";
-import { ActiveListingsPanel } from "@/components/retro/active-listings-panel";
 import { ConditionFilterChips } from "@/components/retro/condition-filter-chips";
+import { GradedMarketPanel } from "@/components/retro/graded-market-panel";
 import { InternationalPricesPanel } from "@/components/retro/international-prices-panel";
 import { PopulationPanel } from "@/components/retro/population-panel";
-import { PsaGradedPanel } from "@/components/retro/psa-graded-panel";
-import { SoldListingsPanel } from "@/components/retro/sold-listings-panel";
 import { computeAlertBands, findCard, franchiseLabel } from "@/lib/cards";
 import { SITE_NAME, absoluteUrl } from "@/lib/site";
 import { cardRefs } from "@/data/card-refs";
@@ -110,15 +108,9 @@ export default async function PriceCheckerPage({ searchParams }: PageProps) {
               <span className="h-px flex-1 bg-border-subtle" />
             </div>
 
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              <PsaGradedPanel card={card} />
-              <InternationalPricesPanel card={card} />
-            </div>
+            <InternationalPricesPanel card={card} />
 
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              <SoldListingsPanel card={card} />
-              <ActiveListingsPanel card={card} />
-            </div>
+            <GradedMarketPanel card={card} />
 
             <div>
               <h3 className="mb-3 flex items-center gap-2 text-lg font-black tracking-[-0.45px]">📈 Raw Card Price History</h3>
