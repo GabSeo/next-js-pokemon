@@ -61,6 +61,12 @@ function rowsFrom(rows: IllustrativeListingRow[], currency: string) {
 async function buildActiveSummary(card: Card, condition: EbayCondition): Promise<TypeSummary & { medianPrice: number | null }> {
   try {
     const { listings, total } = await searchActiveListings(card, condition);
+    if (listings.length === 0) {
+      console.warn(
+        `[ebay] 0 active listings for ${card.id} [${condition}] — search succeeded but returned nothing. ` +
+          `Likely the aspect_filter is too strict/wrong, or the query doesn't match this category. Falling back to preview.`
+      );
+    }
     const med = listings.length > 0 ? median(listings.map((l) => l.price)) : null;
     if (med !== null) {
       return {

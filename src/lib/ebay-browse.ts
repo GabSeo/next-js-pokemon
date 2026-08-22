@@ -1,3 +1,4 @@
+import { cardSearchTerms } from "@/lib/ebay-search";
 import type { Card } from "@/lib/types";
 
 /**
@@ -135,7 +136,7 @@ type BrowseSearchResponse = {
  */
 export async function searchActiveListings(card: Card, condition: EbayCondition): Promise<EbaySearchResult> {
   const token = await getAccessToken();
-  const query = `${card.name} ${card.set}${card.number ? ` ${card.number}` : ""}`.trim();
+  const query = cardSearchTerms(card);
   const qs = new URLSearchParams({
     q: query,
     category_ids: CCG_INDIVIDUAL_CARDS_CATEGORY,
