@@ -91,7 +91,7 @@ export function PsaTiltCard({ children }: { children: React.ReactNode }) {
       }
       leaveSpring = animate(
         card!,
-        { rotateY: 0, rotateX: 0, scale: 1 },
+        { rotateY: [targetRotateY, 0], rotateX: [targetRotateX, 0], scale: [1.05, 1] },
         { type: "spring", stiffness: 180, damping: 14, onComplete: () => idleAnimation.play() }
       );
       card!.style.setProperty("--spot-x", "50%");
