@@ -10,11 +10,29 @@ import { useEffect, useRef } from "react";
  * animation frame (the mockup's own comment explains why — calling
  * animate() on every raw mousemove queues up competing tweens instead of
  * following the cursor 1:1); mouseleave hands off to an actual Motion
- * spring back to flat; a slow y-bob loop runs continuously so the card
- * feels alive at rest. The same rAF-batched handler also writes --spot-x/
- * --spot-y custom properties, which the .psa-spotlight radial-gradient
- * layer in globals.css reads to light up the area under the cursor — same
- * "circle at var(--x) var(--y)" technique as scrydex.com's card holo effect.
+ * spring back to flat; a slow y-bob loop runs while idle so the card feels
+ * alive at rest. The same rAF-batched handler also writes --spot-x/--spot-y
+ * custom properties, which the .psa-spotlight radial-gradient layer in
+ * globals.css reads to light up the area under the cursor — same "circle at
+ * var(--x) var(--y)" technique as scrydex.com's card holo effect.
+ *
+ * The idle bob and the raw mousemove writes both target `transform` on the
+ * same element without knowing about each other — the idle animation is a
+ * Motion tween that recomposes the whole transform from its own tracked
+ * state every tick, so left running during a hover it stomps the raw
+ * rotate/scale back to flat every ~16ms, fighting the tilt writes and
+ * showing up as a flicker (worst right at the edges, where the tilt angle —
+ * and so the jump between the two competing values — is largest). Pausing
+ * the idle animation for the duration of the hover, and stopping any
+ * in-flight leave-spring the moment a new hover starts, keeps only one
+ * system writing `transform` at a time.
+ *
+ * Tilt sign: for `rotateY(θ)`, positive θ moves the *right* edge of the
+ * element away from the viewer (standard CSS rotation matrix — right-handed,
+ * X right / Y down / Z toward viewer). To make the corner under the cursor
+ * read as the *nearest* point, hovering the right half needs a *negative*
+ * rotateY (right edge tips toward the viewer), and hovering the bottom half
+ * needs a *positive* rotateX (bottom edge tips toward the viewer).
  *
  * `children` is the real card image/content — always rendered, unconditional
  * on JS. This component only ever adds transform styling on top of it.
@@ -34,6 +52,10 @@ export function PsaTiltCard({ children }: { children: React.ReactNode }) {
     let targetSpotX = 50;
     let targetSpotY = 50;
     let rafId: number | null = null;
+    let isHovering = false;
+    let leaveSpring: ReturnType<typeof animate> | null = null;
+
+    const idleAnimation = animate(card, { y: [0, -8, 0] }, { duration: 4, repeat: Infinity, ease: "easeInOut" });
 
     function applyTilt() {
       if (card) {
@@ -45,34 +67,45 @@ export function PsaTiltCard({ children }: { children: React.ReactNode }) {
     }
 
     function handleMouseMove(e: MouseEvent) {
+      if (!isHovering) {
+        isHovering = true;
+        idleAnimation.pause();
+        leaveSpring?.stop();
+        leaveSpring = null;
+      }
       const rect = wrap!.getBoundingClientRect();
       const px = (e.clientX - rect.left) / rect.width;
       const py = (e.clientY - rect.top) / rect.height;
-      targetRotateY = (px - 0.5) * 26;
-      targetRotateX = (0.5 - py) * 26;
+      targetRotateY = (0.5 - px) * 26;
+      targetRotateX = (py - 0.5) * 26;
       targetSpotX = px * 100;
       targetSpotY = py * 100;
       if (rafId === null) rafId = requestAnimationFrame(applyTilt);
     }
 
     function handleMouseLeave() {
+      isHovering = false;
       if (rafId !== null) {
         cancelAnimationFrame(rafId);
         rafId = null;
       }
-      animate(card!, { rotateY: 0, rotateX: 0, scale: 1 }, { type: "spring", stiffness: 180, damping: 14 });
+      leaveSpring = animate(
+        card!,
+        { rotateY: 0, rotateX: 0, scale: 1 },
+        { type: "spring", stiffness: 180, damping: 14, onComplete: () => idleAnimation.play() }
+      );
       card!.style.setProperty("--spot-x", "50%");
       card!.style.setProperty("--spot-y", "50%");
     }
 
     wrap.addEventListener("mousemove", handleMouseMove);
     wrap.addEventListener("mouseleave", handleMouseLeave);
-    const idleAnimation = animate(card, { y: [0, -8, 0] }, { duration: 4, repeat: Infinity, ease: "easeInOut" });
 
     return () => {
       wrap.removeEventListener("mousemove", handleMouseMove);
       wrap.removeEventListener("mouseleave", handleMouseLeave);
       if (rafId !== null) cancelAnimationFrame(rafId);
+      leaveSpring?.stop();
       idleAnimation.stop();
     };
   }, []);
