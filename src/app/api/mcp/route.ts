@@ -186,6 +186,12 @@ const handler = createMcpHandler((server) => {
     rows: z.array(gradedMarketListingSchema),
   });
 
+  const gradedMarketLanguageSchema = z.object({
+    language: z.enum(["English", "Japanese", "French"]),
+    active: gradedMarketTypeSchema,
+    sold: gradedMarketTypeSchema,
+  });
+
   server.registerTool(
     "get_graded_market",
     {
@@ -200,8 +206,7 @@ const handler = createMcpHandler((server) => {
           .array(
             z.object({
               condition: z.enum(["PSA 10", "PSA 9", "PSA 8", "Raw"]),
-              active: gradedMarketTypeSchema,
-              sold: gradedMarketTypeSchema,
+              languages: z.array(gradedMarketLanguageSchema),
             })
           )
           .optional(),
@@ -227,14 +232,14 @@ const handler = createMcpHandler((server) => {
         };
       }
       const data = await getGradedMarketData(card);
-      const psa10 = data.conditions.find((c) => c.condition === "PSA 10")!;
+      const psa10English = data.conditions.find((c) => c.condition === "PSA 10")!.languages.find((l) => l.language === "English")!;
       return {
         content: [
           {
             type: "text",
-            text: `${card.name}: PSA 10 active median ${psa10.active.currency} ${psa10.active.medianPrice} (${
-              psa10.active.isReal ? "real, eBay" : "preview, eBay not connected"
-            }). Grading ROI raw -> PSA 10: ${data.roi.percent >= 0 ? "+" : ""}${data.roi.percent.toFixed(0)}% (${
+            text: `${card.name}: PSA 10 active median ${psa10English.active.currency} ${psa10English.active.medianPrice} (${
+              psa10English.active.isReal ? "real, eBay" : "preview, eBay not connected"
+            }, English). Grading ROI raw -> PSA 10: ${data.roi.percent >= 0 ? "+" : ""}${data.roi.percent.toFixed(0)}% (${
               data.roi.isReal ? "real" : "preview"
             }).`,
           },

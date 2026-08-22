@@ -21,22 +21,24 @@ Covers available history from ${from} to ${to}.`;
 async function gradedMarketMarkdown(card: Card): Promise<string> {
   const data = await getGradedMarketData(card);
   const rows = data.conditions
-    .map((c) => {
-      const activeSource = c.active.isReal ? `Real, eBay (${c.active.count} total)` : `Preview (${c.active.count} est.)`;
-      return `| ${c.condition} | ${c.active.currency} ${c.active.medianPrice} | ${activeSource} | ${c.sold.currency} ${c.sold.medianPrice} |`;
-    })
+    .flatMap((c) =>
+      c.languages.map((l) => {
+        const activeSource = l.active.isReal ? `Real, eBay (${l.active.count} total)` : `Preview (${l.active.count} est.)`;
+        return `| ${c.condition} | ${l.language} | ${l.active.currency} ${l.active.medianPrice} | ${activeSource} | ${l.sold.currency} ${l.sold.medianPrice} |`;
+      })
+    )
     .join("\n");
 
   const { roi } = data;
-  const roiSource = roi.isReal ? "real active listings" : "preview numbers, eBay not connected yet";
+  const roiSource = roi.isReal ? "real active listings, English" : "preview numbers, eBay not connected yet";
 
-  return `## Graded market (last 3 active listings + illustrative sold, per condition)
+  return `## Graded market (last 3 active listings + illustrative sold, per condition x language)
 
-| Condition | Active median | Active source | Sold median (illustrative) |
-| --- | --- | --- | --- |
+| Condition | Language | Active median | Active source | Sold median (illustrative) |
+| --- | --- | --- | --- | --- |
 ${rows}
 
-Grading ROI, raw → PSA 10: ${roi.percent >= 0 ? "+" : ""}${roi.percent.toFixed(0)}% (${roiSource}). ${roi.currency} ${roi.rawMedian} raw + ${roi.currency} ${roi.gradingCostUsd} grading vs ${roi.currency} ${roi.psa10Median} PSA 10.
+Grading ROI, raw → PSA 10: ${roi.percent >= 0 ? "+" : ""}${roi.percent.toFixed(0)}% (${roiSource}). ${roi.currency} ${roi.rawMedian} raw + ${roi.currency} ${roi.gradingCostUsd} grading vs ${roi.currency} ${roi.psa10Median} PSA 10. Always computed from English active listings.
 
 Sold data is always illustrative: eBay's sold/completed-listing API (Marketplace Insights) is restricted and closed to new applicants — see lib/ebay-browse.ts.`;
 }

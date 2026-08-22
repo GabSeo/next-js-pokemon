@@ -58,8 +58,11 @@ export async function GradedMarketPanel({ card }: { card: Card }) {
   const entries: ConditionEntry[] = data.conditions.map((c) => ({
     id: c.condition,
     label: c.condition,
-    active: toTypeSummary(c.active),
-    sold: toTypeSummary(c.sold),
+    languages: c.languages.map((l) => ({
+      language: l.language,
+      active: toTypeSummary(l.active),
+      sold: toTypeSummary(l.sold),
+    })),
   }));
 
   const { roi } = data;

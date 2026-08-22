@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { IllustrativeTag } from "@/components/retro/illustrative-tag";
-import type { EbayCondition } from "@/lib/ebay-browse";
+import type { EbayCondition, EbayLanguage } from "@/lib/ebay-browse";
 
 export type TypeSummary = {
   avgLabel: string;
@@ -12,31 +12,39 @@ export type TypeSummary = {
   rows: React.ReactNode;
 };
 
+export type LanguageEntry = {
+  language: EbayLanguage;
+  active: TypeSummary;
+  sold: TypeSummary;
+};
+
 export type ConditionEntry = {
   id: EbayCondition;
   label: string;
-  active: TypeSummary;
-  sold: TypeSummary;
+  languages: LanguageEntry[];
 };
 
 const TYPES = ["active", "sold"] as const;
 type ListingType = (typeof TYPES)[number];
 
 /**
- * Condition tabs (PSA 10/9/8/Raw) plus an active/sold toggle underneath —
- * one control switching which single row-list shows, not two permanent
- * columns competing for space. All 4 conditions × 2 types (8 row-sets) are
- * passed in already server-rendered and stay in the DOM at all times; only
+ * Condition tabs (PSA 10/9/8/Raw), a language selector underneath (English/
+ * Japanese/French), and an active/sold toggle below that — three controls,
+ * each switching one axis of which single row-list shows, not a matrix of
+ * permanent columns. Every condition × language × type combination is
+ * passed in already server-rendered and stays in the DOM at all times; only
  * the `hidden` attribute changes on click, so an AI crawler reading raw
- * HTML sees every combination regardless of which tab/type a human has
- * selected — same pattern as components/price-data-tabs.tsx.
+ * HTML sees every combination regardless of what a human has selected —
+ * same pattern as components/price-data-tabs.tsx.
  */
 export function GradedMarketTabs({ entries }: { entries: ConditionEntry[] }) {
   const [conditionId, setConditionId] = useState<EbayCondition>(entries[0].id);
+  const [language, setLanguage] = useState<EbayLanguage>(entries[0].languages[0].language);
   const [type, setType] = useState<ListingType>("active");
 
-  const current = entries.find((e) => e.id === conditionId)!;
-  const selected = current[type];
+  const currentCondition = entries.find((e) => e.id === conditionId)!;
+  const currentLanguage = currentCondition.languages.find((l) => l.language === language)!;
+  const selected = currentLanguage[type];
 
   return (
     <div>
@@ -59,9 +67,28 @@ export function GradedMarketTabs({ entries }: { entries: ConditionEntry[] }) {
         ))}
       </div>
 
+      <div role="tablist" aria-label="Language" className="mt-4 flex flex-wrap gap-2">
+        {currentCondition.languages.map((l) => (
+          <button
+            key={l.language}
+            type="button"
+            role="tab"
+            aria-selected={language === l.language}
+            onClick={() => setLanguage(l.language)}
+            className={`rounded-full border-2 px-3 py-1 text-xs font-black tracking-[0.3px] uppercase transition-colors ${
+              language === l.language
+                ? "border-black bg-pokemon-blue text-white"
+                : "border-border-subtle bg-muted-surface text-muted-text hover:border-black hover:text-foreground"
+            }`}
+          >
+            {l.language}
+          </button>
+        ))}
+      </div>
+
       <div className="my-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
         {TYPES.map((t) => {
-          const summary = current[t];
+          const summary = currentLanguage[t];
           const isSelected = type === t;
           const borderClass = isSelected ? (t === "active" ? "border-pokemon-red" : "border-pokemon-blue") : "border-border-subtle";
           const labelClass = isSelected ? (t === "active" ? "text-pokemon-red" : "text-pokemon-blue") : "text-muted-text";
@@ -93,18 +120,23 @@ export function GradedMarketTabs({ entries }: { entries: ConditionEntry[] }) {
 
       <div className="mb-1 flex items-center justify-between">
         <span className="text-[11px] font-black tracking-[0.5px] text-muted-text uppercase">
-          {type === "active" ? "Active listings" : "Sold listings"}
+          {type === "active" ? "Active listings" : "Sold listings"} · {language}
         </span>
         <span className="text-[11px] font-black tracking-[0.5px] text-muted-text uppercase">last 3</span>
       </div>
 
       <div className="min-h-[140px]">
         {entries.map((entry) =>
-          TYPES.map((t) => (
-            <div key={`${entry.id}-${t}`} hidden={!(conditionId === entry.id && type === t)}>
-              {entry[t].rows}
-            </div>
-          ))
+          entry.languages.map((l) =>
+            TYPES.map((t) => (
+              <div
+                key={`${entry.id}-${l.language}-${t}`}
+                hidden={!(conditionId === entry.id && language === l.language && type === t)}
+              >
+                {l[t].rows}
+              </div>
+            ))
+          )
         )}
       </div>
 
