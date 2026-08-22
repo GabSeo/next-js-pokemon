@@ -101,19 +101,31 @@ export type EbayActiveListing = {
   currency: string;
   url: string;
   imageUrl?: string;
+  /**
+   * eBay documents `itemCreationDate` as an ItemSummary field, but it's
+   * unconfirmed whether item_summary/search actually populates it (vs only
+   * the single-item getItem detail endpoint) — treat as best-effort, test
+   * against real credentials before relying on it always being present.
+   */
+  listedDate?: string;
 };
 
+export type EbaySearchResult = { listings: EbayActiveListing[]; total: number };
+
 type BrowseSearchResponse = {
+  total?: number;
   itemSummaries?: {
     title: string;
     price?: { value: string; currency: string };
     itemWebUrl: string;
     image?: { imageUrl: string };
+    itemCreationDate?: string;
   }[];
 };
 
 /**
- * Last 3 active listings for one condition tier, newest-listed first.
+ * Last 3 active listings for one condition tier (newest-listed first) plus
+ * the real total match count, for a "see all N listings" link.
  *
  * Restricted to buyingOptions:FIXED_PRICE on purpose: an auction listing's
  * `price` in the Browse API response is the current bid (or starting bid if
@@ -121,7 +133,7 @@ type BrowseSearchResponse = {
  * comparison or the ROI median would be comparing incompatible numbers, not
  * a data-quality nicety.
  */
-export async function searchActiveListings(card: Card, condition: EbayCondition): Promise<EbayActiveListing[]> {
+export async function searchActiveListings(card: Card, condition: EbayCondition): Promise<EbaySearchResult> {
   const token = await getAccessToken();
   const query = `${card.name} ${card.set}${card.number ? ` ${card.number}` : ""}`.trim();
   const qs = new URLSearchParams({
@@ -144,15 +156,17 @@ export async function searchActiveListings(card: Card, condition: EbayCondition)
     throw new Error(`ebay browse search failed (${res.status}) for "${query}" [${condition}]: ${await res.text()}`);
   }
   const data = (await res.json()) as BrowseSearchResponse;
-  return (data.itemSummaries ?? [])
+  const listings = (data.itemSummaries ?? [])
     .map((item) => ({
       title: item.title,
       price: Number(item.price?.value ?? 0),
       currency: item.price?.currency ?? "USD",
       url: item.itemWebUrl,
       imageUrl: item.image?.imageUrl,
+      listedDate: item.itemCreationDate,
     }))
     // Defensive: never let a listing with no real price into the median —
     // a $0 entry would silently drag it down instead of erroring loudly.
     .filter((listing) => listing.price > 0);
+  return { listings, total: data.total ?? listings.length };
 }

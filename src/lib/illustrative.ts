@@ -67,56 +67,73 @@ export function illustrativeInternational(card: Card): IllustrativeIntlPrice[] {
 /** Condition tiers the price-history chart's filter chips reference — every one currently maps to the same real Near Mint series, since that's the only condition apitcg.com tracks. */
 export const ILLUSTRATIVE_CONDITIONS = ["Damaged", "Heavily Played", "Moderately Played", "Near Mint"] as const;
 
-export type IllustrativeSoldListing = { grade: string; price: number; daysAgo: number };
+export type EbayConditionTier = "PSA 10" | "PSA 9" | "PSA 8" | "Raw";
 
-/**
- * Stand-ins for `GET /{game}/ebay-sold-offers?id=&per_page=3` (see
- * tcggo-integration-plan.md §2.4) — deliberately carries NO `url` field.
- * A fabricated eBay item link would be an actually-broken/misleading link,
- * not just a placeholder number, which is a different and worse kind of
- * dishonesty than an illustrative price. Real per-item links only appear
- * once this is backed by the real endpoint.
- *
- * Grade labels ("PSA 10"/"PSA 9"/"PSA 8"/"Raw") match lib/ebay-browse.ts's
- * `EbayCondition` exactly, so GradedMarketPanel can pair each tier's real
- * active median with this illustrative sold median on the same row.
- */
-export function illustrativeSoldListings(card: Card): IllustrativeSoldListing[] {
-  const base = card.currentPrice;
-  return [
-    { grade: "PSA 10", price: Math.round(base * (7 + seedFraction(card.id, 11) * 3)), daysAgo: 2 + Math.round(seedFraction(card.id, 12) * 5) },
-    { grade: "PSA 9", price: Math.round(base * (1.8 + seedFraction(card.id, 13) * 0.8)), daysAgo: 6 + Math.round(seedFraction(card.id, 14) * 10) },
-    { grade: "PSA 8", price: Math.round(base * (1.1 + seedFraction(card.id, 17) * 0.5)), daysAgo: 8 + Math.round(seedFraction(card.id, 18) * 12) },
-    { grade: "Raw", price: Math.round(base * (0.9 + seedFraction(card.id, 15) * 0.3)), daysAgo: 1 + Math.round(seedFraction(card.id, 16) * 4) },
-  ];
-}
+export type IllustrativeListingRow = { date: string; description: string; price: number };
+export type IllustrativeListingSet = { rows: IllustrativeListingRow[]; total: number };
 
-const ACTIVE_MULTIPLIER_RANGE: Record<"PSA 10" | "PSA 9" | "PSA 8" | "Raw", [number, number]> = {
+const MULTIPLIER_RANGE: Record<EbayConditionTier, [number, number]> = {
   "PSA 10": [7, 10],
   "PSA 9": [1.8, 2.6],
   "PSA 8": [1.1, 1.6],
   Raw: [0.9, 1.2],
 };
-const ACTIVE_SALT: Record<"PSA 10" | "PSA 9" | "PSA 8" | "Raw", number> = {
-  "PSA 10": 20,
-  "PSA 9": 21,
-  "PSA 8": 22,
-  Raw: 23,
+const CONDITION_LABEL: Record<EbayConditionTier, string> = {
+  "PSA 10": "PSA 10 Gem Mint",
+  "PSA 9": "PSA 9 Mint",
+  "PSA 8": "PSA 8 NM-Mint",
+  Raw: "Near Mint, ungraded",
 };
+const ACTIVE_BUYING_OPTIONS = ["Buy It Now", "Best Offer", "Buy It Now"];
+const ACTIVE_SALT: Record<EbayConditionTier, number> = { "PSA 10": 20, "PSA 9": 21, "PSA 8": 22, Raw: 23 };
+const SOLD_SALT: Record<EbayConditionTier, number> = { "PSA 10": 11, "PSA 9": 13, "PSA 8": 17, Raw: 15 };
+
+function relativeDateLabel(daysAgo: number): string {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() - daysAgo);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+}
 
 /**
- * UI preview for GradedMarketPanel's active-listing column before
- * EBAY_CLIENT_ID/SECRET exist — lets the panel's full layout (3 prices per
- * tier, median, ROI) be reviewed in the browser ahead of the real API being
- * wired in, same reasoning as everything else in this file. Deliberately
- * returns bare numbers, no fake listing metadata or URLs — see
- * illustrativeSoldListings' comment on why a fabricated eBay link would be
- * worse than an illustrative price. GradedMarketPanel swaps this out
- * automatically the moment a real eBay fetch for that tier succeeds.
+ * UI preview for GradedMarketPanel's active-listing rows before
+ * EBAY_CLIENT_ID/SECRET exist — lets the panel's full layout (rows, avg
+ * price, total count, ROI) be reviewed in the browser ahead of the real API
+ * being wired in, same reasoning as everything else in this file. GradedMarketPanel
+ * swaps this out automatically the moment a real eBay fetch for that tier
+ * succeeds.
  */
-export function illustrativeActivePrices(card: Card, condition: "PSA 10" | "PSA 9" | "PSA 8" | "Raw"): number[] {
+export function illustrativeActiveListings(card: Card, condition: EbayConditionTier): IllustrativeListingSet {
   const base = card.currentPrice;
-  const [lo, hi] = ACTIVE_MULTIPLIER_RANGE[condition];
+  const [lo, hi] = MULTIPLIER_RANGE[condition];
   const salt = ACTIVE_SALT[condition];
-  return [0, 1, 2].map((i) => Math.round(base * (lo + seedFraction(card.id, salt * 10 + i) * (hi - lo))));
+  const rows = [0, 1, 2].map((i) => ({
+    date: relativeDateLabel(i + Math.round(seedFraction(card.id, salt * 10 + i + 5) * 2)),
+    description: `${CONDITION_LABEL[condition]} · ${ACTIVE_BUYING_OPTIONS[i]}`,
+    price: Math.round(base * (lo + seedFraction(card.id, salt * 10 + i) * (hi - lo))),
+  }));
+  const total = 8 + Math.round(seedFraction(card.id, salt * 10 + 9) * 25);
+  return { rows, total };
+}
+
+/**
+ * Stand-ins for `GET /{game}/ebay-sold-offers?id=&per_page=3` (see
+ * tcggo-integration-plan.md §2.4) — deliberately carries NO `url` field per
+ * row. A fabricated eBay item link would be an actually-broken/misleading
+ * link, not just a placeholder number, which is a different and worse kind
+ * of dishonesty than an illustrative price. Real per-item links only appear
+ * once this is backed by the real endpoint — which, per lib/ebay-browse.ts's
+ * comment, is currently gated behind eBay's restricted Marketplace Insights
+ * API, so this stays illustrative regardless of eBay credentials.
+ */
+export function illustrativeSoldListings(card: Card, condition: EbayConditionTier): IllustrativeListingSet {
+  const base = card.currentPrice;
+  const [lo, hi] = MULTIPLIER_RANGE[condition];
+  const salt = SOLD_SALT[condition];
+  const rows = [0, 1, 2].map((i) => ({
+    date: relativeDateLabel(2 + i * 4 + Math.round(seedFraction(card.id, salt * 10 + i + 5) * 3)),
+    description: `${CONDITION_LABEL[condition]} · Sold`,
+    price: Math.round(base * (lo * 0.95 + seedFraction(card.id, salt * 10 + i) * (hi - lo) * 1.05)),
+  }));
+  const total = 6 + Math.round(seedFraction(card.id, salt * 10 + 9) * 20);
+  return { rows, total };
 }
