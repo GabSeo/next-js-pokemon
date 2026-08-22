@@ -130,7 +130,6 @@ export function PsaTiltCard({ children }: { children: React.ReactNode }) {
         style={{ boxShadow: "0 25px 50px -12px rgba(0,0,0,.45), 6px 6px 0px 0px #000", willChange: "transform" }}
       >
         {children}
-        <div className="psa-glare pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300" />
         <div className="psa-spotlight pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300" />
       </div>
     </div>

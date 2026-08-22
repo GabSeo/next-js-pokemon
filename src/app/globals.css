@@ -101,27 +101,10 @@
   }
 }
 
-/* Diagonal glare sweep on the PSA hero card, matching the mockup exactly —
-   kept as plain CSS since Tailwind has no utility for a custom-stop
-   gradient at an arbitrary angle. */
-.psa-glare {
-  background: linear-gradient(
-    115deg,
-    transparent 30%,
-    rgba(255, 255, 255, 0.55) 45%,
-    rgba(255, 255, 255, 0.05) 55%,
-    transparent 70%
-  );
-  mix-blend-mode: overlay;
-}
-.psa-card-wrap:hover .psa-glare {
-  opacity: 1;
-}
-
-/* Cursor-following spotlight, layered on top of the diagonal glare —
-   --spot-x/--spot-y are written every frame by PsaTiltCard's existing
-   rAF-batched pointer handler (same one driving the tilt), same "circle at
-   var(--x) var(--y)" technique as scrydex.com's card_holo_controller.js. */
+/* Cursor-following spotlight — --spot-x/--spot-y are written every frame by
+   PsaTiltCard's existing rAF-batched pointer handler (same one driving the
+   tilt), same "circle at var(--x) var(--y)" technique as scrydex.com's
+   card_holo_controller.js. */
 .psa-spotlight {
   background: radial-gradient(
     circle at var(--spot-x, 50%) var(--spot-y, 50%),
