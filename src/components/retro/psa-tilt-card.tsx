@@ -36,6 +36,14 @@ import { useEffect, useRef } from "react";
  *
  * `children` is the real card image/content — always rendered, unconditional
  * on JS. This component only ever adds transform styling on top of it.
+ *
+ * `transform` never affects document layout, so the scaled/tilted card can
+ * visually paint over whatever sits right below it in flow without pushing
+ * it away. Worst case (hovering the exact bottom corner, full ±13deg tilt +
+ * 1.05 scale, 1000px perspective) works out to ~25px of downward bleed —
+ * `mb-8` on the wrapper reserves comfortably more than that as real layout
+ * space, so hovering near the bottom of the card can't cover whatever sits
+ * below it (e.g. the TCGplayer/Cardmarket links on the product page).
  */
 export function PsaTiltCard({ children }: { children: React.ReactNode }) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -113,7 +121,7 @@ export function PsaTiltCard({ children }: { children: React.ReactNode }) {
   return (
     <div
       ref={wrapRef}
-      className="psa-card-wrap relative w-full max-w-[300px]"
+      className="psa-card-wrap relative mb-8 w-full max-w-[300px]"
       style={{ perspective: "1000px", transformStyle: "preserve-3d" }}
     >
       <div
