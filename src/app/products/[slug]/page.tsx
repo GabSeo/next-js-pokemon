@@ -175,7 +175,7 @@ export default async function ProductPage({ params }: PageProps) {
               <span className="flex items-center gap-2.5">
                 <span className="h-2.5 w-2.5 rounded-full border-2 border-black bg-pokemon-yellow" />
                 Cardmarket
-                <IllustrativeTag label="Not connected — links to homepage" />
+                <IllustrativeTag label="Unconnected" />
               </span>
               ↗
             </a>
