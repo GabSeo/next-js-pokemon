@@ -79,6 +79,7 @@ export async function GradedMarketPanel({ card, defaultMarket }: { card: Card; d
     rows: data.vinted.rows.map((row) => ({
       timeAgo: row.timeAgo,
       condition: row.condition,
+      price: row.price,
       priceLabel: `${row.currency} ${row.price.toLocaleString()}`,
       dealPct: row.dealPct,
       dealTier: row.dealTier,

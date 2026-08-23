@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { IllustrativeTag } from "@/components/retro/illustrative-tag";
+import { VintedListingsSection } from "@/components/retro/vinted-listings-section";
 import type { EbayCondition, EbayLanguage } from "@/lib/ebay-browse";
 import type { GradedMarketRoi } from "@/lib/graded-market";
-import { EBAY_LOGO_URL, VINTED_LOGO_URL } from "@/lib/marketplace-logos";
+import { EBAY_LOGO_URL } from "@/lib/marketplace-logos";
 
 export type TypeSummary = {
   avgLabel: string;
@@ -33,6 +34,8 @@ export type VintedFeedRowSummary = {
   /** Empty string when the listing's age isn't known — a row with an unknown age says nothing rather than claiming to be new. */
   timeAgo: string;
   condition: string;
+  /** Raw number backing priceLabel — kept alongside the formatted string rather than parsed back out of it, needed for real arithmetic like "cheapest of the held rows" in vinted-listings-section.tsx. */
+  price: number;
   priceLabel: string;
   dealPct: number;
   dealTier: "good" | "fair" | "high";
@@ -60,43 +63,6 @@ export type VintedSummary = {
   collectedLabel?: string;
 };
 
-// One small, deliberately restrained color language, reused for both chip
-// systems in the Vinted feed (deal quality and condition) rather than
-// inventing a second competing palette — good/Très bon état share the green
-// read, high/Satisfaisant share the amber "pay attention" read. Kept as
-// resolved hex rather than theme utility classes because these are chip
-// *tints*, one step lighter than any --color-* token in the theme, and the
-// paired text shade is chosen for contrast at 10-11px, not just borrowed
-// from the nearest brand color.
-const CHIP_COLORS = {
-  green: { bg: "#e9f8ee", text: "#1f9d55" },
-  blue: { bg: "#e6f1fb", text: "#185fa5" },
-  amber: { bg: "#fbf1e3", text: "#a15c0c" },
-  grey: { bg: "#f4f5f8", text: "#6b7280" },
-  /** Master Ball purple — reserved for the locked-listings teaser below, so "there's more, unlock it" reads as its own distinct signal, not a repurposed deal-quality or condition tint. */
-  purple: { bg: "#f1e9fb", text: "#6b21a8" },
-} as const;
-
-const DEAL_TIER_COLORS: Record<VintedFeedRowSummary["dealTier"], (typeof CHIP_COLORS)[keyof typeof CHIP_COLORS]> = {
-  good: CHIP_COLORS.green,
-  fair: CHIP_COLORS.grey,
-  high: CHIP_COLORS.amber,
-};
-
-// One tier only. Vinted has three (Très bon état / Bon état /
-// Satisfaisant) and this feed shows exclusively the first — see
-// lib/vinted-listings.ts. The map is kept rather than inlined so an
-// unexpected condition string still renders in neutral grey via the
-// CHIP_COLORS.grey fallback below instead of crashing on a missing key.
-const CONDITION_COLORS: Record<string, (typeof CHIP_COLORS)[keyof typeof CHIP_COLORS]> = {
-  "Très bon état": CHIP_COLORS.green,
-};
-
-function dealPctLabel(pct: number): string {
-  if (pct === 0) return "±0%";
-  return `${pct > 0 ? "+" : ""}${pct}%`;
-}
-
 /**
  * The rest/hover/pressed states every clickable tab in this file shares —
  * a flat hard-shadow sits under the control at rest, lifts half a step on
@@ -117,17 +83,6 @@ export type MarketTab = EbayLanguage | "France";
 
 const TYPES = ["active", "sold"] as const;
 type ListingType = (typeof TYPES)[number];
-
-/**
- * MVP paywall tease for the France/Vinted feed only — English/Japanese eBay
- * stay fully open, untouched by this. Only real, scraped rows get locked
- * (see the `vinted.isReal` gate below): the illustrative preview is already
- * a small fake set, and teasing a premium unlock over invented data would be
- * a real (if minor) dishonesty on top of a fake one. `2` is a starting
- * point, not a measured number — revisit once actual premium conversion
- * exists to look at.
- */
-const FREE_VINTED_ROWS = 2;
 
 /**
  * Top-level Market tabs (English / Japanese / France) select which
@@ -156,12 +111,11 @@ const FREE_VINTED_ROWS = 2;
  * text guess. Known and accepted for now; update this comment when that
  * lands.
  *
- * One exception to "every branch always in the DOM": past FREE_VINTED_ROWS,
- * real Vinted rows are capped, not hidden — the MVP shape of a future
- * premium unlock (see the locked-rows teaser below `visibleVintedRows`).
- * Unlike tab selection, this is a genuine content gate, so a crawler reading
- * raw HTML sees the same capped set a logged-out human does. English/
- * Japanese eBay data is untouched by this — every row still renders.
+ * One exception to "every branch always in the DOM": the France branch below
+ * hands off to VintedListingsSection, whose own doc comment explains why
+ * real listings past a free-row cap are genuinely withheld rather than
+ * CSS-hidden. English/Japanese eBay data is untouched by that — every row
+ * still renders.
  */
 export function GradedMarketTabs({
   entries,
@@ -181,9 +135,6 @@ export function GradedMarketTabs({
   // lib/graded-market.ts), so entries[0]'s is representative of all of them.
   const marketTabs: MarketTab[] = [...entries[0].languages.map((l) => l.language), "France"];
   const [market, setMarket] = useState<MarketTab>(defaultMarket && marketTabs.includes(defaultMarket) ? defaultMarket : marketTabs[0]);
-
-  const visibleVintedRows = vinted.isReal ? vinted.rows.slice(0, FREE_VINTED_ROWS) : vinted.rows;
-  const lockedVintedCount = vinted.isReal ? Math.max(0, vinted.rows.length - FREE_VINTED_ROWS) : 0;
 
   const [conditionId, setConditionId] = useState<EbayCondition>(entries[0].id);
   const [type, setType] = useState<ListingType>("active");
@@ -345,204 +296,7 @@ export function GradedMarketTabs({
       </div>
 
       <div hidden={market !== "France"}>
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
-          {/* Not "Just listed": Lobstr reads Vinted's search-results cards,
-              which carry no listing date, so nothing here knows how old a
-              listing is. Claiming recency we can't measure is the same
-              class of error as showing an illustrative price as real. */}
-          <span className="text-base font-black tracking-[-0.3px]">Vinted listings — {vinted.title}</span>
-          {/* The badge tracks the data, not the layout. Scraped listings get
-              the confident solid pill real connected data gets elsewhere on
-              this page; the fallback feed gets a dashed "Preview" pill, since
-              a "Live" badge over invented numbers would contradict every
-              other real/illustrative signal on this site. */}
-          {vinted.isReal ? (
-            <span className="flex items-center gap-1.5 rounded-full border-2 border-black bg-success-green px-2.5 py-1 text-[11px] font-black tracking-[0.3px] text-white uppercase">
-              <span className="h-1.5 w-1.5 rounded-full bg-white" />
-              Live
-            </span>
-          ) : (
-            <span className="flex items-center gap-1.5 rounded-full border border-dashed border-[#9a9a9a] bg-white px-2.5 py-1 text-[11px] font-black tracking-[0.3px] text-muted-text uppercase">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#9a9a9a]" />
-              Preview
-            </span>
-          )}
-        </div>
-
-        {/* Plain text, not a tooltip or an icon — the filter is the single
-            most important thing to understand about this feed, and it has to
-            be as visible to an AI agent reading raw HTML as to a human. */}
-        <p className="mt-2 text-xs font-bold text-muted-text">
-          <span className="text-foreground">{vinted.conditionFilter} only.</span> Vinted&apos;s other condition tiers are excluded from both this
-          feed and the search link below, so it&apos;s deliberately narrower than an unfiltered search.
-        </p>
-
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border-2 border-black bg-pokemon-blue p-5 shadow-hard-md">
-          <div>
-            <div className="mb-1.5 text-[11px] font-black tracking-[0.5px] text-white/70 uppercase">
-              Avg · {vinted.rows.length} listings
-            </div>
-            <div className="text-3xl font-black tracking-[-0.6px] text-white tabular-nums">{vinted.avgLabel}</div>
-          </div>
-          <div className="text-right text-[11px] font-bold text-white/70 uppercase">
-            {vinted.isReal ? `asking prices${vinted.collectedLabel ? ` · collected ${vinted.collectedLabel} ago` : ""}` : "estimate, not real-time"}
-          </div>
-        </div>
-
-        <div className="mt-5 rounded-md bg-white p-5">
-          <div className="mb-3">
-            <span className="text-[10px] font-black tracking-[0.5px] text-muted-text uppercase">{vinted.conditionFilter} listings</span>
-          </div>
-
-          <div>
-            {visibleVintedRows.map((row, i) => {
-              const dealColors = DEAL_TIER_COLORS[row.dealTier];
-              const conditionColors = CONDITION_COLORS[row.condition] ?? CHIP_COLORS.grey;
-              // A real row shows its own scraped photo; a preview row falls
-              // back to the card's own image, which is the honest choice —
-              // same physical card, different sellers, never a fabricated
-              // per-listing photo.
-              const thumbnail = row.imageUrl ?? vinted.imageUrl;
-              return (
-                <div key={row.url ?? i} className="flex items-center gap-3 border-t border-dashed border-border-subtle py-3 first:border-t-0">
-                  {thumbnail ? (
-                    // eslint-disable-next-line @next/next/no-img-element -- TCGdex/apitcg or Vinted CDN image, domain not allowlisted for next/image (same as CardImage)
-                    <img src={thumbnail} alt="" className="h-14 w-10 flex-none rounded-sm border-2 border-black object-cover shadow-hard-sm" />
-                  ) : (
-                    <div className="h-14 w-10 flex-none rounded-sm border-2 border-black bg-white shadow-hard-sm" />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span
-                        className="rounded-full px-2 py-0.5 text-[10px] font-black tracking-[0.3px] uppercase"
-                        style={{ backgroundColor: conditionColors.bg, color: conditionColors.text }}
-                      >
-                        {row.condition}
-                      </span>
-                      {row.timeAgo && <span className="text-[10px] font-bold text-muted-text">{row.timeAgo}</span>}
-                    </div>
-                    {/* Only real rows carry a title and a link. A preview row
-                        gets neither — a fabricated seller title or a dead
-                        item link is a worse kind of placeholder than an
-                        invented number, since it looks clickable. */}
-                    {row.title &&
-                      (row.url ? (
-                        <a
-                          href={row.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-1 block truncate text-[12px] font-bold hover:text-pokemon-blue hover:underline"
-                        >
-                          {row.title} ↗
-                        </a>
-                      ) : (
-                        <span className="mt-1 block truncate text-[12px] font-bold">{row.title}</span>
-                      ))}
-                  </div>
-                  <div className="flex flex-none flex-col items-end gap-1">
-                    <span className="text-[13px] font-black tabular-nums">{row.priceLabel}</span>
-                    <span
-                      className="rounded-full px-2 py-0.5 text-[10px] font-black tabular-nums"
-                      style={{ backgroundColor: dealColors.bg, color: dealColors.text }}
-                    >
-                      {dealPctLabel(row.dealPct)}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {lockedVintedCount > 0 && (
-            <div className="relative mt-2 overflow-hidden rounded-md">
-              {/* Decoration only, never real data — the free rows above are
-                  the whole real feed a non-premium visitor sees. These bars
-                  stand in for "there's more below", not for any specific
-                  hidden listing. */}
-              <div aria-hidden="true" className="pointer-events-none space-y-3 py-1 opacity-70 blur-[2px]">
-                {Array.from({ length: Math.min(lockedVintedCount, 2) }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className="h-14 w-10 flex-none rounded-sm border-2 border-black bg-white shadow-hard-sm" />
-                    <div className="min-w-0 flex-1 space-y-2">
-                      <div className="h-3 w-14 rounded-full bg-[#e4e4e4]" />
-                      <div className="h-3 w-28 rounded-full bg-[#e4e4e4]" />
-                    </div>
-                    <div className="h-4 w-12 flex-none rounded-full bg-[#e4e4e4]" />
-                  </div>
-                ))}
-              </div>
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white via-white/90 to-transparent" />
-              <div
-                className="relative -mt-8 flex flex-col items-center gap-2 rounded-md border-2 border-black p-4 text-center shadow-hard-sm"
-                style={{ backgroundColor: CHIP_COLORS.purple.bg }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element -- local /public asset, same convention as MasterballBg */}
-                <img src="/masterball.png" alt="" className="h-9 w-9" />
-                <div className="text-[13px] font-black tracking-[-0.2px]" style={{ color: CHIP_COLORS.purple.text }}>
-                  {lockedVintedCount} more listing{lockedVintedCount === 1 ? "" : "s"} tracked
-                </div>
-                <p className="text-[11px] font-bold text-muted-text">Every asking price on Vinted, not just the top {FREE_VINTED_ROWS}.</p>
-                {/* No href/onClick yet — CardTrace Premium doesn't exist as a
-                    destination. Styled and pressable like the real CTAs
-                    around it rather than a greyed-out disabled button, since
-                    the goal is "this is coming", not "this is broken". */}
-                <button
-                  type="button"
-                  className="mt-1 rounded-md border-2 border-black px-3.5 py-2 text-xs font-black tracking-[0.3px] text-white uppercase shadow-hard-sm transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-md"
-                  style={{ backgroundColor: CHIP_COLORS.purple.text }}
-                >
-                  Catch &apos;em all
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-4">
-          <a
-            href={vinted.searchHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-md border-2 border-black bg-pokemon-red px-3.5 py-2 text-xs font-black tracking-[0.3px] text-white uppercase shadow-hard-sm transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-md"
-          >
-            Search on Vinted ↗
-          </a>
-          <div className="mt-2 flex justify-end">
-            <span className="flex items-end gap-1.5 text-[10px] font-bold text-muted-text uppercase">
-              Powered by
-              {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, not an optimizable remote domain */}
-              <img src={VINTED_LOGO_URL} alt="Vinted" className="h-5 w-auto" />
-              {/* Named, not hidden: these rows are scraped by a third party
-                  rather than served by Vinted, and a reader deserves to know
-                  which link in the chain produced the number. */}
-              {vinted.isReal && <span>via Lobstr.io</span>}
-            </span>
-          </div>
-        </div>
-
-        <div className="mt-5 rounded-md border-2 border-black p-5" style={{ backgroundColor: CHIP_COLORS.green.bg }}>
-          <div className="mb-2 text-[11px] font-black tracking-[0.5px] uppercase" style={{ color: CHIP_COLORS.green.text }}>
-            Deal density · {vinted.totalCount} listings
-          </div>
-          <div className="mb-2.5 h-2 overflow-hidden rounded-full border-2 border-black bg-white">
-            <span
-              className="block h-full bg-success-green"
-              style={{ width: `${Math.round((vinted.belowAverageCount / vinted.totalCount) * 100)}%` }}
-            />
-          </div>
-          <p className="text-xs font-bold" style={{ color: CHIP_COLORS.green.text }}>
-            <span className="text-foreground">
-              {vinted.belowAverageCount} of {vinted.totalCount}
-            </span>{" "}
-            listings priced below the average.
-          </p>
-        </div>
-
-        {!vinted.isReal && (
-          <div className="mt-3">
-            <IllustrativeTag label="Preview — no scraped Vinted listings yet" />
-          </div>
-        )}
+        <VintedListingsSection vinted={vinted} />
       </div>
     </div>
   );
