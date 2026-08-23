@@ -252,7 +252,7 @@ export function GradedMarketTabs({
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
+        <div className="mt-4">
           <a
             href={selected.seeAllHref}
             target="_blank"
@@ -261,11 +261,13 @@ export function GradedMarketTabs({
           >
             See all {selected.count} {type} listings ↗
           </a>
-          <span className="flex items-center gap-1.5 text-[10px] font-bold text-muted-text uppercase">
-            Powered by
-            {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, not an optimizable remote domain */}
-            <img src={EBAY_LOGO_URL} alt="eBay" className="h-5 w-auto" />
-          </span>
+          <div className="mt-2 flex justify-end">
+            <span className="flex items-center gap-1.5 text-[10px] font-bold text-muted-text uppercase">
+              Powered by
+              {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, not an optimizable remote domain */}
+              <img src={EBAY_LOGO_URL} alt="eBay" className="h-5 w-auto" />
+            </span>
+          </div>
         </div>
 
         {!selected.isReal && (
@@ -366,7 +368,7 @@ export function GradedMarketTabs({
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
+        <div className="mt-4">
           <a
             href={vinted.searchHref}
             target="_blank"
@@ -375,11 +377,13 @@ export function GradedMarketTabs({
           >
             Search on Vinted ↗
           </a>
-          <span className="flex items-center gap-1.5 text-[10px] font-bold text-muted-text uppercase">
-            Powered by
-            {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, not an optimizable remote domain */}
-            <img src={VINTED_LOGO_URL} alt="Vinted" className="h-5 w-auto" />
-          </span>
+          <div className="mt-2 flex justify-end">
+            <span className="flex items-center gap-1.5 text-[10px] font-bold text-muted-text uppercase">
+              Powered by
+              {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, not an optimizable remote domain */}
+              <img src={VINTED_LOGO_URL} alt="Vinted" className="h-5 w-auto" />
+            </span>
+          </div>
         </div>
 
         <div className="mt-5 rounded-md border-2 border-black p-5" style={{ backgroundColor: CHIP_COLORS.green.bg }}>
