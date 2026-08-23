@@ -73,6 +73,8 @@ const CHIP_COLORS = {
   blue: { bg: "#e6f1fb", text: "#185fa5" },
   amber: { bg: "#fbf1e3", text: "#a15c0c" },
   grey: { bg: "#f4f5f8", text: "#6b7280" },
+  /** Master Ball purple — reserved for the locked-listings teaser below, so "there's more, unlock it" reads as its own distinct signal, not a repurposed deal-quality or condition tint. */
+  purple: { bg: "#f1e9fb", text: "#6b21a8" },
 } as const;
 
 const DEAL_TIER_COLORS: Record<VintedFeedRowSummary["dealTier"], (typeof CHIP_COLORS)[keyof typeof CHIP_COLORS]> = {
@@ -117,6 +119,17 @@ const TYPES = ["active", "sold"] as const;
 type ListingType = (typeof TYPES)[number];
 
 /**
+ * MVP paywall tease for the France/Vinted feed only — English/Japanese eBay
+ * stay fully open, untouched by this. Only real, scraped rows get locked
+ * (see the `vinted.isReal` gate below): the illustrative preview is already
+ * a small fake set, and teasing a premium unlock over invented data would be
+ * a real (if minor) dishonesty on top of a fake one. `2` is a starting
+ * point, not a measured number — revisit once actual premium conversion
+ * exists to look at.
+ */
+const FREE_VINTED_ROWS = 2;
+
+/**
  * Top-level Market tabs (English / Japanese / France) select which
  * marketplace's data is shown. English and Japanese keep the original
  * structure underneath — Condition tabs (PSA 10/9/8/Raw), an active/sold
@@ -132,6 +145,23 @@ type ListingType = (typeof TYPES)[number];
  * changes on click — so an AI crawler reading raw HTML sees every
  * combination regardless of what a human has selected, same pattern as
  * components/price-data-tabs.tsx.
+ *
+ * "France" is itself an approximation worth flagging: Vinted listing
+ * titles/descriptions don't reliably state the card's print language (an
+ * Italian or Japanese print reads the same as a French one to the name+
+ * number matching in lib/vinted-listings.ts), so this feed can include
+ * foreign-print asks alongside genuine French-market ones. The honest fix is
+ * a real per-country price source — TCGGO's Cardmarket data has a
+ * lowest_near_mint_FR field (see tcggo-integration-plan.md) — not a title-
+ * text guess. Known and accepted for now; update this comment when that
+ * lands.
+ *
+ * One exception to "every branch always in the DOM": past FREE_VINTED_ROWS,
+ * real Vinted rows are capped, not hidden — the MVP shape of a future
+ * premium unlock (see the locked-rows teaser below `visibleVintedRows`).
+ * Unlike tab selection, this is a genuine content gate, so a crawler reading
+ * raw HTML sees the same capped set a logged-out human does. English/
+ * Japanese eBay data is untouched by this — every row still renders.
  */
 export function GradedMarketTabs({
   entries,
@@ -151,6 +181,9 @@ export function GradedMarketTabs({
   // lib/graded-market.ts), so entries[0]'s is representative of all of them.
   const marketTabs: MarketTab[] = [...entries[0].languages.map((l) => l.language), "France"];
   const [market, setMarket] = useState<MarketTab>(defaultMarket && marketTabs.includes(defaultMarket) ? defaultMarket : marketTabs[0]);
+
+  const visibleVintedRows = vinted.isReal ? vinted.rows.slice(0, FREE_VINTED_ROWS) : vinted.rows;
+  const lockedVintedCount = vinted.isReal ? Math.max(0, vinted.rows.length - FREE_VINTED_ROWS) : 0;
 
   const [conditionId, setConditionId] = useState<EbayCondition>(entries[0].id);
   const [type, setType] = useState<ListingType>("active");
@@ -362,7 +395,7 @@ export function GradedMarketTabs({
           </div>
 
           <div>
-            {vinted.rows.map((row, i) => {
+            {visibleVintedRows.map((row, i) => {
               const dealColors = DEAL_TIER_COLORS[row.dealTier];
               const conditionColors = CONDITION_COLORS[row.condition] ?? CHIP_COLORS.grey;
               // A real row shows its own scraped photo; a preview row falls
@@ -419,6 +452,50 @@ export function GradedMarketTabs({
               );
             })}
           </div>
+
+          {lockedVintedCount > 0 && (
+            <div className="relative mt-2 overflow-hidden rounded-md">
+              {/* Decoration only, never real data — the free rows above are
+                  the whole real feed a non-premium visitor sees. These bars
+                  stand in for "there's more below", not for any specific
+                  hidden listing. */}
+              <div aria-hidden="true" className="pointer-events-none space-y-3 py-1 opacity-70 blur-[2px]">
+                {Array.from({ length: Math.min(lockedVintedCount, 2) }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className="h-14 w-10 flex-none rounded-sm border-2 border-black bg-white shadow-hard-sm" />
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <div className="h-3 w-14 rounded-full bg-[#e4e4e4]" />
+                      <div className="h-3 w-28 rounded-full bg-[#e4e4e4]" />
+                    </div>
+                    <div className="h-4 w-12 flex-none rounded-full bg-[#e4e4e4]" />
+                  </div>
+                ))}
+              </div>
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white via-white/90 to-transparent" />
+              <div
+                className="relative -mt-8 flex flex-col items-center gap-2 rounded-md border-2 border-black p-4 text-center shadow-hard-sm"
+                style={{ backgroundColor: CHIP_COLORS.purple.bg }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element -- local /public asset, same convention as MasterballBg */}
+                <img src="/masterball.png" alt="" className="h-9 w-9" />
+                <div className="text-[13px] font-black tracking-[-0.2px]" style={{ color: CHIP_COLORS.purple.text }}>
+                  {lockedVintedCount} more listing{lockedVintedCount === 1 ? "" : "s"} tracked
+                </div>
+                <p className="text-[11px] font-bold text-muted-text">Every asking price on Vinted, not just the top {FREE_VINTED_ROWS}.</p>
+                {/* No href/onClick yet — CardTrace Premium doesn't exist as a
+                    destination. Styled and pressable like the real CTAs
+                    around it rather than a greyed-out disabled button, since
+                    the goal is "this is coming", not "this is broken". */}
+                <button
+                  type="button"
+                  className="mt-1 rounded-md border-2 border-black px-3.5 py-2 text-xs font-black tracking-[0.3px] text-white uppercase shadow-hard-sm transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-md"
+                  style={{ backgroundColor: CHIP_COLORS.purple.text }}
+                >
+                  Catch &apos;em all
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="mt-4">
