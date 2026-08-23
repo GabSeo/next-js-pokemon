@@ -1,4 +1,4 @@
-import { getResults, hasLobstrCredentials, listRuns, pinnedVintedRunHash, vintedSquidHash } from "@/lib/lobstr";
+import { getResults, hasLobstrCredentials, listRuns, pinnedVintedRunHash, VINTED_RESULTS_PER_CARD, vintedSquidHash } from "@/lib/lobstr";
 import { cleanCardName } from "@/lib/ebay-search";
 import { getLocalizedName } from "@/lib/tcgdex";
 import { vintedSearchLink } from "@/lib/vinted-search";
@@ -293,8 +293,14 @@ function searchTextOf(url: string): string | undefined {
   }
 }
 
-/** Matches the six-row illustrative feed this replaces, so the panel's layout is identical either way. */
-const DISPLAY_LIMIT = 6;
+/**
+ * Kept in lib/lobstr.ts because it's a budget number, not a layout one: the
+ * squid is configured to scrape exactly (tracked cards x this) results per
+ * run, so the feed's length and the monthly bill are the same decision. The
+ * illustrative fallback renders the same number of rows, so the panel's
+ * layout is identical either way.
+ */
+const DISPLAY_LIMIT = VINTED_RESULTS_PER_CARD;
 /** How many recent runs to look back through when the newest one has nothing for this card (it may still be scraping, or its tasks may not have covered this card). */
 const RUN_LOOKBACK = 3;
 

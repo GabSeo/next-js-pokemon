@@ -68,6 +68,23 @@ export const VINTED_PRODUCTS_CRAWLER = "ffd34f9b42a79b7323a048f09fc158e6";
 export const COLLECTION_INTERVAL_DAYS = 14;
 
 /**
+ * Rows kept per card, and the unit the whole budget is denominated in.
+ *
+ * Lobstr's free tier is 100 results a month. Three tracked Pokémon cards x
+ * 10 results x two collections a month = 60, comfortably inside it with
+ * room for a forced re-collection. Raising this, or adding cards, moves
+ * that total directly — 4 cards at 10 would be 80, 5 would be 100 and the
+ * tier is gone.
+ *
+ * The squid's own `max_unique_results_per_run` has to be set to
+ * (cards x this) for the ceiling to actually bind on Lobstr's side; that's
+ * what `scripts/lobstr-setup.mjs --settings` computes and applies. This
+ * constant alone only trims what's *displayed* — it cannot stop a scrape
+ * that has already been paid for.
+ */
+export const VINTED_RESULTS_PER_CARD = 10;
+
+/**
  * Results are cached for the full collection interval, not minutes.
  *
  * That's safe rather than stale because the cache key includes the RUN

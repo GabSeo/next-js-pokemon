@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import { getAllCards } from "@/lib/cards";
+import { getCardsByFranchise } from "@/lib/cards";
 import {
   addTasks,
   COLLECTION_INTERVAL_DAYS,
   getRunStats,
+  VINTED_RESULTS_PER_CARD,
   hasLobstrCredentials,
   listRuns,
   pinnedVintedRunHash,
@@ -202,7 +203,13 @@ export async function POST(request: Request) {
       if (blocked) return NextResponse.json(blocked, { status: 409 });
     }
 
-    const cards = await getAllCards();
+    // Pokémon only — deliberately not getAllCards(). This is the Pokémon
+    // Market Overview's France tab, and every card added here costs
+    // VINTED_RESULTS_PER_CARD results out of a 100/month tier. Scraping the
+    // One Piece cards too would double the bill for a panel nobody is
+    // reading in that context; their France tab stays on its clearly-marked
+    // preview, which is the honest way to show data that isn't collected.
+    const cards = await getCardsByFranchise("pokemon");
     const queries = await Promise.all(cards.map(async (card) => ({ slug: card.slug, ...(await vintedQueryForCard(card)) })));
     const urls = [...new Set(queries.map((q) => q.searchUrl))];
 
@@ -219,6 +226,16 @@ export async function POST(request: Request) {
       taskCount: urls.length,
       tasks: queries.map((q) => ({ slug: q.slug, query: q.query, url: q.searchUrl })),
       forced: force,
+      // The budget, echoed back on every collection so a card added to
+      // card-refs.ts shows up here as a bigger number instead of quietly
+      // as a bigger invoice. If this exceeds what the squid was configured
+      // with, re-run `node scripts/lobstr-setup.mjs --settings`.
+      resultBudget: {
+        perCard: VINTED_RESULTS_PER_CARD,
+        cards: urls.length,
+        maxResultsThisRun: urls.length * VINTED_RESULTS_PER_CARD,
+        perMonthAtThisCadence: urls.length * VINTED_RESULTS_PER_CARD * 2,
+      },
       nextEligibleAt: new Date(Date.now() + COLLECTION_INTERVAL_DAYS * DAY_MS - COLLECTION_GRACE_MS).toISOString(),
       // Results are not available yet — the run has only just started. This
       // is the asynchronous part callers most often get wrong.

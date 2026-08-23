@@ -161,8 +161,10 @@ export type VintedFeedListing = {
 
 // Fixed recency spread (not random) so the feed always reads newest-first
 // with a believable, increasing gap — matches how a real "just listed"
-// feed would look, without needing wall-clock state.
-const VINTED_MINUTES_AGO = [0, 4, 11, 19, 27, 38];
+// feed would look, without needing wall-clock state. Length matches
+// VINTED_RESULTS_PER_CARD (lib/lobstr.ts), so the preview is the same shape
+// as the real feed it stands in for rather than a shorter stub.
+const VINTED_MINUTES_AGO = [0, 4, 11, 19, 27, 38, 52, 70, 95, 128];
 
 /**
  * Illustrative "newly listed" feed — same placeholder-until-a-real-source

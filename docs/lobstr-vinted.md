@@ -80,7 +80,7 @@ export LOBSTR_API_KEY=...
 node scripts/lobstr-setup.mjs            # verify the key, list crawlers
 node scripts/lobstr-setup.mjs --create   # create the squid, prints LOBSTR_VINTED_SQUID
 export LOBSTR_VINTED_SQUID=...           # and add it in Vercel
-node scripts/lobstr-setup.mjs --settings # apply recommended crawler settings
+node scripts/lobstr-setup.mjs --settings # apply the result cap — NOT optional, see The budget
 ```
 
 Then trigger the first run:
@@ -92,21 +92,30 @@ curl      https://<host>/api/vinted/refresh -H "Authorization: Bearer $LOBSTR_RE
 
 Squids are **not** created per request — you create one and reuse it. That's why creation lives in a script a human runs, not in app code.
 
-## Cost, and the 14-day cadence
+## The budget
 
-**Scraping is the only part of this that costs money.** Lobstr bills per scraped result (100 free/month, then from $1 per 1k). Reading results back is a plain API read — free, and not affected by how many people visit the site. So the bill is set by one thing: how often a run is started.
+**Scraping is the only part of this that costs money.** Lobstr bills per scraped result — 100 free per month. Reading results back is a plain API read: free, and unaffected by how many people visit the site. So the bill is exactly:
 
-Collection runs **every 14 days** (`COLLECTION_INTERVAL_DAYS` in `src/lib/lobstr.ts`), enforced in three places so that no single failure turns into a spend:
+```
+tracked Pokémon cards  x  results per card  x  collections per month
+        3              x         10         x           2            =  60 / 100
+```
 
-| Where | What it does |
-| --- | --- |
-| `vercel.json` cron | Fires the 1st and 15th at 03:00 UTC — the *plan* |
-| `/api/vinted/refresh` | Rejects a run started less than ~14 days after the last one (409, with `nextEligibleAt`) — the part that holds when the plan is wrong |
-| Squid settings | `max_pages: 1`, `max_unique_results_per_run: 150` — a hard ceiling on any one run's spend |
+Every one of those three numbers is enforced somewhere, not just documented:
 
-The interval check asks **Lobstr** when the last run started, rather than trusting a local timestamp: a serverless deployment has nowhere durable to write one, and an evicted cache entry reading as "never collected" would authorise a spend. It carries 12 hours of slack so scheduler jitter can't make a scheduled run fail its own interval check and skip a fortnight. It fails **open** — if the run list can't be read, collection proceeds, since a transient read error silently freezing the site on preview data forever is the worse outcome.
+| Number | Where it's enforced | What happens if it's wrong |
+| --- | --- | --- |
+| **3 cards** | `getCardsByFranchise("pokemon")` in the refresh route | Scraping all 6 cards (Pokémon + One Piece) would double the bill |
+| **10 results** | `max_unique_results_per_run` on the squid, set to cards × 10 | **Without this cap, `max_pages: 1` still scrapes a whole Vinted page — around 96 listings per card, so ~288 in one run: three months of tier in a single collection** |
+| **2 / month** | `vercel.json` cron (1st + 15th) **and** a hard interval check in `/api/vinted/refresh` | A misfiring schedule, a retried webhook, or a manual curl could otherwise collect any number of times |
 
-At six cards that's roughly 300 scraped results a month: inside the free tier plus small change.
+`VINTED_RESULTS_PER_CARD` in `src/lib/lobstr.ts` is the per-card number; `scripts/lobstr-setup.mjs --settings` counts the Pokémon entries in `card-refs.ts`, multiplies, and applies the cap — so **adding a card means re-running `--settings`**, or the new card silently eats another card's share. The script warns if the total would exceed 100/month, and each collection echoes its own budget back in the POST response.
+
+One Piece cards are deliberately not collected. Their France tab stays on the clearly-marked preview — the honest way to show data that isn't gathered.
+
+### The interval check
+
+It asks **Lobstr** when the last run started, rather than trusting a local timestamp: serverless has nowhere durable to write one, and an evicted cache entry reading as "never collected" would authorise a spend. It carries 12 hours of slack so scheduler jitter can't make a scheduled run fail its own interval check and skip a fortnight. It fails **open** — if the run list can't be read, collection proceeds, since a transient read error silently freezing the site on preview data forever is the worse outcome.
 
 Override deliberately when you need to (still requires the secret):
 
@@ -138,6 +147,20 @@ Two smaller unverified spots, both marked in the code and both failing soft (the
 
 - `listRuns` reads `GET /v1/runs?squid=<hash>`, a conventional REST reading of the documented `POST /v1/runs`. Set `LOBSTR_VINTED_RUN` to bypass it.
 - The results envelope (`[...]` vs `{data: [...]}` vs `{results: [...]}`) is unwrapped defensively rather than assumed.
+
+### How the per-run cap splits across cards
+
+`max_unique_results_per_run` is documented as a **per-run** total, not per-task. Whether Lobstr spreads 30 results evenly across the three card searches, or lets the first task consume all 30 before the others are reached, is not documented and couldn't be tested here. `concurrency: 1` means tasks run sequentially, so lopsided-in-task-order is the plausible failure.
+
+Check it on the first real collection:
+
+```bash
+node scripts/lobstr-setup.mjs --sample <run_hash>
+```
+
+If one card dominates, look for a per-task cap in `--params` (`node scripts/lobstr-setup.mjs --params`). Failing that, the fix is one run per card — three separate collections spaced out, rather than raising the cap.
+
+This costs nothing to be wrong about: the spend ceiling still holds either way. It only affects which cards have real rows and which fall back to preview.
 
 ## Deliberate design choices
 

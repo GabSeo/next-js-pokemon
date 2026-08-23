@@ -24,32 +24,57 @@
  * stops being a guess.
  */
 
+import { readFileSync } from "node:fs";
+
 const API_BASE = "https://api.lobstr.io/v1";
 const VINTED_PRODUCTS_CRAWLER = "ffd34f9b42a79b7323a048f09fc158e6";
 
 /**
- * Recommended squid settings, sized from how this site actually reads the
- * data rather than from what the scraper is capable of. Lobstr bills per
- * scraped result, and collection happens fortnightly (see
- * COLLECTION_INTERVAL_DAYS in src/lib/lobstr.ts), so these three numbers
- * are the entire monthly bill.
+ * The budget, in the only unit that costs money: scraped results.
  *
- * The panel renders at most 6 "très bon état" listings per card. Page one
- * of a filtered search already contains far more than that, and results
- * come back relevance-ordered, so a second page would buy nothing but
- * credits — max_pages is 1, not the 32 Lobstr allows.
+ * Lobstr's free tier is 100 results/month. Collection is fortnightly (two
+ * runs a month, see COLLECTION_INTERVAL_DAYS in src/lib/lobstr.ts), so the
+ * whole bill is: tracked cards x RESULTS_PER_CARD x 2.
  *
- * max_unique_results_per_run is a hard ceiling on one collection's spend,
- * set well above what 6 cards need (a card's results still have to survive
- * per-card matching, so some headroom is real) and well below anything
- * expensive. At two collections a month that's ~300 results — inside
- * Lobstr's 100 free/month plus a few cents, rather than dollars.
+ *   3 cards x 10 x 2 = 60/month — inside the free tier, with room for one
+ *   forced re-collection.
+ *
+ * max_unique_results_per_run is the setting that actually enforces this on
+ * Lobstr's side, and it is NOT optional. Without it, `max_pages: 1` still
+ * means one *whole* page of Vinted results per task — around 96 listings —
+ * so three cards would spend ~288 results in a single run and blow a
+ * month's tier three times over on the first collection.
+ *
+ * max_pages stays 1 regardless: page one of a relevance-ordered, condition-
+ * filtered search already holds far more than the ten rows the panel shows.
  */
-const RECOMMENDED_SETTINGS = {
-  max_pages: 1,
-  max_unique_results_per_run: 150,
-  concurrency: 1,
-};
+const RESULTS_PER_CARD = 10; // keep in step with VINTED_RESULTS_PER_CARD in src/lib/lobstr.ts
+const DEFAULT_TRACKED_CARDS = 3;
+
+/**
+ * Counts the Pokémon entries in card-refs.ts rather than hardcoding 3, so
+ * adding a card and re-running `--settings` raises the cap automatically
+ * instead of silently truncating the new card's results. Falls back to the
+ * default if the file moves or its shape changes — a wrong-but-sane cap
+ * beats crashing the one script that configures spend.
+ */
+function trackedPokemonCards() {
+  try {
+    const src = readFileSync(new URL("../src/data/card-refs.ts", import.meta.url), "utf8");
+    const count = (src.match(/franchise:\s*"pokemon"/g) ?? []).length;
+    return count > 0 ? count : DEFAULT_TRACKED_CARDS;
+  } catch {
+    return DEFAULT_TRACKED_CARDS;
+  }
+}
+
+function recommendedSettings(cards) {
+  return {
+    max_pages: 1,
+    max_unique_results_per_run: cards * RESULTS_PER_CARD,
+    concurrency: 1,
+  };
+}
 
 const apiKey = process.env.LOBSTR_API_KEY;
 if (!apiKey) {
@@ -113,9 +138,17 @@ if (has("--settings")) {
     console.error("LOBSTR_VINTED_SQUID is not set — run with --create first.");
     process.exit(1);
   }
-  const updated = await api(`/squids/${squidHash}`, { method: "PUT", body: RECOMMENDED_SETTINGS });
-  console.log("\nApplied settings:", JSON.stringify(RECOMMENDED_SETTINGS, null, 2));
+  const cards = trackedPokemonCards();
+  const settings = recommendedSettings(cards);
+  const updated = await api(`/squids/${squidHash}`, { method: "PUT", body: settings });
+  console.log(`\nTracked Pokémon cards: ${cards} x ${RESULTS_PER_CARD} results = ${settings.max_unique_results_per_run} per run.`);
+  console.log(`At two collections a month that is ${settings.max_unique_results_per_run * 2} results/month (free tier: 100).`);
+  if (settings.max_unique_results_per_run * 2 > 100) {
+    console.log("WARNING: that exceeds the 100/month free tier. Drop RESULTS_PER_CARD or the card count.");
+  }
+  console.log("\nApplied settings:", JSON.stringify(settings, null, 2));
   console.log("Response:", JSON.stringify(updated, null, 2));
+  console.log("\nRe-run this after adding or removing a tracked card — the cap does not update itself.");
   process.exit(0);
 }
 
