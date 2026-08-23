@@ -76,11 +76,13 @@ export const COLLECTION_INTERVAL_DAYS = 14;
  * that total directly — 4 cards at 10 would be 80, 5 would be 100 and the
  * tier is gone.
  *
- * The squid's own `max_unique_results_per_run` has to be set to
- * (cards x this) for the ceiling to actually bind on Lobstr's side; that's
- * what `scripts/lobstr-setup.mjs --settings` computes and applies. This
- * constant alone only trims what's *displayed* — it cannot stop a scrape
- * that has already been paid for.
+ * Two squid settings have to agree with this for it to mean anything on
+ * Lobstr's side, and `scripts/lobstr-setup.mjs --settings` computes and
+ * applies both: `max_results_per_task` = this (so each card gets its own
+ * even share rather than the first task swallowing the run's allowance),
+ * and `max_unique_results_per_run` = cards x this (the spend ceiling).
+ * This constant alone only trims what's *displayed* — it cannot stop a
+ * scrape that has already been paid for.
  */
 export const VINTED_RESULTS_PER_CARD = 10;
 

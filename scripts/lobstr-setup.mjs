@@ -39,11 +39,17 @@ const VINTED_PRODUCTS_CRAWLER = "ffd34f9b42a79b7323a048f09fc158e6";
  *   3 cards x 10 x 2 = 60/month — inside the free tier, with room for one
  *   forced re-collection.
  *
- * max_unique_results_per_run is the setting that actually enforces this on
- * Lobstr's side, and it is NOT optional. Without it, `max_pages: 1` still
- * means one *whole* page of Vinted results per task — around 96 listings —
- * so three cards would spend ~288 results in a single run and blow a
- * month's tier three times over on the first collection.
+ * Two caps do two different jobs, and both matter:
+ *
+ * - max_results_per_task caps EACH card's search at 10. This is what makes
+ *   the per-card number real: without it the run-wide cap is first-come,
+ *   and with tasks running sequentially the first card could swallow the
+ *   whole allowance while the other two return nothing.
+ * - max_unique_results_per_run caps the WHOLE run at cards x 10. This is
+ *   the spend ceiling, and it is not optional: `max_pages: 1` still means
+ *   one *whole* page of Vinted results per task — around 96 listings — so
+ *   without it three cards would spend ~288 results in a single run and
+ *   blow a month's tier three times over on the first collection.
  *
  * max_pages stays 1 regardless: page one of a relevance-ordered, condition-
  * filtered search already holds far more than the ten rows the panel shows.
@@ -68,11 +74,21 @@ function trackedPokemonCards() {
   }
 }
 
+/**
+ * Snake_case names inferred from the squid dashboard's own labels ("Max
+ * pages", "Max Unique Results", "Max Results Per Task", "Slots"), matching
+ * the convention of the three names Lobstr documents by name (max_pages,
+ * max_unique_results_per_run, concurrency). Inferred, not confirmed — which
+ * is exactly why applySettings below checks each one against
+ * /v1/crawlers/<hash>/params before sending it, and says out loud which
+ * ones it couldn't place instead of silently not applying a spend cap.
+ */
 function recommendedSettings(cards) {
   return {
     max_pages: 1,
+    max_results_per_task: RESULTS_PER_CARD,
     max_unique_results_per_run: cards * RESULTS_PER_CARD,
-    concurrency: 1,
+    concurrency: 1, // the dashboard labels this "Slots"
   };
 }
 
@@ -132,23 +148,72 @@ if (has("--params")) {
   process.exit(0);
 }
 
+/**
+ * Pulls the settable parameter names for a crawler out of
+ * /v1/crawlers/<hash>/params. The response shape isn't documented, so every
+ * plausible one is handled: an array of strings, an array of objects with a
+ * name/key/id field, or a plain object keyed by parameter name. Returns []
+ * when nothing recognisable comes back, which the caller treats as "can't
+ * verify" rather than "nothing is settable".
+ */
+async function settableParamNames() {
+  const payload = await api(`/crawlers/${VINTED_PRODUCTS_CRAWLER}/params`);
+  const items = collection(payload);
+  if (items.length > 0) {
+    const names = items
+      .map((item) => (typeof item === "string" ? item : item?.name ?? item?.key ?? item?.id ?? item?.param))
+      .filter((name) => typeof name === "string");
+    if (names.length > 0) return names;
+  }
+  if (payload && typeof payload === "object" && !Array.isArray(payload)) return Object.keys(payload);
+  return [];
+}
+
 if (has("--settings")) {
   const squidHash = process.env.LOBSTR_VINTED_SQUID;
   if (!squidHash) {
     console.error("LOBSTR_VINTED_SQUID is not set — run with --create first.");
     process.exit(1);
   }
+
   const cards = trackedPokemonCards();
-  const settings = recommendedSettings(cards);
-  const updated = await api(`/squids/${squidHash}`, { method: "PUT", body: settings });
-  console.log(`\nTracked Pokémon cards: ${cards} x ${RESULTS_PER_CARD} results = ${settings.max_unique_results_per_run} per run.`);
-  console.log(`At two collections a month that is ${settings.max_unique_results_per_run * 2} results/month (free tier: 100).`);
+  const desired = recommendedSettings(cards);
+
+  // Check names against the crawler's own parameter list before sending
+  // them. A misnamed key is the dangerous failure here: the PUT can quite
+  // happily succeed while quietly ignoring the cap that was the whole point
+  // of the call, and the first sign would be an exhausted month's tier.
+  let known = [];
+  try {
+    known = await settableParamNames();
+  } catch {
+    console.log("Could not read /crawlers/<hash>/params — sending settings unverified.");
+  }
+
+  const unknownKeys = known.length > 0 ? Object.keys(desired).filter((key) => !known.includes(key)) : [];
+  if (unknownKeys.length > 0) {
+    console.log(`\nWARNING: this crawler does not list ${unknownKeys.join(", ")} as settable.`);
+    console.log("Its real parameter names are:");
+    console.log(known.map((name) => `  ${name}`).join("\n"));
+    console.log("Fix recommendedSettings() to use the right names — an ignored cap is an uncapped run.\n");
+  }
+
+  const settings = await api(`/squids/${squidHash}`, { method: "PUT", body: desired }).then(() => desired);
+
+  console.log(`\nTracked Pokémon cards: ${cards}`);
+  console.log(`Per card: ${RESULTS_PER_CARD} (max_results_per_task) — an even split, not first-come.`);
+  console.log(`Per run:  ${settings.max_unique_results_per_run} (max_unique_results_per_run) — the spend ceiling.`);
+  console.log(`Per month at two collections: ${settings.max_unique_results_per_run * 2} results (free tier: 100).`);
   if (settings.max_unique_results_per_run * 2 > 100) {
     console.log("WARNING: that exceeds the 100/month free tier. Drop RESULTS_PER_CARD or the card count.");
   }
-  console.log("\nApplied settings:", JSON.stringify(settings, null, 2));
-  console.log("Response:", JSON.stringify(updated, null, 2));
-  console.log("\nRe-run this after adding or removing a tracked card — the cap does not update itself.");
+  console.log("\nApplied:", JSON.stringify(settings, null, 2));
+  console.log("\nRe-run this after adding or removing a tracked card — the caps do not update themselves.");
+  console.log(
+    'Also check "When to end run" in the dashboard: "End run once all tasks consumed" is what this setup wants,\n' +
+      'not the "End run once no credit left" default. Its API parameter name is not known — look for it in the list\n' +
+      "printed by `node scripts/lobstr-setup.mjs --params` and add it to recommendedSettings()."
+  );
   process.exit(0);
 }
 

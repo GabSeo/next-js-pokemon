@@ -106,10 +106,16 @@ Every one of those three numbers is enforced somewhere, not just documented:
 | Number | Where it's enforced | What happens if it's wrong |
 | --- | --- | --- |
 | **3 cards** | `getCardsByFranchise("pokemon")` in the refresh route | Scraping all 6 cards (Pokémon + One Piece) would double the bill |
-| **10 results** | `max_unique_results_per_run` on the squid, set to cards × 10 | **Without this cap, `max_pages: 1` still scrapes a whole Vinted page — around 96 listings per card, so ~288 in one run: three months of tier in a single collection** |
+| **10 results** | `max_results_per_task` = 10, **and** `max_unique_results_per_run` = cards × 10 | **Without the run cap, `max_pages: 1` still scrapes a whole Vinted page — around 96 listings per card, so ~288 in one run: three months of tier in a single collection.** Without the per-task cap, the run cap is first-come: with tasks running sequentially, card 1 could take all 30 and cards 2–3 return nothing |
 | **2 / month** | `vercel.json` cron (1st + 15th) **and** a hard interval check in `/api/vinted/refresh` | A misfiring schedule, a retried webhook, or a manual curl could otherwise collect any number of times |
 
-`VINTED_RESULTS_PER_CARD` in `src/lib/lobstr.ts` is the per-card number; `scripts/lobstr-setup.mjs --settings` counts the Pokémon entries in `card-refs.ts`, multiplies, and applies the cap — so **adding a card means re-running `--settings`**, or the new card silently eats another card's share. The script warns if the total would exceed 100/month, and each collection echoes its own budget back in the POST response.
+The two caps do different jobs and both are needed: `max_results_per_task` makes the per-card number real (an even 10/10/10 split rather than first-come), `max_unique_results_per_run` is the spend ceiling.
+
+`VINTED_RESULTS_PER_CARD` in `src/lib/lobstr.ts` is the per-card number; `scripts/lobstr-setup.mjs --settings` counts the Pokémon entries in `card-refs.ts`, multiplies, and applies both caps — so **adding a card means re-running `--settings`**, or the new card gets no allowance of its own. The script warns if the total would exceed 100/month, and each collection echoes its own budget back in the POST response.
+
+Parameter names are inferred from the dashboard's own labels (Max pages, Max Unique Results, Max Results Per Task, Slots) following the snake_case convention of the three Lobstr documents by name. `--settings` checks every key against `/v1/crawlers/<hash>/params` before sending and prints the crawler's real names if one doesn't match — a misnamed key is the dangerous case here, since the PUT can succeed while silently ignoring the cap that was the point of the call.
+
+**One dashboard setting isn't covered yet.** "When to end run" defaults to *End run once no credit left*; this setup wants *End run once all tasks consumed*. Its API parameter name is unknown — find it in `node scripts/lobstr-setup.mjs --params` and add it to `recommendedSettings()`. The result caps bound the spend either way, so this is a correctness nicety rather than a budget hole.
 
 One Piece cards are deliberately not collected. Their France tab stays on the clearly-marked preview — the honest way to show data that isn't gathered.
 
@@ -147,20 +153,6 @@ Two smaller unverified spots, both marked in the code and both failing soft (the
 
 - `listRuns` reads `GET /v1/runs?squid=<hash>`, a conventional REST reading of the documented `POST /v1/runs`. Set `LOBSTR_VINTED_RUN` to bypass it.
 - The results envelope (`[...]` vs `{data: [...]}` vs `{results: [...]}`) is unwrapped defensively rather than assumed.
-
-### How the per-run cap splits across cards
-
-`max_unique_results_per_run` is documented as a **per-run** total, not per-task. Whether Lobstr spreads 30 results evenly across the three card searches, or lets the first task consume all 30 before the others are reached, is not documented and couldn't be tested here. `concurrency: 1` means tasks run sequentially, so lopsided-in-task-order is the plausible failure.
-
-Check it on the first real collection:
-
-```bash
-node scripts/lobstr-setup.mjs --sample <run_hash>
-```
-
-If one card dominates, look for a per-task cap in `--params` (`node scripts/lobstr-setup.mjs --params`). Failing that, the fix is one run per card — three separate collections spaced out, rather than raising the cap.
-
-This costs nothing to be wrong about: the spend ceiling still holds either way. It only affects which cards have real rows and which fall back to preview.
 
 ## Deliberate design choices
 
