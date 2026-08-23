@@ -79,33 +79,71 @@ export function isTresBonEtat(raw: string | undefined): boolean {
 }
 
 /**
- * Per-item field names in Lobstr's Vinted Products output aren't part of
- * the walkthrough this integration was built from, and couldn't be
- * confirmed against a live run (no API key here by design). Rather than
- * guess one name per field and silently render nothing when the guess is
- * wrong, each field is read from a small list of plausible aliases and the
- * first present one wins.
+ * Per-item field names, confirmed against a real run's export rather than
+ * guessed. Lobstr returns them SHOUTED AND SPACED — `URL`, `IMAGE URL`,
+ * `INPUT URL` — which is nothing like the snake_case this originally
+ * assumed, and would have dropped every row.
  *
- * These lists are cheap to correct: run scripts/lobstr-setup.mjs --sample
- * against a finished run, look at the real keys it prints, and delete the
- * aliases that aren't real. Nothing else in the codebase needs to change.
+ * Lookup is key-normalised (see normalizeKey) instead of exact, so `IMAGE
+ * URL`, `image_url` and `imageUrl` are all the same field. That matters
+ * because the confirmed names come from the dashboard's JSON *export*, and
+ * whether /v1/results returns identical casing is unverified — normalising
+ * makes the question moot rather than betting on one answer.
+ *
+ * Order is significance order, not preference-of-guess: `price` before
+ * `total item price` because the former is the seller's asking price and
+ * the latter silently adds Vinted's buyer-protection fee (confirmed in the
+ * export: PRICE "1" alongside TOTAL ITEM PRICE "1.75"). Showing a fee-
+ * inclusive number in a price comparison would overstate every listing.
  */
 const FIELD_ALIASES = {
-  condition: ["status", "condition", "item_condition", "item_status", "etat", "état"],
-  title: ["title", "name", "item_title", "product_title"],
-  price: ["price", "price_numeric", "item_price", "total_item_price", "amount"],
-  currency: ["currency", "price_currency", "currency_code"],
-  url: ["url", "item_url", "product_url", "link", "item_link"],
-  image: ["photo", "photo_url", "image", "image_url", "thumbnail", "picture"],
-  seller: ["user", "username", "user_login", "seller", "seller_name"],
-  timestamp: ["created_at", "created_at_ts", "listed_at", "published_at", "date", "timestamp", "updated_at"],
-  /** The task URL a row came from — the exact, unambiguous way to bucket results per card when Lobstr echoes it back. */
-  sourceUrl: ["task_url", "input_url", "source_url", "search_url", "query_url", "task"],
+  condition: ["status", "condition", "item condition", "etat", "état"],
+  title: ["title", "name", "item title"],
+  price: ["price", "total item price", "item price", "amount"],
+  currency: ["currency", "price currency", "currency code"],
+  url: ["url", "item url", "product url", "link"],
+  image: ["image url", "photo", "photo url", "image", "thumbnail"],
+  seller: ["user login", "username", "user", "seller"],
+  /**
+   * Deliberately does NOT include `collected at`. That's when the scrape
+   * ran, identical for every row in a run — presenting it as a per-listing
+   * age would tell a reader the whole feed appeared at the same instant.
+   * Lobstr reads search-results cards only, and those carry no listing
+   * date, so per-row age is simply not available; the UI omits it rather
+   * than inventing it.
+   */
+  timestamp: ["listed at", "published at", "created at"],
+  /** The task URL a row was scraped from — Lobstr echoes it as INPUT URL, which makes per-card bucketing exact instead of inferred. */
+  sourceUrl: ["input url", "task url", "source url", "search url"],
+  /** When the scrape ran. Surfaced once, as feed-level freshness — never per row. */
+  collectedAt: ["collected at"],
 } as const;
 
-function readString(row: Record<string, unknown>, aliases: readonly string[]): string | undefined {
-  for (const key of aliases) {
-    const value = row[key];
+/**
+ * Case, space, underscore and hyphen insensitive key matching. Lobstr's
+ * export says `IMAGE URL`; a different surface might say `image_url` or
+ * `imageUrl`. All three normalise to `imageurl`, so the alias lists above
+ * stay short and none of this depends on guessing a casing convention.
+ */
+function normalizeKey(key: string): string {
+  return key.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+/** Row keys normalised once per row, so a lookup across nine alias lists doesn't rescan the object nine times. */
+function normalizedRow(row: Record<string, unknown>): Map<string, unknown> {
+  const map = new Map<string, unknown>();
+  for (const [key, value] of Object.entries(row)) {
+    const normalized = normalizeKey(key);
+    // First writer wins, so an exact-ish match isn't clobbered by a later
+    // key that happens to normalise the same way.
+    if (!map.has(normalized)) map.set(normalized, value);
+  }
+  return map;
+}
+
+function readString(row: Map<string, unknown>, aliases: readonly string[]): string | undefined {
+  for (const alias of aliases) {
+    const value = row.get(normalizeKey(alias));
     if (typeof value === "string" && value.trim()) return value.trim();
     if (typeof value === "number" && Number.isFinite(value)) return String(value);
   }
@@ -119,9 +157,9 @@ function readString(row: Record<string, unknown>, aliases: readonly string[]): s
  * a bad row is dropped instead of dragging the feed's average toward zero
  * (same defensive rule lib/ebay-browse.ts applies to $0 eBay listings).
  */
-function readPrice(row: Record<string, unknown>): number | undefined {
-  for (const key of FIELD_ALIASES.price) {
-    const value = row[key];
+function readPrice(row: Map<string, unknown>): number | undefined {
+  for (const alias of FIELD_ALIASES.price) {
+    const value = row.get(normalizeKey(alias));
     if (typeof value === "number" && Number.isFinite(value) && value > 0) return value;
     if (typeof value !== "string") continue;
 
@@ -144,7 +182,7 @@ function readPrice(row: Record<string, unknown>): number | undefined {
 }
 
 /** Vinted France trades in euros; the symbol is only read off the price text when Lobstr doesn't hand over an explicit currency field. */
-function readCurrency(row: Record<string, unknown>): string {
+function readCurrency(row: Map<string, unknown>): string {
   const explicit = readString(row, FIELD_ALIASES.currency);
   if (explicit) return explicit.toUpperCase() === "EUR" ? "EUR" : explicit.toUpperCase();
   const priceText = readString(row, FIELD_ALIASES.price) ?? "";
@@ -161,16 +199,18 @@ export type VintedListing = {
   imageUrl?: string;
   /** Always TRES_BON_ETAT — nothing else gets past the filter. Kept on the row so the renderer never has to re-assert it. */
   condition: string;
-  /** Milliseconds since epoch when Lobstr gave us a parseable listing date; undefined otherwise. Used only for ordering and the "x min ago" label. */
+  /** Milliseconds since epoch when Lobstr gave us a parseable listing date. In practice always undefined for this scraper — search-results cards carry no listing date — so the UI shows no per-row age. */
   listedAtMs?: number;
+  /** When the scrape ran. Identical across a run, so it describes the FEED's freshness, never one listing's age. */
+  collectedAtMs?: number;
   seller?: string;
   /** The task URL this row was scraped from, when Lobstr echoes it — see FIELD_ALIASES.sourceUrl. */
   sourceUrl?: string;
 };
 
-function readTimestamp(row: Record<string, unknown>): number | undefined {
-  for (const key of FIELD_ALIASES.timestamp) {
-    const value = row[key];
+function readTimestamp(row: Map<string, unknown>, aliases: readonly string[] = FIELD_ALIASES.timestamp): number | undefined {
+  for (const alias of aliases) {
+    const value = row.get(normalizeKey(alias));
     if (typeof value === "number" && Number.isFinite(value) && value > 0) {
       // Unix seconds vs. milliseconds: anything below ~Nov 2286 in ms is a
       // seconds value, so scale it up.
@@ -210,21 +250,26 @@ let warnedAboutMissingCondition = false;
  *   here — arguably better evidence than scraped display text, since it's
  *   the field Vinted's own filter reads.
  */
-export function toVintedListing(row: Record<string, unknown>): VintedListing | null {
+export function toVintedListing(rawRow: Record<string, unknown>): VintedListing | null {
+  const row = normalizedRow(rawRow);
   const condition = readString(row, FIELD_ALIASES.condition);
   if (condition !== undefined && !isTresBonEtat(condition)) return null;
-  if (condition === undefined && !warnedAboutMissingCondition) {
-    warnedAboutMissingCondition = true;
-    console.warn(
-      `[lobstr] no condition field found on a Vinted result row (looked for: ${FIELD_ALIASES.condition.join(", ")}). ` +
-        `Relying on the task URL's status_ids[]=2 filter alone. Run \`node scripts/lobstr-setup.mjs --sample <run>\` and correct FIELD_ALIASES. ` +
-        `Keys present: ${Object.keys(row).join(", ")}`
-    );
-  }
 
   const price = readPrice(row);
   const url = readString(row, FIELD_ALIASES.url);
   if (price === undefined || !url) return null;
+
+  // Warn only for rows that are otherwise real listings. Lobstr appends
+  // advertising rows to an export ("Export limit reached - Get the full
+  // dataset...") which carry no fields at all; warning on those would send
+  // someone hunting for a FIELD_ALIASES bug that isn't there.
+  if (condition === undefined && !warnedAboutMissingCondition) {
+    warnedAboutMissingCondition = true;
+    console.warn(
+      `[lobstr] no condition field on a Vinted listing row (looked for: ${FIELD_ALIASES.condition.join(", ")}). ` +
+        `Relying on the task URL's status_ids[]=2 filter alone. Keys present: ${Object.keys(rawRow).join(", ")}`
+    );
+  }
 
   return {
     title: readString(row, FIELD_ALIASES.title) ?? "Vinted listing",
@@ -234,6 +279,7 @@ export function toVintedListing(row: Record<string, unknown>): VintedListing | n
     imageUrl: readString(row, FIELD_ALIASES.image),
     condition: TRES_BON_ETAT,
     listedAtMs: readTimestamp(row),
+    collectedAtMs: readTimestamp(row, FIELD_ALIASES.collectedAt),
     seller: readString(row, FIELD_ALIASES.seller),
     sourceUrl: readString(row, FIELD_ALIASES.sourceUrl),
   };
@@ -257,38 +303,43 @@ export async function vintedQueryForCard(card: Card): Promise<{ query: string; d
 }
 
 /**
- * Which card a scraped row belongs to. One run covers every tracked card
- * (one task per card — see app/api/vinted/refresh/route.ts), so results
- * come back mixed and have to be bucketed.
+ * Which card a scraped row belongs to — and whether it's plausibly that
+ * card at all. Two separate questions, and an earlier version answered only
+ * the first.
  *
- * Preferred signal is the echoed task URL, which is exact. Falling back to
- * the title, every significant word of the card's name must appear —
- * seller-written Vinted titles are free text ("Carte Pokémon Ectoplasma
- * VMAX 271/264 état impeccable"), so requiring the words is precise enough
- * to reject a different card while tolerating the surrounding prose.
+ * Bucketing is exact: Lobstr echoes the task URL as INPUT URL, so a row is
+ * assigned to the card whose search produced it, compared on `search_text`
+ * (every task URL shares the same /catalog path, so a path comparison would
+ * match every card to every row).
  *
- * The card's number is deliberately NOT required: unlike eBay's graded
- * market, where the grade and number are effectively always in the title,
- * casual Vinted sellers routinely omit the collector number. Requiring it
- * would throw away most genuine matches.
+ * Relevance is the part that isn't optional. Vinted pads a thin search with
+ * unrelated stock: the live Ectoplasma VMAX search returned "Robe de soirée
+ * noir" and "Jean celio bleu W27" among its ten results. Those rows carry
+ * the right INPUT URL and a perfectly valid `Très bon état` — bucketing
+ * alone would render an evening dress as a Gengar VMAX listing at €10.
+ * So the title must also carry the card's own name.
+ *
+ * The name test requires every word of four or more characters. That length
+ * floor drops French articles ("de", "la") and single-letter card suffixes
+ * ("Lugia V") which carry no distinguishing signal, while keeping the words
+ * that do: "Typhlosion de Luth" needs typhlosion + luth, "Ectoplasma VMAX"
+ * needs ectoplasma + vmax. The card's NUMBER is deliberately not required —
+ * casual Vinted sellers routinely omit it (confirmed in the live data:
+ * "Ectoplasma Vmax Alt" at €780 has no number and is a genuine match).
  */
 function rowMatchesCard(listing: VintedListing, displayName: string, searchUrl: string): boolean {
+  if (!titleMentionsCard(listing.title, displayName)) return false;
+  if (!titleNumberAgreesWithCard(listing.title, primaryNumberOf(searchUrl))) return false;
+
   if (listing.sourceUrl) {
     const scraped = searchTextOf(listing.sourceUrl);
     const wanted = searchTextOf(searchUrl);
-    // Compared on the search_text query param, not on the URL string: every
-    // task URL shares the same https://www.vinted.fr/catalog path, so any
-    // path-level comparison would match every card to every row.
     if (scraped !== undefined && wanted !== undefined) return scraped === wanted;
     return listing.sourceUrl === searchUrl;
   }
-
-  const title = normalizeText(listing.title);
-  const words = normalizeText(displayName)
-    .split(" ")
-    .filter((word) => word.length > 1);
-  if (words.length === 0) return false;
-  return words.every((word) => title.includes(word));
+  // No task URL echoed — the title check above is then the only signal, and
+  // it has already passed.
+  return true;
 }
 
 /** The `search_text` a Vinted catalog URL searches for, normalized for comparison; undefined if the URL isn't parseable or carries no search text. */
@@ -299,6 +350,62 @@ function searchTextOf(url: string): string | undefined {
   } catch {
     return undefined;
   }
+}
+
+/**
+ * The card's own collector number, taken from the search text the task was
+ * built with ("Typhlosion de Luth 190/182" -> "190"). Read from the URL
+ * rather than threaded through as another parameter, so the diagnosis
+ * endpoint and the render path can't disagree about it.
+ */
+function primaryNumberOf(searchUrl: string): string | undefined {
+  const match = (searchTextOf(searchUrl) ?? "").match(/(\d+)\s*\/\s*\d+/);
+  return match?.[1];
+}
+
+/** Three or more digits in a row. Shorter runs are too ambiguous to act on — a "2" in "Lot de 2 cartes" is a quantity, not a card number. */
+const NUMBER_TOKEN = /\d{3,}/g;
+
+/**
+ * Rejects a listing whose title states a DIFFERENT collector number.
+ *
+ * The name check alone is too weak for cards whose name reduces to a single
+ * token: "Lugia V" yields just "lugia" (the "V" is one character), so the
+ * live search matched a 138/195 World Championships print, a jumbo promo
+ * swsh301, and a two-card lot — €4 to €580 — all averaged together as if
+ * they were the 186/195. That average, and the per-listing deal percentages
+ * derived from it, would have been meaningless.
+ *
+ * The test is deliberately one-directional: a title that states no number
+ * is KEPT, because plenty of genuine listings omit it ("Ectoplasma Vmax
+ * Alt" at €780 is a real match). Only a title that names a number and names
+ * the wrong one is rejected — it is contradicting us, not merely silent.
+ *
+ * Skipped entirely when the card's own number is under three digits, since
+ * NUMBER_TOKEN would never find it in a title and every listing would be
+ * dropped.
+ */
+function titleNumberAgreesWithCard(title: string, primaryNumber: string | undefined): boolean {
+  if (!primaryNumber || primaryNumber.length < 3) return true;
+  const stated = title.match(NUMBER_TOKEN);
+  if (!stated) return true;
+  return stated.includes(primaryNumber);
+}
+
+/** Minimum word length to count as a distinguishing token — see rowMatchesCard. */
+const SIGNIFICANT_WORD_LENGTH = 4;
+
+export function significantWords(displayName: string): string[] {
+  return normalizeText(displayName)
+    .split(" ")
+    .filter((word) => word.length >= SIGNIFICANT_WORD_LENGTH);
+}
+
+function titleMentionsCard(title: string, displayName: string): boolean {
+  const words = significantWords(displayName);
+  if (words.length === 0) return true; // nothing distinguishing to test against
+  const normalizedTitle = normalizeText(title);
+  return words.every((word) => normalizedTitle.includes(word));
 }
 
 /**
@@ -387,7 +494,8 @@ export function relativeTimeLabel(listedAtMs: number | undefined, now: number = 
  * function's own checks exactly — if the two ever disagree, this is lying,
  * so keep them in step.
  */
-function classifyRow(row: Record<string, unknown>): "ok" | "wrong-condition" | "no-price" | "no-url" {
+function classifyRow(rawRow: Record<string, unknown>): "ok" | "wrong-condition" | "no-price" | "no-url" {
+  const row = normalizedRow(rawRow);
   const condition = readString(row, FIELD_ALIASES.condition);
   if (condition !== undefined && !isTresBonEtat(condition)) return "wrong-condition";
   if (readPrice(row) === undefined) return "no-price";
@@ -476,7 +584,7 @@ export async function diagnoseVintedRead(
   let missingConditionField = 0;
   for (const row of rows) {
     tally[classifyRow(row)]++;
-    if (readString(row, FIELD_ALIASES.condition) === undefined) missingConditionField++;
+    if (readString(normalizedRow(row), FIELD_ALIASES.condition) === undefined) missingConditionField++;
   }
   const parsed = rows.map(toVintedListing).filter((l): l is VintedListing => l !== null);
 
@@ -487,7 +595,7 @@ export async function diagnoseVintedRead(
     return {
       slug: card.slug,
       displayName: card.displayName,
-      requiredWords: normalizeText(card.displayName).split(" ").filter((w) => w.length > 1),
+      requiredWords: significantWords(card.displayName),
       matched: matched.length,
       sampleMatchedTitles: matched.slice(0, 3).map((l) => l.title),
     };

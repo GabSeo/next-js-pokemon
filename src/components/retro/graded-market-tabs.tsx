@@ -55,6 +55,8 @@ export type VintedSummary = {
   rows: VintedFeedRowSummary[];
   /** The one condition every row is filtered to — see lib/vinted-listings.ts. Stated on screen, not just applied, so the feed's sparseness reads as deliberate. */
   conditionFilter: string;
+  /** How long ago the scrape ran, e.g. "3 h" — describes the whole feed, not any one listing. Absent on the preview, which was never collected. */
+  collectedLabel?: string;
 };
 
 // One small, deliberately restrained color language, reused for both chip
@@ -310,7 +312,11 @@ export function GradedMarketTabs({
 
       <div hidden={market !== "France"}>
         <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
-          <span className="text-base font-black tracking-[-0.3px]">Just listed — {vinted.title}</span>
+          {/* Not "Just listed": Lobstr reads Vinted's search-results cards,
+              which carry no listing date, so nothing here knows how old a
+              listing is. Claiming recency we can't measure is the same
+              class of error as showing an illustrative price as real. */}
+          <span className="text-base font-black tracking-[-0.3px]">Vinted listings — {vinted.title}</span>
           {/* The badge tracks the data, not the layout. Scraped listings get
               the confident solid pill real connected data gets elsewhere on
               this page; the fallback feed gets a dashed "Preview" pill, since
@@ -340,18 +346,18 @@ export function GradedMarketTabs({
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border-2 border-black bg-pokemon-blue p-5 shadow-hard-md">
           <div>
             <div className="mb-1.5 text-[11px] font-black tracking-[0.5px] text-white/70 uppercase">
-              Avg · last {vinted.rows.length} new listings
+              Avg · {vinted.rows.length} listings
             </div>
             <div className="text-3xl font-black tracking-[-0.6px] text-white tabular-nums">{vinted.avgLabel}</div>
           </div>
           <div className="text-right text-[11px] font-bold text-white/70 uppercase">
-            {vinted.isReal ? "scraped listings, not sales" : "estimate, not real-time"}
+            {vinted.isReal ? `asking prices${vinted.collectedLabel ? ` · collected ${vinted.collectedLabel} ago` : ""}` : "estimate, not real-time"}
           </div>
         </div>
 
         <div className="mt-5 rounded-md bg-white p-5">
           <div className="mb-3">
-            <span className="text-[10px] font-black tracking-[0.5px] text-muted-text uppercase">Newly listed</span>
+            <span className="text-[10px] font-black tracking-[0.5px] text-muted-text uppercase">{vinted.conditionFilter} listings</span>
           </div>
 
           <div>

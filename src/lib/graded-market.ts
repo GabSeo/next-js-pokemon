@@ -88,6 +88,14 @@ export type VintedMarketData = {
   /** How many of `rows` are priced below `avgPrice` — a real, derived stat even when the prices it's derived from are illustrative (same honesty shape as the ROI percent below, which is real math over possibly-illustrative inputs). */
   belowAverageCount: number;
   /**
+   * When the scrape that produced these rows ran. Feed-level freshness, and
+   * deliberately NOT a per-row age: Lobstr reads Vinted's search-results
+   * cards, which carry no listing date, so every row in a run shares this
+   * one timestamp. Presenting it per row would tell a reader all six
+   * listings appeared at the same instant.
+   */
+  collectedAtMs?: number;
+  /**
    * The single condition every row in this feed is filtered to. Carried in
    * the data (not just rendered) so the markdown export, JSON API and MCP
    * tool all state the same constraint the panel shows — a consumer reading
@@ -251,6 +259,7 @@ async function buildVintedMarket(card: Card): Promise<VintedMarketData> {
       currency: real[0].currency,
       rows,
       belowAverageCount,
+      collectedAtMs: real.find((listing) => listing.collectedAtMs !== undefined)?.collectedAtMs,
       conditionFilter: TRES_BON_ETAT,
     };
   }
