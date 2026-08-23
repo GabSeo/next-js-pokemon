@@ -82,11 +82,17 @@ export type VintedMarketData = {
   title: string;
   /** The card's own real image — every row shares it (same physical card, different sellers/conditions), never a fabricated per-listing photo. */
   imageUrl?: string;
-  avgPrice: number;
+  /**
+   * The feed's MEDIAN asking price, not its mean — see summarizeVintedFeed.
+   * Named for what it is: a mean would be dragged below every credible
+   * listing by a single placeholder price, which is not hypothetical (the
+   * live Gengar feed contains a EUR 1 row against three near EUR 800).
+   */
+  typicalPrice: number;
   currency: string;
   rows: VintedFeedRow[];
-  /** How many of `rows` are priced below `avgPrice` — a real, derived stat even when the prices it's derived from are illustrative (same honesty shape as the ROI percent below, which is real math over possibly-illustrative inputs). */
-  belowAverageCount: number;
+  /** How many of `rows` sit below `typicalPrice` — real math either way, same honesty shape as the ROI percent, which is real arithmetic over possibly-illustrative inputs. */
+  belowTypicalCount: number;
   /**
    * When the scrape that produced these rows ran. Feed-level freshness, and
    * deliberately NOT a per-row age: Lobstr reads Vinted's search-results
@@ -191,17 +197,34 @@ function vintedDealTier(deltaPct: number): VintedDealTier {
   return "fair";
 }
 
-/** Shared by both branches below: the deal percentages and the below-average count are real math either way, over whichever prices the feed ended up with. */
+/**
+ * Reduces a feed to one reference price plus each row's distance from it.
+ *
+ * The reference is a MEDIAN, not a mean. Vinted asking prices contain
+ * placeholder and contact-price listings — the live Ectoplasma VMAX feed
+ * returned EUR 1, 780, 780, 875, where the EUR 1 is plainly not an asking
+ * price for an eight-hundred-euro card. A mean gives 609, which is below
+ * every credible listing on screen and makes each real one look overpriced
+ * by 28-44%. The median gives 780, and the outlier moves it not at all.
+ *
+ * This also brings the France tab into line with the rest of the panel:
+ * the eBay side has always used median() from lib/roi.ts for exactly this
+ * reason. Vinted was the odd one out.
+ *
+ * The outlier is still displayed. It is a real listing at a real URL, and
+ * hiding rows because they are inconvenient would be a worse failure than
+ * showing an odd one — it just no longer drags the reference price with it.
+ */
 function summarizeVintedFeed(
   prices: number[],
   toRow: (price: number, index: number, dealPct: number, dealTier: VintedDealTier) => VintedFeedRow
-): { rows: VintedFeedRow[]; avgPrice: number; belowAverageCount: number } {
-  const avgPrice = Math.round(prices.reduce((sum, price) => sum + price, 0) / prices.length);
+): { rows: VintedFeedRow[]; typicalPrice: number; belowTypicalCount: number } {
+  const typicalPrice = Math.round(median(prices)!);
   const rows = prices.map((price, i) => {
-    const dealPct = Math.round(((price - avgPrice) / avgPrice) * 100);
+    const dealPct = Math.round(((price - typicalPrice) / typicalPrice) * 100);
     return toRow(price, i, dealPct, vintedDealTier(dealPct));
   });
-  return { rows, avgPrice, belowAverageCount: prices.filter((price) => price < avgPrice).length };
+  return { rows, typicalPrice, belowTypicalCount: prices.filter((price) => price < typicalPrice).length };
 }
 
 /**
@@ -231,7 +254,7 @@ async function buildVintedMarket(card: Card): Promise<VintedMarketData> {
   const real = await getVintedListingsForCard(card, displayName, searchUrl);
 
   if (real.length > 0) {
-    const { rows, avgPrice, belowAverageCount } = summarizeVintedFeed(
+    const { rows, typicalPrice, belowTypicalCount } = summarizeVintedFeed(
       real.map((listing) => listing.price),
       (price, i, dealPct, dealTier) => ({
         timeAgo: relativeTimeLabel(real[i].listedAtMs),
@@ -255,17 +278,17 @@ async function buildVintedMarket(card: Card): Promise<VintedMarketData> {
       searchUrl,
       title: query,
       imageUrl: card.imageUrl,
-      avgPrice,
+      typicalPrice,
       currency: real[0].currency,
       rows,
-      belowAverageCount,
+      belowTypicalCount,
       collectedAtMs: real.find((listing) => listing.collectedAtMs !== undefined)?.collectedAtMs,
       conditionFilter: TRES_BON_ETAT,
     };
   }
 
   const feed = illustrativeVintedFeed(card);
-  const { rows, avgPrice, belowAverageCount } = summarizeVintedFeed(
+  const { rows, typicalPrice, belowTypicalCount } = summarizeVintedFeed(
     feed.map((listing) => listing.price),
     (price, i, dealPct, dealTier) => ({
       timeAgo: feed[i].minutesAgo === 0 ? "now" : `${feed[i].minutesAgo} min`,
@@ -282,10 +305,10 @@ async function buildVintedMarket(card: Card): Promise<VintedMarketData> {
     searchUrl,
     title: query,
     imageUrl: card.imageUrl,
-    avgPrice,
+    typicalPrice,
     currency: card.currency,
     rows,
-    belowAverageCount,
+    belowTypicalCount,
     conditionFilter: TRES_BON_ETAT,
   };
 }

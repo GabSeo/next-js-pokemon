@@ -61,9 +61,9 @@ eBay.fr isn't a good fit for the French Pokémon TCG market, so the French marke
 
 **This feed is filtered to one condition: ${data.vinted.conditionFilter}.** Listings in Vinted's other condition tiers (Bon état, Satisfaisant, Neuf avec/sans étiquette) are excluded — by Vinted itself, via the status_ids[]=2 filter on the search this scrapes. It answers "what is listed in ${data.vinted.conditionFilter}", not "what does this market look like".
 
-${vintedSource} Average: ${data.vinted.currency} ${data.vinted.avgPrice} across the last ${data.vinted.rows.length} listings; ${data.vinted.belowAverageCount} of them priced below that average.
+${vintedSource} Median asking price: ${data.vinted.currency} ${data.vinted.typicalPrice} across ${data.vinted.rows.length} listings; ${data.vinted.belowTypicalCount} of them priced below it. Median rather than mean, because a single placeholder listing would otherwise drag the figure below every credible price in the table.
 
-| Listed | Condition | Price | vs. average | Listing |
+| Listed | Condition | Price | vs. median | Listing |
 | --- | --- | --- | --- | --- |
 ${vintedRows}
 
