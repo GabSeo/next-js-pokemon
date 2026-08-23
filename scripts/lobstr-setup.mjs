@@ -119,11 +119,15 @@ async function api(path, { method = "GET", body } = {}) {
   }
 }
 
-/** Lobstr wraps collections differently per endpoint — same defensive unwrap as src/lib/lobstr.ts. */
+/** Locates the records array whatever it's wrapped in — same shape-based unwrap as src/lib/lobstr.ts, for the same reason: guessing envelope key names silently returned "nothing" for a run that had 30 results. */
 function collection(payload) {
   if (Array.isArray(payload)) return payload;
-  for (const key of ["data", "results", "items", "records"]) {
-    if (payload && Array.isArray(payload[key])) return payload[key];
+  if (!payload || typeof payload !== "object") return [];
+  for (const key of ["data", "results", "items", "records", "runs"]) {
+    if (Array.isArray(payload[key])) return payload[key];
+  }
+  for (const value of Object.values(payload)) {
+    if (Array.isArray(value) && value.some((entry) => entry && typeof entry === "object")) return value;
   }
   return [];
 }

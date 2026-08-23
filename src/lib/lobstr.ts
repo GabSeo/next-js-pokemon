@@ -28,12 +28,12 @@
  *
  * Endpoint shapes below come from Lobstr's documented walkthrough
  * (/v1/me, /v1/crawlers, /v1/squids, /v1/tasks, /v1/runs,
- * /v1/runs/<hash>/stats, /v1/results?run=<hash>). Two things are marked
- * UNVERIFIED where they go past what's documented — the run *listing*
- * query and the exact result-envelope shape — and both are parsed
- * defensively so an unexpected shape degrades to "no real data" (which the
- * panel already renders honestly as a clearly-tagged preview) instead of
- * throwing on a product page.
+ * /v1/runs/<hash>/stats, /v1/results?run=<hash>). Listing a squid's runs
+ * is not documented at all; a live account established that GET /v1/runs
+ * requires ?squid=<hash> (omitting it returns 400 ParamsNeeded). Response
+ * ENVELOPES remain undocumented, so unwrapCollection locates the records
+ * array by shape rather than by key name — guessing the key is what made a
+ * successful collection look like an empty account for a full day.
  *
  * Two documented limits shape the design here. Rate: /v1/squids 120
  * calls/min, /v1/tasks 90/min, /v1/results 2/sec (Lobstr returns
@@ -194,29 +194,55 @@ async function lobstrFetch<T>(path: string, options: LobstrRequestOptions = {}):
 }
 
 /**
- * Lobstr wraps collections inconsistently enough across endpoints that
- * guessing one shape would be brittle — a plain array, `{ data: [...] }`,
- * `{ results: [...] }` and `{ count, next, data }` are all plausible for
- * the same call. Rather than assert one, unwrap whichever is present and
- * treat anything else as empty: a wrong guess then costs a missing preview,
- * not a crashed product page.
+ * Finds the array of records in a Lobstr response, whatever it's wrapped
+ * in. A plain array, `{data: [...]}`, `{results: [...]}` and
+ * `{count, next, <something>: [...]}` are all shapes Lobstr uses across its
+ * surface, and guessing the key is exactly how `GET /v1/runs?squid=` came
+ * back 200-OK-but-empty for a squid that had a finished run: the request
+ * was right, the unwrapping was wrong, and the two are indistinguishable
+ * from the outside.
+ *
+ * So known keys are tried first for predictability, and then — rather than
+ * give up — any property holding an array of objects is used. That makes
+ * the function correct for envelope names nobody has seen yet, which is the
+ * whole problem with an API whose response shapes aren't documented.
  */
 function unwrapCollection<T>(payload: unknown): T[] {
   if (Array.isArray(payload)) return payload as T[];
-  if (payload && typeof payload === "object") {
-    const record = payload as Record<string, unknown>;
-    for (const key of ["data", "results", "items", "records"]) {
-      if (Array.isArray(record[key])) return record[key] as T[];
+  if (!payload || typeof payload !== "object") return [];
+
+  const record = payload as Record<string, unknown>;
+  for (const key of ["data", "results", "items", "records", "runs"]) {
+    if (Array.isArray(record[key])) return record[key] as T[];
+  }
+  // Last resort: the first array of objects at the top level, whatever it's
+  // called. Arrays of primitives are skipped — those are far more likely to
+  // be a list of ids or errors than the records themselves.
+  for (const value of Object.values(record)) {
+    if (Array.isArray(value) && value.some((entry) => entry && typeof entry === "object")) {
+      return value as T[];
     }
   }
   return [];
+}
+
+/** Top-level shape of a response, for diagnostics — says what came back without dumping a whole payload into a JSON response. */
+function describePayload(payload: unknown): string {
+  if (Array.isArray(payload)) return `array(${payload.length})`;
+  if (!payload || typeof payload !== "object") return typeof payload;
+  return Object.entries(payload as Record<string, unknown>)
+    .map(([key, value]) => `${key}: ${Array.isArray(value) ? `array(${value.length})` : typeof value}`)
+    .join(", ");
 }
 
 /** Lobstr hands back object ids as `id` (its own docs' wording: "The response gives you an id"); `hash` is accepted too since parts of its surface use that name. */
 function readId(payload: unknown): string | undefined {
   if (!payload || typeof payload !== "object") return undefined;
   const record = payload as Record<string, unknown>;
-  for (const key of ["id", "hash", "run", "squid"]) {
+  // NOT "squid": a run object names the squid it belongs to, and treating
+  // that as the run's own id would send every results lookup to the wrong
+  // hash — a failure that looks like "no results" rather than an error.
+  for (const key of ["id", "hash", "run_hash", "run"]) {
     const value = record[key];
     if (typeof value === "string" && value) return value;
   }
@@ -298,73 +324,40 @@ export async function getRunStats(run: string): Promise<LobstrRunStats> {
   return lobstrFetch<LobstrRunStats>(`/runs/${run}/stats`);
 }
 
-export type RunListAttempt = { strategy: string; count: number; error?: string };
+export type RunListAttempt = { strategy: string; count: number; payloadShape?: string; error?: string };
 
 /**
- * Finding a squid's runs, the hard way, because there is no documented way.
+ * A squid's runs. Lobstr documents `POST /v1/runs` to start one but no GET
+ * to list them, so this was guesswork until a live account settled it:
+ * `?squid=<hash>` is not merely accepted, it's REQUIRED — omitting it, or
+ * renaming it to `squid_hash`, returns 400 ParamsNeeded ("A required
+ * parameter squid is missing from the route").
  *
- * Lobstr documents `POST /v1/runs` to start one but never a GET to list
- * them, and the conventional reading — `GET /v1/runs?squid=<hash>` — was
- * confirmed against a live account to return NOTHING even with a finished
- * run present. That single unverified guess was the whole reason a
- * successful collection never reached the page.
- *
- * So rather than pick a second guess and hope, this tries each plausible
- * shape in turn and uses the first that actually returns runs:
- *
- *   1. ?squid=<hash>      the original guess, kept in case it works on
- *                         other accounts or starts working
- *   2. ?squid_hash=<hash> Lobstr uses the `squid_hash` wording elsewhere in
- *                         its own docs (the POST /v1/tasks body)
- *   3. no filter at all   GET /v1/runs, filtered client-side. A bare
- *                         collection GET is the most likely of the three to
- *                         exist, since it needs no query support whatsoever
- *
- * Strategy 3 filters locally on whichever field carries the squid id, when
- * one is present; if the run objects don't identify their squid at all, the
- * runs are used as-is. That's safe for this integration's shape — one squid
- * per account — and the alternative is discarding runs that are almost
- * certainly the right ones.
- *
- * Returns the attempts alongside the runs so the diagnosis endpoint can
- * show which shapes were tried and what each returned, instead of just
- * "no runs".
+ * The earlier failure was never the request. It returned 200 with a real
+ * run present; the response envelope simply wasn't one of the key names
+ * unwrapCollection knew, so the runs were dropped on the floor and the read
+ * path concluded there was nothing to read. unwrapCollection now finds the
+ * records array whatever it's called, and the attempt record below carries
+ * the payload's actual shape so a future mismatch is visible immediately
+ * instead of looking like an empty account.
  */
 async function attemptRunList(squid: string): Promise<{ runs: LobstrRun[]; attempts: RunListAttempt[] }> {
-  const strategies: { name: string; query: Record<string, string | undefined>; filterLocally: boolean }[] = [
-    { name: "?squid=", query: { squid }, filterLocally: false },
-    { name: "?squid_hash=", query: { squid_hash: squid }, filterLocally: false },
-    { name: "unfiltered", query: {}, filterLocally: true },
-  ];
+  try {
+    const payload = await lobstrFetch<unknown>("/runs", { query: { squid }, revalidate: RUNS_REVALIDATE_SECONDS });
+    const runs = unwrapCollection<Record<string, unknown>>(payload)
+      .map((run) => {
+        const id = readId(run);
+        return id ? ({ ...run, id } as LobstrRun) : undefined;
+      })
+      .filter((run): run is LobstrRun => run !== undefined);
 
-  const attempts: RunListAttempt[] = [];
-  for (const strategy of strategies) {
-    try {
-      const payload = await lobstrFetch<unknown>("/runs", { query: strategy.query, revalidate: RUNS_REVALIDATE_SECONDS });
-      let runs = unwrapCollection<Record<string, unknown>>(payload)
-        .map((run) => {
-          const id = readId(run);
-          return id ? ({ ...run, id } as LobstrRun) : undefined;
-        })
-        .filter((run): run is LobstrRun => run !== undefined);
-
-      if (strategy.filterLocally) {
-        const owned = runs.filter((run) => ["squid", "squid_hash", "squid_id"].some((key) => run[key] === squid));
-        // Only narrow when the filter actually recognises something —
-        // otherwise the run objects simply don't name their squid, and
-        // dropping every run would be worse than trusting them.
-        if (owned.length > 0) runs = owned;
-      }
-
-      attempts.push({ strategy: strategy.name, count: runs.length });
-      if (runs.length > 0) {
-        return { runs: sortRunsNewestFirst(runs), attempts };
-      }
-    } catch (err) {
-      attempts.push({ strategy: strategy.name, count: 0, error: (err as Error).message });
-    }
+    return {
+      runs: sortRunsNewestFirst(runs),
+      attempts: [{ strategy: "?squid=", count: runs.length, payloadShape: describePayload(payload) }],
+    };
+  } catch (err) {
+    return { runs: [], attempts: [{ strategy: "?squid=", count: 0, error: (err as Error).message }] };
   }
-  return { runs: [], attempts };
 }
 
 /** Newest first when Lobstr gives us a date to sort on; otherwise trust the API's own ordering rather than inventing one. */
@@ -377,7 +370,7 @@ function sortRunsNewestFirst(runs: LobstrRun[]): LobstrRun[] {
   });
 }
 
-/** The squid's runs, newest first — see attemptRunList for why this needs three tries. Empty means every shape came back without runs; set LOBSTR_VINTED_RUN to bypass the lookup entirely. */
+/** The squid's runs, newest first. Empty means the request succeeded but nothing parsed out of it — check the attempt's payloadShape via ?debug=1; LOBSTR_VINTED_RUN bypasses the lookup entirely. */
 export async function listRuns(squid: string): Promise<LobstrRun[]> {
   return (await attemptRunList(squid)).runs;
 }
