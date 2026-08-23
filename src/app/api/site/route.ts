@@ -28,6 +28,12 @@ export async function GET() {
         api: absoluteUrl("/api/price-check?cardId={cardId}"),
       },
     ],
+    mcp: {
+      url: absoluteUrl("/api/mcp"),
+      transport: "streamable-http",
+      serverCard: absoluteUrl("/.well-known/mcp/server-card.json"),
+      tools: ["list_cards", "get_price_range", "get_card_info", "get_graded_market"],
+    },
     cards: cards.map(toPublicCard),
   });
 }

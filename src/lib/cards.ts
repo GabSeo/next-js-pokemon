@@ -28,6 +28,22 @@ function stripHtml(input: string): string {
   return input.replace(/<[^>]*>/g, "").trim();
 }
 
+/**
+ * Evenly-spaced downsample, always keeping the first and last point (so the
+ * overall trend/date range stays readable from the reduced set) — used only
+ * for the agent-facing JSON/markdown mirrors below. The HTML product page's
+ * chart keeps consuming `card.priceHistory` at full resolution directly
+ * (see components/product-page-content.tsx); trend/priceRange are already
+ * computed from the full history in resolveCard, so downsampling this output
+ * field doesn't affect their accuracy.
+ */
+export function downsamplePriceHistory(history: PriceHistoryPoint[], maxPoints = 25): PriceHistoryPoint[] {
+  if (history.length <= maxPoints) return history;
+  if (maxPoints <= 1) return history.slice(-1);
+  const step = (history.length - 1) / (maxPoints - 1);
+  return Array.from({ length: maxPoints }, (_, i) => history[Math.round(i * step)]);
+}
+
 /** Average price over the trailing N days of real daily history. */
 function averageOverLastDays(history: PriceHistoryPoint[], days: number): number | null {
   if (history.length === 0) return null;
@@ -396,16 +412,28 @@ export function toPublicCard(card: Card) {
     setCode: card.setCode,
     number: card.number,
     rarity: card.rarity,
+    // Identity/URL fields grouped here, before priceHistory — an agent
+    // reading this response streamed/truncated should hit "what page is
+    // this and where's the rest of the catalog" before it hits the price
+    // history array, matching how the markdown/OKF mirrors put the same
+    // info (title, "Canonical page:", frontmatter `resource:`) in their
+    // first few lines rather than after the data tables.
+    productUrl: absoluteUrl(`/products/${card.slug}`),
+    markdownUrl: absoluteUrl(`/products/${card.slug}/index.md`),
+    collectionUrl: absoluteUrl(`/collections/${card.franchise}`),
+    collectionJsonUrl: absoluteUrl(`/api/${card.franchise}`),
+    agentIndexUrl: absoluteUrl("/llms.txt"),
     currency: card.currency,
     currentPrice: card.currentPrice,
     asOfDate: card.asOfDate,
-    priceHistory: card.priceHistory,
+    // Downsampled to 25 evenly-spaced points — see downsamplePriceHistory's
+    // own doc comment on why the full-resolution field stays on the HTML
+    // chart only, not this public/agent-facing serialization.
+    priceHistory: downsamplePriceHistory(card.priceHistory),
     recentSnapshots: card.recentSnapshots,
     trend: card.trend,
     priceRange: card.priceRange,
     imageUrl: card.imageUrl,
     sourceUrl: card.sourceUrl,
-    productUrl: absoluteUrl(`/products/${card.slug}`),
-    markdownUrl: absoluteUrl(`/products/${card.slug}/index.md`),
   };
 }

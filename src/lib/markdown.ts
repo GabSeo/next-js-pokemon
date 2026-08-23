@@ -1,4 +1,4 @@
-import { computeAlertBands, getAllCards, getCardsByFranchise, franchiseLabel } from "@/lib/cards";
+import { computeAlertBands, downsamplePriceHistory, getAllCards, getCardsByFranchise, franchiseLabel } from "@/lib/cards";
 import { cardRefs } from "@/data/card-refs";
 import { getGradedMarketData } from "@/lib/graded-market";
 import { absoluteUrl, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
@@ -73,7 +73,9 @@ export async function cardToMarkdown(
   display: Pick<Card, "name" | "set" | "rarity"> = card,
   pagePath: string = `/products/${card.slug}`
 ): Promise<string> {
-  const history = card.priceHistory
+  // Downsampled to 25 evenly-spaced points, same as the JSON mirror
+  // (toPublicCard) — see downsamplePriceHistory's doc comment.
+  const history = downsamplePriceHistory(card.priceHistory)
     .map((p) => `- ${p.date}: ${card.currency} ${p.price}`)
     .join("\n");
 
@@ -140,6 +142,11 @@ ${gradedMarket}
 
 JSON: ${absoluteUrl(`/api/${card.franchise}/${card.id}`)}
 Price-check tool: ${absoluteUrl(`/api/price-check?cardId=${card.id}`)}
+
+## More cards
+
+Collection: ${absoluteUrl(`/collections/${card.franchise}`)} (JSON: ${absoluteUrl(`/api/${card.franchise}`)})
+Full agent index (every card, tools, MCP server): ${absoluteUrl("/llms.txt")}
 `;
 }
 
