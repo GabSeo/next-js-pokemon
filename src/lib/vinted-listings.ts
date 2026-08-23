@@ -222,6 +222,36 @@ function readTimestamp(row: Map<string, unknown>, aliases: readonly string[] = F
   return undefined;
 }
 
+/**
+ * Vinted's floor price, and the reason a listing sitting on it is not an
+ * asking price at all.
+ *
+ * Sellers list at 1 EUR to run a hidden auction: the number is bait for
+ * offers and private negotiation, not what they intend to sell for. The
+ * live Gengar feed carried one (1 EUR beside three listings near 800), and
+ * so did Lugia's. Treating those as market observations poisons every
+ * statistic downstream — the reference price, each row's percentage against
+ * it, and the deal-density bar, which was reporting a "bargain" that was
+ * really just an auction that hadn't started.
+ *
+ * These are excluded rather than down-weighted. A hidden auction is not a
+ * cheap listing to be robust against; it is a different kind of thing,
+ * carrying no price information about this market at all. Robustness
+ * (median, see graded-market.ts) is a good default for outliers we haven't
+ * anticipated — this one we have.
+ *
+ * Threshold rather than equality so 0.50 EUR is caught too. Deliberately
+ * absolute, not relative to the card's value: the pattern is "list at the
+ * platform floor", which does not scale with what the card is worth. A
+ * genuinely 1 EUR card exists, but it is a common, and nothing this site
+ * tracks trades anywhere near there.
+ */
+const HIDDEN_AUCTION_PRICE_CEILING = 1;
+
+function isHiddenAuction(price: number): boolean {
+  return price <= HIDDEN_AUCTION_PRICE_CEILING;
+}
+
 /** Logged at most once per process — a missing condition field is a config note for whoever maintains FIELD_ALIASES, not a per-row event worth flooding the logs with. */
 let warnedAboutMissingCondition = false;
 
@@ -256,6 +286,8 @@ export function toVintedListing(rawRow: Record<string, unknown>): VintedListing 
   const price = readPrice(row);
   const url = readString(row, FIELD_ALIASES.url);
   if (price === undefined || !url) return null;
+  // A 1 EUR listing is a hidden auction, not an offer — see above.
+  if (isHiddenAuction(price)) return null;
 
   // Warn only for rows that are otherwise real listings. Lobstr appends
   // advertising rows to an export ("Export limit reached - Get the full
@@ -489,12 +521,17 @@ export function relativeTimeLabel(listedAtMs: number | undefined, now: number = 
  * function's own checks exactly — if the two ever disagree, this is lying,
  * so keep them in step.
  */
-function classifyRow(rawRow: Record<string, unknown>): "ok" | "wrong-condition" | "no-price" | "no-url" {
+function classifyRow(rawRow: Record<string, unknown>): "ok" | "wrong-condition" | "no-price" | "no-url" | "hidden-auction" {
   const row = normalizedRow(rawRow);
   const condition = readString(row, FIELD_ALIASES.condition);
   if (condition !== undefined && !isTresBonEtat(condition)) return "wrong-condition";
-  if (readPrice(row) === undefined) return "no-price";
+  const price = readPrice(row);
+  if (price === undefined) return "no-price";
   if (!readString(row, FIELD_ALIASES.url)) return "no-url";
+  // Reported separately in ?debug=1 rather than folded into a generic drop
+  // count: "3 hidden auctions excluded" is a fact about the market worth
+  // seeing, not a parsing failure to go hunting for.
+  if (isHiddenAuction(price)) return "hidden-auction";
   return "ok";
 }
 
@@ -538,7 +575,7 @@ export async function diagnoseVintedRead(
     };
   }
 
-  const tally = { ok: 0, "wrong-condition": 0, "no-price": 0, "no-url": 0 };
+  const tally = { ok: 0, "wrong-condition": 0, "no-price": 0, "no-url": 0, "hidden-auction": 0 };
   let missingConditionField = 0;
   for (const row of rows) {
     tally[classifyRow(row)]++;

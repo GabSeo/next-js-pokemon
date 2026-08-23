@@ -49,7 +49,7 @@ export type VintedSummary = {
   searchHref: string;
   title: string;
   imageUrl?: string;
-  /** The feed's MEDIAN asking price, already formatted. Median, not mean: a single placeholder listing (the live Gengar feed has a EUR 1 row) drags a mean below every credible price on screen. */
+  /** The feed's MEDIAN asking price, already formatted — median rather than mean, for outliers that get past the upstream hidden-auction filter. */
   typicalLabel: string;
   belowTypicalCount: number;
   totalCount: number;

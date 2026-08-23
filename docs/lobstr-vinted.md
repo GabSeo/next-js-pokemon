@@ -15,6 +15,16 @@ Two consequences worth accepting up front:
 
 Enforced in two places: Vinted itself filters server-side via `status_ids[]=2` on the scraped URL, and the returned condition text is checked again on our side. The text match is **exact** (accent- and case-insensitively), never a substring — `"bon état"` is a literal substring of `"très bon état"`, so a substring test would let through exactly the tier the filter exists to exclude.
 
+## What gets excluded, and why
+
+Beyond the condition filter, two classes of row never reach the panel:
+
+**1 EUR listings.** On Vinted these are hidden auctions — the price is bait for private offers, not what the seller intends to accept. They are excluded outright rather than down-weighted, because they carry no price information about this market at all. The live Gengar feed had one (1 EUR beside three listings near 800); it was setting the reference price to 609, below every credible listing on screen, and driving the deal-density bar on its own. See `HIDDEN_AUCTION_PRICE_CEILING`.
+
+**Listings that aren't this card.** Vinted pads a thin search with unrelated stock — the Ectoplasma VMAX search returned an evening dress and a pair of jeans, both carrying a valid `Très bon état` and the right task URL. A row must also mention the card's name, and must not state a *different* collector number (which is what separated a real 186/195 Lugia from a 138/195 World Championships print).
+
+The reference price is then a **median**, as a further guard against outliers nobody has characterised yet. That also matches the eBay half of the same panel, which has always used `median()`.
+
 ## The URL being scraped
 
 One function builds it — `vintedSearchLink` in `src/lib/vinted-search.ts` — and it is both the Lobstr task URL and the panel's "Search on Vinted" link, so the two can't drift apart:

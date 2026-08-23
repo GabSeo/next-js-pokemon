@@ -84,9 +84,7 @@ export type VintedMarketData = {
   imageUrl?: string;
   /**
    * The feed's MEDIAN asking price, not its mean — see summarizeVintedFeed.
-   * Named for what it is: a mean would be dragged below every credible
-   * listing by a single placeholder price, which is not hypothetical (the
-   * live Gengar feed contains a EUR 1 row against three near EUR 800).
+   * Named for what it is, so no consumer reads "avg" and assumes a mean.
    */
   typicalPrice: number;
   currency: string;
@@ -200,20 +198,17 @@ function vintedDealTier(deltaPct: number): VintedDealTier {
 /**
  * Reduces a feed to one reference price plus each row's distance from it.
  *
- * The reference is a MEDIAN, not a mean. Vinted asking prices contain
- * placeholder and contact-price listings — the live Ectoplasma VMAX feed
- * returned EUR 1, 780, 780, 875, where the EUR 1 is plainly not an asking
- * price for an eight-hundred-euro card. A mean gives 609, which is below
- * every credible listing on screen and makes each real one look overpriced
- * by 28-44%. The median gives 780, and the outlier moves it not at all.
+ * The reference is a MEDIAN, not a mean, and that is now a second line of
+ * defence rather than the main one. The listings that most distorted a mean
+ * — 1 EUR hidden auctions, where the price is bait for private offers and
+ * not an asking price at all — are excluded upstream in
+ * lib/vinted-listings.ts, because they carry no market information to be
+ * robust *about*.
  *
- * This also brings the France tab into line with the rest of the panel:
- * the eBay side has always used median() from lib/roi.ts for exactly this
- * reason. Vinted was the odd one out.
- *
- * The outlier is still displayed. It is a real listing at a real URL, and
- * hiding rows because they are inconvenient would be a worse failure than
- * showing an odd one — it just no longer drags the reference price with it.
+ * The median stays for the outliers nobody has characterised yet: a
+ * mispriced listing, a lot sold as a single card, a currency oddity. It
+ * also keeps the France tab consistent with the eBay half of this same
+ * panel, which has always used median() from lib/roi.ts.
  */
 function summarizeVintedFeed(
   prices: number[],
