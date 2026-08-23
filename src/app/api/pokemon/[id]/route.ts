@@ -7,7 +7,13 @@ export const revalidate = 129600;
 
 export async function generateStaticParams() {
   const cards = await getCardsByFranchise("pokemon");
-  return cards.map((card) => ({ id: card.slug }));
+  // Pre-build by both slug (the documented, stable entry point) and by
+  // whichever id happened to resolve at build time (apitcg's numeric id when
+  // apitcg has a match, TCGdex's id otherwise — see cards.ts's resolveCard).
+  // Without this, any request that lands on the id form instead of the slug
+  // is a guaranteed cache-miss on its very first hit ever, rendered on-demand
+  // instead of served instantly from the prebuilt static page.
+  return cards.flatMap((card) => (card.id === card.slug ? [{ id: card.slug }] : [{ id: card.slug }, { id: card.id }]));
 }
 
 export async function GET(

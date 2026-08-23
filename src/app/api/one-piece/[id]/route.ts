@@ -7,7 +7,10 @@ export const revalidate = 129600;
 
 export async function generateStaticParams() {
   const cards = await getCardsByFranchise("one-piece");
-  return cards.map((card) => ({ id: card.slug }));
+  // See the /api/pokemon/[id] route's own comment on this same pattern —
+  // pre-build by both slug and the resolved apitcg id so an id-based request
+  // isn't a guaranteed on-demand cache-miss on its first-ever hit.
+  return cards.flatMap((card) => (card.id === card.slug ? [{ id: card.slug }] : [{ id: card.slug }, { id: card.id }]));
 }
 
 export async function GET(
