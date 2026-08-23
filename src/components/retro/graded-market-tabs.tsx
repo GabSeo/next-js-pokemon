@@ -232,22 +232,24 @@ export function GradedMarketTabs({
           })}
         </div>
 
-        <div className="mb-1">
-          <span className="text-[11px] font-black tracking-[0.5px] text-muted-text uppercase">
-            {type === "active" ? "Active listings" : "Sold listings"} · {market}
-          </span>
-        </div>
+        <div className="rounded-md border-2 border-black bg-white p-5">
+          <div className="mb-3">
+            <span className="text-[10px] font-black tracking-[0.5px] text-muted-text uppercase">
+              {type === "active" ? "Active listings" : "Sold listings"} · {market}
+            </span>
+          </div>
 
-        <div className="min-h-[140px]">
-          {entries.map((entry) =>
-            entry.languages.map((l) =>
-              TYPES.map((t) => (
-                <div key={`${entry.id}-${l.language}-${t}`} hidden={!(conditionId === entry.id && market === l.language && type === t)}>
-                  {l[t].rows}
-                </div>
-              ))
-            )
-          )}
+          <div className="min-h-[140px]">
+            {entries.map((entry) =>
+              entry.languages.map((l) =>
+                TYPES.map((t) => (
+                  <div key={`${entry.id}-${l.language}-${t}`} hidden={!(conditionId === entry.id && market === l.language && type === t)}>
+                    {l[t].rows}
+                  </div>
+                ))
+              )
+            )}
+          </div>
         </div>
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
@@ -317,49 +319,51 @@ export function GradedMarketTabs({
           <div className="text-right text-[11px] font-bold text-white/70 uppercase">estimate, not real-time</div>
         </div>
 
-        <div className="mt-5 mb-1">
-          <span className="text-[11px] font-black tracking-[0.5px] text-muted-text uppercase">Newly listed</span>
-        </div>
+        <div className="mt-5 rounded-md border-2 border-black bg-white p-5">
+          <div className="mb-3">
+            <span className="text-[10px] font-black tracking-[0.5px] text-muted-text uppercase">Newly listed</span>
+          </div>
 
-        <div>
-          {vinted.rows.map((row, i) => {
-            const dealColors = DEAL_TIER_COLORS[row.dealTier];
-            const conditionColors = CONDITION_COLORS[row.condition] ?? CHIP_COLORS.grey;
-            return (
-              <div key={i} className="flex items-center gap-3 border-t border-dashed border-border-subtle py-3 first:border-t-0">
-                {vinted.imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- TCGdex/apitcg CDN image, domain not allowlisted for next/image (same as CardImage)
-                  <img
-                    src={vinted.imageUrl}
-                    alt=""
-                    className="h-14 w-10 flex-none rounded-sm border-2 border-black object-cover shadow-hard-sm"
-                  />
-                ) : (
-                  <div className="h-14 w-10 flex-none rounded-sm border-2 border-black bg-white shadow-hard-sm" />
-                )}
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-1.5">
+          <div>
+            {vinted.rows.map((row, i) => {
+              const dealColors = DEAL_TIER_COLORS[row.dealTier];
+              const conditionColors = CONDITION_COLORS[row.condition] ?? CHIP_COLORS.grey;
+              return (
+                <div key={i} className="flex items-center gap-3 border-t border-dashed border-border-subtle py-3 first:border-t-0">
+                  {vinted.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- TCGdex/apitcg CDN image, domain not allowlisted for next/image (same as CardImage)
+                    <img
+                      src={vinted.imageUrl}
+                      alt=""
+                      className="h-14 w-10 flex-none rounded-sm border-2 border-black object-cover shadow-hard-sm"
+                    />
+                  ) : (
+                    <div className="h-14 w-10 flex-none rounded-sm border-2 border-black bg-white shadow-hard-sm" />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span
+                        className="rounded-full px-2 py-0.5 text-[10px] font-black tracking-[0.3px] uppercase"
+                        style={{ backgroundColor: conditionColors.bg, color: conditionColors.text }}
+                      >
+                        {row.condition}
+                      </span>
+                      <span className="text-[10px] font-bold text-muted-text">{row.timeAgo}</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-none flex-col items-end gap-1">
+                    <span className="text-[13px] font-black tabular-nums">{row.priceLabel}</span>
                     <span
-                      className="rounded-full px-2 py-0.5 text-[10px] font-black tracking-[0.3px] uppercase"
-                      style={{ backgroundColor: conditionColors.bg, color: conditionColors.text }}
+                      className="rounded-full px-2 py-0.5 text-[10px] font-black tabular-nums"
+                      style={{ backgroundColor: dealColors.bg, color: dealColors.text }}
                     >
-                      {row.condition}
+                      {dealPctLabel(row.dealPct)}
                     </span>
-                    <span className="text-[11px] font-bold text-muted-text">{row.timeAgo}</span>
                   </div>
                 </div>
-                <div className="flex flex-none flex-col items-end gap-1">
-                  <span className="text-sm font-black tabular-nums">{row.priceLabel}</span>
-                  <span
-                    className="rounded-full px-2 py-0.5 text-[10px] font-black tabular-nums"
-                    style={{ backgroundColor: dealColors.bg, color: dealColors.text }}
-                  >
-                    {dealPctLabel(row.dealPct)}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">

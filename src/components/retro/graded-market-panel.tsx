@@ -5,8 +5,8 @@ import type { Card } from "@/lib/types";
 /** One row, real or illustrative — real rows get a working per-item link, illustrative rows never do (see lib/illustrative.ts). */
 function ListingRow({ date, description, price, currency, url }: { date: string; description: string; price: number; currency: string; url?: string }) {
   return (
-    <div className="grid grid-cols-[76px_1fr_auto_20px] items-center gap-3 border-t border-dashed border-border-subtle py-3 text-sm first:border-t-0">
-      <span className="text-xs font-bold text-muted-text">{date}</span>
+    <div className="grid grid-cols-[76px_1fr_auto_20px] items-center gap-3 border-t border-dashed border-border-subtle py-3 text-[13px] first:border-t-0">
+      <span className="text-[11px] font-bold text-muted-text">{date}</span>
       <span className="truncate font-bold">{description}</span>
       <span className="font-black tabular-nums">
         {currency} {price.toLocaleString()}
