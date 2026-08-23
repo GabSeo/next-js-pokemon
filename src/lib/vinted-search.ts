@@ -73,12 +73,20 @@ export function vintedSearchLink(query: string): string {
     `catalog[]=${TRADING_CARDS_CATALOG_ID}`,
     `status_ids[]=${TRES_BON_ETAT_STATUS_ID}`,
     "page=1",
-    // Relevance, not newest-first: with a small max_pages budget (see
-    // scripts/lobstr-setup.mjs) the goal is to spend it on listings that
-    // actually match the card, not on whatever happened to be posted last.
-    // The panel still renders what comes back newest-first — that ordering
-    // is applied in lib/vinted-listings.ts, not asked of Vinted here.
-    "order=relevance",
+    // Newest-first, not relevance: with results this thin (max_pages=1,
+    // ~10/card — see scripts/lobstr-setup.mjs), a listing's age matters more
+    // than how well it matches on text — a stale, long-unsold ask isn't a
+    // reliable current price the way a fresh one is. The tradeoff this
+    // accepts: Vinted's relevance ranking was previously doing some of the
+    // "is this actually the card" filtering for free within that same small
+    // budget: sorting by newest instead can let more off-topic recent
+    // listings occupy result slots, leaning more on titleMentionsCard/
+    // titleNumberAgreesWithCard in vinted-listings.ts to filter them out
+    // after the fact. Unlike status_ids[]/catalog[], "newest" hasn't been
+    // confirmed against a live Vinted response the same rigorous way — worth
+    // opening the built URL in a browser once to confirm Vinted actually
+    // orders by it rather than silently ignoring an unrecognised value.
+    "order=newest",
   ];
   return `https://${VINTED_DOMAIN}/catalog?${params.join("&")}`;
 }
