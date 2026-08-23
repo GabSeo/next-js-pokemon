@@ -236,15 +236,10 @@ export function GradedMarketTabs({
           <span className="text-[11px] font-black tracking-[0.5px] text-muted-text uppercase">
             {type === "active" ? "Active listings" : "Sold listings"} · {market}
           </span>
-          <span className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 rounded-sm border-2 border-black bg-white px-1.5 py-0.5 text-[10px] font-bold text-muted-text uppercase">
-              via
-              {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, not an optimizable remote domain */}
-              <img src={EBAY_LOGO_URL} alt="eBay" className="h-3.5 w-auto" />
-            </span>
-            <span className="text-[11px] font-black tracking-[0.5px] text-muted-text uppercase">
-              {selected.rowCount === 1 ? "1 listing" : `last ${selected.rowCount}`}
-            </span>
+          <span className="flex items-center gap-1.5 text-[10px] font-bold text-muted-text uppercase">
+            Powered by
+            {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, not an optimizable remote domain */}
+            <img src={EBAY_LOGO_URL} alt="eBay" className="h-3.5 w-auto" />
           </span>
         </div>
 
@@ -322,8 +317,8 @@ export function GradedMarketTabs({
 
         <div className="mt-5 mb-1 flex items-center justify-between gap-3">
           <span className="text-[11px] font-black tracking-[0.5px] text-muted-text uppercase">Newly listed</span>
-          <span className="flex items-center gap-1.5 rounded-sm border-2 border-black bg-white px-1.5 py-0.5 text-[10px] font-bold text-muted-text uppercase">
-            via
+          <span className="flex items-center gap-1.5 text-[10px] font-bold text-muted-text uppercase">
+            Powered by
             {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, not an optimizable remote domain */}
             <img src={VINTED_LOGO_URL} alt="Vinted" className="h-3.5 w-auto" />
           </span>
