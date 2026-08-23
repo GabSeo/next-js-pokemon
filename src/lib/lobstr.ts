@@ -298,35 +298,93 @@ export async function getRunStats(run: string): Promise<LobstrRunStats> {
   return lobstrFetch<LobstrRunStats>(`/runs/${run}/stats`);
 }
 
-/**
- * UNVERIFIED: listing a squid's runs via `GET /v1/runs?squid=<hash>` is a
- * conventional REST reading of the documented `POST /v1/runs`, not
- * something Lobstr's walkthrough spells out. It's what lets the read path
- * find the newest finished run without a database to remember run hashes
- * in. If the query shape is wrong this returns [] (see unwrapCollection)
- * and the France tab falls back to its clearly-marked preview — set
- * LOBSTR_VINTED_RUN to pin a known run hash and bypass this entirely.
- */
-export async function listRuns(squid: string): Promise<LobstrRun[]> {
-  const payload = await lobstrFetch<unknown>("/runs", {
-    query: { squid },
-    revalidate: RUNS_REVALIDATE_SECONDS,
-  });
-  const runs = unwrapCollection<Record<string, unknown>>(payload)
-    .map((run) => {
-      const id = readId(run);
-      return id ? ({ ...run, id } as LobstrRun) : undefined;
-    })
-    .filter((run): run is LobstrRun => run !== undefined);
+export type RunListAttempt = { strategy: string; count: number; error?: string };
 
-  // Newest first when Lobstr gives us a date to sort on; otherwise trust
-  // the API's own ordering rather than inventing one.
-  return runs.sort((a, b) => {
+/**
+ * Finding a squid's runs, the hard way, because there is no documented way.
+ *
+ * Lobstr documents `POST /v1/runs` to start one but never a GET to list
+ * them, and the conventional reading — `GET /v1/runs?squid=<hash>` — was
+ * confirmed against a live account to return NOTHING even with a finished
+ * run present. That single unverified guess was the whole reason a
+ * successful collection never reached the page.
+ *
+ * So rather than pick a second guess and hope, this tries each plausible
+ * shape in turn and uses the first that actually returns runs:
+ *
+ *   1. ?squid=<hash>      the original guess, kept in case it works on
+ *                         other accounts or starts working
+ *   2. ?squid_hash=<hash> Lobstr uses the `squid_hash` wording elsewhere in
+ *                         its own docs (the POST /v1/tasks body)
+ *   3. no filter at all   GET /v1/runs, filtered client-side. A bare
+ *                         collection GET is the most likely of the three to
+ *                         exist, since it needs no query support whatsoever
+ *
+ * Strategy 3 filters locally on whichever field carries the squid id, when
+ * one is present; if the run objects don't identify their squid at all, the
+ * runs are used as-is. That's safe for this integration's shape — one squid
+ * per account — and the alternative is discarding runs that are almost
+ * certainly the right ones.
+ *
+ * Returns the attempts alongside the runs so the diagnosis endpoint can
+ * show which shapes were tried and what each returned, instead of just
+ * "no runs".
+ */
+async function attemptRunList(squid: string): Promise<{ runs: LobstrRun[]; attempts: RunListAttempt[] }> {
+  const strategies: { name: string; query: Record<string, string | undefined>; filterLocally: boolean }[] = [
+    { name: "?squid=", query: { squid }, filterLocally: false },
+    { name: "?squid_hash=", query: { squid_hash: squid }, filterLocally: false },
+    { name: "unfiltered", query: {}, filterLocally: true },
+  ];
+
+  const attempts: RunListAttempt[] = [];
+  for (const strategy of strategies) {
+    try {
+      const payload = await lobstrFetch<unknown>("/runs", { query: strategy.query, revalidate: RUNS_REVALIDATE_SECONDS });
+      let runs = unwrapCollection<Record<string, unknown>>(payload)
+        .map((run) => {
+          const id = readId(run);
+          return id ? ({ ...run, id } as LobstrRun) : undefined;
+        })
+        .filter((run): run is LobstrRun => run !== undefined);
+
+      if (strategy.filterLocally) {
+        const owned = runs.filter((run) => ["squid", "squid_hash", "squid_id"].some((key) => run[key] === squid));
+        // Only narrow when the filter actually recognises something —
+        // otherwise the run objects simply don't name their squid, and
+        // dropping every run would be worse than trusting them.
+        if (owned.length > 0) runs = owned;
+      }
+
+      attempts.push({ strategy: strategy.name, count: runs.length });
+      if (runs.length > 0) {
+        return { runs: sortRunsNewestFirst(runs), attempts };
+      }
+    } catch (err) {
+      attempts.push({ strategy: strategy.name, count: 0, error: (err as Error).message });
+    }
+  }
+  return { runs: [], attempts };
+}
+
+/** Newest first when Lobstr gives us a date to sort on; otherwise trust the API's own ordering rather than inventing one. */
+function sortRunsNewestFirst(runs: LobstrRun[]): LobstrRun[] {
+  return [...runs].sort((a, b) => {
     const aTime = a.created_at ? Date.parse(a.created_at) : NaN;
     const bTime = b.created_at ? Date.parse(b.created_at) : NaN;
     if (Number.isNaN(aTime) || Number.isNaN(bTime)) return 0;
     return bTime - aTime;
   });
+}
+
+/** The squid's runs, newest first — see attemptRunList for why this needs three tries. Empty means every shape came back without runs; set LOBSTR_VINTED_RUN to bypass the lookup entirely. */
+export async function listRuns(squid: string): Promise<LobstrRun[]> {
+  return (await attemptRunList(squid)).runs;
+}
+
+/** Same lookup, plus what each attempted query shape returned — for the ?debug=1 diagnosis. */
+export async function listRunsWithAttempts(squid: string): Promise<{ runs: LobstrRun[]; attempts: RunListAttempt[] }> {
+  return attemptRunList(squid);
 }
 
 /**

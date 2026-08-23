@@ -1,4 +1,12 @@
-import { getResults, hasLobstrCredentials, listRuns, pinnedVintedRunHash, VINTED_RESULTS_PER_CARD, vintedSquidHash } from "@/lib/lobstr";
+import {
+  getResults,
+  hasLobstrCredentials,
+  listRuns,
+  listRunsWithAttempts,
+  pinnedVintedRunHash,
+  VINTED_RESULTS_PER_CARD,
+  vintedSquidHash,
+} from "@/lib/lobstr";
 import { cleanCardName } from "@/lib/ebay-search";
 import { getLocalizedName } from "@/lib/tcgdex";
 import { vintedSearchLink } from "@/lib/vinted-search";
@@ -419,16 +427,25 @@ export async function diagnoseVintedRead(
   // Step 1 — find runs. listRuns is the UNVERIFIED part of the chain, so an
   // empty list or an error here is a prime suspect, not a footnote.
   let runIds: string[];
+  let runListAttempts: unknown = "skipped (LOBSTR_VINTED_RUN is pinned)";
   if (config.pinnedRun) {
     runIds = [config.pinnedRun];
   } else {
     try {
-      runIds = (await listRuns(config.squid!)).map((run) => run.id);
+      const { runs, attempts } = await listRunsWithAttempts(config.squid!);
+      runListAttempts = attempts;
+      runIds = runs.map((run) => run.id);
     } catch (err) {
-      return { config, step: "listRuns", verdict: `listRuns threw — set LOBSTR_VINTED_RUN to bypass it. ${(err as Error).message}` };
+      return { config, step: "listRuns", verdict: `Run lookup threw — set LOBSTR_VINTED_RUN to bypass it. ${(err as Error).message}` };
     }
     if (runIds.length === 0) {
-      return { config, step: "listRuns", verdict: "listRuns returned no runs — its GET /v1/runs?squid= shape is unverified. Set LOBSTR_VINTED_RUN to bypass it." };
+      return {
+        config,
+        step: "listRuns",
+        runListAttempts,
+        verdict:
+          "No query shape returned runs (see runListAttempts for what each tried). Lobstr documents no GET for listing runs. Set LOBSTR_VINTED_RUN to the run hash to bypass the lookup.",
+      };
     }
   }
 
@@ -450,7 +467,7 @@ export async function diagnoseVintedRead(
     }
   }
   if (rows.length === 0) {
-    return { config, runIds: runIds.slice(0, RUN_LOOKBACK), runsTried, step: "getResults", verdict: "No run returned any rows — either the results envelope isn't being unwrapped, or these runs are genuinely empty." };
+    return { config, runListAttempts, runIds: runIds.slice(0, RUN_LOOKBACK), runsTried, step: "getResults", verdict: "No run returned any rows — either the results envelope isn't being unwrapped, or these runs are genuinely empty." };
   }
 
   // Step 3 — parse. The sample row's real key names are the whole point:
@@ -478,6 +495,7 @@ export async function diagnoseVintedRead(
 
   return {
     config,
+    runListAttempts,
     runInspected,
     runsTried,
     rawRows: rows.length,
