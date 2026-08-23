@@ -76,7 +76,7 @@ export type VintedFeedRow = {
 export type VintedMarketData = {
   /** True once Lobstr has scraped real "très bon état" listings for this card (see lib/vinted-listings.ts); false falls back to the clearly-tagged illustrative feed. */
   isReal: boolean;
-  /** Real, working vinted.fr search-results link (see lib/vinted-search.ts) — and deliberately UNFILTERED, unlike `rows`: a human clicking through should see the whole market, not just the one condition this feed narrows to. */
+  /** Real, working Vinted search-results link (see lib/vinted-search.ts) — carrying the same `status_ids[]=2` (Très bon état) filter as `rows`, so a human clicking through lands on exactly the set of listings the panel is showing them. */
   searchUrl: string;
   /** Real French name + number when TCGdex has a match, English otherwise — same string used to build searchUrl. */
   title: string;

@@ -1,6 +1,6 @@
 # Vinted prices via Lobstr.io
 
-How real French/Vinted listings reach the **Pokémon Market Overview → France** tab, and what to do when they don't.
+How real Vinted listings reach the **Pokémon Market Overview → France** tab, and what to do when they don't.
 
 ## The one product rule
 
@@ -10,10 +10,25 @@ Vinted's other condition tiers — Bon état, Satisfaisant, Neuf avec/sans étiq
 
 Two consequences worth accepting up front:
 
-- The feed is deliberately sparser than the Vinted search it links to. A card whose recent listings are all "Bon état" shows **zero** real rows and falls back to the clearly-marked preview. That's the honest outcome, not a bug to widen the filter for.
+- The feed is deliberately sparser than an unfiltered Vinted search. A card whose recent listings are all "Bon état" shows **zero** real rows and falls back to the clearly-marked preview. That's the honest outcome, not a bug to widen the filter for.
 - Every row carries the same condition tag, because there is only one condition on screen by construction.
 
-The filter is applied on the returned condition text, and matched **exactly** (accent- and case-insensitively) — never as a substring. `"bon état"` is a literal substring of `"très bon état"`, so a substring test would let through exactly the tier the filter exists to exclude.
+Enforced in two places: Vinted itself filters server-side via `status_ids[]=2` on the scraped URL, and the returned condition text is checked again on our side. The text match is **exact** (accent- and case-insensitively), never a substring — `"bon état"` is a literal substring of `"très bon état"`, so a substring test would let through exactly the tier the filter exists to exclude.
+
+## The URL being scraped
+
+One function builds it — `vintedSearchLink` in `src/lib/vinted-search.ts` — and it is both the Lobstr task URL and the panel's "Search on Vinted" link, so the two can't drift apart:
+
+```
+https://www.vinted.be/catalog?search_text=Typhlosion%20de%20Luth%20190%2F182&status_ids[]=2&page=1&order=relevance
+```
+
+- `search_text` — the card's French name plus its number, from TCGdex (`vintedQueryForCard`), falling back to English when no French name exists.
+- `status_ids[]=2` — **Très bon état**. The whole product rule, applied by Vinted server-side.
+- `order=relevance` — with a small `max_pages` budget, spend it on listings that actually match the card rather than on whatever was posted last. The panel still renders newest-first; that ordering happens in our code, not Vinted's.
+- `time=<unix>` is deliberately **omitted**. It's a cache-buster Vinted's own UI appends and nothing server-side needs. A URL that changes on every call would churn a statically-generated page's HTML and pile up a fresh Lobstr task per refresh instead of reusing one stable task per card.
+
+Encoding is hand-built with `encodeURIComponent`, not `URLSearchParams`, so spaces come out as `%20` and the key stays a literal `status_ids[]`. `URLSearchParams` would emit `+` and `status_ids%5B%5D`; both are RFC-equivalent and would almost certainly decode the same, but "almost certainly" isn't a reason to send something other than the string confirmed to work.
 
 ## Why a scraper at all
 
@@ -51,6 +66,7 @@ READ    product page render        (cached 30 min)
 | `LOBSTR_VINTED_SQUID` | yes | The reused squid's hash, printed by `scripts/lobstr-setup.mjs --create`. |
 | `LOBSTR_REFRESH_SECRET` | yes | Gates `/api/vinted/refresh`. `CRON_SECRET` is accepted as a fallback so Vercel Cron works unchanged. |
 | `LOBSTR_VINTED_RUN` | no | Pins the read path to one run hash instead of resolving the squid's latest run. |
+| `VINTED_DOMAIN` | no | Which Vinted marketplace to search. Defaults to `www.vinted.be`. Each country is a separate site with its own sellers and shipping, so this changes which listings come back. |
 
 Without any of these the site still builds and renders — the France tab just stays on its clearly-marked preview.
 
@@ -103,11 +119,11 @@ Two smaller unverified spots, both marked in the code and both failing soft (the
 
 ## Deliberate design choices
 
-**The condition filter is applied after scraping, not in the task URL.** Vinted's search URL does carry a status filter, but its numeric ids aren't documented anywhere this integration could verify, and a wrong id would silently scrape the wrong tier — an error that looks exactly like real data. Filtering on returned text is checkable. Worth revisiting as a credit optimisation once the ids are confirmed against a live run.
+**The condition filter is applied twice, in two independent places.** Vinted applies it server-side from `status_ids[]=2` on the task URL, so the scrape only ever visits pages of très bon état listings and no credits go on tiers we'd discard. The returned condition text is then checked again on our side, as a guard against a stale task queued before the filter existed. A row whose condition field can't be read at all is *kept* (and logged once): it came back from a search Vinted itself restricted to status 2, and dropping it would let one wrong guess in `FIELD_ALIASES` silently empty the whole feed.
 
 **Real and preview never mix.** A card's feed is entirely scraped or entirely illustrative. Real rows carry a working per-listing link and the seller's title; preview rows carry neither, because a dead item link is a worse placeholder than an invented number — it looks clickable.
 
-**Prices are per-listing currency, not the card's.** Vinted France trades in euros while `card.currentPrice` is TCGPlayer USD. Mislabelling € as $ on a price-comparison page is a real error, not a cosmetic one.
+**Prices are per-listing currency, not the card's.** Vinted trades in euros on the `.fr`/`.be` sites while `card.currentPrice` is TCGPlayer USD. Mislabelling € as $ on a price-comparison page is a real error, not a cosmetic one.
 
 **These are asking prices on active listings, not completed sales.** Vinted has no public sold feed, so there's no sold/active split to render — the same reason the eBay side keeps sold data illustrative.
 

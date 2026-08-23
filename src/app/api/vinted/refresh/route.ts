@@ -89,14 +89,10 @@ export async function GET(request: Request) {
  * the "Search on Vinted" link the panel renders — the scrape and the
  * click-through can't drift apart.
  *
- * Note on the condition filter: tasks scrape the *unfiltered* search, and
- * "Très bon état" is applied afterwards when results are read
- * (lib/vinted-listings.ts). Vinted's URL does carry a status filter, but
- * its numeric ids aren't documented anywhere this integration could verify,
- * and a wrong id would silently scrape the wrong tier — an error that looks
- * exactly like real data. Filtering on the returned condition text is
- * checkable and can't quietly mislabel a listing. Worth revisiting as a
- * credit optimisation once the ids are confirmed against a live run.
+ * Note on the condition filter: every task URL carries `status_ids[]=2`
+ * (Très bon état), so Vinted filters server-side and the scrape never
+ * spends credits on tiers this site would throw away. The text check in
+ * lib/vinted-listings.ts stays on as a second, independent guard.
  */
 export async function POST(request: Request) {
   if (!isAuthorized(request)) {

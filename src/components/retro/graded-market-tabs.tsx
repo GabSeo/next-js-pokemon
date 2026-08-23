@@ -333,8 +333,8 @@ export function GradedMarketTabs({
             most important thing to understand about this feed, and it has to
             be as visible to an AI agent reading raw HTML as to a human. */}
         <p className="mt-2 text-xs font-bold text-muted-text">
-          <span className="text-foreground">{vinted.conditionFilter} only.</span> Listings in Vinted&apos;s other condition tiers are filtered
-          out, so this feed is deliberately narrower than the full search.
+          <span className="text-foreground">{vinted.conditionFilter} only.</span> Vinted&apos;s other condition tiers are excluded from both this
+          feed and the search link below, so it&apos;s deliberately narrower than an unfiltered search.
         </p>
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border-2 border-black bg-pokemon-blue p-5 shadow-hard-md">

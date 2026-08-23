@@ -59,7 +59,7 @@ Sold data is always illustrative: eBay's sold/completed-listing API (Marketplace
 
 eBay.fr isn't a good fit for the French Pokémon TCG market, so the French market view is a Vinted listing feed instead of PSA grades — no grading, no active/sold split (Vinted has no public sold feed).
 
-**This feed is filtered to one condition: ${data.vinted.conditionFilter}.** Listings in Vinted's other condition tiers (Bon état, Satisfaisant, Neuf avec/sans étiquette) are excluded, so this is deliberately narrower than the full Vinted search linked below — it answers "what is listed in ${data.vinted.conditionFilter}", not "what does the French market look like".
+**This feed is filtered to one condition: ${data.vinted.conditionFilter}.** Listings in Vinted's other condition tiers (Bon état, Satisfaisant, Neuf avec/sans étiquette) are excluded — by Vinted itself, via the status_ids[]=2 filter on the search this scrapes. It answers "what is listed in ${data.vinted.conditionFilter}", not "what does this market look like".
 
 ${vintedSource} Average: ${data.vinted.currency} ${data.vinted.avgPrice} across the last ${data.vinted.rows.length} listings; ${data.vinted.belowAverageCount} of them priced below that average.
 
@@ -67,7 +67,7 @@ ${vintedSource} Average: ${data.vinted.currency} ${data.vinted.avgPrice} across 
 | --- | --- | --- | --- | --- |
 ${vintedRows}
 
-Search on Vinted (unfiltered): ${data.vinted.searchUrl}`;
+Search on Vinted (same ${data.vinted.conditionFilter} filter applied): ${data.vinted.searchUrl}`;
 }
 
 /**

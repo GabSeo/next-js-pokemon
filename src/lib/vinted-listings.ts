@@ -9,14 +9,23 @@ import type { Card } from "@/lib/types";
  * into listings this site is willing to show, and decides which card each
  * one belongs to.
  *
- * THE ONE FILTER THAT MATTERS: only listings whose condition is literally
- * "Très bon état" survive. Not "the best of what's available", not a
- * ranking — a hard filter. Vinted's other tiers (Bon état, Satisfaisant,
- * Neuf avec/sans étiquette) are dropped outright, so the feed answers one
- * question only: what's for sale that the seller has clearly described as
- * très bon état. That's also why every rendered row carries the same single
- * condition tag instead of a per-row condition: there is only one condition
- * on screen, by construction.
+ * THE ONE FILTER THAT MATTERS: only listings whose condition is "Très bon
+ * état" survive. Not "the best of what's available", not a ranking — a hard
+ * filter. Vinted's other tiers (Bon état, Satisfaisant, Neuf avec/sans
+ * étiquette) are excluded, so the feed answers one question only: what's
+ * for sale that the seller has clearly described as très bon état. That's
+ * also why every rendered row carries the same single condition tag instead
+ * of a per-row condition: there is only one condition on screen, by
+ * construction.
+ *
+ * It's enforced twice, in two independent places:
+ *
+ *   1. Vinted itself, server-side, via `status_ids[]=2` on the task URL
+ *      (lib/vinted-search.ts) — so the scrape only ever visits pages of
+ *      très bon état listings, and no credits are spent on tiers we'd
+ *      throw away.
+ *   2. Here, on each returned row (toVintedListing), as a guard against a
+ *      stale task queued before the filter existed or a mislabelled row.
  *
  * Consequence worth stating plainly: this feed is intentionally sparser
  * than the underlying Vinted search. A card whose recent listings are all
@@ -167,15 +176,43 @@ function readTimestamp(row: Record<string, unknown>): number | undefined {
   return undefined;
 }
 
+/** Logged at most once per process — a missing condition field is a config note for whoever maintains FIELD_ALIASES, not a per-row event worth flooding the logs with. */
+let warnedAboutMissingCondition = false;
+
 /**
  * One raw Lobstr row -> a listing, or null. Returns null for anything
- * missing a price, a URL or the condition tag — a row we can't price or
- * link to isn't a listing a buyer can act on, and a row with no readable
- * condition is by definition not *clearly described* as très bon état.
+ * missing a price or a URL: a row we can't price or link to isn't a listing
+ * a buyer can act on.
+ *
+ * The condition check is now a SECOND line of defence, not the only one.
+ * The scrape itself is constrained to Très bon état by `status_ids[]=2` in
+ * the task URL (lib/vinted-search.ts), so Vinted has already filtered
+ * server-side before Lobstr ever sees a page. That changes what to do with
+ * a row whose condition we can't read:
+ *
+ * - Condition readable and NOT très bon état -> drop it. Something is wrong
+ *   (a stale task queued before the filter existed, a mislabelled row), and
+ *   showing it would break the one promise this feed makes.
+ * - Condition readable and très bon état -> keep it, obviously.
+ * - Condition not readable at all -> KEEP it, and warn. The row came back
+ *   from a search Vinted itself restricted to status 2; dropping it would
+ *   mean that one wrong guess in FIELD_ALIASES silently empties the entire
+ *   feed and pins the site to its preview forever. The seller's structured
+ *   condition selection is what "clearly described as très bon état" means
+ *   here — arguably better evidence than scraped display text, since it's
+ *   the field Vinted's own filter reads.
  */
 export function toVintedListing(row: Record<string, unknown>): VintedListing | null {
   const condition = readString(row, FIELD_ALIASES.condition);
-  if (!isTresBonEtat(condition)) return null;
+  if (condition !== undefined && !isTresBonEtat(condition)) return null;
+  if (condition === undefined && !warnedAboutMissingCondition) {
+    warnedAboutMissingCondition = true;
+    console.warn(
+      `[lobstr] no condition field found on a Vinted result row (looked for: ${FIELD_ALIASES.condition.join(", ")}). ` +
+        `Relying on the task URL's status_ids[]=2 filter alone. Run \`node scripts/lobstr-setup.mjs --sample <run>\` and correct FIELD_ALIASES. ` +
+        `Keys present: ${Object.keys(row).join(", ")}`
+    );
+  }
 
   const price = readPrice(row);
   const url = readString(row, FIELD_ALIASES.url);
