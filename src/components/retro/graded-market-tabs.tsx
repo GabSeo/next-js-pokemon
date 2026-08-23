@@ -232,7 +232,7 @@ export function GradedMarketTabs({
           })}
         </div>
 
-        <div className="rounded-md border-2 border-black bg-white p-5">
+        <div className="rounded-md bg-white p-5">
           <div className="mb-3">
             <span className="text-[10px] font-black tracking-[0.5px] text-muted-text uppercase">
               {type === "active" ? "Active listings" : "Sold listings"} · {market}
@@ -319,7 +319,7 @@ export function GradedMarketTabs({
           <div className="text-right text-[11px] font-bold text-white/70 uppercase">estimate, not real-time</div>
         </div>
 
-        <div className="mt-5 rounded-md border-2 border-black bg-white p-5">
+        <div className="mt-5 rounded-md bg-white p-5">
           <div className="mb-3">
             <span className="text-[10px] font-black tracking-[0.5px] text-muted-text uppercase">Newly listed</span>
           </div>
