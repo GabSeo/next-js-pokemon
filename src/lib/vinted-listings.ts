@@ -362,13 +362,21 @@ export async function vintedQueryForCard(card: Card): Promise<{ query: string; d
  * floor drops French articles ("de", "la") and single-letter card suffixes
  * ("Lugia V") which carry no distinguishing signal, while keeping the words
  * that do: "Typhlosion de Luth" needs typhlosion + luth, "Ectoplasma VMAX"
- * needs ectoplasma + vmax. The card's NUMBER is deliberately not required —
- * casual Vinted sellers routinely omit it (confirmed in the live data:
- * "Ectoplasma Vmax Alt" at €780 has no number and is a genuine match).
+ * needs ectoplasma + vmax. The card's NUMBER is not required when the name
+ * alone has 2+ distinguishing words — casual Vinted sellers routinely omit
+ * it ("Ectoplasma Vmax Alt" at €780 has no number and is a genuine match) —
+ * but IS required when the name is down to one word, like "lugia": a bare
+ * "Lugia V" title matched a real, unrelated €12–13 listing, a different and
+ * far cheaper print than the 186/195 alt art being searched for. See
+ * titleNumberAgreesWithCard's own comment for the full reasoning.
  */
 function rowMatchesCard(listing: VintedListing, displayName: string, searchUrl: string): boolean {
   if (!titleMentionsCard(listing.title, displayName)) return false;
-  if (!titleNumberAgreesWithCard(listing.title, primaryNumberOf(searchUrl))) return false;
+  // A single distinguishing word ("lugia") is too weak to trust a bare,
+  // number-less title on its own — see titleNumberAgreesWithCard's doc
+  // comment on the real €12 false positive this closed.
+  const requireNumber = significantWords(displayName).length <= 1;
+  if (!titleNumberAgreesWithCard(listing.title, primaryNumberOf(searchUrl), requireNumber)) return false;
 
   if (listing.sourceUrl) {
     const scraped = searchTextOf(listing.sourceUrl);
@@ -406,7 +414,8 @@ function primaryNumberOf(searchUrl: string): string | undefined {
 const NUMBER_TOKEN = /\d{3,}/g;
 
 /**
- * Rejects a listing whose title states a DIFFERENT collector number.
+ * Rejects a listing whose title states a DIFFERENT collector number — and,
+ * for cards whose name alone is ambiguous, one that states no number either.
  *
  * The name check alone is too weak for cards whose name reduces to a single
  * token: "Lugia V" yields just "lugia" (the "V" is one character), so the
@@ -415,19 +424,26 @@ const NUMBER_TOKEN = /\d{3,}/g;
  * they were the 186/195. That average, and the per-listing deal percentages
  * derived from it, would have been meaningless.
  *
- * The test is deliberately one-directional: a title that states no number
- * is KEPT, because plenty of genuine listings omit it ("Ectoplasma Vmax
- * Alt" at €780 is a real match). Only a title that names a number and names
- * the wrong one is rejected — it is contradicting us, not merely silent.
+ * A wrong stated number was always rejected — it contradicts us, not merely
+ * silent. But a bare "Lugia V" (no number at all, confirmed live: a real
+ * listing at €12–13, a different and far cheaper print) used to be KEPT,
+ * on the theory that plenty of genuine listings omit the number
+ * ("Ectoplasma Vmax Alt" at €780 is a real match with none). That theory
+ * only holds when the name itself is distinguishing enough to trust alone —
+ * for a single-token name like "lugia", omission is silence, not evidence,
+ * and the ambiguity that broke the wrong-number case breaks this case too.
+ * So `requireNumber` (true when the card's own significantWords is down to
+ * one token — see rowMatchesCard) demands the number be stated for those
+ * cards, and keeps the lenient no-number-is-fine behaviour for the rest.
  *
  * Skipped entirely when the card's own number is under three digits, since
  * NUMBER_TOKEN would never find it in a title and every listing would be
  * dropped.
  */
-function titleNumberAgreesWithCard(title: string, primaryNumber: string | undefined): boolean {
+function titleNumberAgreesWithCard(title: string, primaryNumber: string | undefined, requireNumber: boolean): boolean {
   if (!primaryNumber || primaryNumber.length < 3) return true;
   const stated = title.match(NUMBER_TOKEN);
-  if (!stated) return true;
+  if (!stated) return !requireNumber;
   return stated.includes(primaryNumber);
 }
 
