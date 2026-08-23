@@ -10,6 +10,15 @@
  *
  *   https://www.vinted.be/catalog?search_text=Typhlosion%20de%20Luth%20190%2F182&status_ids[]=2&page=1&order=relevance
  *
+ * `catalog[]=4875` scopes the search to Vinted's own "Cartes à collectionner
+ * à l'unité" (single trading cards) category, confirmed from a real working
+ * search URL the same way status_ids[] was. Without it, `search_text` alone
+ * can surface non-card listings (playmats, sleeves, other items whose title
+ * happens to match) — this filters server-side, the same "let Vinted do the
+ * filtering, don't rely on scraped text alone" reasoning as status_ids[]
+ * below, and for the same reason: catching it here is cheaper and more
+ * reliable than trying to detect an off-category listing after the fact.
+ *
  * The load-bearing param is `status_ids[]=2` — Vinted's own id for **Très
  * bon état**. An earlier version of this file deliberately left the search
  * unfiltered and applied the condition filter only to scraped text, because
@@ -42,6 +51,9 @@
 /** Vinted's status id for "Très bon état", read off a confirmed working search URL. The other tiers' ids are unknown and unneeded — this integration only ever asks for this one. */
 export const TRES_BON_ETAT_STATUS_ID = "2";
 
+/** Vinted's category id for "Cartes à collectionner à l'unité" (single trading cards), read off a confirmed working search URL — see this file's header comment. */
+export const TRADING_CARDS_CATALOG_ID = "4875";
+
 /**
  * Which Vinted marketplace to search. Vinted runs a separate site per
  * country with its own sellers and shipping, so this genuinely changes
@@ -58,6 +70,7 @@ export const VINTED_DOMAIN = process.env.VINTED_DOMAIN || "www.vinted.fr";
 export function vintedSearchLink(query: string): string {
   const params = [
     `search_text=${encodeURIComponent(query)}`,
+    `catalog[]=${TRADING_CARDS_CATALOG_ID}`,
     `status_ids[]=${TRES_BON_ETAT_STATUS_ID}`,
     "page=1",
     // Relevance, not newest-first: with a small max_pages budget (see

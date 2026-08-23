@@ -39,6 +39,14 @@ const VINTED_PRODUCTS_CRAWLER = "ffd34f9b42a79b7323a048f09fc158e6";
  *   3 cards x 10 x 2 = 60/month — inside the free tier, with room for one
  *   forced re-collection.
  *
+ *   Temporarily raised to 20 (see VINTED_RESULTS_PER_CARD in
+ *   src/lib/lobstr.ts) for a one-off test against the new catalog[]=4875
+ *   filter: 3 cards x 20 = 60, spending a single collection's worth of the
+ *   ~60 credits available right now. This no longer fits the free tier at
+ *   the regular fortnightly cadence (3 x 20 x 2 = 120/month) — the
+ *   overage warning below will fire until this is dialed back or the plan
+ *   changes.
+ *
  * Two caps do two different jobs, and both matter:
  *
  * - max_results_per_task caps EACH card's search at 10. This is what makes
@@ -54,7 +62,7 @@ const VINTED_PRODUCTS_CRAWLER = "ffd34f9b42a79b7323a048f09fc158e6";
  * max_pages stays 1 regardless: page one of a relevance-ordered, condition-
  * filtered search already holds far more than the ten rows the panel shows.
  */
-const RESULTS_PER_CARD = 10; // keep in step with VINTED_RESULTS_PER_CARD in src/lib/lobstr.ts
+const RESULTS_PER_CARD = 20; // keep in step with VINTED_RESULTS_PER_CARD in src/lib/lobstr.ts
 const DEFAULT_TRACKED_CARDS = 3;
 
 /**

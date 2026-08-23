@@ -70,11 +70,14 @@ export const COLLECTION_INTERVAL_DAYS = 14;
 /**
  * Rows kept per card, and the unit the whole budget is denominated in.
  *
- * Lobstr's free tier is 100 results a month. Three tracked Pokémon cards x
- * 10 results x two collections a month = 60, comfortably inside it with
- * room for a forced re-collection. Raising this, or adding cards, moves
- * that total directly — 4 cards at 10 would be 80, 5 would be 100 and the
- * tier is gone.
+ * Lobstr's free tier is 100 results a month. Raised from 10 to 20 for a
+ * one-off test against the added catalog[]=4875 filter (see
+ * vinted-search.ts) — three tracked Pokémon cards x 20 = 60, spending the
+ * ~60 credits available for this test in a single collection. At the
+ * *steady-state* fortnightly cadence this no longer fits the free tier
+ * (3 x 20 x 2 = 120 > 100) — `scripts/lobstr-setup.mjs --settings` prints
+ * its own warning when that's true, rather than silently exceeding it.
+ * Revisit before the next scheduled collection.
  *
  * Two squid settings have to agree with this for it to mean anything on
  * Lobstr's side, and `scripts/lobstr-setup.mjs --settings` computes and
@@ -84,7 +87,7 @@ export const COLLECTION_INTERVAL_DAYS = 14;
  * This constant alone only trims what's *displayed* — it cannot stop a
  * scrape that has already been paid for.
  */
-export const VINTED_RESULTS_PER_CARD = 10;
+export const VINTED_RESULTS_PER_CARD = 20;
 
 /**
  * Results are cached for the full collection interval, not minutes.
