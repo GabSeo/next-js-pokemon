@@ -22,13 +22,19 @@
 const API_BASE = "https://api.tcgdex.net/v2";
 
 /**
- * TCGdex's card database changes only when new sets are printed — nothing
- * like apitcg's daily price churn — so this is deliberately much longer
- * than apitcg.ts's 36h REVALIDATE_SECONDS. 30 days keeps this well clear of
- * being a meaningful quota concern (TCGdex has no published rate limit, but
- * there's no reason to hammer it for data this static either).
+ * Matches apitcg.ts's own 36h REVALIDATE_SECONDS — deliberately, even
+ * though the identity fields on this same response (name/set/rarity/
+ * types/image) change far less often than that. TCGdex bundles identity
+ * and live TCGplayer pricing in one combined /cards/{id} response (see
+ * tcgplayerSnapshot's doc comment), so a single fetch() only gets one cache
+ * window; price is what actually needs to stay fresh, so that's the window
+ * that wins. This "wastes" a refetch of unchanged identity data every 36h,
+ * but TCGdex has no published rate limit, so that costs nothing real — a
+ * true split (identity cached ~1 year, price cached 36h) would need a
+ * separate storage layer for identity data, not worth building for a
+ * refetch that's free.
  */
-const REVALIDATE_SECONDS = 60 * 60 * 24 * 30;
+const REVALIDATE_SECONDS = 60 * 60 * 36;
 
 /** Languages TCGdex's card database actually supports — see file header. */
 export type TcgdexLang = "en" | "fr" | "es" | "de" | "it" | "pt";
