@@ -105,21 +105,43 @@ async function resolveTcgdexCard(ref: CardRef): Promise<TcgdexCard | undefined> 
 }
 
 async function resolveCard(ref: CardRef): Promise<Card | undefined> {
-  const [product, tcgdexCard] = await Promise.all([resolveProduct(ref), resolveTcgdexCard(ref)]);
-  if (!product) return undefined;
+  // apitcg failure (quota exhausted, outage, etc.) must never take the
+  // whole card down when TCGdex already has a match — resolveProduct throws
+  // on a non-2xx response (see apitcg.ts's apitcgFetch), and an uncaught
+  // rejection inside Promise.all rejects the *whole* Promise.all, discarding
+  // resolveTcgdexCard's already-successful result along with it. Caught
+  // right here, at the source, rather than relying on resolveCardSafe's
+  // outer try/catch — that outer catch is a last-resort safety net for
+  // *this function* failing outright, not a substitute for handling one of
+  // two independent sources failing while the other succeeds.
+  const [product, tcgdexCard] = await Promise.all([
+    resolveProduct(ref).catch((err) => {
+      console.error(`[cards] apitcg lookup failed for ${ref.slug} (quota exhausted or outage?):`, err);
+      return undefined;
+    }),
+    resolveTcgdexCard(ref),
+  ]);
 
-  // apitcg's product record is still resolved for every card, every time —
-  // it's the only source with a numeric product id, which price history
-  // below needs regardless of franchise (TCGdex has no history endpoint;
-  // see tcgplayerSnapshot's doc comment). But its *fields* — name, set,
-  // rarity, image, current price, TCGplayer link, description — are used
-  // only when TCGdex has no match for this card (One Piece, always; a
-  // Pokémon card TCGdex couldn't find, rarely). TCGdex is exclusive where
-  // it applies, not blended field-by-field with apitcg's — no more
-  // `tcgdex ?? apitcg` chains, since a mix would mean showing e.g. TCGdex's
-  // French-adjacent English name next to apitcg's own separately-sourced
-  // image, two different snapshots of "the same" card pretending to agree.
-  const history = await getHistoryPrices(product._id, HISTORY_LOOKBACK_LIMIT).catch(() => []);
+  // Genuinely nothing to build a card from — apitcg has no match (or
+  // failed) and TCGdex has no match either (always true for One Piece).
+  if (!product && !tcgdexCard) return undefined;
+
+  // apitcg's product record is the only source with a numeric product id,
+  // which price history below needs regardless of franchise (TCGdex has no
+  // history endpoint; see tcgplayerSnapshot's doc comment) — but its
+  // *identity fields* (name, set, rarity, image, current price, TCGplayer
+  // link, description) are used only when TCGdex has no match for this card
+  // (One Piece, always; a Pokémon card TCGdex couldn't find, or apitcg being
+  // down while TCGdex is up). TCGdex is exclusive where it applies, not
+  // blended field-by-field with apitcg's — no more `tcgdex ?? apitcg`
+  // chains, since a mix would mean showing e.g. TCGdex's French-adjacent
+  // English name next to apitcg's own separately-sourced image, two
+  // different snapshots of "the same" card pretending to agree.
+  //
+  // When apitcg is unavailable, price history/trend/range/recentSnapshots
+  // simply come back empty rather than blocking the card — the page already
+  // renders "No historical data available yet" for that case.
+  const history = product ? await getHistoryPrices(product._id, HISTORY_LOOKBACK_LIMIT).catch(() => []) : [];
 
   const sortedAsc = [...history].sort((a, b) => a.date.localeCompare(b.date));
   const priceHistory: PriceHistoryPoint[] = sortedAsc
@@ -141,7 +163,7 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
       date: p.date,
       price: p.price,
       source: "TCGPlayer",
-      sourceUrl: product.markets?.tcgplayer?.url,
+      sourceUrl: product?.markets?.tcgplayer?.url,
     }));
 
   const tcgdexPrice = tcgdexCard ? tcgplayerSnapshot(tcgdexCard) : undefined;
@@ -169,24 +191,31 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
         sourceUrl: tcgdexPrice?.url,
         asOfDate: tcgdexPrice?.updated ?? new Date().toISOString(),
       }
-    : {
-        name: product.name,
-        set: product.set?.name ?? "",
-        setCode: product.set?.code,
-        number: product.attributes?.Number ?? product.code,
-        rarity: product.attributes?.Rarity,
-        // apitcg has no energy-type field — One Piece and any unmatched
-        // Pokémon card simply have none, rather than a fabricated guess.
-        types: undefined as string[] | undefined,
-        imageUrl: product.images?.[0]?.large ?? product.images?.[0]?.medium,
-        description: product.attributes?.Description ? stripHtml(product.attributes.Description) : undefined,
-        currentPrice: marketPrice(product.markets) ?? 0,
-        sourceUrl: product.markets?.tcgplayer?.url,
-        asOfDate: product.updatedAt ?? new Date().toISOString(),
-      };
+    : product
+      ? {
+          name: product.name,
+          set: product.set?.name ?? "",
+          setCode: product.set?.code,
+          number: product.attributes?.Number ?? product.code,
+          rarity: product.attributes?.Rarity,
+          // apitcg has no energy-type field — One Piece and any unmatched
+          // Pokémon card simply have none, rather than a fabricated guess.
+          types: undefined as string[] | undefined,
+          imageUrl: product.images?.[0]?.large ?? product.images?.[0]?.medium,
+          description: product.attributes?.Description ? stripHtml(product.attributes.Description) : undefined,
+          currentPrice: marketPrice(product.markets) ?? 0,
+          sourceUrl: product.markets?.tcgplayer?.url,
+          asOfDate: product.updatedAt ?? new Date().toISOString(),
+        }
+      : undefined;
+
+  // Unreachable given the `!product && !tcgdexCard` guard above, but keeps
+  // the branches above type-safe (TypeScript can't express "at least one of
+  // these two is defined" as a single narrowing) without an unsafe `!`.
+  if (!identity) return undefined;
 
   return {
-    id: String(product._id),
+    id: product ? String(product._id) : tcgdexCard!.id,
     slug: ref.slug,
     franchise: ref.franchise,
     ...identity,
@@ -270,7 +299,7 @@ const resolveCardSafe = cache(async (ref: CardRef): Promise<Card | undefined> =>
   try {
     const card = await resolveCard(ref);
     if (!card) {
-      console.error(`[cards] no apitcg match for ${ref.slug} (${JSON.stringify(ref.lookup)})`);
+      console.error(`[cards] no data source matched ${ref.slug} (${JSON.stringify(ref.lookup)}) — both apitcg and TCGdex came back empty`);
     }
     return card;
   } catch (err) {
