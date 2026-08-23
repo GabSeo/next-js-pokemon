@@ -303,7 +303,7 @@ function ModelSignalPanel({ nameFull, bestDeal }: { nameFull: string; bestDeal?:
   const firstSignal = bestDeal ? `${bestDeal.priceLabel} ask entered under fair value` : "New ask entered under fair value";
 
   return (
-    <div className="mt-3.5 rounded-md border-2 border-black bg-foreground p-5" style={{ boxShadow: "6px 6px 0 0 rgba(10,10,10,.3)" }}>
+    <div className="relative mt-3.5 overflow-hidden rounded-md border-2 border-black bg-foreground p-5" style={{ boxShadow: "6px 6px 0 0 rgba(10,10,10,.3)" }}>
       <div className="flex flex-wrap items-center gap-2.5">
         {/* Name alone here — "Premium" said once, by the pill, not twice. */}
         <span className="text-[10px] font-black tracking-[1.1px] text-pokemon-yellow uppercase">{nameFull}</span>
@@ -359,33 +359,43 @@ function ModelSignalPanel({ nameFull, bestDeal }: { nameFull: string; bestDeal?:
         </div>
       </div>
 
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
+      <div className="mt-6">
         <button
           type="button"
-          className="inline-flex flex-col items-start gap-1 rounded-md border-2 border-pokemon-yellow bg-pokemon-yellow px-[18px] py-2.5 text-foreground transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pokemon-yellow"
+          className="group inline-flex items-center gap-3 rounded-md border-2 border-pokemon-yellow bg-pokemon-yellow py-3 pr-3 pl-5 text-foreground transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pokemon-yellow"
           style={{ boxShadow: "4px 4px 0 0 rgba(255,205,5,.28)" }}
         >
-          <span className="text-[13px] font-black tracking-[0.8px] uppercase">
-            Create an account to unlock Premium <span aria-hidden="true">→</span>
+          <span className="flex flex-col items-start gap-0.5 text-left">
+            <span className="text-[14px] font-black tracking-[0.4px] uppercase">Create an account to unlock Premium</span>
+            {/* Muted brown, not black — same secondary-text-on-yellow convention as the Grading ROI callout box, so the subtitle reads as a subtitle instead of a second, equally loud headline. */}
+            <span className="text-[10px] font-bold tracking-[0.2px]" style={{ color: "#5a4600" }}>
+              Track 5 cards for free
+            </span>
           </span>
-          <span className="text-[10px] font-bold tracking-[0.3px] text-foreground/70 uppercase">Track 5 cards for free</span>
+          <span
+            aria-hidden="true"
+            className="flex h-8 w-8 flex-none items-center justify-center rounded-full border-2 border-black bg-foreground text-base text-pokemon-yellow transition-transform duration-150 group-hover:translate-x-0.5"
+          >
+            →
+          </span>
         </button>
-
-        {/* Mascot, same line as the CTA rather than stranded below it —
-            purely decorative, never a stand-in for real content. */}
-        <div className="relative flex-none">
-          <span aria-hidden="true" className="absolute -inset-2 rounded-full bg-pokemon-yellow/20 blur-md" />
-          {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, animated GIF (next/image can't animate) */}
-          <img
-            src="/gengar.gif"
-            alt=""
-            className="relative h-16 w-16 [image-rendering:pixelated]"
-            style={{ filter: "drop-shadow(3px 3px 0 rgba(0,0,0,0.45))" }}
-          />
-        </div>
       </div>
 
-      <p className="mt-3 text-[9px] font-bold tracking-[0.2px] text-[#6b6b6b]">{PREMIUM_TEASER_NOTICE}</p>
+      <p className="mt-3 max-w-[70%] text-[9px] font-bold tracking-[0.2px] text-[#6b6b6b]">{PREMIUM_TEASER_NOTICE}</p>
+
+      {/* Mascot, cornered bottom-right — absolutely positioned so it never
+          adds to the panel's own height/width; overflow-hidden above clips
+          him to the panel's rounded corner instead of poking past it. */}
+      <div aria-hidden="true" className="pointer-events-none absolute -right-1 -bottom-1">
+        <span className="absolute -inset-2 rounded-full bg-pokemon-yellow/20 blur-md" />
+        {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, animated GIF (next/image can't animate) */}
+        <img
+          src="/gengar.gif"
+          alt=""
+          className="relative h-20 w-20 [image-rendering:pixelated]"
+          style={{ filter: "drop-shadow(3px 3px 0 rgba(0,0,0,0.45))" }}
+        />
+      </div>
     </div>
   );
 }
