@@ -30,11 +30,18 @@ export type ConditionEntry = {
 
 /** One "newly listed" feed row — see lib/graded-market.ts's VintedFeedRow. */
 export type VintedFeedRowSummary = {
+  /** Empty string when the listing's age isn't known — a row with an unknown age says nothing rather than claiming to be new. */
   timeAgo: string;
   condition: string;
   priceLabel: string;
   dealPct: number;
   dealTier: "good" | "fair" | "high";
+  /** Seller-written title, real rows only. */
+  title?: string;
+  /** Real per-item Vinted link — real rows only; preview rows never get a fabricated link. */
+  url?: string;
+  /** The listing's own photo, real rows only; preview rows fall back to VintedSummary.imageUrl. */
+  imageUrl?: string;
 };
 
 export type VintedSummary = {
@@ -46,6 +53,8 @@ export type VintedSummary = {
   belowAverageCount: number;
   totalCount: number;
   rows: VintedFeedRowSummary[];
+  /** The one condition every row is filtered to — see lib/vinted-listings.ts. Stated on screen, not just applied, so the feed's sparseness reads as deliberate. */
+  conditionFilter: string;
 };
 
 // One small, deliberately restrained color language, reused for both chip
@@ -69,12 +78,13 @@ const DEAL_TIER_COLORS: Record<VintedFeedRowSummary["dealTier"], (typeof CHIP_CO
   high: CHIP_COLORS.amber,
 };
 
-// Vinted's own three condition tiers, best to worst — see
-// lib/illustrative.ts's VINTED_CONDITIONS for why these three specifically.
+// One tier only. Vinted has three (Très bon état / Bon état /
+// Satisfaisant) and this feed shows exclusively the first — see
+// lib/vinted-listings.ts. The map is kept rather than inlined so an
+// unexpected condition string still renders in neutral grey via the
+// CHIP_COLORS.grey fallback below instead of crashing on a missing key.
 const CONDITION_COLORS: Record<string, (typeof CHIP_COLORS)[keyof typeof CHIP_COLORS]> = {
   "Très bon état": CHIP_COLORS.green,
-  "Bon état": CHIP_COLORS.blue,
-  Satisfaisant: CHIP_COLORS.amber,
 };
 
 function dealPctLabel(pct: number): string {
@@ -110,10 +120,12 @@ type ListingType = (typeof TYPES)[number];
  * toggle, real eBay data — completely unchanged. France is a different
  * marketplace with a different shape: eBay.fr isn't where the French
  * Pokémon TCG market actually trades, so instead of a third eBay language
- * this renders Vinted's own condition tiers (Très bon état/Bon état/
- * Satisfaisant — Vinted's real vocabulary, not PSA grades) with no
- * active/sold split, since Vinted has neither grading nor a public "sold"
- * feed. Every branch is always in the DOM — only the `hidden` attribute
+ * this renders a single Vinted feed filtered to one condition — "Très bon
+ * état", Vinted's own vocabulary, not a PSA grade — with no active/sold
+ * split, since Vinted has neither grading nor a public "sold" feed. The
+ * condition filter is stated on screen rather than silently applied: this
+ * tab deliberately answers "what's listed in très bon état", not "what does
+ * the French market look like". Every branch is always in the DOM — only the `hidden` attribute
  * changes on click — so an AI crawler reading raw HTML sees every
  * combination regardless of what a human has selected, same pattern as
  * components/price-data-tabs.tsx.
@@ -299,17 +311,31 @@ export function GradedMarketTabs({
       <div hidden={market !== "France"}>
         <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
           <span className="text-base font-black tracking-[-0.3px]">Just listed — {vinted.title}</span>
-          {/* Not "Live": every number here is illustrative (no real Vinted
-              source yet) — a pulsing "Live" badge on fabricated data would
-              contradict every other real/illustrative signal on this site.
-              Dashed border keeps the same slot honestly "sketch"-flavored
-              instead of borrowing the confident solid-pill look real
-              connected data gets elsewhere on this page. */}
-          <span className="flex items-center gap-1.5 rounded-full border border-dashed border-[#9a9a9a] bg-white px-2.5 py-1 text-[11px] font-black tracking-[0.3px] text-muted-text uppercase">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#9a9a9a]" />
-            Preview
-          </span>
+          {/* The badge tracks the data, not the layout. Scraped listings get
+              the confident solid pill real connected data gets elsewhere on
+              this page; the fallback feed gets a dashed "Preview" pill, since
+              a "Live" badge over invented numbers would contradict every
+              other real/illustrative signal on this site. */}
+          {vinted.isReal ? (
+            <span className="flex items-center gap-1.5 rounded-full border-2 border-black bg-success-green px-2.5 py-1 text-[11px] font-black tracking-[0.3px] text-white uppercase">
+              <span className="h-1.5 w-1.5 rounded-full bg-white" />
+              Live
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5 rounded-full border border-dashed border-[#9a9a9a] bg-white px-2.5 py-1 text-[11px] font-black tracking-[0.3px] text-muted-text uppercase">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#9a9a9a]" />
+              Preview
+            </span>
+          )}
         </div>
+
+        {/* Plain text, not a tooltip or an icon — the filter is the single
+            most important thing to understand about this feed, and it has to
+            be as visible to an AI agent reading raw HTML as to a human. */}
+        <p className="mt-2 text-xs font-bold text-muted-text">
+          <span className="text-foreground">{vinted.conditionFilter} only.</span> Listings in Vinted&apos;s other condition tiers are filtered
+          out, so this feed is deliberately narrower than the full search.
+        </p>
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border-2 border-black bg-pokemon-blue p-5 shadow-hard-md">
           <div>
@@ -318,7 +344,9 @@ export function GradedMarketTabs({
             </div>
             <div className="text-3xl font-black tracking-[-0.6px] text-white tabular-nums">{vinted.avgLabel}</div>
           </div>
-          <div className="text-right text-[11px] font-bold text-white/70 uppercase">estimate, not real-time</div>
+          <div className="text-right text-[11px] font-bold text-white/70 uppercase">
+            {vinted.isReal ? "scraped listings, not sales" : "estimate, not real-time"}
+          </div>
         </div>
 
         <div className="mt-5 rounded-md bg-white p-5">
@@ -330,15 +358,16 @@ export function GradedMarketTabs({
             {vinted.rows.map((row, i) => {
               const dealColors = DEAL_TIER_COLORS[row.dealTier];
               const conditionColors = CONDITION_COLORS[row.condition] ?? CHIP_COLORS.grey;
+              // A real row shows its own scraped photo; a preview row falls
+              // back to the card's own image, which is the honest choice —
+              // same physical card, different sellers, never a fabricated
+              // per-listing photo.
+              const thumbnail = row.imageUrl ?? vinted.imageUrl;
               return (
-                <div key={i} className="flex items-center gap-3 border-t border-dashed border-border-subtle py-3 first:border-t-0">
-                  {vinted.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element -- TCGdex/apitcg CDN image, domain not allowlisted for next/image (same as CardImage)
-                    <img
-                      src={vinted.imageUrl}
-                      alt=""
-                      className="h-14 w-10 flex-none rounded-sm border-2 border-black object-cover shadow-hard-sm"
-                    />
+                <div key={row.url ?? i} className="flex items-center gap-3 border-t border-dashed border-border-subtle py-3 first:border-t-0">
+                  {thumbnail ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- TCGdex/apitcg or Vinted CDN image, domain not allowlisted for next/image (same as CardImage)
+                    <img src={thumbnail} alt="" className="h-14 w-10 flex-none rounded-sm border-2 border-black object-cover shadow-hard-sm" />
                   ) : (
                     <div className="h-14 w-10 flex-none rounded-sm border-2 border-black bg-white shadow-hard-sm" />
                   )}
@@ -350,8 +379,25 @@ export function GradedMarketTabs({
                       >
                         {row.condition}
                       </span>
-                      <span className="text-[10px] font-bold text-muted-text">{row.timeAgo}</span>
+                      {row.timeAgo && <span className="text-[10px] font-bold text-muted-text">{row.timeAgo}</span>}
                     </div>
+                    {/* Only real rows carry a title and a link. A preview row
+                        gets neither — a fabricated seller title or a dead
+                        item link is a worse kind of placeholder than an
+                        invented number, since it looks clickable. */}
+                    {row.title &&
+                      (row.url ? (
+                        <a
+                          href={row.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-1 block truncate text-[12px] font-bold hover:text-pokemon-blue hover:underline"
+                        >
+                          {row.title} ↗
+                        </a>
+                      ) : (
+                        <span className="mt-1 block truncate text-[12px] font-bold">{row.title}</span>
+                      ))}
                   </div>
                   <div className="flex flex-none flex-col items-end gap-1">
                     <span className="text-[13px] font-black tabular-nums">{row.priceLabel}</span>
@@ -382,6 +428,10 @@ export function GradedMarketTabs({
               Powered by
               {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, not an optimizable remote domain */}
               <img src={VINTED_LOGO_URL} alt="Vinted" className="h-5 w-auto" />
+              {/* Named, not hidden: these rows are scraped by a third party
+                  rather than served by Vinted, and a reader deserves to know
+                  which link in the chain produced the number. */}
+              {vinted.isReal && <span>via Lobstr.io</span>}
             </span>
           </div>
         </div>
@@ -404,9 +454,11 @@ export function GradedMarketTabs({
           </p>
         </div>
 
-        <div className="mt-3">
-          <IllustrativeTag label="Preview — Vinted not connected yet" />
-        </div>
+        {!vinted.isReal && (
+          <div className="mt-3">
+            <IllustrativeTag label="Preview — no scraped Vinted listings yet" />
+          </div>
+        )}
       </div>
     </div>
   );

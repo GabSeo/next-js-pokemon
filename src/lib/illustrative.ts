@@ -140,21 +140,22 @@ export function illustrativeSoldListings(card: Card, condition: EbayConditionTie
 
 /**
  * Vinted's own real condition vocabulary (its actual French-UI options,
- * confirmed live at vinted.fr/help/50), not PSA grades and not a
- * translation of them — Vinted listings are raw/ungraded peer-to-peer
- * resale, a fundamentally different marketplace shape from eBay's graded
- * market. "Neuf avec/sans étiquette" (new with/without tag) is Vinted's
- * clothing-oriented top tier and doesn't fit how a card would realistically
- * be listed, so it's left out here. Rendered as its own tag per listing row
- * — Vinted has no grading system to build a PSA-style tab structure
- * around, but condition is still real, visible information a buyer checks.
+ * confirmed live at vinted.fr/help/50) includes Très bon état, Bon état and
+ * Satisfaisant — but this feed deliberately shows only the first one.
+ *
+ * That's a product decision, not a data limitation: the France tab exists
+ * to surface listings a seller has *clearly described* as très bon état,
+ * so the lower tiers are filtered out of the real feed entirely
+ * (lib/vinted-listings.ts) and never invented here either. A preview that
+ * showed three condition tags would advertise a filter the real feed
+ * doesn't apply — the preview's job is to look like the real thing, minus
+ * the honesty of real numbers.
  */
-export type VintedConditionTier = "Très bon état" | "Bon état" | "Satisfaisant";
-const VINTED_CONDITIONS: VintedConditionTier[] = ["Très bon état", "Bon état", "Satisfaisant"];
+export const VINTED_TRES_BON_ETAT = "Très bon état";
 
 export type VintedFeedListing = {
   minutesAgo: number;
-  condition: VintedConditionTier;
+  condition: typeof VINTED_TRES_BON_ETAT;
   price: number;
 };
 
@@ -169,24 +170,24 @@ const VINTED_MINUTES_AGO = [0, 4, 11, 19, 27, 38];
  * fundamentally different marketplace: no PSA grading, no active/sold
  * split (Vinted has no public "sold" feed the way eBay does), just a
  * single rolling list of recent listings a buyer would actually scroll
- * through. Price spread is wider and skews lower than eBay's graded tiers
- * (0.5x-1.15x of the real current price) — casual peer-to-peer resale
- * genuinely prices lower and more inconsistently than a curated/graded
- * market. Each row's own condition is its visible identity here — the card
- * itself is shown once via the panel's real image, not repeated per row.
+ * through, every one of them très bon état. Price spread is wider and skews
+ * lower than eBay's graded tiers (0.5x-1.15x of the real current price) —
+ * casual peer-to-peer resale genuinely prices lower and more
+ * inconsistently than a curated/graded market. The card itself is shown
+ * once via the panel's real image, not repeated per row.
  *
- * Vinted has no known public API today (that's the next thing to go find)
- * — this stays illustrative until a real data source or integration path
- * is found.
+ * This is now the FALLBACK path, not the only path: real listings come from
+ * Lobstr's Vinted Products Scraper (lib/lobstr.ts, lib/vinted-listings.ts),
+ * and this feed renders only when that returns nothing — no API key, no
+ * finished run yet, or no très bon état listing for this card right now.
  */
 export function illustrativeVintedFeed(card: Card): VintedFeedListing[] {
   const base = card.currentPrice;
   return VINTED_MINUTES_AGO.map((minutesAgo, i) => {
-    const condition = VINTED_CONDITIONS[Math.floor(seedFraction(card.id, 50 + i) * VINTED_CONDITIONS.length)];
     const multiplier = 0.5 + seedFraction(card.id, 60 + i) * 0.65;
     return {
       minutesAgo,
-      condition,
+      condition: VINTED_TRES_BON_ETAT,
       price: Math.round(base * multiplier),
     };
   });

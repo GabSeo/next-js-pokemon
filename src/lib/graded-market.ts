@@ -2,8 +2,7 @@ import { conditionSearchLink } from "@/lib/ebay-search";
 import { searchActiveListings, type EbayCondition, type EbayLanguage } from "@/lib/ebay-browse";
 import { illustrativeActiveListings, illustrativeSoldListings, illustrativeVintedFeed } from "@/lib/illustrative";
 import { DEFAULT_PSA_GRADING_COST_USD, gradingRoi, median } from "@/lib/roi";
-import { getLocalizedName } from "@/lib/tcgdex";
-import { vintedSearchLink } from "@/lib/vinted-search";
+import { getVintedListingsForCard, relativeTimeLabel, TRES_BON_ETAT, vintedQueryForCard } from "@/lib/vinted-listings";
 import type { Card } from "@/lib/types";
 
 export const GRADED_MARKET_CONDITIONS: EbayCondition[] = ["PSA 10", "PSA 9", "PSA 8", "Raw"];
@@ -59,18 +58,25 @@ export type VintedDealTier = "good" | "fair" | "high";
 
 export type VintedFeedRow = {
   timeAgo: string;
+  /** Always "Très bon état" — see lib/vinted-listings.ts. Kept per-row so the renderer never has to re-assert the filter. */
   condition: string;
   price: number;
   currency: string;
   /** Signed percent vs. this card's rolling average across the feed (see VintedMarketData.avgPrice) — negative means priced below average. */
   dealPct: number;
   dealTier: VintedDealTier;
+  /** Seller-written listing title — real rows only. */
+  title?: string;
+  /** Real per-item Vinted link — present only on real rows, never fabricated for a preview row (same rule as GradedMarketListingRow.url). */
+  url?: string;
+  /** The listing's own photo when the scrape returned one; real rows only. Preview rows share the card's image via VintedMarketData.imageUrl. */
+  imageUrl?: string;
 };
 
 export type VintedMarketData = {
-  /** Always false today — Vinted has no known public API (that's the next thing to go find), so this is illustrative-only, same shape as illustrativeVintedFeed's own doc comment. */
+  /** True once Lobstr has scraped real "très bon état" listings for this card (see lib/vinted-listings.ts); false falls back to the clearly-tagged illustrative feed. */
   isReal: boolean;
-  /** Real, working vinted.fr search-results link (see lib/vinted-search.ts) — not itemized data, but a real place to click through to regardless of the illustrative numbers above it. */
+  /** Real, working vinted.fr search-results link (see lib/vinted-search.ts) — and deliberately UNFILTERED, unlike `rows`: a human clicking through should see the whole market, not just the one condition this feed narrows to. */
   searchUrl: string;
   /** Real French name + number when TCGdex has a match, English otherwise — same string used to build searchUrl. */
   title: string;
@@ -79,8 +85,16 @@ export type VintedMarketData = {
   avgPrice: number;
   currency: string;
   rows: VintedFeedRow[];
-  /** How many of `rows` are priced below `avgPrice` — a real, derived stat even though the prices it's derived from are illustrative (same honesty shape as the ROI percent below, which is real math over possibly-illustrative inputs). */
+  /** How many of `rows` are priced below `avgPrice` — a real, derived stat even when the prices it's derived from are illustrative (same honesty shape as the ROI percent below, which is real math over possibly-illustrative inputs). */
   belowAverageCount: number;
+  /**
+   * The single condition every row in this feed is filtered to. Carried in
+   * the data (not just rendered) so the markdown export, JSON API and MCP
+   * tool all state the same constraint the panel shows — a consumer reading
+   * only the JSON must not mistake this for an unfiltered view of the
+   * French market.
+   */
+  conditionFilter: string;
 };
 
 export type GradedMarketData = {
@@ -157,16 +171,6 @@ function buildSoldTier(card: Card, condition: EbayCondition, language: EbayLangu
   };
 }
 
-/**
- * French/Vinted market view — structurally nothing like the PSA-tiered
- * eBay data above: no grading concept, no active/sold split, Vinted's own
- * condition vocabulary (see illustrativeVintedListings). Still uses the
- * real French card name when one exists (via card.tcgdexId, same TCGdex
- * lookup the old French eBay tab used) — a French marketplace should be
- * searched in French, illustrative pricing or not. Falls back to the
- * English name if no French match exists (One Piece, or an unmatched
- * Pokémon card) so the search link is always at least usable.
- */
 // A listing more than 8% below the feed's own rolling average reads as a
 // good deal, more than 8% above reads as pricey, everything in between is
 // unremarkable — thresholds are a judgment call, not derived from anything,
@@ -179,35 +183,101 @@ function vintedDealTier(deltaPct: number): VintedDealTier {
   return "fair";
 }
 
+/** Shared by both branches below: the deal percentages and the below-average count are real math either way, over whichever prices the feed ended up with. */
+function summarizeVintedFeed(
+  prices: number[],
+  toRow: (price: number, index: number, dealPct: number, dealTier: VintedDealTier) => VintedFeedRow
+): { rows: VintedFeedRow[]; avgPrice: number; belowAverageCount: number } {
+  const avgPrice = Math.round(prices.reduce((sum, price) => sum + price, 0) / prices.length);
+  const rows = prices.map((price, i) => {
+    const dealPct = Math.round(((price - avgPrice) / avgPrice) * 100);
+    return toRow(price, i, dealPct, vintedDealTier(dealPct));
+  });
+  return { rows, avgPrice, belowAverageCount: prices.filter((price) => price < avgPrice).length };
+}
+
+/**
+ * French/Vinted market view — structurally nothing like the PSA-tiered eBay
+ * data above: no grading concept, no active/sold split, and exactly one
+ * condition, "Très bon état". That single condition is the point of this
+ * view rather than an incidental filter: it answers "what can I buy right
+ * now that the seller has clearly described as very good condition", not
+ * "what does the French market look like". Everything below Très bon état
+ * is dropped before it reaches here (lib/vinted-listings.ts).
+ *
+ * Real listings come from Lobstr's Vinted Products Scraper, read back from
+ * the most recent finished run (see lib/lobstr.ts for why a page render
+ * reads results rather than triggering a scrape). When there are none —
+ * no API key, no run yet, or genuinely nothing in that condition right now
+ * — this degrades to the illustrative feed, tagged as a preview in every
+ * surface that renders it. Never a silent mix: the whole feed is real or
+ * the whole feed is preview.
+ *
+ * Searches in French when TCGdex has a French name for the card (a French
+ * marketplace gets searched in French), English otherwise — see
+ * vintedQueryForCard.
+ */
 async function buildVintedMarket(card: Card): Promise<VintedMarketData> {
-  const frenchName = card.tcgdexId ? await getLocalizedName(card.tcgdexId, "fr").catch(() => undefined) : undefined;
-  const displayName = frenchName ?? card.name;
-  const query = `${displayName} ${card.number ?? ""}`.trim();
+  const { query, displayName, searchUrl } = await vintedQueryForCard(card);
+
+  const real = await getVintedListingsForCard(card, displayName, searchUrl);
+
+  if (real.length > 0) {
+    const { rows, avgPrice, belowAverageCount } = summarizeVintedFeed(
+      real.map((listing) => listing.price),
+      (price, i, dealPct, dealTier) => ({
+        timeAgo: relativeTimeLabel(real[i].listedAtMs),
+        condition: real[i].condition,
+        price,
+        // Per-listing currency, not card.currency: Vinted France trades in
+        // euros while card.currentPrice is TCGPlayer USD. Mislabelling €
+        // as $ on a price comparison page would be a real error, not a
+        // cosmetic one.
+        currency: real[i].currency,
+        dealPct,
+        dealTier,
+        title: real[i].title,
+        url: real[i].url,
+        imageUrl: real[i].imageUrl,
+      })
+    );
+
+    return {
+      isReal: true,
+      searchUrl,
+      title: query,
+      imageUrl: card.imageUrl,
+      avgPrice,
+      currency: real[0].currency,
+      rows,
+      belowAverageCount,
+      conditionFilter: TRES_BON_ETAT,
+    };
+  }
 
   const feed = illustrativeVintedFeed(card);
-  const avgPrice = Math.round(feed.reduce((sum, r) => sum + r.price, 0) / feed.length);
-
-  const rows: VintedFeedRow[] = feed.map((r) => {
-    const dealPct = Math.round(((r.price - avgPrice) / avgPrice) * 100);
-    return {
-      timeAgo: r.minutesAgo === 0 ? "now" : `${r.minutesAgo} min`,
-      condition: r.condition,
-      price: r.price,
+  const { rows, avgPrice, belowAverageCount } = summarizeVintedFeed(
+    feed.map((listing) => listing.price),
+    (price, i, dealPct, dealTier) => ({
+      timeAgo: feed[i].minutesAgo === 0 ? "now" : `${feed[i].minutesAgo} min`,
+      condition: feed[i].condition,
+      price,
       currency: card.currency,
       dealPct,
-      dealTier: vintedDealTier(dealPct),
-    };
-  });
+      dealTier,
+    })
+  );
 
   return {
     isReal: false,
-    searchUrl: vintedSearchLink(query),
+    searchUrl,
     title: query,
     imageUrl: card.imageUrl,
     avgPrice,
     currency: card.currency,
     rows,
-    belowAverageCount: feed.filter((r) => r.price < avgPrice).length,
+    belowAverageCount,
+    conditionFilter: TRES_BON_ETAT,
   };
 }
 
