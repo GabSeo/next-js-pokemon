@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductPageContent, type LocaleLink } from "@/components/product-page-content";
+import { JAPANESE_MARKET_ENABLED } from "@/lib/graded-market";
 import { franchiseLabel, getAllCards, getCardBySlug, getFrenchCardText } from "@/lib/cards";
 import { absoluteUrl } from "@/lib/site";
 
@@ -105,7 +106,7 @@ export default async function ProductPage({ params }: PageProps) {
   const localeLinks: LocaleLink[] = [
     { code: "US", href: `/products/${card.slug}`, active: true },
     ...(fr.translated ? [{ code: "FR", href: `/products/${card.slug}/fr`, active: false }] : []),
-    { code: "JP", href: `/products/${card.slug}/ja`, active: false },
+    ...(JAPANESE_MARKET_ENABLED ? [{ code: "JP", href: `/products/${card.slug}/ja`, active: false }] : []),
   ];
 
   return (

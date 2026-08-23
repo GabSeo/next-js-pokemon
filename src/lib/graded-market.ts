@@ -6,14 +6,37 @@ import { getVintedListingsForCard, relativeTimeLabel, TRES_BON_ETAT, vintedQuery
 import type { Card } from "@/lib/types";
 
 export const GRADED_MARKET_CONDITIONS: EbayCondition[] = ["PSA 10", "PSA 9", "PSA 8", "Raw"];
+
 /**
- * eBay-backed languages only — French was removed from here (not from
+ * Japan is OFF until a real Japanese source is wired in.
+ *
+ * The tab was never Japanese data — it was eBay's US marketplace with a
+ * `Language: Japanese` aspect filter, which returns almost nothing that
+ * survives titleMatchesCard. Every card logged four `[ebay] 0 active
+ * listings ... falling back to preview` warnings per build, drowning the
+ * real English failures, and the tab itself showed an illustrative preview
+ * dressed as a market.
+ *
+ * Turning it off is one flag, and it is genuinely one flag: the market tab,
+ * the /products/[slug]/ja route, and the JP locale links all read from
+ * here, so nothing is left half-disabled and re-enabling is the same single
+ * edit. It also halves the eBay calls per card — 4 conditions x 1 market
+ * instead of x 2.
+ *
+ * Flip to true once a source that actually has Japanese listings exists
+ * (eBay.jp, or a Japanese marketplace the way Vinted covers France).
+ */
+export const JAPANESE_MARKET_ENABLED = false;
+
+/**
+ * eBay-backed markets. French was removed from here (not from
  * EbayLanguage/ebay-browse.ts/ebay-search.ts themselves, which still
  * support it) after a market-fit call: eBay.fr isn't where the French
  * Pokémon TCG market actually trades, Vinted is. French gets its own
- * VintedMarketData below instead of a third entry in this array.
+ * VintedMarketData below instead of a third entry in this array. Japanese
+ * is gated on the flag above.
  */
-export const GRADED_MARKET_LANGUAGES: EbayLanguage[] = ["English", "Japanese"];
+export const GRADED_MARKET_LANGUAGES: EbayLanguage[] = JAPANESE_MARKET_ENABLED ? ["English", "Japanese"] : ["English"];
 
 export type GradedMarketListingRow = {
   date: string;

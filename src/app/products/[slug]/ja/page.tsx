@@ -2,11 +2,17 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductPageContent, type LocaleLink } from "@/components/product-page-content";
 import { franchiseLabel, getAllCards, getCardBySlug, getFrenchCardText } from "@/lib/cards";
+import { JAPANESE_MARKET_ENABLED } from "@/lib/graded-market";
 
 // Same window as the base product page — see its own comment.
 export const revalidate = 129600;
 
 export async function generateStaticParams() {
+  // Nothing to build while Japan is off. The whole point of this route is a
+  // URL that opens on the Japanese market tab; with that tab gone it would
+  // render English data under a "Japan market data" title, which is worse
+  // than not existing. The file stays so re-enabling is the one flag.
+  if (!JAPANESE_MARKET_ENABLED) return [];
   const cards = await getAllCards();
   return cards.map((card) => ({ slug: card.slug }));
 }
@@ -31,6 +37,7 @@ type PageProps = { params: Promise<{ slug: string }> };
  * for building an eBay.jp query workflow later, not an SEO play.
  */
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  if (!JAPANESE_MARKET_ENABLED) return {};
   const { slug } = await params;
   const card = await getCardBySlug(slug);
   if (!card) return {};
@@ -46,6 +53,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function ProductPageJapan({ params }: PageProps) {
+  if (!JAPANESE_MARKET_ENABLED) notFound();
   const { slug } = await params;
   const card = await getCardBySlug(slug);
   if (!card) notFound();

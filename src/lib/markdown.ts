@@ -1,6 +1,6 @@
 import { computeAlertBands, downsamplePriceHistory, getAllCards, getCardsByFranchise, franchiseLabel } from "@/lib/cards";
 import { cardRefs } from "@/data/card-refs";
-import { getGradedMarketData } from "@/lib/graded-market";
+import { getGradedMarketData, GRADED_MARKET_LANGUAGES } from "@/lib/graded-market";
 import { absoluteUrl, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 import type { Card, Franchise } from "@/lib/types";
 
@@ -45,7 +45,7 @@ async function gradedMarketMarkdown(card: Card): Promise<string> {
 
   return `## Pokémon market overview
 
-### English / Japanese (eBay) — up to 4 recent active listings + illustrative sold, per condition x market
+### ${GRADED_MARKET_LANGUAGES.join(" / ")} (eBay) — up to 4 recent active listings + illustrative sold, per condition x market
 
 | Condition | Market | Active median | Active source | Sold median (illustrative) |
 | --- | --- | --- | --- | --- |
