@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAllCards } from "@/lib/cards";
 import {
   addTasks,
+  COLLECTION_INTERVAL_DAYS,
   getRunStats,
   hasLobstrCredentials,
   listRuns,
@@ -22,10 +23,19 @@ import { vintedQueryForCard } from "@/lib/vinted-listings";
  * configured and how the most recent run is doing, without triggering
  * anything.
  *
- * Both are secret-gated and FAIL CLOSED: with no LOBSTR_REFRESH_SECRET
- * configured, every request is rejected. An open endpoint here would let
- * anyone on the internet burn the account's scrape credits by holding down
- * refresh.
+ * Two independent guards on spend, because scraping is the only part of
+ * this integration that costs money:
+ *
+ * 1. Secret-gated, FAILING CLOSED: with no LOBSTR_REFRESH_SECRET
+ *    configured, every request is rejected. An open endpoint here would let
+ *    anyone on the internet burn the account's credits by holding down
+ *    refresh.
+ * 2. A minimum interval of COLLECTION_INTERVAL_DAYS between runs, checked
+ *    against Lobstr's own record of when the last run started. The cron
+ *    schedule in vercel.json is a *plan*; this is the part that holds when
+ *    the plan is wrong — a misconfigured schedule, a retried webhook, two
+ *    deployments, or someone curling this by hand can't collect early. Pass
+ *    force to override deliberately.
  */
 
 export const dynamic = "force-dynamic";
@@ -41,6 +51,68 @@ function configurationError(): string | undefined {
   if (!hasLobstrCredentials()) return "LOBSTR_API_KEY not set";
   if (!vintedSquidHash()) return "LOBSTR_VINTED_SQUID not set — run `node scripts/lobstr-setup.mjs` once to create the squid";
   return undefined;
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+/**
+ * Slack cut off the front of the interval so a scheduled collection can't
+ * be rejected by its own schedule. The cron in vercel.json fires on the 1st
+ * and 15th — exactly 14 days apart in the best case — so without this, a
+ * few minutes of scheduler jitter would make the run "13 days 23:59 old",
+ * fail the check, and skip the collection entirely until the *next* fire a
+ * fortnight later. Half a day of tolerance costs nothing (it can pull a
+ * collection at most 12h early) and removes that failure mode.
+ */
+const COLLECTION_GRACE_MS = 12 * 60 * 60 * 1000;
+/** Matches RUNS_REVALIDATE_SECONDS in lib/lobstr.ts — how long a freshly finished run can take to reach product pages. Reported back so a caller knows when to look, instead of refreshing and assuming it failed. */
+const LISTING_DISCOVERY_HOURS = 6;
+
+/** `force` may arrive as ?force=1 or as {"force":true} in the body, so a browser address bar and a scripted POST both work. A malformed body is simply not a force. */
+async function isForced(request: Request): Promise<boolean> {
+  if (new URL(request.url).searchParams.get("force") !== null) return true;
+  try {
+    const body = (await request.clone().json()) as { force?: unknown };
+    return body?.force === true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Lobstr's own run history is the source of truth for "when did we last
+ * collect", deliberately — not a local timestamp. A serverless deployment
+ * has nowhere durable to write one, and a cache entry that got evicted
+ * would read as "never collected" and authorise a spend. Asking the vendor
+ * that already knows cannot drift.
+ *
+ * Fails OPEN: if the run list can't be read (the UNVERIFIED query shape in
+ * lib/lobstr.ts, an outage), collection proceeds. The alternative — a
+ * transient read failure permanently blocking collection — leaves the site
+ * on preview data indefinitely, which is worse than one unplanned run.
+ */
+async function tooSoonToCollect(squid: string): Promise<{ error: string; lastRunAt: string; nextEligibleAt: string } | undefined> {
+  let runs;
+  try {
+    runs = await listRuns(squid);
+  } catch (err) {
+    console.warn("[lobstr] could not check last run time, allowing collection:", err);
+    return undefined;
+  }
+
+  const lastRunAt = runs.find((run) => run.created_at)?.created_at;
+  if (!lastRunAt) return undefined;
+
+  const lastRunMs = Date.parse(lastRunAt);
+  if (Number.isNaN(lastRunMs)) return undefined;
+
+  const nextEligibleMs = lastRunMs + COLLECTION_INTERVAL_DAYS * DAY_MS - COLLECTION_GRACE_MS;
+  if (Date.now() >= nextEligibleMs) return undefined;
+
+  return {
+    error: `Last collection was less than ${COLLECTION_INTERVAL_DAYS} days ago. Scraping is the only part of this that costs credits, so it is rate-limited to that interval. Pass force to override.`,
+    lastRunAt,
+    nextEligibleAt: new Date(nextEligibleMs).toISOString(),
+  };
 }
 
 /**
@@ -68,8 +140,20 @@ export async function GET(request: Request) {
     // Stats are fetched for the newest run only: it's the one the read path
     // will use, and one call keeps this well inside Lobstr's rate limits.
     const stats = latest ? await getRunStats(latest.id).catch(() => null) : null;
+    const lastRunAt = runs.find((run) => run.created_at)?.created_at;
+    const lastRunMs = lastRunAt ? Date.parse(lastRunAt) : NaN;
     return NextResponse.json({
       configured,
+      collection: {
+        intervalDays: COLLECTION_INTERVAL_DAYS,
+        lastRunAt: lastRunAt ?? null,
+        // Answers the question someone actually has when they hit this
+        // endpoint: can I collect right now, and if not, when?
+        nextEligibleAt: Number.isNaN(lastRunMs)
+          ? null
+          : new Date(lastRunMs + COLLECTION_INTERVAL_DAYS * DAY_MS - COLLECTION_GRACE_MS).toISOString(),
+        eligibleNow: Number.isNaN(lastRunMs) || Date.now() >= lastRunMs + COLLECTION_INTERVAL_DAYS * DAY_MS - COLLECTION_GRACE_MS,
+      },
       runs: runs.slice(0, 5).map((run) => ({ id: run.id, status: run.status ?? null, createdAt: run.created_at ?? null })),
       latestRunStats: stats,
     });
@@ -89,6 +173,11 @@ export async function GET(request: Request) {
  * the "Search on Vinted" link the panel renders — the scrape and the
  * click-through can't drift apart.
  *
+ * Refuses to collect again within COLLECTION_INTERVAL_DAYS of the last run
+ * (409 + the timestamp it next becomes eligible), unless `force` is passed
+ * as a query param or in the JSON body. Force still requires the secret —
+ * it's an override for a human who means it, not a way around the gate.
+ *
  * Note on the condition filter: every task URL carries `status_ids[]=2`
  * (Très bon état), so Vinted filters server-side and the scrape never
  * spends credits on tiers this site would throw away. The text check in
@@ -105,8 +194,14 @@ export async function POST(request: Request) {
   }
 
   const squid = vintedSquidHash()!;
+  const force = await isForced(request);
 
   try {
+    if (!force) {
+      const blocked = await tooSoonToCollect(squid);
+      if (blocked) return NextResponse.json(blocked, { status: 409 });
+    }
+
     const cards = await getAllCards();
     const queries = await Promise.all(cards.map(async (card) => ({ slug: card.slug, ...(await vintedQueryForCard(card)) })));
     const urls = [...new Set(queries.map((q) => q.searchUrl))];
@@ -123,9 +218,11 @@ export async function POST(request: Request) {
       runId: run.id,
       taskCount: urls.length,
       tasks: queries.map((q) => ({ slug: q.slug, query: q.query, url: q.searchUrl })),
+      forced: force,
+      nextEligibleAt: new Date(Date.now() + COLLECTION_INTERVAL_DAYS * DAY_MS - COLLECTION_GRACE_MS).toISOString(),
       // Results are not available yet — the run has only just started. This
       // is the asynchronous part callers most often get wrong.
-      note: "Run started. Results appear on product pages once the run finishes and the read path's cache turns over.",
+      note: `Run started. Results appear on product pages once the run finishes and the read path picks up the new run (within ${LISTING_DISCOVERY_HOURS}h).`,
     });
   } catch (err) {
     console.error("[lobstr] failed to start Vinted run:", err);

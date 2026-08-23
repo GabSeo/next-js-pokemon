@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/vinted/refresh",
+      "schedule": "0 3 1,15 * *"
+    }
+  ]
+}

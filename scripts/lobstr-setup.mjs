@@ -28,15 +28,26 @@ const API_BASE = "https://api.lobstr.io/v1";
 const VINTED_PRODUCTS_CRAWLER = "ffd34f9b42a79b7323a048f09fc158e6";
 
 /**
- * Recommended squid settings, matching how this site actually reads the
- * data: it renders at most 6 "très bon état" listings per card, so scraping
- * deep into a search's pagination buys nothing but credits. Kept small on
- * purpose — Lobstr caps max_pages at 32, which is a different question from
- * what's worth paying for.
+ * Recommended squid settings, sized from how this site actually reads the
+ * data rather than from what the scraper is capable of. Lobstr bills per
+ * scraped result, and collection happens fortnightly (see
+ * COLLECTION_INTERVAL_DAYS in src/lib/lobstr.ts), so these three numbers
+ * are the entire monthly bill.
+ *
+ * The panel renders at most 6 "très bon état" listings per card. Page one
+ * of a filtered search already contains far more than that, and results
+ * come back relevance-ordered, so a second page would buy nothing but
+ * credits — max_pages is 1, not the 32 Lobstr allows.
+ *
+ * max_unique_results_per_run is a hard ceiling on one collection's spend,
+ * set well above what 6 cards need (a card's results still have to survive
+ * per-card matching, so some headroom is real) and well below anything
+ * expensive. At two collections a month that's ~300 results — inside
+ * Lobstr's 100 free/month plus a few cents, rather than dollars.
  */
 const RECOMMENDED_SETTINGS = {
-  max_pages: 2,
-  max_unique_results_per_run: 200,
+  max_pages: 1,
+  max_unique_results_per_run: 150,
   concurrency: 1,
 };
 

@@ -20,7 +20,7 @@ Enforced in two places: Vinted itself filters server-side via `status_ids[]=2` o
 One function builds it — `vintedSearchLink` in `src/lib/vinted-search.ts` — and it is both the Lobstr task URL and the panel's "Search on Vinted" link, so the two can't drift apart:
 
 ```
-https://www.vinted.be/catalog?search_text=Typhlosion%20de%20Luth%20190%2F182&status_ids[]=2&page=1&order=relevance
+https://www.vinted.fr/catalog?search_text=Typhlosion%20de%20Luth%20190%2F182&status_ids[]=2&page=1&order=relevance
 ```
 
 - `search_text` — the card's French name plus its number, from TCGdex (`vintedQueryForCard`), falling back to English when no French name exists.
@@ -43,11 +43,13 @@ Lobstr's API does not return prices when you ask for prices. You create a squid 
 A page render can never drive that whole cycle — it would block for the length of a scrape and burn a credit per page view. So the work is split, and only the read half is on the render path:
 
 ```
-WRITE   POST /api/vinted/refresh   (cron or manual, secret-gated)
-        addTasks -> startRun -> [Lobstr scrapes, minutes] -> done
+COLLECT   POST /api/vinted/refresh   (cron 1st + 15th, secret-gated,
+          addTasks -> startRun         refuses to run early)
+          -> [Lobstr scrapes, minutes] -> done
 
-READ    product page render        (cached 30 min)
-        listRuns -> getResults -> filter to Très bon état -> render
+READ      product page render        (results cached 14 days,
+          listRuns -> getResults       run list 6 h)
+          -> filter to Très bon état -> render
 ```
 
 | File | Role |
@@ -66,7 +68,7 @@ READ    product page render        (cached 30 min)
 | `LOBSTR_VINTED_SQUID` | yes | The reused squid's hash, printed by `scripts/lobstr-setup.mjs --create`. |
 | `LOBSTR_REFRESH_SECRET` | yes | Gates `/api/vinted/refresh`. `CRON_SECRET` is accepted as a fallback so Vercel Cron works unchanged. |
 | `LOBSTR_VINTED_RUN` | no | Pins the read path to one run hash instead of resolving the squid's latest run. |
-| `VINTED_DOMAIN` | no | Which Vinted marketplace to search. Defaults to `www.vinted.be`. Each country is a separate site with its own sellers and shipping, so this changes which listings come back. |
+| `VINTED_DOMAIN` | no | Which Vinted marketplace to search. Defaults to `www.vinted.fr`, matching the panel's France tab. Each country is a separate site with its own sellers and shipping, so this changes which listings come back — point it elsewhere and the tab label should move with it. |
 
 Without any of these the site still builds and renders — the France tab just stays on its clearly-marked preview.
 
@@ -90,15 +92,35 @@ curl      https://<host>/api/vinted/refresh -H "Authorization: Bearer $LOBSTR_RE
 
 Squids are **not** created per request — you create one and reuse it. That's why creation lives in a script a human runs, not in app code.
 
-### Scheduling it
+## Cost, and the 14-day cadence
 
-`vercel.json`, if you want it on a schedule (Vercel Cron sends `Authorization: Bearer $CRON_SECRET`):
+**Scraping is the only part of this that costs money.** Lobstr bills per scraped result (100 free/month, then from $1 per 1k). Reading results back is a plain API read — free, and not affected by how many people visit the site. So the bill is set by one thing: how often a run is started.
 
-```json
-{ "crons": [{ "path": "/api/vinted/refresh", "schedule": "0 */6 * * *" }] }
+Collection runs **every 14 days** (`COLLECTION_INTERVAL_DAYS` in `src/lib/lobstr.ts`), enforced in three places so that no single failure turns into a spend:
+
+| Where | What it does |
+| --- | --- |
+| `vercel.json` cron | Fires the 1st and 15th at 03:00 UTC — the *plan* |
+| `/api/vinted/refresh` | Rejects a run started less than ~14 days after the last one (409, with `nextEligibleAt`) — the part that holds when the plan is wrong |
+| Squid settings | `max_pages: 1`, `max_unique_results_per_run: 150` — a hard ceiling on any one run's spend |
+
+The interval check asks **Lobstr** when the last run started, rather than trusting a local timestamp: a serverless deployment has nowhere durable to write one, and an evicted cache entry reading as "never collected" would authorise a spend. It carries 12 hours of slack so scheduler jitter can't make a scheduled run fail its own interval check and skip a fortnight. It fails **open** — if the run list can't be read, collection proceeds, since a transient read error silently freezing the site on preview data forever is the worse outcome.
+
+At six cards that's roughly 300 scraped results a month: inside the free tier plus small change.
+
+Override deliberately when you need to (still requires the secret):
+
+```bash
+curl -X POST "https://<host>/api/vinted/refresh?force=1" -H "Authorization: Bearer $LOBSTR_REFRESH_SECRET"
 ```
 
-Every run costs credits (Lobstr: 100 free results/month, then from $1 per 1k). One run covers all tracked cards, so the cost scales with cards × pages, not with site traffic.
+### What "stored 2 weeks" means here
+
+Results are cached for the full 14 days rather than minutes. That's safe rather than stale because **the cache key includes the run hash**, and a finished run's results are immutable — a snapshot of one scrape that nothing will ever change. The next collection produces a *new* run hash, so it lands on a fresh entry and shows up immediately; it never waits for the TTL to lapse.
+
+The run *listing* is the only thing that needs to stay fresher, since it's how a new run gets discovered — 6 hours, about four API reads a day.
+
+There is no database behind this. Next's Data Cache is the store, which means a cache miss (eviction, a new deployment) costs one API read to Lobstr, never a re-scrape. The open question that would justify a real store is **how long Lobstr retains a run's results** — if that turns out to be under 14 days, results need persisting somewhere between collections. `supabase/schema.sql` is where that would go.
 
 ## The part that is still a guess
 

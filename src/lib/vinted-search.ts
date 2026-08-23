@@ -4,7 +4,9 @@
  * button's destination — one function, so what gets scraped and what a
  * human clicks through to can never drift apart.
  *
- * Shape confirmed against a real, working search URL:
+ * Shape confirmed against a real, working search URL (a .be one; the params
+ * are identical across Vinted's country domains, and VINTED_DOMAIN below
+ * defaults to .fr to match the panel's France tab):
  *
  *   https://www.vinted.be/catalog?search_text=Typhlosion%20de%20Luth%20190%2F182&status_ids[]=2&page=1&order=relevance
  *
@@ -43,11 +45,15 @@ export const TRES_BON_ETAT_STATUS_ID = "2";
 /**
  * Which Vinted marketplace to search. Vinted runs a separate site per
  * country with its own sellers and shipping, so this genuinely changes
- * which listings come back — it isn't a cosmetic locale switch. Overridable
- * without a code change because the right answer depends on where the
- * site's buyers actually are.
+ * which listings come back — it isn't a cosmetic locale switch.
+ *
+ * vinted.fr, matching the panel's "France" tab and the French search terms
+ * this integration builds (see vintedQueryForCard). Overridable without a
+ * code change — the reference URL this file's shape was confirmed against
+ * was a .be one, and every Vinted domain takes identical params — but if
+ * this is pointed at another country, the tab label should move with it.
  */
-export const VINTED_DOMAIN = process.env.VINTED_DOMAIN || "www.vinted.be";
+export const VINTED_DOMAIN = process.env.VINTED_DOMAIN || "www.vinted.fr";
 
 export function vintedSearchLink(query: string): string {
   const params = [

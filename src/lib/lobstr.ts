@@ -16,10 +16,11 @@
  * So the flow is split in two, and only the second half is on the render
  * path:
  *
- *   WRITE  (app/api/vinted/refresh/route.ts, cron or manual, secret-gated)
- *          addTasks() -> startRun() -> [Lobstr scrapes] -> getRunStats()
- *   READ   (lib/vinted-listings.ts, called during page render, cached)
- *          listRuns() -> getResults() -> filter -> render
+ *   COLLECT  (app/api/vinted/refresh/route.ts, cron every 14 days,
+ *             secret-gated, refuses to run early)
+ *             addTasks() -> startRun() -> [Lobstr scrapes] -> getRunStats()
+ *   READ      (lib/vinted-listings.ts, during page render, cached 14 days)
+ *             listRuns() -> getResults() -> filter -> render
  *
  * Squids are NOT created per request. Per Lobstr's own guidance you create
  * one and reuse it; ours is created once by scripts/lobstr-setup.mjs and
@@ -53,15 +54,42 @@ const API_BASE = "https://api.lobstr.io/v1";
 export const VINTED_PRODUCTS_CRAWLER = "ffd34f9b42a79b7323a048f09fc158e6";
 
 /**
- * Results churn on Lobstr's side only when a new run finishes, which is a
- * scheduled/manual event (see the refresh route) — not something that can
- * change between two page views seconds apart. 30 minutes keeps product
- * pages statically renderable and well clear of the documented 2 req/s
- * limit on /v1/results even under real traffic.
+ * How often the data is actually re-collected. Scraping is what costs money
+ * (Lobstr bills per scraped result); reading results back does not. So the
+ * cost of this integration is set almost entirely by this number, and it is
+ * enforced in two places rather than just documented: the cron schedule in
+ * vercel.json, and a hard minimum-interval check in the refresh route that
+ * refuses to start a run this soon after the last one.
+ *
+ * Card prices on a peer-to-peer resale market move slowly enough that a
+ * fortnightly snapshot is honest. If that ever needs to be weekly, this is
+ * the single constant to change — the cache TTLs below are derived from it.
  */
-const RESULTS_REVALIDATE_SECONDS = 30 * 60;
-/** Run metadata is cheap and slightly more volatile than results (a run appears the moment it's started, before it has any results) — refreshed more eagerly so a just-finished run is picked up within minutes. */
-const RUNS_REVALIDATE_SECONDS = 5 * 60;
+export const COLLECTION_INTERVAL_DAYS = 14;
+
+/**
+ * Results are cached for the full collection interval, not minutes.
+ *
+ * That's safe rather than stale because the cache key includes the RUN
+ * HASH, and a finished run's results are immutable — they are a snapshot of
+ * one scrape, and nothing will ever change them. When the next collection
+ * happens it produces a *new* run hash, so it lands on a fresh cache entry
+ * and appears immediately; it never has to wait for this TTL to lapse.
+ *
+ * A cache miss (eviction, a new deployment) costs one API read, not a
+ * re-scrape — no credits. The expensive operation is starting a run, and
+ * nothing on the render path can do that.
+ */
+const RESULTS_REVALIDATE_SECONDS = COLLECTION_INTERVAL_DAYS * 24 * 60 * 60;
+
+/**
+ * The run *listing* is the one thing that has to stay fresher than the
+ * collection interval, because it's how a newly finished run is discovered
+ * at all. Six hours means a fresh collection reaches product pages within
+ * that window, at a cost of four API reads a day — negligible, and nowhere
+ * near any documented rate limit.
+ */
+const RUNS_REVALIDATE_SECONDS = 6 * 60 * 60;
 
 export function hasLobstrCredentials(): boolean {
   return Boolean(process.env.LOBSTR_API_KEY);
