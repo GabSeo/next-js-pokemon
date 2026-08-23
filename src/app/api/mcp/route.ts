@@ -194,7 +194,7 @@ const handler = createMcpHandler((server) => {
 
   const vintedFeedRowSchema = z.object({
     timeAgo: z.string(),
-    description: z.string(),
+    condition: z.string(),
     price: z.number(),
     currency: z.string(),
     dealPct: z.number(),
@@ -204,6 +204,7 @@ const handler = createMcpHandler((server) => {
     isReal: z.boolean(),
     searchUrl: z.string(),
     title: z.string(),
+    imageUrl: z.string().optional(),
     avgPrice: z.number(),
     currency: z.string(),
     rows: z.array(vintedFeedRowSchema),

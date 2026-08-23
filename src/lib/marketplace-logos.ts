@@ -1,7 +1,7 @@
 /**
- * Real official marketplace logos, sourced from Wikimedia Commons (verified
- * live, not guessed): eBay's current wordmark and Vinted's 2022 wordmark —
- * the same teal script logo the brand uses today.
+ * Real official marketplace logos, provided directly and self-hosted under
+ * /public so they render full-color and don't depend on an external CDN
+ * staying up. eBay's multicolor wordmark and Vinted's teal script logo.
  */
-export const EBAY_LOGO_URL = "https://upload.wikimedia.org/wikipedia/commons/1/1b/EBay_logo.svg";
-export const VINTED_LOGO_URL = "https://upload.wikimedia.org/wikipedia/commons/b/b8/Vinted_Logo_2022.svg";
+export const EBAY_LOGO_URL = "/ebay-logo.png";
+export const VINTED_LOGO_URL = "/vinted-logo.png";

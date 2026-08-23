@@ -1,5 +1,4 @@
 import { GradedMarketTabs, type ConditionEntry, type MarketTab, type TypeSummary, type VintedSummary } from "@/components/retro/graded-market-tabs";
-import { IllustrativeTag } from "@/components/retro/illustrative-tag";
 import { getGradedMarketData, type GradedMarketTypeData } from "@/lib/graded-market";
 import type { Card } from "@/lib/types";
 
@@ -70,19 +69,18 @@ export async function GradedMarketPanel({ card, defaultMarket }: { card: Card; d
     isReal: data.vinted.isReal,
     searchHref: data.vinted.searchUrl,
     title: data.vinted.title,
+    imageUrl: data.vinted.imageUrl,
     avgLabel: `${data.vinted.currency} ${data.vinted.avgPrice.toLocaleString()}`,
     belowAverageCount: data.vinted.belowAverageCount,
     totalCount: data.vinted.rows.length,
     rows: data.vinted.rows.map((row) => ({
       timeAgo: row.timeAgo,
-      description: row.description,
+      condition: row.condition,
       priceLabel: `${row.currency} ${row.price.toLocaleString()}`,
       dealPct: row.dealPct,
       dealTier: row.dealTier,
     })),
   };
-
-  const { roi } = data;
 
   return (
     <div className="rounded-lg border-2 border-black bg-card-surface p-7 shadow-hard-md">
@@ -91,24 +89,7 @@ export async function GradedMarketPanel({ card, defaultMarket }: { card: Card; d
         <span className="h-px flex-1 bg-border-subtle" />
       </div>
 
-      <GradedMarketTabs entries={entries} vinted={vinted} defaultMarket={defaultMarket} />
-
-      <div className="mt-6 rounded-md border-2 border-black bg-muted-surface p-4">
-        <div className="mb-1 flex flex-wrap items-center gap-2 text-xs font-black tracking-[0.3px] text-muted-text uppercase">
-          Grading ROI — raw → PSA 10
-          {!roi.isReal && <IllustrativeTag label="Preview — eBay not connected yet" />}
-        </div>
-        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-          <span className={`text-2xl font-black tabular-nums ${roi.percent >= 0 ? "text-success-green" : "text-pokemon-red"}`}>
-            {roi.percent >= 0 ? "+" : ""}
-            {roi.percent.toFixed(0)}%
-          </span>
-          <span className="text-xs font-bold text-muted-text">
-            {roi.currency} {roi.rawMedian.toLocaleString()} raw + {roi.currency} {roi.gradingCostUsd} grading vs {roi.currency}{" "}
-            {roi.psa10Median.toLocaleString()} PSA 10, {roi.isReal ? "today's active listings" : "preview numbers"}.
-          </span>
-        </div>
-      </div>
+      <GradedMarketTabs entries={entries} vinted={vinted} roi={data.roi} defaultMarket={defaultMarket} />
     </div>
   );
 }

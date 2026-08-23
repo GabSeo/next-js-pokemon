@@ -33,7 +33,7 @@ async function gradedMarketMarkdown(card: Card): Promise<string> {
   const roiSource = roi.isReal ? "real active listings, English" : "preview numbers, eBay not connected yet";
 
   const vintedRows = data.vinted.rows
-    .map((r) => `| ${r.timeAgo} | ${r.description} | ${r.currency} ${r.price} | ${r.dealPct > 0 ? "+" : ""}${r.dealPct}% (${r.dealTier}) |`)
+    .map((r) => `| ${r.timeAgo} | ${r.condition} | ${r.currency} ${r.price} | ${r.dealPct > 0 ? "+" : ""}${r.dealPct}% (${r.dealTier}) |`)
     .join("\n");
 
   return `## Pokémon market overview
@@ -52,7 +52,7 @@ Sold data is always illustrative: eBay's sold/completed-listing API (Marketplace
 
 eBay.fr isn't a good fit for the French Pokémon TCG market, so the French market view is a simulated Vinted listing feed instead of PSA grades — no active/sold split, no known public Vinted API yet, so every row below is a clearly-marked preview, not real data. Average: ${data.vinted.currency} ${data.vinted.avgPrice} across the last ${data.vinted.rows.length} listings; ${data.vinted.belowAverageCount} of them priced below that average.
 
-| Listed | Description | Price | vs. average |
+| Listed | Condition | Price | vs. average |
 | --- | --- | --- | --- |
 ${vintedRows}
 

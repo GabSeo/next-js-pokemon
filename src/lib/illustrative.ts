@@ -145,15 +145,16 @@ export function illustrativeSoldListings(card: Card, condition: EbayConditionTie
  * resale, a fundamentally different marketplace shape from eBay's graded
  * market. "Neuf avec/sans étiquette" (new with/without tag) is Vinted's
  * clothing-oriented top tier and doesn't fit how a card would realistically
- * be listed, so it's left out here. Used only as flavor text inside each
- * feed row's description below — Vinted has no grading system to build a
- * tab structure around the way PSA does.
+ * be listed, so it's left out here. Rendered as its own tag per listing row
+ * — Vinted has no grading system to build a PSA-style tab structure
+ * around, but condition is still real, visible information a buyer checks.
  */
-const VINTED_CONDITIONS = ["Très bon état", "Bon état", "Satisfaisant"] as const;
+export type VintedConditionTier = "Très bon état" | "Bon état" | "Satisfaisant";
+const VINTED_CONDITIONS: VintedConditionTier[] = ["Très bon état", "Bon état", "Satisfaisant"];
 
 export type VintedFeedListing = {
   minutesAgo: number;
-  description: string;
+  condition: VintedConditionTier;
   price: number;
 };
 
@@ -171,22 +172,21 @@ const VINTED_MINUTES_AGO = [0, 4, 11, 19, 27, 38];
  * through. Price spread is wider and skews lower than eBay's graded tiers
  * (0.5x-1.15x of the real current price) — casual peer-to-peer resale
  * genuinely prices lower and more inconsistently than a curated/graded
- * market. `displayName` lets the caller pass the real French card name
- * (via card.tcgdexId) instead of the English one — a French marketplace's
- * listings should read in French, illustrative price or not.
+ * market. Each row's own condition is its visible identity here — the card
+ * itself is shown once via the panel's real image, not repeated per row.
  *
  * Vinted has no known public API today (that's the next thing to go find)
  * — this stays illustrative until a real data source or integration path
  * is found.
  */
-export function illustrativeVintedFeed(card: Card, displayName: string): VintedFeedListing[] {
+export function illustrativeVintedFeed(card: Card): VintedFeedListing[] {
   const base = card.currentPrice;
   return VINTED_MINUTES_AGO.map((minutesAgo, i) => {
     const condition = VINTED_CONDITIONS[Math.floor(seedFraction(card.id, 50 + i) * VINTED_CONDITIONS.length)];
     const multiplier = 0.5 + seedFraction(card.id, 60 + i) * 0.65;
     return {
       minutesAgo,
-      description: `${displayName} · ${condition}`,
+      condition,
       price: Math.round(base * multiplier),
     };
   });

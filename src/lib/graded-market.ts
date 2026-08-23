@@ -59,7 +59,7 @@ export type VintedDealTier = "good" | "fair" | "high";
 
 export type VintedFeedRow = {
   timeAgo: string;
-  description: string;
+  condition: string;
   price: number;
   currency: string;
   /** Signed percent vs. this card's rolling average across the feed (see VintedMarketData.avgPrice) — negative means priced below average. */
@@ -72,8 +72,10 @@ export type VintedMarketData = {
   isReal: boolean;
   /** Real, working vinted.fr search-results link (see lib/vinted-search.ts) — not itemized data, but a real place to click through to regardless of the illustrative numbers above it. */
   searchUrl: string;
-  /** Real French name + number when TCGdex has a match, English otherwise — same string used to build searchUrl and every feed row's description. */
+  /** Real French name + number when TCGdex has a match, English otherwise — same string used to build searchUrl. */
   title: string;
+  /** The card's own real image — every row shares it (same physical card, different sellers/conditions), never a fabricated per-listing photo. */
+  imageUrl?: string;
   avgPrice: number;
   currency: string;
   rows: VintedFeedRow[];
@@ -182,14 +184,14 @@ async function buildVintedMarket(card: Card): Promise<VintedMarketData> {
   const displayName = frenchName ?? card.name;
   const query = `${displayName} ${card.number ?? ""}`.trim();
 
-  const feed = illustrativeVintedFeed(card, displayName);
+  const feed = illustrativeVintedFeed(card);
   const avgPrice = Math.round(feed.reduce((sum, r) => sum + r.price, 0) / feed.length);
 
   const rows: VintedFeedRow[] = feed.map((r) => {
     const dealPct = Math.round(((r.price - avgPrice) / avgPrice) * 100);
     return {
       timeAgo: r.minutesAgo === 0 ? "now" : `${r.minutesAgo} min`,
-      description: r.description,
+      condition: r.condition,
       price: r.price,
       currency: card.currency,
       dealPct,
@@ -201,6 +203,7 @@ async function buildVintedMarket(card: Card): Promise<VintedMarketData> {
     isReal: false,
     searchUrl: vintedSearchLink(query),
     title: query,
+    imageUrl: card.imageUrl,
     avgPrice,
     currency: card.currency,
     rows,

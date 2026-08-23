@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { IllustrativeTag } from "@/components/retro/illustrative-tag";
 import type { EbayCondition, EbayLanguage } from "@/lib/ebay-browse";
+import type { GradedMarketRoi } from "@/lib/graded-market";
 import { EBAY_LOGO_URL, VINTED_LOGO_URL } from "@/lib/marketplace-logos";
 
 export type TypeSummary = {
@@ -30,7 +31,7 @@ export type ConditionEntry = {
 /** One "newly listed" feed row — see lib/graded-market.ts's VintedFeedRow. */
 export type VintedFeedRowSummary = {
   timeAgo: string;
-  description: string;
+  condition: string;
   priceLabel: string;
   dealPct: number;
   dealTier: "good" | "fair" | "high";
@@ -40,6 +41,7 @@ export type VintedSummary = {
   isReal: boolean;
   searchHref: string;
   title: string;
+  imageUrl?: string;
   avgLabel: string;
   belowAverageCount: number;
   totalCount: number;
@@ -81,11 +83,14 @@ type ListingType = (typeof TYPES)[number];
 export function GradedMarketTabs({
   entries,
   vinted,
+  roi,
   defaultMarket,
 }: {
   /** English/Japanese only — see lib/graded-market.ts's GRADED_MARKET_LANGUAGES. */
   entries: ConditionEntry[];
   vinted: VintedSummary;
+  /** Only meaningful for the eBay-graded English/Japanese markets (raw vs. PSA 10) — rendered inside the English/Japanese branch below and hidden on France, since Vinted has no PSA grading to compute a grading ROI against. */
+  roi: GradedMarketRoi;
   /** Lets a locale-specific product page (/products/[slug]/fr, /products/[slug]/ja) open straight to its own market instead of always defaulting to English. */
   defaultMarket?: MarketTab;
 }) {
@@ -193,10 +198,10 @@ export function GradedMarketTabs({
             {type === "active" ? "Active listings" : "Sold listings"} · {market}
           </span>
           <span className="flex items-center gap-3">
-            <span className="flex items-center gap-1 text-[10px] font-bold text-muted-text uppercase">
+            <span className="flex items-center gap-1.5 text-[10px] font-bold text-muted-text uppercase">
               via
-              {/* eslint-disable-next-line @next/next/no-img-element -- external CDN image, domain not allowlisted for next/image */}
-              <img src={EBAY_LOGO_URL} alt="eBay" className="h-[13px] w-auto opacity-70 grayscale" />
+              {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, not an optimizable remote domain */}
+              <img src={EBAY_LOGO_URL} alt="eBay" className="h-4 w-auto" />
             </span>
             <span className="text-[11px] font-black tracking-[0.5px] text-muted-text uppercase">
               {selected.rowCount === 1 ? "1 listing" : `last ${selected.rowCount}`}
@@ -230,6 +235,23 @@ export function GradedMarketTabs({
             <IllustrativeTag label={type === "active" ? "Preview — eBay not connected yet" : "Illustrative — not connected"} />
           </div>
         )}
+
+        <div className="mt-6 rounded-md border-2 border-black bg-muted-surface p-4">
+          <div className="mb-1 flex flex-wrap items-center gap-2 text-xs font-black tracking-[0.3px] text-muted-text uppercase">
+            Grading ROI — raw → PSA 10
+            {!roi.isReal && <IllustrativeTag label="Preview — eBay not connected yet" />}
+          </div>
+          <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+            <span className={`text-2xl font-black tabular-nums ${roi.percent >= 0 ? "text-success-green" : "text-pokemon-red"}`}>
+              {roi.percent >= 0 ? "+" : ""}
+              {roi.percent.toFixed(0)}%
+            </span>
+            <span className="text-xs font-bold text-muted-text">
+              {roi.currency} {roi.rawMedian.toLocaleString()} raw + {roi.currency} {roi.gradingCostUsd} grading vs {roi.currency}{" "}
+              {roi.psa10Median.toLocaleString()} PSA 10, {roi.isReal ? "today's active listings" : "preview numbers"}.
+            </span>
+          </div>
+        </div>
       </div>
 
       <div hidden={market !== "France"}>
@@ -259,10 +281,10 @@ export function GradedMarketTabs({
 
         <div className="mt-5 mb-1 flex items-center justify-between gap-3">
           <span className="text-[11px] font-black tracking-[0.5px] text-muted-text uppercase">Newly listed</span>
-          <span className="flex items-center gap-1 text-[10px] font-bold text-muted-text uppercase">
+          <span className="flex items-center gap-1.5 text-[10px] font-bold text-muted-text uppercase">
             via
-            {/* eslint-disable-next-line @next/next/no-img-element -- external CDN image, domain not allowlisted for next/image */}
-            <img src={VINTED_LOGO_URL} alt="Vinted" className="h-[13px] w-auto opacity-70 grayscale" />
+            {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, not an optimizable remote domain */}
+            <img src={VINTED_LOGO_URL} alt="Vinted" className="h-4 w-auto" />
           </span>
         </div>
 
@@ -270,19 +292,30 @@ export function GradedMarketTabs({
           {vinted.rows.map((row, i) => {
             const colors = DEAL_TIER_COLORS[row.dealTier];
             return (
-              <div
-                key={i}
-                className="grid grid-cols-[52px_1fr_auto_auto] items-center gap-3 border-t border-dashed border-border-subtle py-3 text-sm first:border-t-0"
-              >
-                <span className="text-xs font-bold text-muted-text">{row.timeAgo}</span>
-                <span className="truncate font-bold">{row.description}</span>
-                <span
-                  className="rounded-full px-2 py-0.5 text-[11px] font-black tabular-nums"
-                  style={{ backgroundColor: colors.bg, color: colors.text }}
-                >
-                  {dealPctLabel(row.dealPct)}
-                </span>
-                <span className="font-black tabular-nums">{row.priceLabel}</span>
+              <div key={i} className="flex items-center gap-3 border-t border-dashed border-border-subtle py-3 first:border-t-0">
+                {vinted.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- TCGdex/apitcg CDN image, domain not allowlisted for next/image (same as CardImage)
+                  <img src={vinted.imageUrl} alt="" className="h-14 w-10 flex-none rounded-sm border-2 border-black object-cover" />
+                ) : (
+                  <div className="h-14 w-10 flex-none rounded-sm border-2 border-black bg-white" />
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="rounded-full border-2 border-black bg-white px-2 py-0.5 text-[10px] font-black tracking-[0.3px] uppercase">
+                      {row.condition}
+                    </span>
+                    <span className="text-[11px] font-bold text-muted-text">{row.timeAgo}</span>
+                  </div>
+                </div>
+                <div className="flex flex-none flex-col items-end gap-1">
+                  <span className="text-sm font-black tabular-nums">{row.priceLabel}</span>
+                  <span
+                    className="rounded-full px-2 py-0.5 text-[10px] font-black tabular-nums"
+                    style={{ backgroundColor: colors.bg, color: colors.text }}
+                  >
+                    {dealPctLabel(row.dealPct)}
+                  </span>
+                </div>
               </div>
             );
           })}
