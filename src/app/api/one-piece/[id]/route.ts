@@ -1,6 +1,14 @@
 import { NextResponse } from "next/server";
-import { getCardByIdOrSlug, toPublicCard } from "@/lib/cards";
+import { getCardByIdOrSlug, getCardsByFranchise, toPublicCard } from "@/lib/cards";
 import { getGradedMarketData } from "@/lib/graded-market";
+
+// Same window as the HTML product page this data backs.
+export const revalidate = 129600;
+
+export async function generateStaticParams() {
+  const cards = await getCardsByFranchise("one-piece");
+  return cards.map((card) => ({ id: card.slug }));
+}
 
 export async function GET(
   _request: Request,

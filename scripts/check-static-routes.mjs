@@ -1,16 +1,23 @@
 #!/usr/bin/env node
 /**
- * Guards against the exact class of bug fixed in commit 82bfeab: a single
- * `cache: "no-store"` (or `revalidate: 0`) fetch anywhere in a product
- * page's render tree silently downgrades /products/[slug] from static
- * (fast, pre-built, readable by an AI agent on the very first fetch — the
- * whole premise of this site, see AGENTS.md/PLAN.md) to on-demand dynamic
- * rendering. Next.js doesn't always throw loudly enough at `next build`
- * time to catch this — the original bug shipped a passing build, then
- * broke later at ISR-regeneration time in production, invisible until
- * someone happened to read the runtime logs.
+ * Every page/route listed below exists to be fetched fast and reliably by
+ * an AI agent — often on a single, one-shot visit with no retry (the whole
+ * premise of this site, see AGENTS.md/PLAN.md). "Dynamic" (on-demand,
+ * server-rendered per request) isn't broken, but it's slower and less
+ * reliable than a pre-built static page served instantly from Vercel's edge
+ * — a real regression for that goal even when it isn't a crash.
  *
- * This checks the actual build artifact Next itself writes
+ * Originally written to guard against the specific bug fixed in commit
+ * 82bfeab (a `cache: "no-store"` fetch anywhere in a route's render tree
+ * silently forces the *whole route* dynamic — Next.js doesn't always throw
+ * loudly enough at `next build` time to catch this; that bug shipped a
+ * passing build, then broke later at ISR-regeneration time in production,
+ * invisible until someone happened to read the runtime logs). Extended to
+ * also cover the markdown and JSON mirrors of each product page, which
+ * simply never had `generateStaticParams` added — same "should be static,
+ * isn't" failure mode, different root cause, same check catches both.
+ *
+ * Checks the actual build artifact Next itself writes
  * (.next/prerender-manifest.json — the authoritative record of which pages
  * really got prerendered) rather than trusting build-time console output,
  * so a regression fails the build immediately instead of surfacing days
@@ -41,6 +48,10 @@ const REQUIRED_PATTERNS = [
   { label: "/products/[slug]", test: (r) => /^\/products\/[^/]+$/.test(r) },
   { label: "/products/[slug]/fr", test: (r) => /^\/products\/[^/]+\/fr$/.test(r) },
   { label: "/products/[slug]/ja", test: (r) => /^\/products\/[^/]+\/ja$/.test(r) },
+  { label: "/products/[slug]/index.md", test: (r) => /^\/products\/[^/]+\/index\.md$/.test(r) },
+  { label: "/products/[slug]/fr/index.md", test: (r) => /^\/products\/[^/]+\/fr\/index\.md$/.test(r) },
+  { label: "/api/pokemon/[id]", test: (r) => /^\/api\/pokemon\/[^/]+$/.test(r) },
+  { label: "/api/one-piece/[id]", test: (r) => /^\/api\/one-piece\/[^/]+$/.test(r) },
   { label: "/okf/products/[slug]", test: (r) => /^\/okf\/products\/[^/]+$/.test(r) },
 ];
 
@@ -51,8 +62,8 @@ for (const { label, test } of REQUIRED_PATTERNS) {
     failed = true;
     console.error(`[check-static-routes] FAIL: no statically-prerendered pages found for ${label}.`);
     console.error(`  This route is supposed to be pre-built (fast, agent-readable on the first fetch), not on-demand.`);
-    console.error(`  Likely cause: a cache: "no-store" / revalidate: 0 fetch somewhere in this route's`);
-    console.error(`  render tree forced it into dynamic rendering — see commit 82bfeab for the last time this happened.`);
+    console.error(`  Either generateStaticParams is missing/broken for this route, or a cache: "no-store" /`);
+    console.error(`  revalidate: 0 fetch somewhere in its render tree forced it into dynamic rendering.`);
   } else {
     console.log(`[check-static-routes] OK: ${label} — ${matches.length} static page(s).`);
   }

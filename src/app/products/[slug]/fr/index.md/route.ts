@@ -1,5 +1,19 @@
-import { getCardBySlug, getFrenchCardText } from "@/lib/cards";
+import { getAllCards, getCardBySlug, getFrenchCardText } from "@/lib/cards";
 import { cardToMarkdown } from "@/lib/markdown";
+
+// Same window as the base product page — see its own comment.
+export const revalidate = 129600;
+
+export async function generateStaticParams() {
+  const cards = await getAllCards();
+  const withFrench = await Promise.all(cards.map(async (card) => ({ slug: card.slug, fr: await getFrenchCardText(card) })));
+  return withFrench.filter((c) => c.fr.translated).map((c) => ({ slug: c.slug }));
+}
+
+// Matches the page route's own dynamicParams = false — no French markdown
+// mirror for a card TCGdex couldn't translate; an on-demand render would
+// just 404 anyway, this makes it explicit and avoids the cost of trying.
+export const dynamicParams = false;
 
 export async function GET(
   _request: Request,
