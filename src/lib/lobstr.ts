@@ -73,9 +73,9 @@ export const COLLECTION_INTERVAL_DAYS = 14;
  * Lobstr's free tier is 100 results a month. Dialed to 14 for a one-off
  * test against the added catalog[]=4875 filter (see vinted-search.ts) —
  * three tracked Pokémon cards x 14 = 42, spending exactly the ~42 credits
- * available for this test in a single collection, with max_pages raised
- * to 3 on the squid itself (see scripts/lobstr-setup.mjs) so there's
- * enough of Vinted's own result pages to actually pull 14/card from.
+ * available for this test in a single collection. max_pages stays 1 (see
+ * scripts/lobstr-setup.mjs) — page one of a relevance-ordered, filtered
+ * search already holds far more than 14 rows to pull per card.
  *
  * An earlier attempt at this same test ran with 20/card and 60/run, but
  * the two squid settings ended up applied to the wrong fields (max run

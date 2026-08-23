@@ -42,8 +42,9 @@ const VINTED_PRODUCTS_CRAWLER = "ffd34f9b42a79b7323a048f09fc158e6";
  *   Dialed to 14 (see VINTED_RESULTS_PER_CARD in src/lib/lobstr.ts) for a
  *   one-off test against the new catalog[]=4875 filter: 3 cards x 14 = 42,
  *   spending exactly the ~42 credits available for this test in a single
- *   collection. max_pages raised to 3 to match (see below) — enough of
- *   Vinted's own result pages to actually pull 14/card from.
+ *   collection. max_pages stays 1 — page one of a relevance-ordered,
+ *   condition-and-category-filtered search already holds far more than
+ *   14 rows, so a second/third page would only add cost, not coverage.
  *
  * Two caps do two different jobs, and both matter:
  *
@@ -67,7 +68,7 @@ const VINTED_PRODUCTS_CRAWLER = "ffd34f9b42a79b7323a048f09fc158e6";
  * fails silently (some cards return zero results) rather than erroring.
  */
 const RESULTS_PER_CARD = 14; // keep in step with VINTED_RESULTS_PER_CARD in src/lib/lobstr.ts
-const MAX_PAGES = 3; // raised from 1 to give a 14/card cap enough Vinted result pages to actually fill from
+const MAX_PAGES = 1; // page one alone already holds far more than 14 rows of a filtered, relevance-ordered search
 const DEFAULT_TRACKED_CARDS = 3;
 
 /**
