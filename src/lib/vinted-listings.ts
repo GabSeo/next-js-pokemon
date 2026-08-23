@@ -369,11 +369,6 @@ export async function vintedQueryForCard(card: Card): Promise<{ query: string; d
  * "Lugia V" title matched a real, unrelated €12–13 listing, a different and
  * far cheaper print than the 186/195 alt art being searched for. See
  * titleNumberAgreesWithCard's own comment for the full reasoning.
- *
- * A title agreeing on name and number can still be the wrong market: a
- * title stating a foreign print (see titleStatesForeignPrint) is rejected
- * even then — a correctly-identified Italian print is still not a France
- * asking price.
  */
 function rowMatchesCard(listing: VintedListing, displayName: string, searchUrl: string): boolean {
   if (!titleMentionsCard(listing.title, displayName)) return false;
@@ -382,7 +377,6 @@ function rowMatchesCard(listing: VintedListing, displayName: string, searchUrl: 
   // comment on the real €12 false positive this closed.
   const requireNumber = significantWords(displayName).length <= 1;
   if (!titleNumberAgreesWithCard(listing.title, primaryNumberOf(searchUrl), requireNumber)) return false;
-  if (titleStatesForeignPrint(listing.title)) return false;
 
   if (listing.sourceUrl) {
     const scraped = searchTextOf(listing.sourceUrl);
@@ -467,30 +461,6 @@ function titleMentionsCard(title: string, displayName: string): boolean {
   if (words.length === 0) return true; // nothing distinguishing to test against
   const normalizedTitle = normalizeText(title);
   return words.every((word) => normalizedTitle.includes(word));
-}
-
-/**
- * Rejects a title that states it's a non-French/non-default-language print
- * of the card, even when the name and number both agree. Confirmed live:
- * "Lugia V alt 186/195 ITA" at €320 states the correct card exactly, but
- * "ITA" marks it as the Italian print — a different market than the France
- * tab claims to show, the same way this site keeps English and Japanese as
- * separate eBay markets (see GRADED_MARKET_LANGUAGES in graded-market.ts)
- * rather than averaging them into one number.
- *
- * A short, deliberately conservative list, matched on a whole word only
- * (`\b`) — the risk with this kind of filter is a false NEGATIVE, not a
- * false positive: "DE" or "ES" would look like a language marker but are
- * common French words (`de`, `es` in `étés`/`français`...), so only markers
- * unambiguous as a standalone token are listed. Extend this only against
- * confirmed real evidence, the same way HIDDEN_AUCTION_PRICE_CEILING and
- * TRADING_CARDS_CATALOG_ID were built — not by guessing every possible
- * language upfront.
- */
-const FOREIGN_PRINT_MARKERS = /\b(ita|jap|kor)\b/;
-
-function titleStatesForeignPrint(title: string): boolean {
-  return FOREIGN_PRINT_MARKERS.test(normalizeText(title));
 }
 
 /**
