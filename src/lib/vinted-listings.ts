@@ -77,16 +77,20 @@ export function isTresBonEtat(raw: string | undefined): boolean {
 }
 
 /**
- * Per-item field names, confirmed against a real run's export rather than
- * guessed. Lobstr returns them SHOUTED AND SPACED — `URL`, `IMAGE URL`,
- * `INPUT URL` — which is nothing like the snake_case this originally
- * assumed, and would have dropped every row.
+ * Per-item field names, confirmed against real output from BOTH surfaces —
+ * and they disagree, which is why the lookup is key-normalised rather than
+ * exact. The dashboard export shouts and spaces them (`IMAGE URL`, `INPUT
+ * URL`); /v1/results uses snake_case (`image_url`, `scraping_time`). Both
+ * normalise to the same key (see normalizeKey), so neither surface needs
+ * its own alias list and neither can break the other.
  *
- * Lookup is key-normalised (see normalizeKey) instead of exact, so `IMAGE
- * URL`, `image_url` and `imageUrl` are all the same field. That matters
- * because the confirmed names come from the dashboard's JSON *export*, and
- * whether /v1/results returns identical casing is unverified — normalising
- * makes the question moot rather than betting on one answer.
+ * That was a guess when it was written and is now a verified one: production
+ * returns snake_case, the export returns caps. Betting on either alone would
+ * have dropped every row from the other.
+ *
+ * One field exists only in the export: `INPUT URL`, the task URL a row came
+ * from. /v1/results does not return it, so per-card bucketing falls back to
+ * matching the card's name and number in the title (see rowMatchesCard).
  *
  * Order is significance order, not preference-of-guess: `price` before
  * `total item price` because the former is the seller's asking price and
@@ -113,8 +117,13 @@ const FIELD_ALIASES = {
   timestamp: ["listed at", "published at", "created at"],
   /** The task URL a row was scraped from — Lobstr echoes it as INPUT URL, which makes per-card bucketing exact instead of inferred. */
   sourceUrl: ["input url", "task url", "source url", "search url"],
-  /** When the scrape ran. Surfaced once, as feed-level freshness — never per row. */
-  collectedAt: ["collected at"],
+  /**
+   * When the scrape ran — surfaced once as feed-level freshness, never per
+   * row. `scraping_time` is what /v1/results calls it; `collected at` is
+   * what the dashboard export calls the same field. Both are listed because
+   * both surfaces are real.
+   */
+  collectedAt: ["scraping time", "collected at"],
 } as const;
 
 /**
