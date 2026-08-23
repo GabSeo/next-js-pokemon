@@ -1,9 +1,7 @@
 import {
-  getResults,
   hasLobstrCredentials,
-  listRuns,
-  listRunsWithAttempts,
   pinnedVintedRunHash,
+  resolveVintedResults,
   VINTED_RESULTS_PER_CARD,
   vintedSquidHash,
 } from "@/lib/lobstr";
@@ -416,8 +414,6 @@ function titleMentionsCard(title: string, displayName: string): boolean {
  * layout is identical either way.
  */
 const DISPLAY_LIMIT = VINTED_RESULTS_PER_CARD;
-/** How many recent runs to look back through when the newest one has nothing for this card (it may still be scraping, or its tasks may not have covered this card). */
-const RUN_LOOKBACK = 3;
 
 /**
  * Real "très bon état" listings for one card, newest first — or an empty
@@ -445,28 +441,27 @@ export async function getVintedListingsForCard(card: Card, displayName: string, 
   if (!pinnedRun && !squid) return [];
 
   try {
-    const runs = pinnedRun ? [pinnedRun] : (await listRuns(squid!)).slice(0, RUN_LOOKBACK).map((run) => run.id);
+    // One resolution for the whole feed, whichever route works (see
+    // resolveVintedResults). Previously this walked a run list that
+    // production shows returns nothing, which took the feature down
+    // silently — an unfound run and a genuinely empty market render
+    // identically.
+    const { rows } = await resolveVintedResults(squid, pinnedRun);
 
-    for (const run of runs) {
-      const rows = await getResults(run);
-      const listings = rows
-        .map(toVintedListing)
-        .filter((listing): listing is VintedListing => listing !== null)
-        .filter((listing) => rowMatchesCard(listing, displayName, searchUrl));
+    const listings = rows
+      .map(toVintedListing)
+      .filter((listing): listing is VintedListing => listing !== null)
+      .filter((listing) => rowMatchesCard(listing, displayName, searchUrl));
 
-      // Same listing can appear on more than one scraped page of the same
-      // search; the item URL is its identity.
-      const deduped = [...new Map(listings.map((listing) => [listing.url, listing])).values()];
-      if (deduped.length === 0) continue;
-
-      deduped.sort((a, b) => (b.listedAtMs ?? 0) - (a.listedAtMs ?? 0));
-      return deduped.slice(0, DISPLAY_LIMIT);
-    }
+    // The same listing can appear on more than one scraped page of a
+    // search; the item URL is its identity.
+    const deduped = [...new Map(listings.map((listing) => [listing.url, listing])).values()];
+    deduped.sort((a, b) => (b.listedAtMs ?? 0) - (a.listedAtMs ?? 0));
+    return deduped.slice(0, DISPLAY_LIMIT);
   } catch (err) {
     console.error(`[lobstr] failed to read Vinted results for ${card.id}:`, err);
+    return [];
   }
-
-  return [];
 }
 
 /**
@@ -532,54 +527,17 @@ export async function diagnoseVintedRead(
   if (!config.hasApiKey) return { config, verdict: "LOBSTR_API_KEY missing on this deployment" };
   if (!config.squid && !config.pinnedRun) return { config, verdict: "LOBSTR_VINTED_SQUID missing on this deployment" };
 
-  // Step 1 — find runs. listRuns is the UNVERIFIED part of the chain, so an
-  // empty list or an error here is a prime suspect, not a footnote.
-  let runIds: string[];
-  let runListAttempts: unknown = "skipped (LOBSTR_VINTED_RUN is pinned)";
-  if (config.pinnedRun) {
-    runIds = [config.pinnedRun];
-  } else {
-    try {
-      const { runs, attempts } = await listRunsWithAttempts(config.squid!);
-      runListAttempts = attempts;
-      runIds = runs.map((run) => run.id);
-    } catch (err) {
-      return { config, step: "listRuns", verdict: `Run lookup threw — set LOBSTR_VINTED_RUN to bypass it. ${(err as Error).message}` };
-    }
-    if (runIds.length === 0) {
-      return {
-        config,
-        step: "listRuns",
-        runListAttempts,
-        verdict:
-          "No query shape returned runs (see runListAttempts for what each tried). Lobstr documents no GET for listing runs. Set LOBSTR_VINTED_RUN to the run hash to bypass the lookup.",
-      };
-    }
-  }
+  const { rows, source, attempts } = await resolveVintedResults(config.squid ?? undefined, config.pinnedRun ?? undefined);
 
-  // Step 2 — read results from the newest run that actually has rows.
-  const runsTried: { run: string; rawRows: number; error?: string }[] = [];
-  let rows: Record<string, unknown>[] = [];
-  let runInspected: string | null = null;
-  for (const run of runIds.slice(0, RUN_LOOKBACK)) {
-    try {
-      const got = await getResults(run);
-      runsTried.push({ run, rawRows: got.length });
-      if (got.length > 0) {
-        rows = got;
-        runInspected = run;
-        break;
-      }
-    } catch (err) {
-      runsTried.push({ run, rawRows: 0, error: (err as Error).message });
-    }
-  }
   if (rows.length === 0) {
-    return { config, runListAttempts, runIds: runIds.slice(0, RUN_LOOKBACK), runsTried, step: "getResults", verdict: "No run returned any rows — either the results envelope isn't being unwrapped, or these runs are genuinely empty." };
+    return {
+      config,
+      resultAttempts: attempts,
+      verdict:
+        "No route returned any rows. resultAttempts shows every endpoint tried and what each returned — a payloadShape with total_results: 0 means Lobstr reports nothing there, anything else means the rows were found but not unwrapped. Pinning LOBSTR_VINTED_RUN to a known run hash bypasses discovery entirely.",
+    };
   }
 
-  // Step 3 — parse. The sample row's real key names are the whole point:
-  // FIELD_ALIASES is guesswork until compared against them.
   const tally = { ok: 0, "wrong-condition": 0, "no-price": 0, "no-url": 0 };
   let missingConditionField = 0;
   for (const row of rows) {
@@ -588,8 +546,6 @@ export async function diagnoseVintedRead(
   }
   const parsed = rows.map(toVintedListing).filter((l): l is VintedListing => l !== null);
 
-  // Step 4 — per-card bucketing. When a card matches nothing, the sample
-  // titles show whether the word-match was simply too strict.
   const perCard = cards.map((card) => {
     const matched = parsed.filter((listing) => rowMatchesCard(listing, card.displayName, card.searchUrl));
     return {
@@ -603,21 +559,19 @@ export async function diagnoseVintedRead(
 
   return {
     config,
-    runListAttempts,
-    runInspected,
-    runsTried,
+    resultAttempts: attempts,
+    source,
     rawRows: rows.length,
-    // The single most useful line here when the mapping is wrong.
     sampleRowKeys: Object.keys(rows[0]),
     sampleRow: rows[0],
     parse: { ...tally, missingConditionField, parsedListings: parsed.length },
-    sampleParsedTitles: parsed.slice(0, 5).map((l) => ({ title: l.title, price: l.price, currency: l.currency, condition: l.condition, sourceUrl: l.sourceUrl ?? null })),
+    sampleParsedTitles: parsed.slice(0, 5).map((l) => ({ title: l.title, price: l.price, currency: l.currency, condition: l.condition })),
     perCard,
     verdict:
       parsed.length === 0
         ? "Rows arrived but none parsed — compare sampleRowKeys against FIELD_ALIASES (url and price are required)."
         : perCard.every((c) => c.matched === 0)
-          ? "Rows parsed but none matched a card — rowMatchesCard is too strict; see requiredWords vs the titles in sampleParsedTitles."
-          : "Read path is working. If the page still shows Preview, it's serving cached HTML — redeploy to regenerate it.",
+          ? "Rows parsed but none matched a card — see requiredWords against sampleParsedTitles."
+          : "Read path is working. If a page still shows Preview it is serving cached HTML: product pages are ISR with revalidate=129600 (36h), so redeploy to regenerate.",
   };
 }

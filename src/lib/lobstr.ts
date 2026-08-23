@@ -157,10 +157,55 @@ type LobstrRequestOptions = {
    * only ever run inside a route handler that's already dynamic.
    */
   revalidate?: number;
+  /** Internal: 429 retry budget. One retry is enough to ride out a concurrent-render collision; more would just make a slow page slower. */
+  retriesLeft?: number;
 };
 
+/**
+ * In-flight GET de-duplication, keyed by the full request URL.
+ *
+ * Next's Data Cache does not help here: the three product pages regenerate
+ * in separate invocations, so nothing is shared between them, and they hit
+ * /v1/results — documented at 2 requests per SECOND — at the same instant.
+ * The third request is then rate-limited, its fetch throws, the read path
+ * catches it and silently renders the clearly-marked preview instead. One
+ * card shows live data and the other two don't, for no reason visible on
+ * the page. That is exactly the "worked on one card, then stopped" symptom.
+ *
+ * Same mechanism and the same reasoning as lib/ebay-browse.ts's
+ * inFlightTokenRequest, which exists because a single panel render fired
+ * four concurrent token requests.
+ */
+const inFlightGets = new Map<string, Promise<unknown>>();
+
+/**
+ * De-duplicating entry point. Concurrent GETs for the same URL share one
+ * request; everything else goes straight through. The map entry is cleared
+ * in a finally block, so this is a coalescing window rather than a cache —
+ * caching stays Next's job, with the TTLs above.
+ */
 async function lobstrFetch<T>(path: string, options: LobstrRequestOptions = {}): Promise<T> {
-  const { method = "GET", body, query, revalidate = 0 } = options;
+  if ((options.method ?? "GET") !== "GET") return lobstrRequest<T>(path, options);
+
+  const key = requestUrl(path, options.query);
+  const existing = inFlightGets.get(key) as Promise<T> | undefined;
+  if (existing) return existing;
+
+  const request = lobstrRequest<T>(path, options).finally(() => inFlightGets.delete(key));
+  inFlightGets.set(key, request);
+  return request;
+}
+
+function requestUrl(path: string, query: LobstrRequestOptions["query"]): string {
+  const qs = new URLSearchParams();
+  for (const [key, value] of Object.entries(query ?? {})) {
+    if (value !== undefined) qs.set(key, String(value));
+  }
+  return `${API_BASE}${path}${qs.size > 0 ? `?${qs}` : ""}`;
+}
+
+async function lobstrRequest<T>(path: string, options: LobstrRequestOptions = {}): Promise<T> {
+  const { method = "GET", body, query, revalidate = 0, retriesLeft = 1 } = options;
 
   const qs = new URLSearchParams();
   for (const [key, value] of Object.entries(query ?? {})) {
@@ -178,6 +223,16 @@ async function lobstrFetch<T>(path: string, options: LobstrRequestOptions = {}):
     body: body ? JSON.stringify(body) : undefined,
     next: { revalidate },
   });
+
+  if (res.status === 429 && retriesLeft > 0) {
+    // Respect Lobstr's own backoff instruction rather than inventing one.
+    // Capped: a render must never sit waiting on a scraper vendor, and the
+    // honest fallback (a clearly-marked preview) is one caught error away.
+    const retryAfter = Number(res.headers.get("retry-after"));
+    const waitMs = Math.min(Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 1000, 2000);
+    await new Promise((resolve) => setTimeout(resolve, waitMs));
+    return lobstrRequest<T>(path, { ...options, retriesLeft: retriesLeft - 1 });
+  }
 
   if (!res.ok) {
     // Rate-limit responses carry Retry-After / X-RateLimit-Remaining;
@@ -226,12 +281,25 @@ function unwrapCollection<T>(payload: unknown): T[] {
   return [];
 }
 
-/** Top-level shape of a response, for diagnostics — says what came back without dumping a whole payload into a JSON response. */
+/**
+ * Top-level shape of a response, for diagnostics — with scalar VALUES, not
+ * just their types. That distinction is the whole point: a shape line
+ * reading `total_results: number, data: array(0)` cannot tell you whether
+ * Lobstr believes the squid has no runs at all or whether pagination
+ * dropped them, whereas `total_results: 0` settles it in one glance.
+ * Arrays are still summarised by length so a 30-row payload doesn't get
+ * dumped into an HTTP response.
+ */
 function describePayload(payload: unknown): string {
   if (Array.isArray(payload)) return `array(${payload.length})`;
   if (!payload || typeof payload !== "object") return typeof payload;
   return Object.entries(payload as Record<string, unknown>)
-    .map(([key, value]) => `${key}: ${Array.isArray(value) ? `array(${value.length})` : typeof value}`)
+    .map(([key, value]) => {
+      if (Array.isArray(value)) return `${key}: array(${value.length})`;
+      if (value === null) return `${key}: null`;
+      if (typeof value === "object") return `${key}: object`;
+      return `${key}: ${JSON.stringify(value)}`;
+    })
     .join(", ");
 }
 
@@ -378,6 +446,102 @@ export async function listRuns(squid: string): Promise<LobstrRun[]> {
 /** Same lookup, plus what each attempted query shape returned — for the ?debug=1 diagnosis. */
 export async function listRunsWithAttempts(squid: string): Promise<{ runs: LobstrRun[]; attempts: RunListAttempt[] }> {
   return attemptRunList(squid);
+}
+
+export type ResultsAttempt = { strategy: string; rows: number; payloadShape?: string; error?: string };
+export type ResolvedResults = { rows: Record<string, unknown>[]; source: string | null; attempts: ResultsAttempt[] };
+
+/**
+ * Gets the latest scraped rows, by whatever route actually works.
+ *
+ * This exists because the render path had a single point of failure that
+ * production proved is not reliable: it asked `GET /v1/runs?squid=` for the
+ * newest run, then read that run's results. That lookup returns
+ * `{total_results, data: []}` — a 200 with an empty list — for a squid whose
+ * run demonstrably produced 30 results. One undocumented endpoint behaving
+ * unexpectedly took the whole feature down, and did it *silently*: no run
+ * found is indistinguishable from no data, and the panel honestly renders a
+ * preview for both.
+ *
+ * So the run lookup is now the LAST resort rather than the only path:
+ *
+ *   1. LOBSTR_VINTED_RUN        pinned; one documented call, no lookup at
+ *                               all. Deterministic — this is the route to
+ *                               prefer in production.
+ *   2. /v1/results?squid=       speculative but free to try, and if Lobstr
+ *                               supports it the run lookup disappears
+ *                               entirely. /v1/runs requires a squid param,
+ *                               so the API is clearly squid-scoped.
+ *   3. /v1/squids/<hash>/runs   the conventional REST sub-resource.
+ *   4. /v1/runs?squid=          what we have; kept in case it starts
+ *                               returning finished runs.
+ *
+ * Every attempt is recorded with the payload's real shape, so one look at
+ * ?debug=1 says which routes exist and what each returned, instead of
+ * another round of guessing against an API whose responses aren't
+ * documented.
+ */
+export async function resolveVintedResults(squid: string | undefined, pinnedRun: string | undefined): Promise<ResolvedResults> {
+  const attempts: ResultsAttempt[] = [];
+
+  const readRun = async (run: string, strategy: string): Promise<ResolvedResults | undefined> => {
+    try {
+      const rows = await getResults(run);
+      attempts.push({ strategy, rows: rows.length });
+      if (rows.length > 0) return { rows, source: run, attempts };
+    } catch (err) {
+      attempts.push({ strategy, rows: 0, error: (err as Error).message });
+    }
+    return undefined;
+  };
+
+  if (pinnedRun) {
+    const resolved = await readRun(pinnedRun, `LOBSTR_VINTED_RUN=${pinnedRun}`);
+    if (resolved) return resolved;
+  }
+
+  if (!squid) return { rows: [], source: null, attempts };
+
+  // 2 — results directly by squid, if that's a thing.
+  try {
+    const payload = await lobstrFetch<unknown>("/results", { query: { squid }, revalidate: RESULTS_REVALIDATE_SECONDS });
+    const rows = unwrapCollection<Record<string, unknown>>(payload);
+    attempts.push({ strategy: "/results?squid=", rows: rows.length, payloadShape: describePayload(payload) });
+    if (rows.length > 0) return { rows, source: `squid:${squid}`, attempts };
+  } catch (err) {
+    attempts.push({ strategy: "/results?squid=", rows: 0, error: (err as Error).message });
+  }
+
+  // 3 and 4 — find a run, then read it.
+  for (const { strategy, path, query } of [
+    { strategy: "/squids/<hash>/runs", path: `/squids/${squid}/runs`, query: {} },
+    { strategy: "/runs?squid=", path: "/runs", query: { squid } },
+  ]) {
+    let runIds: string[] = [];
+    try {
+      const payload = await lobstrFetch<unknown>(path, { query, revalidate: RUNS_REVALIDATE_SECONDS });
+      const runs = unwrapCollection<Record<string, unknown>>(payload)
+        .map((run) => {
+          const id = readId(run);
+          return id ? ({ ...run, id } as LobstrRun) : undefined;
+        })
+        .filter((run): run is LobstrRun => run !== undefined);
+      runIds = sortRunsNewestFirst(runs).map((run) => run.id);
+      attempts.push({ strategy, rows: runIds.length, payloadShape: describePayload(payload) });
+    } catch (err) {
+      attempts.push({ strategy, rows: 0, error: (err as Error).message });
+      continue;
+    }
+
+    // Only the newest few: a squid accumulates runs, and each extra lookup
+    // is another request against a 2/sec endpoint for diminishing odds.
+    for (const run of runIds.slice(0, 3)) {
+      const resolved = await readRun(run, `${strategy} -> run ${run}`);
+      if (resolved) return resolved;
+    }
+  }
+
+  return { rows: [], source: null, attempts };
 }
 
 /**

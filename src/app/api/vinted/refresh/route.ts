@@ -91,6 +91,15 @@ async function isForced(request: Request): Promise<boolean> {
  * transient read failure permanently blocking collection — leaves the site
  * on preview data indefinitely, which is worse than one unplanned run.
  */
+/** The newest run date Lobstr will admit to, or undefined when the run list is empty/unreadable. Separate from tooSoonToCollect so the response can distinguish "checked and allowed" from "could not check". */
+async function lastRunTimestamp(squid: string): Promise<string | undefined> {
+  try {
+    return (await listRuns(squid)).find((run) => run.created_at)?.created_at;
+  } catch {
+    return undefined;
+  }
+}
+
 async function tooSoonToCollect(squid: string): Promise<{ error: string; lastRunAt: string; nextEligibleAt: string } | undefined> {
   let runs;
   try {
@@ -101,7 +110,17 @@ async function tooSoonToCollect(squid: string): Promise<{ error: string; lastRun
   }
 
   const lastRunAt = runs.find((run) => run.created_at)?.created_at;
-  if (!lastRunAt) return undefined;
+  if (!lastRunAt) {
+    // Production reality: GET /v1/runs?squid= returns an empty list even for
+    // a squid with a finished run, so this check frequently CANNOT be
+    // evaluated. It still fails open — a transient read error must not
+    // freeze collection forever — but that means the 14-day spend guard is
+    // not actually protecting anything right now, and pretending otherwise
+    // would be worse than saying so. The POST response reports this as
+    // intervalCheck: "unverifiable" rather than implying it passed.
+    console.warn("[lobstr] no run dates available — the collection-interval guard cannot be enforced on this call.");
+    return undefined;
+  }
 
   const lastRunMs = Date.parse(lastRunAt);
   if (Number.isNaN(lastRunMs)) return undefined;
@@ -211,12 +230,14 @@ export async function POST(request: Request) {
 
   const squid = vintedSquidHash()!;
   const force = await isForced(request);
+  let lastRunSeenAt: string | undefined;
 
   try {
     if (!force) {
       const blocked = await tooSoonToCollect(squid);
       if (blocked) return NextResponse.json(blocked, { status: 409 });
     }
+    lastRunSeenAt = await lastRunTimestamp(squid);
 
     // Pokémon only — deliberately not getAllCards(). This is the Pokémon
     // Market Overview's France tab, and every card added here costs
@@ -241,6 +262,11 @@ export async function POST(request: Request) {
       taskCount: urls.length,
       tasks: queries.map((q) => ({ slug: q.slug, query: q.query, url: q.searchUrl })),
       forced: force,
+      // "enforced" only when Lobstr actually told us when the last run was.
+      // See tooSoonToCollect: the run list is unreliable, so this is often
+      // "unverifiable" — meaning nothing stopped this call, and repeated
+      // POSTs would each spend a full collection's credits.
+      intervalCheck: force ? "overridden" : lastRunSeenAt ? "enforced" : "unverifiable",
       // The budget, echoed back on every collection so a card added to
       // card-refs.ts shows up here as a bigger number instead of quietly
       // as a bigger invoice. If this exceeds what the squid was configured
