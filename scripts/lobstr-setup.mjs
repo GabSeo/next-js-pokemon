@@ -39,30 +39,35 @@ const VINTED_PRODUCTS_CRAWLER = "ffd34f9b42a79b7323a048f09fc158e6";
  *   3 cards x 10 x 2 = 60/month — inside the free tier, with room for one
  *   forced re-collection.
  *
- *   Temporarily raised to 20 (see VINTED_RESULTS_PER_CARD in
- *   src/lib/lobstr.ts) for a one-off test against the new catalog[]=4875
- *   filter: 3 cards x 20 = 60, spending a single collection's worth of the
- *   ~60 credits available right now. This no longer fits the free tier at
- *   the regular fortnightly cadence (3 x 20 x 2 = 120/month) — the
- *   overage warning below will fire until this is dialed back or the plan
- *   changes.
+ *   Dialed to 14 (see VINTED_RESULTS_PER_CARD in src/lib/lobstr.ts) for a
+ *   one-off test against the new catalog[]=4875 filter: 3 cards x 14 = 42,
+ *   spending exactly the ~42 credits available for this test in a single
+ *   collection. max_pages raised to 3 to match (see below) — enough of
+ *   Vinted's own result pages to actually pull 14/card from.
  *
  * Two caps do two different jobs, and both matter:
  *
- * - max_results_per_task caps EACH card's search at 10. This is what makes
- *   the per-card number real: without it the run-wide cap is first-come,
- *   and with tasks running sequentially the first card could swallow the
- *   whole allowance while the other two return nothing.
- * - max_unique_results_per_run caps the WHOLE run at cards x 10. This is
- *   the spend ceiling, and it is not optional: `max_pages: 1` still means
- *   one *whole* page of Vinted results per task — around 96 listings — so
- *   without it three cards would spend ~288 results in a single run and
- *   blow a month's tier three times over on the first collection.
+ * - max_results_per_task caps EACH card's search at RESULTS_PER_CARD. This
+ *   is what makes the per-card number real: without it the run-wide cap is
+ *   first-come, and with tasks running sequentially the first card could
+ *   swallow the whole allowance while the other two return nothing. This
+ *   is exactly what happened on the 20/60 test run before this one — the
+ *   two settings ended up applied backwards on the squid (run-wide cap
+ *   lower than the per-task cap), so Gengar's task alone exhausted the
+ *   whole run and Lugia/Ethan's Typhlosion never got scraped. Confirmed
+ *   from that run's own results export: every row shared one task id.
+ * - max_unique_results_per_run caps the WHOLE run at cards x
+ *   RESULTS_PER_CARD. This is the spend ceiling, and it is not optional:
+ *   without it, a card's task can overrun on its own and blow the budget
+ *   before the other cards get a turn — same failure mode as above, just
+ *   from the opposite direction.
  *
- * max_pages stays 1 regardless: page one of a relevance-ordered, condition-
- * filtered search already holds far more than the ten rows the panel shows.
+ * Double check both values against the squid dashboard before triggering a
+ * run — the two fields are easy to transpose by hand, and a swapped pair
+ * fails silently (some cards return zero results) rather than erroring.
  */
-const RESULTS_PER_CARD = 20; // keep in step with VINTED_RESULTS_PER_CARD in src/lib/lobstr.ts
+const RESULTS_PER_CARD = 14; // keep in step with VINTED_RESULTS_PER_CARD in src/lib/lobstr.ts
+const MAX_PAGES = 3; // raised from 1 to give a 14/card cap enough Vinted result pages to actually fill from
 const DEFAULT_TRACKED_CARDS = 3;
 
 /**
@@ -93,7 +98,7 @@ function trackedPokemonCards() {
  */
 function recommendedSettings(cards) {
   return {
-    max_pages: 1,
+    max_pages: MAX_PAGES,
     max_results_per_task: RESULTS_PER_CARD,
     max_unique_results_per_run: cards * RESULTS_PER_CARD,
     concurrency: 1, // the dashboard labels this "Slots"

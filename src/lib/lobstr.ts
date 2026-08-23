@@ -70,14 +70,26 @@ export const COLLECTION_INTERVAL_DAYS = 14;
 /**
  * Rows kept per card, and the unit the whole budget is denominated in.
  *
- * Lobstr's free tier is 100 results a month. Raised from 10 to 20 for a
- * one-off test against the added catalog[]=4875 filter (see
- * vinted-search.ts) — three tracked Pokémon cards x 20 = 60, spending the
- * ~60 credits available for this test in a single collection. At the
- * *steady-state* fortnightly cadence this no longer fits the free tier
- * (3 x 20 x 2 = 120 > 100) — `scripts/lobstr-setup.mjs --settings` prints
- * its own warning when that's true, rather than silently exceeding it.
- * Revisit before the next scheduled collection.
+ * Lobstr's free tier is 100 results a month. Dialed to 14 for a one-off
+ * test against the added catalog[]=4875 filter (see vinted-search.ts) —
+ * three tracked Pokémon cards x 14 = 42, spending exactly the ~42 credits
+ * available for this test in a single collection, with max_pages raised
+ * to 3 on the squid itself (see scripts/lobstr-setup.mjs) so there's
+ * enough of Vinted's own result pages to actually pull 14/card from.
+ *
+ * An earlier attempt at this same test ran with 20/card and 60/run, but
+ * the two squid settings ended up applied to the wrong fields (max run
+ * cap set lower than max per-task cap) — the first task alone consumed
+ * the whole run's budget before the other two cards' tasks ever started.
+ * Double check both fields on the squid dashboard match this file before
+ * triggering another collection: max_unique_results_per_run should be
+ * cards x this (42), max_results_per_task should be this (14) — see the
+ * comment below on where those get applied.
+ *
+ * At the *steady-state* fortnightly cadence this doesn't fit the free
+ * tier either (3 x 14 x 2 = 84, fine; but this is a one-off spend against
+ * remaining credits, not a recurring budget) — revisit before the next
+ * scheduled collection regardless.
  *
  * Two squid settings have to agree with this for it to mean anything on
  * Lobstr's side, and `scripts/lobstr-setup.mjs --settings` computes and
@@ -87,7 +99,7 @@ export const COLLECTION_INTERVAL_DAYS = 14;
  * This constant alone only trims what's *displayed* — it cannot stop a
  * scrape that has already been paid for.
  */
-export const VINTED_RESULTS_PER_CARD = 20;
+export const VINTED_RESULTS_PER_CARD = 14;
 
 /**
  * Results are cached for the full collection interval, not minutes.
