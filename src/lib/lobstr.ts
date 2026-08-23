@@ -502,11 +502,11 @@ export async function resolveVintedResults(squid: string | undefined, pinnedRun:
 
   if (!squid) return { rows: [], source: null, attempts };
 
-  // 2 — results directly by squid, if that's a thing.
+  // 2 — results directly by squid. Confirmed working in production, and
+  // the reason the run lookup below is now a fallback rather than the path.
   try {
-    const payload = await lobstrFetch<unknown>("/results", { query: { squid }, revalidate: RESULTS_REVALIDATE_SECONDS });
-    const rows = unwrapCollection<Record<string, unknown>>(payload);
-    attempts.push({ strategy: "/results?squid=", rows: rows.length, payloadShape: describePayload(payload) });
+    const { rows, payloadShape } = await fetchAllResults({ squid });
+    attempts.push({ strategy: "/results?squid=", rows: rows.length, payloadShape });
     if (rows.length > 0) return { rows, source: `squid:${squid}`, attempts };
   } catch (err) {
     attempts.push({ strategy: "/results?squid=", rows: 0, error: (err as Error).message });
@@ -545,6 +545,47 @@ export async function resolveVintedResults(squid: string | undefined, pinnedRun:
 }
 
 /**
+ * One page of results is not the results.
+ *
+ * /v1/results paginates at 10 by default and reports the rest only in
+ * `total_pages` and a `next` URL. Reading page one silently returned 10 of
+ * 30 rows — split across three cards, that left each one with a third of
+ * its listings and no indication anything was missing. A partial market
+ * that looks complete is worse than an empty one.
+ *
+ * So: ask for a large page (one request covers the whole free-tier run),
+ * then follow `next` if the server still says there is more. Bounded by
+ * RESULTS_MAX_PAGES, because a runaway loop against a 2 req/s endpoint
+ * during a page render is a worse failure than a truncated feed.
+ */
+const RESULTS_PAGE_SIZE = 100;
+const RESULTS_MAX_PAGES = 5;
+
+async function fetchAllResults(
+  query: Record<string, string | number | undefined>
+): Promise<{ rows: Record<string, unknown>[]; payloadShape: string; pagesRead: number }> {
+  const rows: Record<string, unknown>[] = [];
+  let payloadShape = "";
+  let page = 1;
+
+  for (; page <= RESULTS_MAX_PAGES; page++) {
+    const payload = await lobstrFetch<unknown>("/results", {
+      query: { ...query, page, limit: RESULTS_PAGE_SIZE },
+      revalidate: RESULTS_REVALIDATE_SECONDS,
+    });
+    if (page === 1) payloadShape = describePayload(payload);
+
+    const batch = unwrapCollection<Record<string, unknown>>(payload);
+    rows.push(...batch);
+
+    const next = payload && typeof payload === "object" ? (payload as Record<string, unknown>).next : null;
+    if (!next || batch.length === 0) break;
+  }
+
+  return { rows, payloadShape, pagesRead: Math.min(page, RESULTS_MAX_PAGES) };
+}
+
+/**
  * GET /v1/results?run=<hash> — the scraped rows, in JSON. (Lobstr also
  * exposes GET /v1/runs/<hash>/download for a temporary CSV link, and
  * push-style delivery to Sheets/S3/SFTP; JSON pull is the only one that
@@ -559,13 +600,6 @@ export async function resolveVintedResults(squid: string | undefined, pinnedRun:
  * the caller reads a single page and works with whatever comes back, which
  * is correct for either a paginated or an unpaginated response.
  */
-export async function getResults(
-  run: string,
-  options: { page?: number; limit?: number } = {}
-): Promise<Record<string, unknown>[]> {
-  const payload = await lobstrFetch<unknown>("/results", {
-    query: { run, page: options.page, limit: options.limit },
-    revalidate: RESULTS_REVALIDATE_SECONDS,
-  });
-  return unwrapCollection<Record<string, unknown>>(payload);
+export async function getResults(run: string): Promise<Record<string, unknown>[]> {
+  return (await fetchAllResults({ run })).rows;
 }
