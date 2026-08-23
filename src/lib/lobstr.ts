@@ -448,7 +448,7 @@ export async function listRunsWithAttempts(squid: string): Promise<{ runs: Lobst
   return attemptRunList(squid);
 }
 
-export type ResultsAttempt = { strategy: string; rows: number; payloadShape?: string; error?: string };
+export type ResultsAttempt = { strategy: string; rows: number; pagesRead?: number; payloadShape?: string; error?: string };
 export type ResolvedResults = { rows: Record<string, unknown>[]; source: string | null; attempts: ResultsAttempt[] };
 
 /**
@@ -505,8 +505,8 @@ export async function resolveVintedResults(squid: string | undefined, pinnedRun:
   // 2 — results directly by squid. Confirmed working in production, and
   // the reason the run lookup below is now a fallback rather than the path.
   try {
-    const { rows, payloadShape } = await fetchAllResults({ squid });
-    attempts.push({ strategy: "/results?squid=", rows: rows.length, payloadShape });
+    const { rows, payloadShape, pagesRead } = await fetchAllResults({ squid });
+    attempts.push({ strategy: "/results?squid=", rows: rows.length, pagesRead, payloadShape });
     if (rows.length > 0) return { rows, source: `squid:${squid}`, attempts };
   } catch (err) {
     attempts.push({ strategy: "/results?squid=", rows: 0, error: (err as Error).message });
@@ -545,34 +545,97 @@ export async function resolveVintedResults(squid: string | undefined, pinnedRun:
 }
 
 /**
- * One page of results is not the results.
+ * One page of results is not the results — but asking for too big a page is
+ * worse than asking for a small one.
  *
- * /v1/results paginates at 10 by default and reports the rest only in
- * `total_pages` and a `next` URL. Reading page one silently returned 10 of
- * 30 rows — split across three cards, that left each one with a third of
- * its listings and no indication anything was missing. A partial market
- * that looks complete is worse than an empty one.
+ * Two production facts shape this, and they pull in opposite directions:
  *
- * So: ask for a large page (one request covers the whole free-tier run),
- * then follow `next` if the server still says there is more. Bounded by
- * RESULTS_MAX_PAGES, because a runaway loop against a 2 req/s endpoint
- * during a page render is a worse failure than a truncated feed.
+ *   1. /v1/results paginates at 10 by default and reports the rest only in
+ *      `total_pages` and a `next` URL. Reading page one silently returned
+ *      10 of 30 rows — split across three cards, that left each one with a
+ *      third of its listings and no indication anything was missing. A
+ *      partial market that looks complete is worse than an empty one.
+ *   2. The free plan caps how many results an account may export, and asks
+ *      for the whole page up front: `limit=100` came back
+ *      `400 ExportLimitReached` ("You have reached the free plan limit of
+ *      30 results"), while the default `limit=10` came back 200 with the
+ *      same message downgraded to a soft `warning` field. So the ceiling is
+ *      enforced on the REQUEST, not on the response — a page bigger than
+ *      the plan allows returns nothing at all rather than as much as it can.
+ *
+ * Hence a ladder rather than a single page size: try the largest page that
+ * should fit the whole free-tier run in one request, and if the server
+ * rejects it as too large, drop to the size production has already proven
+ * and page through instead. The ladder means an untested page size can only
+ * ever cost one extra request, never the whole feed — which is what the
+ * jump straight to 100 cost.
+ *
+ * Bounded by RESULTS_MAX_PAGES, because a runaway loop against a 2 req/s
+ * endpoint during a page render is a worse failure than a truncated feed.
  */
-const RESULTS_PAGE_SIZE = 100;
+const RESULTS_PAGE_SIZES = [30, 10] as const;
 const RESULTS_MAX_PAGES = 5;
 
-async function fetchAllResults(
-  query: Record<string, string | number | undefined>
-): Promise<{ rows: Record<string, unknown>[]; payloadShape: string; pagesRead: number }> {
+type ResultsPage = { rows: Record<string, unknown>[]; payloadShape: string; pagesRead: number };
+
+/**
+ * True for the "your page is bigger than your plan" rejection, which is the
+ * one error worth retrying at a smaller page size. Matched on the message
+ * rather than a parsed body because lobstrFetch surfaces the raw text, and
+ * loosely (`400` + "limit") rather than on the exact `ExportLimitReached`
+ * string, since the wording is plan copy and plan copy changes.
+ */
+function looksLikePageTooLarge(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : String(err);
+  return message.includes("failed (400)") && /limit/i.test(message);
+}
+
+async function fetchAllResults(query: Record<string, string | number | undefined>): Promise<ResultsPage> {
+  let lastError: unknown;
+
+  for (const [index, limit] of RESULTS_PAGE_SIZES.entries()) {
+    try {
+      return await readResultPages(query, limit);
+    } catch (err) {
+      const smaller = RESULTS_PAGE_SIZES[index + 1];
+      if (smaller === undefined || !looksLikePageTooLarge(err)) throw err;
+      lastError = err;
+      console.warn(`[lobstr] /results refused limit=${limit}, retrying at limit=${smaller}: ${(err as Error).message}`);
+    }
+  }
+
+  throw lastError;
+}
+
+/**
+ * Pages through /v1/results at a fixed page size, following `next`.
+ *
+ * A failure on the FIRST page propagates: nothing was read, so the caller
+ * should try a smaller page or a different route. A failure on any LATER
+ * page does not — pages 1..n-1 already arrived, and the free plan's export
+ * ceiling is exactly the kind of thing that lets you read the first page
+ * and then refuses the second. Half a market beats none, and the shortfall
+ * shows up in ?debug=1 as a pagesRead that stopped early.
+ */
+async function readResultPages(query: Record<string, string | number | undefined>, limit: number): Promise<ResultsPage> {
   const rows: Record<string, unknown>[] = [];
   let payloadShape = "";
-  let page = 1;
+  let pagesRead = 0;
 
-  for (; page <= RESULTS_MAX_PAGES; page++) {
-    const payload = await lobstrFetch<unknown>("/results", {
-      query: { ...query, page, limit: RESULTS_PAGE_SIZE },
-      revalidate: RESULTS_REVALIDATE_SECONDS,
-    });
+  for (let page = 1; page <= RESULTS_MAX_PAGES; page++) {
+    let payload: unknown;
+    try {
+      payload = await lobstrFetch<unknown>("/results", {
+        query: { ...query, page, limit },
+        revalidate: RESULTS_REVALIDATE_SECONDS,
+      });
+    } catch (err) {
+      if (page === 1) throw err;
+      console.warn(`[lobstr] /results stopped at page ${page} with ${rows.length} rows already read: ${(err as Error).message}`);
+      break;
+    }
+
+    pagesRead = page;
     if (page === 1) payloadShape = describePayload(payload);
 
     const batch = unwrapCollection<Record<string, unknown>>(payload);
@@ -582,7 +645,7 @@ async function fetchAllResults(
     if (!next || batch.length === 0) break;
   }
 
-  return { rows, payloadShape, pagesRead: Math.min(page, RESULTS_MAX_PAGES) };
+  return { rows, payloadShape, pagesRead };
 }
 
 /**
