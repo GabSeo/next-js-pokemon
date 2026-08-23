@@ -70,26 +70,21 @@ export const COLLECTION_INTERVAL_DAYS = 14;
 /**
  * Rows kept per card, and the unit the whole budget is denominated in.
  *
- * Lobstr's free tier is 100 results a month. Dialed to 14 for a one-off
- * test against the added catalog[]=4875 filter (see vinted-search.ts) —
- * three tracked Pokémon cards x 14 = 42, spending exactly the ~42 credits
- * available for this test in a single collection. max_pages stays 1 (see
- * scripts/lobstr-setup.mjs) — page one of a relevance-ordered, filtered
- * search already holds far more than 14 rows to pull per card.
+ * Lobstr's free tier is 100 results a month. Three tracked Pokémon cards x
+ * 10 results x two collections a month = 60, comfortably inside it with
+ * room for a forced re-collection. Raising this, or adding cards, moves
+ * that total directly — 4 cards at 10 would be 80, 5 would be 100 and the
+ * tier is gone.
  *
- * An earlier attempt at this same test ran with 20/card and 60/run, but
- * the two squid settings ended up applied to the wrong fields (max run
- * cap set lower than max per-task cap) — the first task alone consumed
- * the whole run's budget before the other two cards' tasks ever started.
- * Double check both fields on the squid dashboard match this file before
- * triggering another collection: max_unique_results_per_run should be
- * cards x this (42), max_results_per_task should be this (14) — see the
- * comment below on where those get applied.
- *
- * At the *steady-state* fortnightly cadence this doesn't fit the free
- * tier either (3 x 14 x 2 = 84, fine; but this is a one-off spend against
- * remaining credits, not a recurring budget) — revisit before the next
- * scheduled collection regardless.
+ * A live test briefly ran this at 20, then 14, against remaining test
+ * credits — reverted back to 10 as the steady-state value once that test
+ * was done. The one real lesson from it, worth keeping in mind whenever
+ * this changes again: the two squid settings below are easy to transpose
+ * by hand on the dashboard, and a swapped pair fails silently rather than
+ * erroring — the first task alone can consume the whole run's budget
+ * before the other cards' tasks ever start. Always double check
+ * max_unique_results_per_run (cards x this) isn't set *lower* than
+ * max_results_per_task (this) before triggering a collection.
  *
  * Two squid settings have to agree with this for it to mean anything on
  * Lobstr's side, and `scripts/lobstr-setup.mjs --settings` computes and
@@ -99,7 +94,7 @@ export const COLLECTION_INTERVAL_DAYS = 14;
  * This constant alone only trims what's *displayed* — it cannot stop a
  * scrape that has already been paid for.
  */
-export const VINTED_RESULTS_PER_CARD = 14;
+export const VINTED_RESULTS_PER_CARD = 10;
 
 /**
  * Results are cached for the full collection interval, not minutes.

@@ -39,24 +39,17 @@ const VINTED_PRODUCTS_CRAWLER = "ffd34f9b42a79b7323a048f09fc158e6";
  *   3 cards x 10 x 2 = 60/month — inside the free tier, with room for one
  *   forced re-collection.
  *
- *   Dialed to 14 (see VINTED_RESULTS_PER_CARD in src/lib/lobstr.ts) for a
- *   one-off test against the new catalog[]=4875 filter: 3 cards x 14 = 42,
- *   spending exactly the ~42 credits available for this test in a single
- *   collection. max_pages stays 1 — page one of a relevance-ordered,
- *   condition-and-category-filtered search already holds far more than
- *   14 rows, so a second/third page would only add cost, not coverage.
- *
  * Two caps do two different jobs, and both matter:
  *
  * - max_results_per_task caps EACH card's search at RESULTS_PER_CARD. This
  *   is what makes the per-card number real: without it the run-wide cap is
  *   first-come, and with tasks running sequentially the first card could
- *   swallow the whole allowance while the other two return nothing. This
- *   is exactly what happened on the 20/60 test run before this one — the
- *   two settings ended up applied backwards on the squid (run-wide cap
- *   lower than the per-task cap), so Gengar's task alone exhausted the
- *   whole run and Lugia/Ethan's Typhlosion never got scraped. Confirmed
- *   from that run's own results export: every row shared one task id.
+ *   swallow the whole allowance while the other two return nothing. A live
+ *   test at 20/60 hit exactly this: the two settings ended up applied
+ *   backwards on the squid dashboard (run-wide cap set lower than the
+ *   per-task cap), so Gengar's task alone exhausted the whole run and
+ *   Lugia/Ethan's Typhlosion never got scraped. Confirmed from that run's
+ *   own results export: every row shared one task id.
  * - max_unique_results_per_run caps the WHOLE run at cards x
  *   RESULTS_PER_CARD. This is the spend ceiling, and it is not optional:
  *   without it, a card's task can overrun on its own and blow the budget
@@ -66,9 +59,13 @@ const VINTED_PRODUCTS_CRAWLER = "ffd34f9b42a79b7323a048f09fc158e6";
  * Double check both values against the squid dashboard before triggering a
  * run — the two fields are easy to transpose by hand, and a swapped pair
  * fails silently (some cards return zero results) rather than erroring.
+ *
+ * max_pages stays 1 regardless: page one of a relevance-ordered, condition-
+ * and-category-filtered search already holds far more than the ten rows
+ * the panel shows.
  */
-const RESULTS_PER_CARD = 14; // keep in step with VINTED_RESULTS_PER_CARD in src/lib/lobstr.ts
-const MAX_PAGES = 1; // page one alone already holds far more than 14 rows of a filtered, relevance-ordered search
+const RESULTS_PER_CARD = 10; // keep in step with VINTED_RESULTS_PER_CARD in src/lib/lobstr.ts
+const MAX_PAGES = 1;
 const DEFAULT_TRACKED_CARDS = 3;
 
 /**
