@@ -11,7 +11,7 @@ import {
   startRun,
   vintedSquidHash,
 } from "@/lib/lobstr";
-import { vintedQueryForCard } from "@/lib/vinted-listings";
+import { diagnoseVintedRead, vintedQueryForCard } from "@/lib/vinted-listings";
 
 /**
  * The WRITE half of the Lobstr integration (lib/lobstr.ts explains the
@@ -131,6 +131,21 @@ export async function GET(request: Request) {
     squid: vintedSquidHash() ?? null,
     pinnedRun: pinnedVintedRunHash() ?? null,
   };
+
+  // ?debug=1 walks the whole read path and reports where rows are being
+  // lost. Costs nothing — reading results isn't billed and the rows are
+  // already cached by run hash — so it's safe to hit repeatedly while
+  // chasing an empty France tab.
+  if (new URL(request.url).searchParams.get("debug") !== null) {
+    const cards = await getCardsByFranchise("pokemon");
+    const targets = await Promise.all(
+      cards.map(async (card) => {
+        const { displayName, searchUrl } = await vintedQueryForCard(card);
+        return { slug: card.slug, displayName, searchUrl };
+      })
+    );
+    return NextResponse.json(await diagnoseVintedRead(targets));
+  }
 
   const squid = vintedSquidHash();
   if (!squid) return NextResponse.json({ configured, runs: [] });

@@ -373,3 +373,125 @@ export function relativeTimeLabel(listedAtMs: number | undefined, now: number = 
   if (hours < 24) return `${hours} h`;
   return `${Math.floor(hours / 24)} j`;
 }
+
+/**
+ * Why one raw row did or didn't survive toVintedListing. Mirrors that
+ * function's own checks exactly — if the two ever disagree, this is lying,
+ * so keep them in step.
+ */
+function classifyRow(row: Record<string, unknown>): "ok" | "wrong-condition" | "no-price" | "no-url" {
+  const condition = readString(row, FIELD_ALIASES.condition);
+  if (condition !== undefined && !isTresBonEtat(condition)) return "wrong-condition";
+  if (readPrice(row) === undefined) return "no-price";
+  if (!readString(row, FIELD_ALIASES.url)) return "no-url";
+  return "ok";
+}
+
+export type VintedReadDiagnosis = Record<string, unknown>;
+
+/**
+ * Read-path diagnosis for when a collection succeeded but the France tab
+ * still shows its preview. There are several independent places a row can
+ * vanish between Lobstr and the panel — no run found (listRuns' query shape
+ * is UNVERIFIED), an unrecognised results envelope, a FIELD_ALIASES miss on
+ * url/price, or per-card title matching being too strict — and they all
+ * look identical from the outside: an empty feed.
+ *
+ * Rather than guess, this walks the same funnel getVintedListingsForCard
+ * walks and reports the count at every stage, plus the real field names on
+ * a sample row. Costs nothing: reading results is not billed, and the rows
+ * are already cached by run hash.
+ *
+ * Never throws — a diagnosis that 500s tells you less than one that says
+ * which step blew up.
+ */
+export async function diagnoseVintedRead(
+  cards: { slug: string; displayName: string; searchUrl: string }[]
+): Promise<VintedReadDiagnosis> {
+  const config = {
+    hasApiKey: hasLobstrCredentials(),
+    squid: vintedSquidHash() ?? null,
+    pinnedRun: pinnedVintedRunHash() ?? null,
+  };
+  if (!config.hasApiKey) return { config, verdict: "LOBSTR_API_KEY missing on this deployment" };
+  if (!config.squid && !config.pinnedRun) return { config, verdict: "LOBSTR_VINTED_SQUID missing on this deployment" };
+
+  // Step 1 — find runs. listRuns is the UNVERIFIED part of the chain, so an
+  // empty list or an error here is a prime suspect, not a footnote.
+  let runIds: string[];
+  if (config.pinnedRun) {
+    runIds = [config.pinnedRun];
+  } else {
+    try {
+      runIds = (await listRuns(config.squid!)).map((run) => run.id);
+    } catch (err) {
+      return { config, step: "listRuns", verdict: `listRuns threw — set LOBSTR_VINTED_RUN to bypass it. ${(err as Error).message}` };
+    }
+    if (runIds.length === 0) {
+      return { config, step: "listRuns", verdict: "listRuns returned no runs — its GET /v1/runs?squid= shape is unverified. Set LOBSTR_VINTED_RUN to bypass it." };
+    }
+  }
+
+  // Step 2 — read results from the newest run that actually has rows.
+  const runsTried: { run: string; rawRows: number; error?: string }[] = [];
+  let rows: Record<string, unknown>[] = [];
+  let runInspected: string | null = null;
+  for (const run of runIds.slice(0, RUN_LOOKBACK)) {
+    try {
+      const got = await getResults(run);
+      runsTried.push({ run, rawRows: got.length });
+      if (got.length > 0) {
+        rows = got;
+        runInspected = run;
+        break;
+      }
+    } catch (err) {
+      runsTried.push({ run, rawRows: 0, error: (err as Error).message });
+    }
+  }
+  if (rows.length === 0) {
+    return { config, runIds: runIds.slice(0, RUN_LOOKBACK), runsTried, step: "getResults", verdict: "No run returned any rows — either the results envelope isn't being unwrapped, or these runs are genuinely empty." };
+  }
+
+  // Step 3 — parse. The sample row's real key names are the whole point:
+  // FIELD_ALIASES is guesswork until compared against them.
+  const tally = { ok: 0, "wrong-condition": 0, "no-price": 0, "no-url": 0 };
+  let missingConditionField = 0;
+  for (const row of rows) {
+    tally[classifyRow(row)]++;
+    if (readString(row, FIELD_ALIASES.condition) === undefined) missingConditionField++;
+  }
+  const parsed = rows.map(toVintedListing).filter((l): l is VintedListing => l !== null);
+
+  // Step 4 — per-card bucketing. When a card matches nothing, the sample
+  // titles show whether the word-match was simply too strict.
+  const perCard = cards.map((card) => {
+    const matched = parsed.filter((listing) => rowMatchesCard(listing, card.displayName, card.searchUrl));
+    return {
+      slug: card.slug,
+      displayName: card.displayName,
+      requiredWords: normalizeText(card.displayName).split(" ").filter((w) => w.length > 1),
+      matched: matched.length,
+      sampleMatchedTitles: matched.slice(0, 3).map((l) => l.title),
+    };
+  });
+
+  return {
+    config,
+    runInspected,
+    runsTried,
+    rawRows: rows.length,
+    // The single most useful line here when the mapping is wrong.
+    sampleRowKeys: Object.keys(rows[0]),
+    sampleRow: rows[0],
+    parse: { ...tally, missingConditionField, parsedListings: parsed.length },
+    sampleParsedTitles: parsed.slice(0, 5).map((l) => ({ title: l.title, price: l.price, currency: l.currency, condition: l.condition, sourceUrl: l.sourceUrl ?? null })),
+    perCard,
+    verdict:
+      parsed.length === 0
+        ? "Rows arrived but none parsed — compare sampleRowKeys against FIELD_ALIASES (url and price are required)."
+        : perCard.every((c) => c.matched === 0)
+          ? "Rows parsed but none matched a card — rowMatchesCard is too strict; see requiredWords vs the titles in sampleParsedTitles."
+          : "Read path is working. If the page still shows Preview, it's serving cached HTML — redeploy to regenerate it.",
+  };
+}
