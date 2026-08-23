@@ -252,7 +252,7 @@ export function GradedMarketTabs({
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
           <a
             href={selected.seeAllHref}
             target="_blank"
@@ -366,7 +366,7 @@ export function GradedMarketTabs({
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
           <a
             href={vinted.searchHref}
             target="_blank"
