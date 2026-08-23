@@ -187,9 +187,22 @@ const handler = createMcpHandler((server) => {
   });
 
   const gradedMarketLanguageSchema = z.object({
-    language: z.enum(["English", "Japanese", "French"]),
+    language: z.enum(["English", "Japanese"]),
     active: gradedMarketTypeSchema,
     sold: gradedMarketTypeSchema,
+  });
+
+  const vintedConditionSchema = z.object({
+    condition: z.enum(["Très bon état", "Bon état", "Satisfaisant"]),
+    medianPrice: z.number(),
+    currency: z.string(),
+    count: z.number(),
+    rows: z.array(gradedMarketListingSchema),
+  });
+  const vintedMarketSchema = z.object({
+    isReal: z.boolean(),
+    searchUrl: z.string(),
+    conditions: z.array(vintedConditionSchema),
   });
 
   server.registerTool(
@@ -220,6 +233,7 @@ const handler = createMcpHandler((server) => {
             currency: z.string(),
           })
           .optional(),
+        vinted: vintedMarketSchema.optional(),
       }),
     },
     async ({ cardId }: { cardId: string }) => {
@@ -233,6 +247,7 @@ const handler = createMcpHandler((server) => {
       }
       const data = await getGradedMarketData(card);
       const psa10English = data.conditions.find((c) => c.condition === "PSA 10")!.languages.find((l) => l.language === "English")!;
+      const vintedBest = data.vinted.conditions[0];
       return {
         content: [
           {
@@ -241,10 +256,10 @@ const handler = createMcpHandler((server) => {
               psa10English.active.isReal ? "real, eBay" : "preview, eBay not connected"
             }, English). Grading ROI raw -> PSA 10: ${data.roi.percent >= 0 ? "+" : ""}${data.roi.percent.toFixed(0)}% (${
               data.roi.isReal ? "real" : "preview"
-            }).`,
+            }). France/Vinted, ${vintedBest.condition}: ${vintedBest.currency} ${vintedBest.medianPrice} (preview, Vinted not connected).`,
           },
         ],
-        structuredContent: { found: true, conditions: data.conditions, roi: data.roi },
+        structuredContent: { found: true, conditions: data.conditions, roi: data.roi, vinted: data.vinted },
       };
     }
   );

@@ -69,7 +69,7 @@ export default async function ProductPageJapan({ params }: PageProps) {
       jsonHref={`/api/${card.franchise}/${card.id}`}
       okfHref={`/okf/products/${card.slug}`}
       localeLinks={localeLinks}
-      defaultGradedMarketLanguage="Japanese"
+      defaultMarketTab="Japanese"
     />
   );
 }

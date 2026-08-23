@@ -32,15 +32,31 @@ async function gradedMarketMarkdown(card: Card): Promise<string> {
   const { roi } = data;
   const roiSource = roi.isReal ? "real active listings, English" : "preview numbers, eBay not connected yet";
 
-  return `## Graded market (up to 4 recent active listings + illustrative sold, per condition x language)
+  const vintedRows = data.vinted.conditions
+    .map((c) => `| ${c.condition} | ${c.currency} ${c.medianPrice} | ${c.count} est. |`)
+    .join("\n");
 
-| Condition | Language | Active median | Active source | Sold median (illustrative) |
+  return `## Pokémon market overview
+
+### English / Japanese (eBay) — up to 4 recent active listings + illustrative sold, per condition x market
+
+| Condition | Market | Active median | Active source | Sold median (illustrative) |
 | --- | --- | --- | --- | --- |
 ${rows}
 
 Grading ROI, raw → PSA 10: ${roi.percent >= 0 ? "+" : ""}${roi.percent.toFixed(0)}% (${roiSource}). ${roi.currency} ${roi.rawMedian} raw + ${roi.currency} ${roi.gradingCostUsd} grading vs ${roi.currency} ${roi.psa10Median} PSA 10. Always computed from English active listings.
 
-Sold data is always illustrative: eBay's sold/completed-listing API (Marketplace Insights) is restricted and closed to new applicants — see lib/ebay-browse.ts.`;
+Sold data is always illustrative: eBay's sold/completed-listing API (Marketplace Insights) is restricted and closed to new applicants — see lib/ebay-browse.ts.
+
+### France (Vinted) — illustrative preview
+
+eBay.fr isn't a good fit for the French Pokémon TCG market, so the French market view is sourced from Vinted's own condition tiers instead of PSA grades. No known public Vinted API yet, so every row below is a clearly-marked preview, not real data.
+
+| Condition | Median price (illustrative) | Est. listings |
+| --- | --- | --- |
+${vintedRows}
+
+Search on Vinted: ${data.vinted.searchUrl}`;
 }
 
 /**

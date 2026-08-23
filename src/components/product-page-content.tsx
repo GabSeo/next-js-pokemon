@@ -8,6 +8,7 @@ import { PriceDataTabs } from "@/components/price-data-tabs";
 import { StructuredData } from "@/components/structured-data";
 import { ConditionFilterChips } from "@/components/retro/condition-filter-chips";
 import { GradedMarketPanel } from "@/components/retro/graded-market-panel";
+import type { MarketTab } from "@/components/retro/graded-market-tabs";
 import { IllustrativeTag } from "@/components/retro/illustrative-tag";
 import { InternationalPricesPanel } from "@/components/retro/international-prices-panel";
 import { PopulationPanel } from "@/components/retro/population-panel";
@@ -15,7 +16,6 @@ import { PsaTiltCard } from "@/components/retro/psa-tilt-card";
 import { TypeBadge } from "@/components/retro/type-badge";
 import { computeAlertBands } from "@/lib/cards";
 import { CARDMARKET_HOMEPAGE_URL } from "@/lib/cardmarket-search";
-import type { EbayLanguage } from "@/lib/ebay-browse";
 import type { Card } from "@/lib/types";
 
 /** `code` is a real ISO 3166-1 alpha-2 country code (e.g. "US", "FR", "JP") — used both as the visible label and, lowercased, to build the flag image URL below. */
@@ -54,8 +54,8 @@ type ProductPageContentProps = {
   okfHref: string;
   /** The visible "no orphan pages" cross-links between market variants (PLAN.md §4.3). Framed as *market* focus (US/FR/JP), not *language* — honest either way: /fr is real translated content, /ja isn't (see that route's own doc comment), but both are legitimately a different market's data for this card. */
   localeLinks: LocaleLink[];
-  /** Which Graded Market tab opens by default — English unless a locale page overrides it. */
-  defaultGradedMarketLanguage?: EbayLanguage;
+  /** Which Pokémon Market Overview tab opens by default — English unless a locale page overrides it. */
+  defaultMarketTab?: MarketTab;
   /** Omitted on the /ja workflow page: its content is identical to the English original, so it's meant to canonicalize back there rather than assert itself as separately-indexable content via schema.org. */
   structuredData?: { product: Record<string, unknown>; breadcrumb: Record<string, unknown>; faq: Record<string, unknown> };
 };
@@ -69,7 +69,7 @@ export function ProductPageContent({
   jsonHref,
   okfHref,
   localeLinks,
-  defaultGradedMarketLanguage,
+  defaultMarketTab,
   structuredData,
 }: ProductPageContentProps) {
   const bands = computeAlertBands(card.currentPrice);
@@ -219,7 +219,7 @@ export function ProductPageContent({
                   <InternationalPricesPanel card={card} />
                 </div>
 
-                <GradedMarketPanel card={card} defaultLanguage={defaultGradedMarketLanguage} />
+                <GradedMarketPanel card={card} defaultMarket={defaultMarketTab} />
 
                 <div>
                   <h3 className="mb-3 flex items-center gap-2 text-lg font-black tracking-[-0.45px]">📈 Raw Card Price History</h3>

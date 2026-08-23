@@ -1,7 +1,6 @@
-import { GradedMarketTabs, type ConditionEntry, type TypeSummary } from "@/components/retro/graded-market-tabs";
+import { GradedMarketTabs, type ConditionEntry, type MarketTab, type TypeSummary, type VintedConditionSummary, type VintedSummary } from "@/components/retro/graded-market-tabs";
 import { IllustrativeTag } from "@/components/retro/illustrative-tag";
-import type { EbayLanguage } from "@/lib/ebay-browse";
-import { getGradedMarketData, type GradedMarketTypeData } from "@/lib/graded-market";
+import { getGradedMarketData, type GradedMarketTypeData, type VintedConditionData } from "@/lib/graded-market";
 import type { Card } from "@/lib/types";
 
 /** One row, real or illustrative — real rows get a working per-item link, illustrative rows never do (see lib/illustrative.ts). */
@@ -41,6 +40,22 @@ function toTypeSummary(data: GradedMarketTypeData): TypeSummary {
   };
 }
 
+function toVintedConditionSummary(data: VintedConditionData): VintedConditionSummary {
+  return {
+    condition: data.condition,
+    avgLabel: `${data.currency} ${data.medianPrice.toLocaleString()}`,
+    count: data.count,
+    rowCount: data.rows.length,
+    rows: (
+      <div>
+        {data.rows.map((row, i) => (
+          <ListingRow key={i} date={row.date} description={row.description} price={row.price} currency={row.currency} url={row.url} />
+        ))}
+      </div>
+    ),
+  };
+}
+
 /**
  * One shared window: condition tabs (PSA 10/9/8/Raw) plus an active/sold
  * type toggle underneath — only one row-list is visible at a time, but all
@@ -54,7 +69,7 @@ function toTypeSummary(data: GradedMarketTypeData): TypeSummary {
  * component is purely presentational (JSX shaping), not a second place
  * fetch logic or the real/illustrative rules could live.
  */
-export async function GradedMarketPanel({ card, defaultLanguage }: { card: Card; defaultLanguage?: EbayLanguage }) {
+export async function GradedMarketPanel({ card, defaultMarket }: { card: Card; defaultMarket?: MarketTab }) {
   const data = await getGradedMarketData(card);
 
   const entries: ConditionEntry[] = data.conditions.map((c) => ({
@@ -67,16 +82,22 @@ export async function GradedMarketPanel({ card, defaultLanguage }: { card: Card;
     })),
   }));
 
+  const vinted: VintedSummary = {
+    isReal: data.vinted.isReal,
+    searchHref: data.vinted.searchUrl,
+    conditions: data.vinted.conditions.map(toVintedConditionSummary),
+  };
+
   const { roi } = data;
 
   return (
     <div className="rounded-lg border-2 border-black bg-card-surface p-6 shadow-hard-md">
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <span className="text-xs font-black tracking-[0.6px] text-pokemon-blue uppercase">🏅 Graded Market</span>
+        <span className="text-xs font-black tracking-[0.6px] text-pokemon-blue uppercase">📊 Pokémon Market Overview</span>
         <span className="h-px flex-1 bg-border-subtle" />
       </div>
 
-      <GradedMarketTabs entries={entries} defaultLanguage={defaultLanguage} />
+      <GradedMarketTabs entries={entries} vinted={vinted} defaultMarket={defaultMarket} />
 
       <div className="mt-5 rounded-md border-2 border-black bg-muted-surface p-4">
         <div className="mb-1 flex flex-wrap items-center gap-2 text-xs font-black tracking-[0.3px] text-muted-text uppercase">

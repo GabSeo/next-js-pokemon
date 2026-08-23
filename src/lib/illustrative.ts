@@ -137,3 +137,44 @@ export function illustrativeSoldListings(card: Card, condition: EbayConditionTie
   const total = 6 + Math.round(seedFraction(card.id, salt * 10 + 9) * 20);
   return { rows, total };
 }
+
+/**
+ * Vinted's own real condition vocabulary (its actual French-UI options,
+ * confirmed live at vinted.fr/help/50), not PSA grades and not a
+ * translation of them — Vinted listings are raw/ungraded peer-to-peer
+ * resale, a fundamentally different marketplace shape from eBay's graded
+ * market. "Neuf avec/sans étiquette" (new with/without tag) is Vinted's
+ * clothing-oriented top tier and doesn't fit how a card would realistically
+ * be listed, so it's left out here.
+ */
+export type VintedConditionTier = "Très bon état" | "Bon état" | "Satisfaisant";
+export const VINTED_CONDITIONS: VintedConditionTier[] = ["Très bon état", "Bon état", "Satisfaisant"];
+
+const VINTED_MULTIPLIER_RANGE: Record<VintedConditionTier, [number, number]> = {
+  "Très bon état": [0.75, 1.0],
+  "Bon état": [0.5, 0.75],
+  Satisfaisant: [0.3, 0.5],
+};
+const VINTED_SALT: Record<VintedConditionTier, number> = { "Très bon état": 41, "Bon état": 42, Satisfaisant: 43 };
+
+/**
+ * Illustrative Vinted listing rows — same placeholder-until-a-real-source
+ * pattern as illustrativeActiveListings above, but for a fundamentally
+ * different marketplace shape: no PSA grading, and no public "sold" feed
+ * the way eBay has, so there's only ever one set of rows per condition
+ * tier, not an active/sold split. Vinted has no public API today (as far
+ * as this project has confirmed) — this stays illustrative until a real
+ * data source or integration path is found.
+ */
+export function illustrativeVintedListings(card: Card, condition: VintedConditionTier): IllustrativeListingSet {
+  const base = card.currentPrice;
+  const [lo, hi] = VINTED_MULTIPLIER_RANGE[condition];
+  const salt = VINTED_SALT[condition];
+  const rows = [0, 1, 2].map((i) => ({
+    date: relativeDateLabel(i + Math.round(seedFraction(card.id, salt * 10 + i + 5) * 3)),
+    description: `${condition} · Vinted`,
+    price: Math.round(base * (lo + seedFraction(card.id, salt * 10 + i) * (hi - lo))),
+  }));
+  const total = 3 + Math.round(seedFraction(card.id, salt * 10 + 9) * 15);
+  return { rows, total };
+}
