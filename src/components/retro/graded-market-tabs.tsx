@@ -262,7 +262,7 @@ export function GradedMarketTabs({
             See all {selected.count} {type} listings ↗
           </a>
           <div className="mt-2 flex justify-end">
-            <span className="flex items-center gap-1.5 text-[10px] font-bold text-muted-text uppercase">
+            <span className="flex items-end gap-1.5 text-[10px] font-bold text-muted-text uppercase">
               Powered by
               {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, not an optimizable remote domain */}
               <img src={EBAY_LOGO_URL} alt="eBay" className="h-5 w-auto" />
@@ -378,7 +378,7 @@ export function GradedMarketTabs({
             Search on Vinted ↗
           </a>
           <div className="mt-2 flex justify-end">
-            <span className="flex items-center gap-1.5 text-[10px] font-bold text-muted-text uppercase">
+            <span className="flex items-end gap-1.5 text-[10px] font-bold text-muted-text uppercase">
               Powered by
               {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, not an optimizable remote domain */}
               <img src={VINTED_LOGO_URL} alt="Vinted" className="h-5 w-auto" />
