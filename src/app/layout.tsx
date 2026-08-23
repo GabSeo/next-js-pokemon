@@ -41,6 +41,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <StructuredData data={organizationJsonLd} />
         <link rel="ai-catalog" href={absoluteUrl("/.well-known/ai-catalog.json")} />
+        {/* Mirrors the rel="index" Link HTTP header set in next.config.ts — see its own comment on why this is a direct, one-hop pointer rather than routing through ai-catalog.json's documentationUrl field. */}
+        <link rel="index" href={absoluteUrl("/llms.txt")} />
       </head>
       <body className="min-h-full flex flex-col">
         <MasterballBg />
