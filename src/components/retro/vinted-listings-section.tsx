@@ -362,14 +362,28 @@ function ModelSignalPanel({ nameFull, bestDeal }: { nameFull: string; bestDeal?:
       <div className="mt-6 flex flex-wrap items-center gap-3.5">
         <button
           type="button"
-          className="inline-flex items-center gap-2.5 rounded-md border-2 border-pokemon-yellow bg-pokemon-yellow py-2.5 pr-[18px] pl-3 text-[13px] font-black tracking-[0.8px] text-foreground uppercase transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pokemon-yellow"
+          className="inline-flex items-center gap-2.5 rounded-md border-2 border-pokemon-yellow bg-pokemon-yellow px-[18px] py-2.5 text-[13px] font-black tracking-[0.8px] text-foreground uppercase transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pokemon-yellow"
           style={{ boxShadow: "4px 4px 0 0 rgba(255,205,5,.28)" }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, same convention as masterball-bg.tsx */}
-          <img src="/masterball.png" alt="" className="h-6 w-6 flex-none" />
-          Unlock with Premium <span aria-hidden="true">→</span>
+          Create an account to unlock Premium <span aria-hidden="true">→</span>
         </button>
-        <span className="text-[10px] font-bold tracking-[0.3px] text-[#8b8b8b] uppercase">{PREMIUM_TEASER_NOTICE}</span>
+        <span className="text-[10px] font-bold tracking-[0.3px] text-[#8b8b8b] uppercase">Track 5 cards for free</span>
+      </div>
+
+      <p className="mt-3 text-[9px] font-bold tracking-[0.2px] text-[#6b6b6b]">{PREMIUM_TEASER_NOTICE}</p>
+
+      {/* Mascot sign-off, bottom-right — purely decorative, never a stand-in for real content, so it comes after everything else and stays out of the flex rows above rather than risking an overlap with the CTA on a narrow card name. */}
+      <div className="mt-4 flex justify-end">
+        <div className="relative">
+          <span aria-hidden="true" className="absolute -inset-2 rounded-full bg-pokemon-yellow/20 blur-md" />
+          {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, animated GIF (next/image can't animate) */}
+          <img
+            src="/gengar.gif"
+            alt=""
+            className="relative h-16 w-16 [image-rendering:pixelated]"
+            style={{ filter: "drop-shadow(3px 3px 0 rgba(0,0,0,0.45))" }}
+          />
+        </div>
       </div>
     </div>
   );
