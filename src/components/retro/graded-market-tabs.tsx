@@ -215,7 +215,7 @@ export function GradedMarketTabs({
                 key={t}
                 type="button"
                 onClick={() => setType(t)}
-                className={`rounded-md border-2 border-black p-4 text-left transition-all duration-150 ${pressable(isSelected)} ${fillClass}`}
+                className={`rounded-md border-2 border-black p-5 text-left transition-all duration-150 ${pressable(isSelected)} ${fillClass}`}
               >
                 <div className={`mb-1.5 flex items-center gap-2 text-[11px] font-black tracking-[0.5px] uppercase ${labelClass}`}>
                   {t === "active" ? (
@@ -232,14 +232,9 @@ export function GradedMarketTabs({
           })}
         </div>
 
-        <div className="mb-1 flex items-center justify-between gap-3">
+        <div className="mb-1">
           <span className="text-[11px] font-black tracking-[0.5px] text-muted-text uppercase">
             {type === "active" ? "Active listings" : "Sold listings"} · {market}
-          </span>
-          <span className="flex items-center gap-1.5 text-[10px] font-bold text-muted-text uppercase">
-            Powered by
-            {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, not an optimizable remote domain */}
-            <img src={EBAY_LOGO_URL} alt="eBay" className="h-3.5 w-auto" />
           </span>
         </div>
 
@@ -255,14 +250,21 @@ export function GradedMarketTabs({
           )}
         </div>
 
-        <a
-          href={selected.seeAllHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-4 inline-flex items-center gap-1.5 rounded-md border-2 border-black bg-pokemon-red px-3.5 py-2 text-xs font-black tracking-[0.3px] text-white uppercase shadow-hard-sm transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-md"
-        >
-          See all {selected.count} {type} listings ↗
-        </a>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <a
+            href={selected.seeAllHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-md border-2 border-black bg-pokemon-red px-3.5 py-2 text-xs font-black tracking-[0.3px] text-white uppercase shadow-hard-sm transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-md"
+          >
+            See all {selected.count} {type} listings ↗
+          </a>
+          <span className="flex items-center gap-1.5 text-[10px] font-bold text-muted-text uppercase">
+            Powered by
+            {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, not an optimizable remote domain */}
+            <img src={EBAY_LOGO_URL} alt="eBay" className="h-3.5 w-auto" />
+          </span>
+        </div>
 
         {!selected.isReal && (
           <div className="mt-3">
@@ -271,7 +273,7 @@ export function GradedMarketTabs({
         )}
 
         <div className="mt-6 overflow-hidden rounded-md border-2 border-black bg-pokemon-yellow shadow-hard-md">
-          <div className="p-4">
+          <div className="p-5">
             <div className="mb-1 flex flex-wrap items-center gap-2 text-xs font-black tracking-[0.3px] text-[#5a4600] uppercase">
               Grading ROI — raw → PSA 10
               {!roi.isReal && <IllustrativeTag label="Preview — eBay not connected yet" />}
@@ -305,7 +307,7 @@ export function GradedMarketTabs({
           </span>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border-2 border-black bg-pokemon-blue p-4 shadow-hard-md">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border-2 border-black bg-pokemon-blue p-5 shadow-hard-md">
           <div>
             <div className="mb-1.5 text-[11px] font-black tracking-[0.5px] text-white/70 uppercase">
               Avg · last {vinted.rows.length} new listings
@@ -315,13 +317,8 @@ export function GradedMarketTabs({
           <div className="text-right text-[11px] font-bold text-white/70 uppercase">estimate, not real-time</div>
         </div>
 
-        <div className="mt-5 mb-1 flex items-center justify-between gap-3">
+        <div className="mt-5 mb-1">
           <span className="text-[11px] font-black tracking-[0.5px] text-muted-text uppercase">Newly listed</span>
-          <span className="flex items-center gap-1.5 text-[10px] font-bold text-muted-text uppercase">
-            Powered by
-            {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, not an optimizable remote domain */}
-            <img src={VINTED_LOGO_URL} alt="Vinted" className="h-3.5 w-auto" />
-          </span>
         </div>
 
         <div>
@@ -365,16 +362,23 @@ export function GradedMarketTabs({
           })}
         </div>
 
-        <a
-          href={vinted.searchHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-4 inline-flex items-center gap-1.5 rounded-md border-2 border-black bg-pokemon-red px-3.5 py-2 text-xs font-black tracking-[0.3px] text-white uppercase shadow-hard-sm transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-md"
-        >
-          Search on Vinted ↗
-        </a>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <a
+            href={vinted.searchHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-md border-2 border-black bg-pokemon-red px-3.5 py-2 text-xs font-black tracking-[0.3px] text-white uppercase shadow-hard-sm transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-md"
+          >
+            Search on Vinted ↗
+          </a>
+          <span className="flex items-center gap-1.5 text-[10px] font-bold text-muted-text uppercase">
+            Powered by
+            {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, not an optimizable remote domain */}
+            <img src={VINTED_LOGO_URL} alt="Vinted" className="h-3.5 w-auto" />
+          </span>
+        </div>
 
-        <div className="mt-5 rounded-md border-2 border-black p-4" style={{ backgroundColor: CHIP_COLORS.green.bg }}>
+        <div className="mt-5 rounded-md border-2 border-black p-5" style={{ backgroundColor: CHIP_COLORS.green.bg }}>
           <div className="mb-2 text-[11px] font-black tracking-[0.5px] uppercase" style={{ color: CHIP_COLORS.green.text }}>
             Deal density · last {vinted.totalCount} listings
           </div>
