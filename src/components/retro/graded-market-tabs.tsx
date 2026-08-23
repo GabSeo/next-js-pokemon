@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { IllustrativeTag } from "@/components/retro/illustrative-tag";
 import type { EbayCondition, EbayLanguage } from "@/lib/ebay-browse";
+import { EBAY_LOGO_URL, VINTED_LOGO_URL } from "@/lib/marketplace-logos";
 
 export type TypeSummary = {
   avgLabel: string;
@@ -26,20 +27,35 @@ export type ConditionEntry = {
   languages: LanguageEntry[];
 };
 
-/** One Vinted condition tier's summary — see lib/graded-market.ts's VintedConditionData. */
-export type VintedConditionSummary = {
-  condition: string;
-  avgLabel: string;
-  count: number;
-  rowCount: number;
-  rows: React.ReactNode;
+/** One "newly listed" feed row — see lib/graded-market.ts's VintedFeedRow. */
+export type VintedFeedRowSummary = {
+  timeAgo: string;
+  description: string;
+  priceLabel: string;
+  dealPct: number;
+  dealTier: "good" | "fair" | "high";
 };
 
 export type VintedSummary = {
   isReal: boolean;
   searchHref: string;
-  conditions: VintedConditionSummary[];
+  title: string;
+  avgLabel: string;
+  belowAverageCount: number;
+  totalCount: number;
+  rows: VintedFeedRowSummary[];
 };
+
+const DEAL_TIER_COLORS: Record<VintedFeedRowSummary["dealTier"], { bg: string; text: string }> = {
+  good: { bg: "#e9f8ee", text: "#1f9d55" },
+  fair: { bg: "#f4f5f8", text: "#6b7280" },
+  high: { bg: "#fbf1e3", text: "#a15c0c" },
+};
+
+function dealPctLabel(pct: number): string {
+  if (pct === 0) return "±0%";
+  return `${pct > 0 ? "+" : ""}${pct}%`;
+}
 
 /** A top-level market tab — the two real eBay-backed languages, plus France, which isn't eBay at all (see graded-market-tabs.tsx's file doc comment). */
 export type MarketTab = EbayLanguage | "France";
@@ -80,13 +96,11 @@ export function GradedMarketTabs({
 
   const [conditionId, setConditionId] = useState<EbayCondition>(entries[0].id);
   const [type, setType] = useState<ListingType>("active");
-  const [vintedConditionIdx, setVintedConditionIdx] = useState(0);
 
   const currentCondition = entries.find((e) => e.id === conditionId)!;
   const currentLanguage =
     currentCondition.languages.find((l) => l.language === market) ?? currentCondition.languages[0];
   const selected = currentLanguage[type];
-  const selectedVinted = vinted.conditions[vintedConditionIdx];
 
   return (
     <div>
@@ -142,7 +156,7 @@ export function GradedMarketTabs({
           ))}
         </div>
 
-        <div className="my-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="my-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
           {TYPES.map((t) => {
             const summary = currentLanguage[t];
             const isSelected = type === t;
@@ -174,12 +188,19 @@ export function GradedMarketTabs({
           })}
         </div>
 
-        <div className="mb-1 flex items-center justify-between">
+        <div className="mb-1 flex items-center justify-between gap-3">
           <span className="text-[11px] font-black tracking-[0.5px] text-muted-text uppercase">
             {type === "active" ? "Active listings" : "Sold listings"} · {market}
           </span>
-          <span className="text-[11px] font-black tracking-[0.5px] text-muted-text uppercase">
-            {selected.rowCount === 1 ? "1 listing" : `last ${selected.rowCount}`}
+          <span className="flex items-center gap-3">
+            <span className="flex items-center gap-1 text-[10px] font-bold text-muted-text uppercase">
+              via
+              {/* eslint-disable-next-line @next/next/no-img-element -- external CDN image, domain not allowlisted for next/image */}
+              <img src={EBAY_LOGO_URL} alt="eBay" className="h-[13px] w-auto opacity-70 grayscale" />
+            </span>
+            <span className="text-[11px] font-black tracking-[0.5px] text-muted-text uppercase">
+              {selected.rowCount === 1 ? "1 listing" : `last ${selected.rowCount}`}
+            </span>
           </span>
         </div>
 
@@ -212,46 +233,59 @@ export function GradedMarketTabs({
       </div>
 
       <div hidden={market !== "France"}>
-        <div role="tablist" aria-label="Vinted condition" className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {vinted.conditions.map((c, i) => {
-            const isSelected = i === vintedConditionIdx;
-            return (
-              <button
-                key={c.condition}
-                type="button"
-                role="tab"
-                aria-selected={isSelected}
-                onClick={() => setVintedConditionIdx(i)}
-                className={`rounded-md border-2 p-4 text-left transition-[transform,border-color,background-color] duration-150 hover:-translate-y-0.5 ${
-                  isSelected ? "border-pokemon-red bg-card-surface" : "border-border-subtle bg-muted-surface"
-                }`}
-              >
-                <div
-                  className={`mb-1.5 text-[11px] font-black tracking-[0.5px] uppercase ${isSelected ? "text-pokemon-red" : "text-muted-text"}`}
-                >
-                  {c.condition} <span className="font-bold text-[#9a9a9a] normal-case">({c.count})</span>
-                </div>
-                <div className={`text-2xl font-black tracking-[-0.6px] tabular-nums ${isSelected ? "text-foreground" : "text-[#9a9a9a]"}`}>
-                  {c.avgLabel}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="mt-5 mb-1 flex items-center justify-between">
-          <span className="text-[11px] font-black tracking-[0.5px] text-muted-text uppercase">Vinted listings · {selectedVinted.condition}</span>
-          <span className="text-[11px] font-black tracking-[0.5px] text-muted-text uppercase">
-            {selectedVinted.rowCount === 1 ? "1 listing" : `last ${selectedVinted.rowCount}`}
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+          <span className="text-sm font-black tracking-[0.2px]">Just listed — {vinted.title}</span>
+          {/* Not "Live": every number here is illustrative (no real Vinted
+              source yet) — a pulsing "Live" badge on fabricated data would
+              contradict every other real/illustrative signal on this site.
+              Same slot, honest label instead. */}
+          <span className="flex items-center gap-1.5 rounded-full bg-muted-surface px-2.5 py-1 text-[11px] font-black tracking-[0.3px] text-muted-text uppercase">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#9a9a9a]" />
+            Preview
           </span>
         </div>
 
-        <div className="min-h-[140px]">
-          {vinted.conditions.map((c, i) => (
-            <div key={c.condition} hidden={i !== vintedConditionIdx}>
-              {c.rows}
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border-2 border-black bg-muted-surface p-4">
+          <div>
+            <div className="mb-1.5 text-[11px] font-black tracking-[0.5px] text-muted-text uppercase">
+              Avg · last {vinted.rows.length} new listings
             </div>
-          ))}
+            <div className="text-3xl font-black tracking-[-0.6px] tabular-nums">
+              {vinted.avgLabel}
+            </div>
+          </div>
+          <div className="text-right text-[11px] font-bold text-muted-text uppercase">estimate, not real-time</div>
+        </div>
+
+        <div className="mt-5 mb-1 flex items-center justify-between gap-3">
+          <span className="text-[11px] font-black tracking-[0.5px] text-muted-text uppercase">Newly listed</span>
+          <span className="flex items-center gap-1 text-[10px] font-bold text-muted-text uppercase">
+            via
+            {/* eslint-disable-next-line @next/next/no-img-element -- external CDN image, domain not allowlisted for next/image */}
+            <img src={VINTED_LOGO_URL} alt="Vinted" className="h-[13px] w-auto opacity-70 grayscale" />
+          </span>
+        </div>
+
+        <div>
+          {vinted.rows.map((row, i) => {
+            const colors = DEAL_TIER_COLORS[row.dealTier];
+            return (
+              <div
+                key={i}
+                className="grid grid-cols-[52px_1fr_auto_auto] items-center gap-3 border-t border-dashed border-border-subtle py-3 text-sm first:border-t-0"
+              >
+                <span className="text-xs font-bold text-muted-text">{row.timeAgo}</span>
+                <span className="truncate font-bold">{row.description}</span>
+                <span
+                  className="rounded-full px-2 py-0.5 text-[11px] font-black tabular-nums"
+                  style={{ backgroundColor: colors.bg, color: colors.text }}
+                >
+                  {dealPctLabel(row.dealPct)}
+                </span>
+                <span className="font-black tabular-nums">{row.priceLabel}</span>
+              </div>
+            );
+          })}
         </div>
 
         <a
@@ -263,11 +297,25 @@ export function GradedMarketTabs({
           Search on Vinted ↗
         </a>
 
-        {!vinted.isReal && (
-          <div className="mt-3">
-            <IllustrativeTag label="Preview — Vinted not connected yet" />
+        <div className="mt-5 rounded-md border-2 border-black bg-muted-surface p-4">
+          <div className="mb-2 text-[11px] font-black tracking-[0.5px] text-muted-text uppercase">Deal density · last {vinted.totalCount} listings</div>
+          <div className="mb-2.5 h-2 overflow-hidden rounded-full border border-black bg-white">
+            <span
+              className="block h-full bg-success-green"
+              style={{ width: `${Math.round((vinted.belowAverageCount / vinted.totalCount) * 100)}%` }}
+            />
           </div>
-        )}
+          <p className="text-xs font-bold text-muted-text">
+            <span className="text-foreground">
+              {vinted.belowAverageCount} of {vinted.totalCount}
+            </span>{" "}
+            listings priced below the rolling average.
+          </p>
+        </div>
+
+        <div className="mt-3">
+          <IllustrativeTag label="Preview — Vinted not connected yet" />
+        </div>
       </div>
     </div>
   );

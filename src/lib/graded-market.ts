@@ -1,12 +1,6 @@
 import { conditionSearchLink } from "@/lib/ebay-search";
 import { searchActiveListings, type EbayCondition, type EbayLanguage } from "@/lib/ebay-browse";
-import {
-  illustrativeActiveListings,
-  illustrativeSoldListings,
-  illustrativeVintedListings,
-  VINTED_CONDITIONS,
-  type VintedConditionTier,
-} from "@/lib/illustrative";
+import { illustrativeActiveListings, illustrativeSoldListings, illustrativeVintedFeed } from "@/lib/illustrative";
 import { DEFAULT_PSA_GRADING_COST_USD, gradingRoi, median } from "@/lib/roi";
 import { getLocalizedName } from "@/lib/tcgdex";
 import { vintedSearchLink } from "@/lib/vinted-search";
@@ -61,20 +55,30 @@ export type GradedMarketRoi = {
   currency: string;
 };
 
-export type VintedConditionData = {
-  condition: VintedConditionTier;
-  medianPrice: number;
+export type VintedDealTier = "good" | "fair" | "high";
+
+export type VintedFeedRow = {
+  timeAgo: string;
+  description: string;
+  price: number;
   currency: string;
-  count: number;
-  rows: GradedMarketListingRow[];
+  /** Signed percent vs. this card's rolling average across the feed (see VintedMarketData.avgPrice) — negative means priced below average. */
+  dealPct: number;
+  dealTier: VintedDealTier;
 };
 
 export type VintedMarketData = {
-  /** Always false today — Vinted has no known public API (that's the next thing to go find), so this is illustrative-only, same shape as illustrativeVintedListings' own doc comment. */
+  /** Always false today — Vinted has no known public API (that's the next thing to go find), so this is illustrative-only, same shape as illustrativeVintedFeed's own doc comment. */
   isReal: boolean;
   /** Real, working vinted.fr search-results link (see lib/vinted-search.ts) — not itemized data, but a real place to click through to regardless of the illustrative numbers above it. */
   searchUrl: string;
-  conditions: VintedConditionData[];
+  /** Real French name + number when TCGdex has a match, English otherwise — same string used to build searchUrl and every feed row's description. */
+  title: string;
+  avgPrice: number;
+  currency: string;
+  rows: VintedFeedRow[];
+  /** How many of `rows` are priced below `avgPrice` — a real, derived stat even though the prices it's derived from are illustrative (same honesty shape as the ROI percent below, which is real math over possibly-illustrative inputs). */
+  belowAverageCount: number;
 };
 
 export type GradedMarketData = {
@@ -161,22 +165,47 @@ function buildSoldTier(card: Card, condition: EbayCondition, language: EbayLangu
  * English name if no French match exists (One Piece, or an unmatched
  * Pokémon card) so the search link is always at least usable.
  */
+// A listing more than 8% below the feed's own rolling average reads as a
+// good deal, more than 8% above reads as pricey, everything in between is
+// unremarkable — thresholds are a judgment call, not derived from anything,
+// same as the codebase's other illustrative-tuning constants.
+const VINTED_DEAL_THRESHOLD_PCT = 8;
+
+function vintedDealTier(deltaPct: number): VintedDealTier {
+  if (deltaPct <= -VINTED_DEAL_THRESHOLD_PCT) return "good";
+  if (deltaPct >= VINTED_DEAL_THRESHOLD_PCT) return "high";
+  return "fair";
+}
+
 async function buildVintedMarket(card: Card): Promise<VintedMarketData> {
   const frenchName = card.tcgdexId ? await getLocalizedName(card.tcgdexId, "fr").catch(() => undefined) : undefined;
-  const query = frenchName ? `${frenchName} ${card.number ?? ""}`.trim() : `${card.name} ${card.number ?? ""}`.trim();
+  const displayName = frenchName ?? card.name;
+  const query = `${displayName} ${card.number ?? ""}`.trim();
 
-  const conditions: VintedConditionData[] = VINTED_CONDITIONS.map((condition) => {
-    const { rows, total } = illustrativeVintedListings(card, condition);
+  const feed = illustrativeVintedFeed(card, displayName);
+  const avgPrice = Math.round(feed.reduce((sum, r) => sum + r.price, 0) / feed.length);
+
+  const rows: VintedFeedRow[] = feed.map((r) => {
+    const dealPct = Math.round(((r.price - avgPrice) / avgPrice) * 100);
     return {
-      condition,
-      medianPrice: median(rows.map((r) => r.price))!,
+      timeAgo: r.minutesAgo === 0 ? "now" : `${r.minutesAgo} min`,
+      description: r.description,
+      price: r.price,
       currency: card.currency,
-      count: total,
-      rows: rows.map((row) => ({ ...row, currency: card.currency })),
+      dealPct,
+      dealTier: vintedDealTier(dealPct),
     };
   });
 
-  return { isReal: false, searchUrl: vintedSearchLink(query), conditions };
+  return {
+    isReal: false,
+    searchUrl: vintedSearchLink(query),
+    title: query,
+    avgPrice,
+    currency: card.currency,
+    rows,
+    belowAverageCount: feed.filter((r) => r.price < avgPrice).length,
+  };
 }
 
 /**

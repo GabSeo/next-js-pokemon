@@ -145,36 +145,49 @@ export function illustrativeSoldListings(card: Card, condition: EbayConditionTie
  * resale, a fundamentally different marketplace shape from eBay's graded
  * market. "Neuf avec/sans étiquette" (new with/without tag) is Vinted's
  * clothing-oriented top tier and doesn't fit how a card would realistically
- * be listed, so it's left out here.
+ * be listed, so it's left out here. Used only as flavor text inside each
+ * feed row's description below — Vinted has no grading system to build a
+ * tab structure around the way PSA does.
  */
-export type VintedConditionTier = "Très bon état" | "Bon état" | "Satisfaisant";
-export const VINTED_CONDITIONS: VintedConditionTier[] = ["Très bon état", "Bon état", "Satisfaisant"];
+const VINTED_CONDITIONS = ["Très bon état", "Bon état", "Satisfaisant"] as const;
 
-const VINTED_MULTIPLIER_RANGE: Record<VintedConditionTier, [number, number]> = {
-  "Très bon état": [0.75, 1.0],
-  "Bon état": [0.5, 0.75],
-  Satisfaisant: [0.3, 0.5],
+export type VintedFeedListing = {
+  minutesAgo: number;
+  description: string;
+  price: number;
 };
-const VINTED_SALT: Record<VintedConditionTier, number> = { "Très bon état": 41, "Bon état": 42, Satisfaisant: 43 };
+
+// Fixed recency spread (not random) so the feed always reads newest-first
+// with a believable, increasing gap — matches how a real "just listed"
+// feed would look, without needing wall-clock state.
+const VINTED_MINUTES_AGO = [0, 4, 11, 19, 27, 38];
 
 /**
- * Illustrative Vinted listing rows — same placeholder-until-a-real-source
- * pattern as illustrativeActiveListings above, but for a fundamentally
- * different marketplace shape: no PSA grading, and no public "sold" feed
- * the way eBay has, so there's only ever one set of rows per condition
- * tier, not an active/sold split. Vinted has no public API today (as far
- * as this project has confirmed) — this stays illustrative until a real
- * data source or integration path is found.
+ * Illustrative "newly listed" feed — same placeholder-until-a-real-source
+ * pattern as illustrativeActiveListings above, but shaped for a
+ * fundamentally different marketplace: no PSA grading, no active/sold
+ * split (Vinted has no public "sold" feed the way eBay does), just a
+ * single rolling list of recent listings a buyer would actually scroll
+ * through. Price spread is wider and skews lower than eBay's graded tiers
+ * (0.5x-1.15x of the real current price) — casual peer-to-peer resale
+ * genuinely prices lower and more inconsistently than a curated/graded
+ * market. `displayName` lets the caller pass the real French card name
+ * (via card.tcgdexId) instead of the English one — a French marketplace's
+ * listings should read in French, illustrative price or not.
+ *
+ * Vinted has no known public API today (that's the next thing to go find)
+ * — this stays illustrative until a real data source or integration path
+ * is found.
  */
-export function illustrativeVintedListings(card: Card, condition: VintedConditionTier): IllustrativeListingSet {
+export function illustrativeVintedFeed(card: Card, displayName: string): VintedFeedListing[] {
   const base = card.currentPrice;
-  const [lo, hi] = VINTED_MULTIPLIER_RANGE[condition];
-  const salt = VINTED_SALT[condition];
-  const rows = [0, 1, 2].map((i) => ({
-    date: relativeDateLabel(i + Math.round(seedFraction(card.id, salt * 10 + i + 5) * 3)),
-    description: `${condition} · Vinted`,
-    price: Math.round(base * (lo + seedFraction(card.id, salt * 10 + i) * (hi - lo))),
-  }));
-  const total = 3 + Math.round(seedFraction(card.id, salt * 10 + 9) * 15);
-  return { rows, total };
+  return VINTED_MINUTES_AGO.map((minutesAgo, i) => {
+    const condition = VINTED_CONDITIONS[Math.floor(seedFraction(card.id, 50 + i) * VINTED_CONDITIONS.length)];
+    const multiplier = 0.5 + seedFraction(card.id, 60 + i) * 0.65;
+    return {
+      minutesAgo,
+      description: `${displayName} · ${condition}`,
+      price: Math.round(base * multiplier),
+    };
+  });
 }

@@ -28,7 +28,7 @@ export const MCP_TOOLS = [
   {
     name: "get_graded_market",
     description:
-      "Get Pokémon market overview data for a card. Two parts: (1) eBay-backed data by condition tier (PSA 10, PSA 9, PSA 8, Raw) and market (English, Japanese) — up to 4 real active listings (fewer for rare cards where quality-filtered results are sparse) and their median per condition/market (falls back to a clearly-marked illustrative preview if eBay isn't reachable), illustrative sold-listing estimates (eBay's sold-data API is restricted and unavailable), and a grading ROI estimate (raw -> PSA 10) computed from English active-listing medians only; (2) an always-illustrative French market view sourced from Vinted's own condition tiers (Très bon état, Bon état, Satisfaisant) instead of PSA grades — eBay.fr isn't a good fit for this market, so French never goes through eBay.",
+      "Get Pokémon market overview data for a card. Two parts: (1) eBay-backed data by condition tier (PSA 10, PSA 9, PSA 8, Raw) and market (English, Japanese) — up to 4 real active listings (fewer for rare cards where quality-filtered results are sparse) and their median per condition/market (falls back to a clearly-marked illustrative preview if eBay isn't reachable), illustrative sold-listing estimates (eBay's sold-data API is restricted and unavailable), and a grading ROI estimate (raw -> PSA 10) computed from English active-listing medians only; (2) an always-illustrative French market view: a simulated Vinted 'newly listed' feed (no PSA grades, no active/sold split — Vinted has neither) with a rolling average and a per-listing deal rating (good/fair/high) relative to it — eBay.fr isn't a good fit for this market, so French never goes through eBay.",
   },
 ] as const;
 

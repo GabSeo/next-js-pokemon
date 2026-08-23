@@ -32,8 +32,8 @@ async function gradedMarketMarkdown(card: Card): Promise<string> {
   const { roi } = data;
   const roiSource = roi.isReal ? "real active listings, English" : "preview numbers, eBay not connected yet";
 
-  const vintedRows = data.vinted.conditions
-    .map((c) => `| ${c.condition} | ${c.currency} ${c.medianPrice} | ${c.count} est. |`)
+  const vintedRows = data.vinted.rows
+    .map((r) => `| ${r.timeAgo} | ${r.description} | ${r.currency} ${r.price} | ${r.dealPct > 0 ? "+" : ""}${r.dealPct}% (${r.dealTier}) |`)
     .join("\n");
 
   return `## Pokémon market overview
@@ -48,12 +48,12 @@ Grading ROI, raw → PSA 10: ${roi.percent >= 0 ? "+" : ""}${roi.percent.toFixed
 
 Sold data is always illustrative: eBay's sold/completed-listing API (Marketplace Insights) is restricted and closed to new applicants — see lib/ebay-browse.ts.
 
-### France (Vinted) — illustrative preview
+### France (Vinted) — illustrative "newly listed" preview
 
-eBay.fr isn't a good fit for the French Pokémon TCG market, so the French market view is sourced from Vinted's own condition tiers instead of PSA grades. No known public Vinted API yet, so every row below is a clearly-marked preview, not real data.
+eBay.fr isn't a good fit for the French Pokémon TCG market, so the French market view is a simulated Vinted listing feed instead of PSA grades — no active/sold split, no known public Vinted API yet, so every row below is a clearly-marked preview, not real data. Average: ${data.vinted.currency} ${data.vinted.avgPrice} across the last ${data.vinted.rows.length} listings; ${data.vinted.belowAverageCount} of them priced below that average.
 
-| Condition | Median price (illustrative) | Est. listings |
-| --- | --- | --- |
+| Listed | Description | Price | vs. average |
+| --- | --- | --- | --- |
 ${vintedRows}
 
 Search on Vinted: ${data.vinted.searchUrl}`;

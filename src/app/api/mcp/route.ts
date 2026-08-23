@@ -192,17 +192,22 @@ const handler = createMcpHandler((server) => {
     sold: gradedMarketTypeSchema,
   });
 
-  const vintedConditionSchema = z.object({
-    condition: z.enum(["Très bon état", "Bon état", "Satisfaisant"]),
-    medianPrice: z.number(),
+  const vintedFeedRowSchema = z.object({
+    timeAgo: z.string(),
+    description: z.string(),
+    price: z.number(),
     currency: z.string(),
-    count: z.number(),
-    rows: z.array(gradedMarketListingSchema),
+    dealPct: z.number(),
+    dealTier: z.enum(["good", "fair", "high"]),
   });
   const vintedMarketSchema = z.object({
     isReal: z.boolean(),
     searchUrl: z.string(),
-    conditions: z.array(vintedConditionSchema),
+    title: z.string(),
+    avgPrice: z.number(),
+    currency: z.string(),
+    rows: z.array(vintedFeedRowSchema),
+    belowAverageCount: z.number(),
   });
 
   server.registerTool(
@@ -247,7 +252,6 @@ const handler = createMcpHandler((server) => {
       }
       const data = await getGradedMarketData(card);
       const psa10English = data.conditions.find((c) => c.condition === "PSA 10")!.languages.find((l) => l.language === "English")!;
-      const vintedBest = data.vinted.conditions[0];
       return {
         content: [
           {
@@ -256,7 +260,7 @@ const handler = createMcpHandler((server) => {
               psa10English.active.isReal ? "real, eBay" : "preview, eBay not connected"
             }, English). Grading ROI raw -> PSA 10: ${data.roi.percent >= 0 ? "+" : ""}${data.roi.percent.toFixed(0)}% (${
               data.roi.isReal ? "real" : "preview"
-            }). France/Vinted, ${vintedBest.condition}: ${vintedBest.currency} ${vintedBest.medianPrice} (preview, Vinted not connected).`,
+            }). France/Vinted, avg of last ${data.vinted.rows.length} listings: ${data.vinted.currency} ${data.vinted.avgPrice} (preview, Vinted not connected).`,
           },
         ],
         structuredContent: { found: true, conditions: data.conditions, roi: data.roi, vinted: data.vinted },

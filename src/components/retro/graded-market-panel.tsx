@@ -1,12 +1,12 @@
-import { GradedMarketTabs, type ConditionEntry, type MarketTab, type TypeSummary, type VintedConditionSummary, type VintedSummary } from "@/components/retro/graded-market-tabs";
+import { GradedMarketTabs, type ConditionEntry, type MarketTab, type TypeSummary, type VintedSummary } from "@/components/retro/graded-market-tabs";
 import { IllustrativeTag } from "@/components/retro/illustrative-tag";
-import { getGradedMarketData, type GradedMarketTypeData, type VintedConditionData } from "@/lib/graded-market";
+import { getGradedMarketData, type GradedMarketTypeData } from "@/lib/graded-market";
 import type { Card } from "@/lib/types";
 
 /** One row, real or illustrative — real rows get a working per-item link, illustrative rows never do (see lib/illustrative.ts). */
 function ListingRow({ date, description, price, currency, url }: { date: string; description: string; price: number; currency: string; url?: string }) {
   return (
-    <div className="grid grid-cols-[76px_1fr_auto_20px] items-center gap-3 border-t border-dashed border-border-subtle py-2.5 text-sm first:border-t-0">
+    <div className="grid grid-cols-[76px_1fr_auto_20px] items-center gap-3 border-t border-dashed border-border-subtle py-3 text-sm first:border-t-0">
       <span className="text-xs font-bold text-muted-text">{date}</span>
       <span className="truncate font-bold">{description}</span>
       <span className="font-black tabular-nums">
@@ -34,22 +34,6 @@ function toTypeSummary(data: GradedMarketTypeData): TypeSummary {
       <div>
         {data.rows.map((row, i) => (
           <ListingRow key={row.url ?? i} date={row.date} description={row.description} price={row.price} currency={row.currency} url={row.url} />
-        ))}
-      </div>
-    ),
-  };
-}
-
-function toVintedConditionSummary(data: VintedConditionData): VintedConditionSummary {
-  return {
-    condition: data.condition,
-    avgLabel: `${data.currency} ${data.medianPrice.toLocaleString()}`,
-    count: data.count,
-    rowCount: data.rows.length,
-    rows: (
-      <div>
-        {data.rows.map((row, i) => (
-          <ListingRow key={i} date={row.date} description={row.description} price={row.price} currency={row.currency} url={row.url} />
         ))}
       </div>
     ),
@@ -85,21 +69,31 @@ export async function GradedMarketPanel({ card, defaultMarket }: { card: Card; d
   const vinted: VintedSummary = {
     isReal: data.vinted.isReal,
     searchHref: data.vinted.searchUrl,
-    conditions: data.vinted.conditions.map(toVintedConditionSummary),
+    title: data.vinted.title,
+    avgLabel: `${data.vinted.currency} ${data.vinted.avgPrice.toLocaleString()}`,
+    belowAverageCount: data.vinted.belowAverageCount,
+    totalCount: data.vinted.rows.length,
+    rows: data.vinted.rows.map((row) => ({
+      timeAgo: row.timeAgo,
+      description: row.description,
+      priceLabel: `${row.currency} ${row.price.toLocaleString()}`,
+      dealPct: row.dealPct,
+      dealTier: row.dealTier,
+    })),
   };
 
   const { roi } = data;
 
   return (
-    <div className="rounded-lg border-2 border-black bg-card-surface p-6 shadow-hard-md">
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+    <div className="rounded-lg border-2 border-black bg-card-surface p-7 shadow-hard-md">
+      <div className="mb-5 flex flex-wrap items-center gap-2">
         <span className="text-xs font-black tracking-[0.6px] text-pokemon-blue uppercase">📊 Pokémon Market Overview</span>
         <span className="h-px flex-1 bg-border-subtle" />
       </div>
 
       <GradedMarketTabs entries={entries} vinted={vinted} defaultMarket={defaultMarket} />
 
-      <div className="mt-5 rounded-md border-2 border-black bg-muted-surface p-4">
+      <div className="mt-6 rounded-md border-2 border-black bg-muted-surface p-4">
         <div className="mb-1 flex flex-wrap items-center gap-2 text-xs font-black tracking-[0.3px] text-muted-text uppercase">
           Grading ROI — raw → PSA 10
           {!roi.isReal && <IllustrativeTag label="Preview — eBay not connected yet" />}
