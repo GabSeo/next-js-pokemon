@@ -474,6 +474,42 @@ const DISPLAY_LIMIT = VINTED_RESULTS_PER_CARD;
  * token request). That's what keeps a six-card build well inside the
  * documented 2 req/s cap on /v1/results.
  */
+/**
+ * Every raw row that survives toVintedListing, card-agnostic. Split out
+ * because the run is read ONCE for the whole feed and then narrowed per
+ * card: parsing is the shared half, matching is the per-card half.
+ */
+export function parseVintedRows(rows: Record<string, unknown>[]): VintedListing[] {
+  return rows.map(toVintedListing).filter((listing): listing is VintedListing => listing !== null);
+}
+
+/**
+ * The listings one card actually shows: matched, de-duplicated, newest
+ * first, capped at DISPLAY_LIMIT.
+ *
+ * Pure and exported on purpose. It is the step that decides how many rows a
+ * product page renders, and the step most likely to be wrong (too strict
+ * empties a card, too loose puts an evening dress in a Pokémon feed) — so
+ * it has to be runnable against a saved Lobstr export offline, without an
+ * API key. The render path and ?debug=1 both call this exact function, so a
+ * count checked against a real export is the count the page will show.
+ */
+export function selectVintedListings(listings: VintedListing[], displayName: string, searchUrl: string): VintedListing[] {
+  const matched = listings.filter((listing) => rowMatchesCard(listing, displayName, searchUrl));
+  // The same listing can appear on more than one scraped page of a search;
+  // the item URL is its identity.
+  const deduped = [...new Map(matched.map((listing) => [listing.url, listing])).values()];
+  // Newest first, by when the listing was posted — but Lobstr's Vinted rows
+  // carry no posting date in practice, only a `scraping time`, so fall back
+  // to that. It matters more than it looks: if /v1/results ever accumulates
+  // across runs (a squid keeps its history, and run-scoped reads are not
+  // available on this plan), the most recently collected rows are the ones
+  // that should win the DISPLAY_LIMIT slots rather than whichever order the
+  // API happened to return.
+  deduped.sort((a, b) => (b.listedAtMs ?? b.collectedAtMs ?? 0) - (a.listedAtMs ?? a.collectedAtMs ?? 0));
+  return deduped.slice(0, DISPLAY_LIMIT);
+}
+
 export async function getVintedListingsForCard(card: Card, displayName: string, searchUrl: string): Promise<VintedListing[]> {
   if (!hasLobstrCredentials()) return [];
 
@@ -488,17 +524,7 @@ export async function getVintedListingsForCard(card: Card, displayName: string, 
     // silently — an unfound run and a genuinely empty market render
     // identically.
     const { rows } = await resolveVintedResults(squid, pinnedRun);
-
-    const listings = rows
-      .map(toVintedListing)
-      .filter((listing): listing is VintedListing => listing !== null)
-      .filter((listing) => rowMatchesCard(listing, displayName, searchUrl));
-
-    // The same listing can appear on more than one scraped page of a
-    // search; the item URL is its identity.
-    const deduped = [...new Map(listings.map((listing) => [listing.url, listing])).values()];
-    deduped.sort((a, b) => (b.listedAtMs ?? 0) - (a.listedAtMs ?? 0));
-    return deduped.slice(0, DISPLAY_LIMIT);
+    return selectVintedListings(parseVintedRows(rows), displayName, searchUrl);
   } catch (err) {
     console.error(`[lobstr] failed to read Vinted results for ${card.id}:`, err);
     return [];
@@ -590,10 +616,10 @@ export async function diagnoseVintedRead(
     tally[classifyRow(row)]++;
     if (readString(normalizedRow(row), FIELD_ALIASES.condition) === undefined) missingConditionField++;
   }
-  const parsed = rows.map(toVintedListing).filter((l): l is VintedListing => l !== null);
+  const parsed = parseVintedRows(rows);
 
   const perCard = cards.map((card) => {
-    const matched = parsed.filter((listing) => rowMatchesCard(listing, card.displayName, card.searchUrl));
+    const matched = selectVintedListings(parsed, card.displayName, card.searchUrl);
     return {
       slug: card.slug,
       displayName: card.displayName,

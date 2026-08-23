@@ -179,3 +179,47 @@ Two smaller unverified spots, both marked in the code and both failing soft (the
 Documented per-endpoint caps: `/v1/squids` 120/min, `/v1/tasks` 90/min, `/v1/results` **2/sec**. Responses carry `X-RateLimit-Remaining` and `Retry-After`, and `lobstr.ts` includes both in its error text so a 429 reads as "back off" rather than as a generic failure.
 
 The read path caches results for 30 minutes and run listings for 5, which keeps product pages statically renderable and well clear of the results cap under real traffic.
+
+## Reading results: the page-size trap
+
+Results come back as structured JSON from `GET /v1/results`. That is the right
+endpoint and the only one this integration needs — no CSV download link, no
+push delivery to Sheets/S3.
+
+What is *not* obvious is how to page it, and getting it wrong has now broken
+the feed in both directions:
+
+| `limit` | What production returned |
+| --- | --- |
+| *(omitted — defaults to 10)* | `200` with 10 rows of 30, plus a soft `warning` field: "Export limit reached - only 30 results returned" |
+| `100` | `400 ExportLimitReached` — **zero rows**, no data at all |
+
+So the free plan's export ceiling is enforced on the **request**, not on the
+response. Ask for a page bigger than the plan allows and you get nothing
+back, not "as much as we can give you". Reading one default page, meanwhile,
+silently returns a third of the run — split across three cards, that leaves
+every card missing two thirds of its listings with nothing to indicate it.
+
+`fetchAllResults` therefore walks a **ladder of page sizes** (`RESULTS_PAGE_SIZES`,
+currently `[30, 10]`): it asks for the largest page that should hold a whole
+free-tier run in one request, and if the server rejects that as too large it
+drops to the size production has already proven and pages through with `next`.
+An untested page size can then only ever cost one extra request instead of the
+whole feed. Failures on a *later* page are swallowed rather than thrown — the
+earlier pages already arrived, and the export ceiling is exactly the sort of
+thing that lets you read page 1 and refuses page 2. `?debug=1` reports
+`pagesRead` alongside the row count so a short read is visible instead of
+looking like a small market.
+
+**Open question, and the reason run-scoped reads are worth revisiting.** The
+read is scoped by squid (`/v1/results?squid=<hash>`), because run discovery is
+dead on this plan: `/v1/squids/<hash>/runs` answers `404` and
+`/v1/runs?squid=<hash>` answers with an empty list. A squid accumulates runs,
+so once a second collection lands there will be 60 results behind that one
+squid and a 30-result ceiling in front of them. Whether the ceiling then hands
+back the newest 30 or the oldest 30 is not documented and cannot be determined
+until a second run exists. If it turns out to be the oldest, the fix is to
+scope the read to a run — which means persisting the run hash the collection
+route already receives in its POST response, since it cannot be discovered
+afterwards. Until then, `selectVintedListings` sorts by collection time so the
+most recently scraped rows win the display slots whatever order the API uses.
