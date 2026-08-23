@@ -23,7 +23,7 @@ Beyond the condition filter, two classes of row never reach the panel:
 
 **Listings that aren't this card.** Vinted pads a thin search with unrelated stock — the Ectoplasma VMAX search returned an evening dress and a pair of jeans, both carrying a valid `Très bon état` and the right task URL. A row must also mention the card's name, and must not state a *different* collector number (which is what separated a real 186/195 Lugia from a 138/195 World Championships print).
 
-The reference price is then a **median**, as a further guard against outliers nobody has characterised yet. That also matches the eBay half of the same panel, which has always used `median()`.
+With those gone, the reference price is a plain **arithmetic mean** — every remaining row is a real asking price, so an average is what it claims to be. (It was briefly a median, while the hidden auctions were still in the sample. Filtering the cause beat damping the symptom.) If an outlier class turns up that can't be characterised and excluded, `median()` from `lib/roi.ts` is one line away.
 
 ## The URL being scraped
 

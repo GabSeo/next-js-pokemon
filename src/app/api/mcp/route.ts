@@ -208,10 +208,10 @@ const handler = createMcpHandler((server) => {
     searchUrl: z.string().describe("Unfiltered Vinted search for this card — shows all conditions, unlike rows below."),
     title: z.string(),
     imageUrl: z.string().optional(),
-    typicalPrice: z.number().describe("Median asking price across the listings — median, not mean, so one placeholder listing cannot drag it below every real price."),
+    avgPrice: z.number().describe("Mean asking price across the listings. A true average: 1 EUR hidden-auction listings are excluded before it is computed."),
     currency: z.string(),
     rows: z.array(vintedFeedRowSchema),
-    belowTypicalCount: z.number(),
+    belowAverageCount: z.number(),
     conditionFilter: z.string().describe("The single condition every row is filtered to: \"Tr\u00e8s bon \u00e9tat\"."),
   });
 
@@ -265,7 +265,7 @@ const handler = createMcpHandler((server) => {
               psa10English.active.isReal ? "real, eBay" : "preview, eBay not connected"
             }, English). Grading ROI raw -> PSA 10: ${data.roi.percent >= 0 ? "+" : ""}${data.roi.percent.toFixed(0)}% (${
               data.roi.isReal ? "real" : "preview"
-            }). France/Vinted (${data.vinted.conditionFilter} only), median of ${data.vinted.rows.length} listings: ${data.vinted.currency} ${data.vinted.typicalPrice} (${
+            }). France/Vinted (${data.vinted.conditionFilter} only), avg of ${data.vinted.rows.length} listings: ${data.vinted.currency} ${data.vinted.avgPrice} (${
               data.vinted.isReal ? "real, scraped via Lobstr" : "preview, no scraped listings yet"
             }).`,
           },

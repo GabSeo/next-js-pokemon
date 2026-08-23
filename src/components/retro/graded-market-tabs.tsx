@@ -49,9 +49,9 @@ export type VintedSummary = {
   searchHref: string;
   title: string;
   imageUrl?: string;
-  /** The feed's MEDIAN asking price, already formatted — median rather than mean, for outliers that get past the upstream hidden-auction filter. */
-  typicalLabel: string;
-  belowTypicalCount: number;
+  /** The feed's mean asking price, already formatted. A true average — 1 EUR hidden auctions are excluded upstream, so nothing in the sample distorts it. */
+  avgLabel: string;
+  belowAverageCount: number;
   totalCount: number;
   rows: VintedFeedRowSummary[];
   /** The one condition every row is filtered to — see lib/vinted-listings.ts. Stated on screen, not just applied, so the feed's sparseness reads as deliberate. */
@@ -347,9 +347,9 @@ export function GradedMarketTabs({
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border-2 border-black bg-pokemon-blue p-5 shadow-hard-md">
           <div>
             <div className="mb-1.5 text-[11px] font-black tracking-[0.5px] text-white/70 uppercase">
-              Median · {vinted.rows.length} listings
+              Avg · {vinted.rows.length} listings
             </div>
-            <div className="text-3xl font-black tracking-[-0.6px] text-white tabular-nums">{vinted.typicalLabel}</div>
+            <div className="text-3xl font-black tracking-[-0.6px] text-white tabular-nums">{vinted.avgLabel}</div>
           </div>
           <div className="text-right text-[11px] font-bold text-white/70 uppercase">
             {vinted.isReal ? `asking prices${vinted.collectedLabel ? ` · collected ${vinted.collectedLabel} ago` : ""}` : "estimate, not real-time"}
@@ -450,14 +450,14 @@ export function GradedMarketTabs({
           <div className="mb-2.5 h-2 overflow-hidden rounded-full border-2 border-black bg-white">
             <span
               className="block h-full bg-success-green"
-              style={{ width: `${Math.round((vinted.belowTypicalCount / vinted.totalCount) * 100)}%` }}
+              style={{ width: `${Math.round((vinted.belowAverageCount / vinted.totalCount) * 100)}%` }}
             />
           </div>
           <p className="text-xs font-bold" style={{ color: CHIP_COLORS.green.text }}>
             <span className="text-foreground">
-              {vinted.belowTypicalCount} of {vinted.totalCount}
+              {vinted.belowAverageCount} of {vinted.totalCount}
             </span>{" "}
-            listings priced below the median.
+            listings priced below the average.
           </p>
         </div>
 

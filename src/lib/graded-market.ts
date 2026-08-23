@@ -83,14 +83,15 @@ export type VintedMarketData = {
   /** The card's own real image — every row shares it (same physical card, different sellers/conditions), never a fabricated per-listing photo. */
   imageUrl?: string;
   /**
-   * The feed's MEDIAN asking price, not its mean — see summarizeVintedFeed.
-   * Named for what it is, so no consumer reads "avg" and assumes a mean.
+   * The feed's mean asking price. A real arithmetic average, safe to
+   * compute because 1 EUR hidden auctions are excluded before it — see
+   * summarizeVintedFeed.
    */
-  typicalPrice: number;
+  avgPrice: number;
   currency: string;
   rows: VintedFeedRow[];
-  /** How many of `rows` sit below `typicalPrice` — real math either way, same honesty shape as the ROI percent, which is real arithmetic over possibly-illustrative inputs. */
-  belowTypicalCount: number;
+  /** How many of `rows` sit below `avgPrice` — real math either way, same honesty shape as the ROI percent, which is real arithmetic over possibly-illustrative inputs. */
+  belowAverageCount: number;
   /**
    * When the scrape that produced these rows ran. Feed-level freshness, and
    * deliberately NOT a per-row age: Lobstr reads Vinted's search-results
@@ -198,28 +199,34 @@ function vintedDealTier(deltaPct: number): VintedDealTier {
 /**
  * Reduces a feed to one reference price plus each row's distance from it.
  *
- * The reference is a MEDIAN, not a mean, and that is now a second line of
- * defence rather than the main one. The listings that most distorted a mean
- * — 1 EUR hidden auctions, where the price is bait for private offers and
- * not an asking price at all — are excluded upstream in
- * lib/vinted-listings.ts, because they carry no market information to be
- * robust *about*.
+ * The reference is an arithmetic MEAN — a genuine average asking price,
+ * which is what a reader assumes when they see "Avg". That is only safe
+ * because the one class of row that reliably destroyed a mean is now
+ * excluded upstream: 1 EUR hidden auctions, where the number is bait for
+ * private offers rather than a price (lib/vinted-listings.ts). With those
+ * gone, every remaining row is a real asking price and belongs in the
+ * average.
  *
- * The median stays for the outliers nobody has characterised yet: a
- * mispriced listing, a lot sold as a single card, a currency oddity. It
- * also keeps the France tab consistent with the eBay half of this same
- * panel, which has always used median() from lib/roi.ts.
+ * This briefly used a median instead. That was the right call while the
+ * hidden auctions were still in the sample — the live Gengar feed read
+ * 1, 780, 780, 875, and a mean of 609 sat below every credible listing on
+ * screen. Filtering the cause rather than damping the symptom is better,
+ * and it lets the number go back to being the plain thing it claims to be.
+ *
+ * If another outlier class turns up that can't be characterised and
+ * excluded, median() from lib/roi.ts is one line away — that's what the
+ * eBay half of this panel uses.
  */
 function summarizeVintedFeed(
   prices: number[],
   toRow: (price: number, index: number, dealPct: number, dealTier: VintedDealTier) => VintedFeedRow
-): { rows: VintedFeedRow[]; typicalPrice: number; belowTypicalCount: number } {
-  const typicalPrice = Math.round(median(prices)!);
+): { rows: VintedFeedRow[]; avgPrice: number; belowAverageCount: number } {
+  const avgPrice = Math.round(prices.reduce((sum, price) => sum + price, 0) / prices.length);
   const rows = prices.map((price, i) => {
-    const dealPct = Math.round(((price - typicalPrice) / typicalPrice) * 100);
+    const dealPct = Math.round(((price - avgPrice) / avgPrice) * 100);
     return toRow(price, i, dealPct, vintedDealTier(dealPct));
   });
-  return { rows, typicalPrice, belowTypicalCount: prices.filter((price) => price < typicalPrice).length };
+  return { rows, avgPrice, belowAverageCount: prices.filter((price) => price < avgPrice).length };
 }
 
 /**
@@ -249,7 +256,7 @@ async function buildVintedMarket(card: Card): Promise<VintedMarketData> {
   const real = await getVintedListingsForCard(card, displayName, searchUrl);
 
   if (real.length > 0) {
-    const { rows, typicalPrice, belowTypicalCount } = summarizeVintedFeed(
+    const { rows, avgPrice, belowAverageCount } = summarizeVintedFeed(
       real.map((listing) => listing.price),
       (price, i, dealPct, dealTier) => ({
         timeAgo: relativeTimeLabel(real[i].listedAtMs),
@@ -273,17 +280,17 @@ async function buildVintedMarket(card: Card): Promise<VintedMarketData> {
       searchUrl,
       title: query,
       imageUrl: card.imageUrl,
-      typicalPrice,
+      avgPrice,
       currency: real[0].currency,
       rows,
-      belowTypicalCount,
+      belowAverageCount,
       collectedAtMs: real.find((listing) => listing.collectedAtMs !== undefined)?.collectedAtMs,
       conditionFilter: TRES_BON_ETAT,
     };
   }
 
   const feed = illustrativeVintedFeed(card);
-  const { rows, typicalPrice, belowTypicalCount } = summarizeVintedFeed(
+  const { rows, avgPrice, belowAverageCount } = summarizeVintedFeed(
     feed.map((listing) => listing.price),
     (price, i, dealPct, dealTier) => ({
       timeAgo: feed[i].minutesAgo === 0 ? "now" : `${feed[i].minutesAgo} min`,
@@ -300,10 +307,10 @@ async function buildVintedMarket(card: Card): Promise<VintedMarketData> {
     searchUrl,
     title: query,
     imageUrl: card.imageUrl,
-    typicalPrice,
+    avgPrice,
     currency: card.currency,
     rows,
-    belowTypicalCount,
+    belowAverageCount,
     conditionFilter: TRES_BON_ETAT,
   };
 }
