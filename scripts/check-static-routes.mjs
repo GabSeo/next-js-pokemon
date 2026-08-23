@@ -41,9 +41,11 @@ try {
 
 const routeKeys = Object.keys(manifest.routes ?? {});
 
-// One entry per route that must be statically prerendered — every pattern
-// needs at least one real page in the manifest, or that route silently
-// fell back to on-demand dynamic rendering.
+// Every pattern here draws from getAllCards() or getCardsByFranchise("pokemon")
+// — both resilient to apitcg being down (Pokemon falls back to TCGdex; see
+// commit 1a8ef71) — so a zero-page result can only mean this specific route's
+// own generateStaticParams (or its render tree) is broken, not that an
+// external dependency is unavailable. Fails the build.
 const REQUIRED_PATTERNS = [
   { label: "/products/[slug]", test: (r) => /^\/products\/[^/]+$/.test(r) },
   { label: "/products/[slug]/fr", test: (r) => /^\/products\/[^/]+\/fr$/.test(r) },
@@ -51,9 +53,17 @@ const REQUIRED_PATTERNS = [
   { label: "/products/[slug]/index.md", test: (r) => /^\/products\/[^/]+\/index\.md$/.test(r) },
   { label: "/products/[slug]/fr/index.md", test: (r) => /^\/products\/[^/]+\/fr\/index\.md$/.test(r) },
   { label: "/api/pokemon/[id]", test: (r) => /^\/api\/pokemon\/[^/]+$/.test(r) },
-  { label: "/api/one-piece/[id]", test: (r) => /^\/api\/one-piece\/[^/]+$/.test(r) },
   { label: "/okf/products/[slug]", test: (r) => /^\/okf\/products\/[^/]+$/.test(r) },
 ];
+
+// One Piece has zero TCGdex coverage — getCardsByFranchise("one-piece")
+// depends on apitcg *unconditionally*, with no fallback (see cards.ts's
+// resolveCard). A zero-page result here can genuinely mean "apitcg's quota
+// is exhausted right now" rather than a code regression, and blocking the
+// *entire* deploy over a real external outage — even when the resilient
+// Pokemon routes above built fine — is worse than the problem it prevents.
+// Warns, doesn't fail the build.
+const SOFT_PATTERNS = [{ label: "/api/one-piece/[id]", test: (r) => /^\/api\/one-piece\/[^/]+$/.test(r) }];
 
 let failed = false;
 for (const { label, test } of REQUIRED_PATTERNS) {
@@ -64,6 +74,19 @@ for (const { label, test } of REQUIRED_PATTERNS) {
     console.error(`  This route is supposed to be pre-built (fast, agent-readable on the first fetch), not on-demand.`);
     console.error(`  Either generateStaticParams is missing/broken for this route, or a cache: "no-store" /`);
     console.error(`  revalidate: 0 fetch somewhere in its render tree forced it into dynamic rendering.`);
+  } else {
+    console.log(`[check-static-routes] OK: ${label} — ${matches.length} static page(s).`);
+  }
+}
+
+for (const { label, test } of SOFT_PATTERNS) {
+  const matches = routeKeys.filter(test);
+  if (matches.length === 0) {
+    console.warn(`[check-static-routes] WARN: no statically-prerendered pages found for ${label}.`);
+    console.warn(`  Not failing the build for this one — One Piece has no TCGdex fallback, so this can`);
+    console.warn(`  legitimately mean apitcg's quota is exhausted right now, not a code regression.`);
+    console.warn(`  These pages will still render on demand once apitcg recovers (dynamicParams defaults`);
+    console.warn(`  to true) — just not pre-built until the next successful revalidation.`);
   } else {
     console.log(`[check-static-routes] OK: ${label} — ${matches.length} static page(s).`);
   }
