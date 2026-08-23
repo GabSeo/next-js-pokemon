@@ -68,7 +68,18 @@ async function getAccessToken(): Promise<string> {
         grant_type: "client_credentials",
         scope: "https://api.ebay.com/oauth/api_scope",
       }),
-      cache: "no-store", // token endpoint — never let Next's Data Cache serve a stale one
+      // NOT cache: "no-store" — that maps to Next's revalidate: 0, which
+      // taints the *entire calling route* as dynamic. This function only
+      // ever runs when the in-memory cachedToken above is empty or genuinely
+      // expired, so a real fresh token is always wanted regardless of what
+      // Next's Data Cache does here — and POST requests aren't cached by
+      // Next's Data Cache by default anyway, so a short positive revalidate
+      // costs nothing while staying compatible with /products/[slug]'s
+      // static generation. Confirmed live: omitting this (or using
+      // no-store) broke static rendering in production with
+      // "Dynamic server usage ... couldn't be rendered statically" and
+      // "Page changed from static to dynamic at runtime" errors.
+      next: { revalidate: 60 },
     });
     if (!res.ok) {
       throw new Error(`ebay oauth token request failed (${res.status}): ${await res.text()}`);
