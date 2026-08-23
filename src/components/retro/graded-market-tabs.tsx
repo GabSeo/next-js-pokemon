@@ -48,15 +48,53 @@ export type VintedSummary = {
   rows: VintedFeedRowSummary[];
 };
 
-const DEAL_TIER_COLORS: Record<VintedFeedRowSummary["dealTier"], { bg: string; text: string }> = {
-  good: { bg: "#e9f8ee", text: "#1f9d55" },
-  fair: { bg: "#f4f5f8", text: "#6b7280" },
-  high: { bg: "#fbf1e3", text: "#a15c0c" },
+// One small, deliberately restrained color language, reused for both chip
+// systems in the Vinted feed (deal quality and condition) rather than
+// inventing a second competing palette — good/Très bon état share the green
+// read, high/Satisfaisant share the amber "pay attention" read. Kept as
+// resolved hex rather than theme utility classes because these are chip
+// *tints*, one step lighter than any --color-* token in the theme, and the
+// paired text shade is chosen for contrast at 10-11px, not just borrowed
+// from the nearest brand color.
+const CHIP_COLORS = {
+  green: { bg: "#e9f8ee", text: "#1f9d55" },
+  blue: { bg: "#e6f1fb", text: "#185fa5" },
+  amber: { bg: "#fbf1e3", text: "#a15c0c" },
+  grey: { bg: "#f4f5f8", text: "#6b7280" },
+} as const;
+
+const DEAL_TIER_COLORS: Record<VintedFeedRowSummary["dealTier"], (typeof CHIP_COLORS)[keyof typeof CHIP_COLORS]> = {
+  good: CHIP_COLORS.green,
+  fair: CHIP_COLORS.grey,
+  high: CHIP_COLORS.amber,
+};
+
+// Vinted's own three condition tiers, best to worst — see
+// lib/illustrative.ts's VINTED_CONDITIONS for why these three specifically.
+const CONDITION_COLORS: Record<string, (typeof CHIP_COLORS)[keyof typeof CHIP_COLORS]> = {
+  "Très bon état": CHIP_COLORS.green,
+  "Bon état": CHIP_COLORS.blue,
+  Satisfaisant: CHIP_COLORS.amber,
 };
 
 function dealPctLabel(pct: number): string {
   if (pct === 0) return "±0%";
   return `${pct > 0 ? "+" : ""}${pct}%`;
+}
+
+/**
+ * The rest/hover/pressed states every clickable tab in this file shares —
+ * a flat hard-shadow sits under the control at rest, lifts half a step on
+ * hover (more shadow shows), and on selection the control sinks flush into
+ * the surface (shadow gone, nudged down-right by the same distance the
+ * shadow used to occupy) so choosing a tab reads as *pressing* it, not just
+ * recoloring it. This is the one interaction pattern applied everywhere
+ * instead of every control inventing its own hover/active treatment.
+ */
+function pressable(isSelected: boolean): string {
+  return isSelected
+    ? "translate-x-[2px] translate-y-[2px] shadow-none"
+    : "shadow-hard-sm hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-md";
 }
 
 /** A top-level market tab — the two real eBay-backed languages, plus France, which isn't eBay at all (see graded-market-tabs.tsx's file doc comment). */
@@ -109,40 +147,44 @@ export function GradedMarketTabs({
 
   return (
     <div>
-      <div role="tablist" aria-label="Market" className="flex flex-wrap gap-2">
-        {entries[0].languages.map((l) => (
-          <button
-            key={l.language}
-            type="button"
-            role="tab"
-            aria-selected={market === l.language}
-            onClick={() => setMarket(l.language)}
-            className={`rounded-full border-2 px-3 py-1 text-xs font-black tracking-[0.3px] uppercase transition-colors ${
-              market === l.language
-                ? "border-black bg-pokemon-blue text-white"
-                : "border-border-subtle bg-muted-surface text-muted-text hover:border-black hover:text-foreground"
-            }`}
-          >
-            {l.language}
-          </button>
-        ))}
-        <button
-          type="button"
-          role="tab"
-          aria-selected={market === "France"}
-          onClick={() => setMarket("France")}
-          className={`rounded-full border-2 px-3 py-1 text-xs font-black tracking-[0.3px] uppercase transition-colors ${
-            market === "France"
-              ? "border-black bg-pokemon-blue text-white"
-              : "border-border-subtle bg-muted-surface text-muted-text hover:border-black hover:text-foreground"
-          }`}
-        >
-          France (Vinted)
-        </button>
+      <div role="tablist" aria-label="Market" className="flex flex-wrap gap-2.5">
+        {entries[0].languages.map((l) => {
+          const isSelected = market === l.language;
+          return (
+            <button
+              key={l.language}
+              type="button"
+              role="tab"
+              aria-selected={isSelected}
+              onClick={() => setMarket(l.language)}
+              className={`rounded-full border-2 border-black px-4 py-1.5 text-xs font-black tracking-[0.3px] uppercase transition-all duration-150 ${pressable(
+                isSelected
+              )} ${isSelected ? "bg-pokemon-blue text-white" : "bg-white text-foreground"}`}
+            >
+              {l.language}
+            </button>
+          );
+        })}
+        {(() => {
+          const isSelected = market === "France";
+          return (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={isSelected}
+              onClick={() => setMarket("France")}
+              className={`rounded-full border-2 border-black px-4 py-1.5 text-xs font-black tracking-[0.3px] uppercase transition-all duration-150 ${pressable(
+                isSelected
+              )} ${isSelected ? "bg-pokemon-blue text-white" : "bg-white text-foreground"}`}
+            >
+              France <span className="opacity-70">(Vinted)</span>
+            </button>
+          );
+        })()}
       </div>
 
       <div hidden={market === "France"}>
-        <div role="tablist" aria-label="Condition" className="mt-4 flex flex-wrap gap-7 border-b-2 border-border-subtle">
+        <div role="tablist" aria-label="Condition" className="mt-5 flex flex-wrap gap-7 border-b-2 border-border-subtle">
           {entries.map((entry) => (
             <button
               key={entry.id}
@@ -165,16 +207,15 @@ export function GradedMarketTabs({
           {TYPES.map((t) => {
             const summary = currentLanguage[t];
             const isSelected = type === t;
-            const borderClass = isSelected ? (t === "active" ? "border-pokemon-red" : "border-pokemon-blue") : "border-border-subtle";
-            const labelClass = isSelected ? (t === "active" ? "text-pokemon-red" : "text-pokemon-blue") : "text-muted-text";
+            const fillClass = isSelected ? (t === "active" ? "bg-pokemon-red" : "bg-pokemon-blue") : "bg-white";
+            const textClass = isSelected ? "text-white" : "text-foreground";
+            const labelClass = isSelected ? "text-white" : "text-muted-text";
             return (
               <button
                 key={t}
                 type="button"
                 onClick={() => setType(t)}
-                className={`rounded-md border-2 p-4 text-left transition-[transform,border-color,background-color] duration-150 hover:-translate-y-0.5 ${borderClass} ${
-                  isSelected ? "bg-card-surface" : "bg-muted-surface"
-                }`}
+                className={`rounded-md border-2 border-black p-4 text-left transition-all duration-150 ${pressable(isSelected)} ${fillClass}`}
               >
                 <div className={`mb-1.5 flex items-center gap-2 text-[11px] font-black tracking-[0.5px] uppercase ${labelClass}`}>
                   {t === "active" ? (
@@ -183,11 +224,9 @@ export function GradedMarketTabs({
                     <span>✓</span>
                   )}
                   {t === "active" ? "Active" : "Sold"}
-                  <span className="font-bold text-[#9a9a9a] normal-case">({summary.count})</span>
+                  <span className={`font-bold normal-case ${isSelected ? "text-white/70" : "text-[#9a9a9a]"}`}>({summary.count})</span>
                 </div>
-                <div className={`text-2xl font-black tracking-[-0.6px] tabular-nums ${isSelected ? "text-foreground" : "text-[#9a9a9a]"}`}>
-                  {summary.avgLabel}
-                </div>
+                <div className={`text-2xl font-black tracking-[-0.6px] tabular-nums ${textClass}`}>{summary.avgLabel}</div>
               </button>
             );
           })}
@@ -198,10 +237,10 @@ export function GradedMarketTabs({
             {type === "active" ? "Active listings" : "Sold listings"} · {market}
           </span>
           <span className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 text-[10px] font-bold text-muted-text uppercase">
+            <span className="flex items-center gap-1.5 rounded-sm border-2 border-black bg-white px-1.5 py-0.5 text-[10px] font-bold text-muted-text uppercase">
               via
               {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, not an optimizable remote domain */}
-              <img src={EBAY_LOGO_URL} alt="eBay" className="h-4 w-auto" />
+              <img src={EBAY_LOGO_URL} alt="eBay" className="h-3.5 w-auto" />
             </span>
             <span className="text-[11px] font-black tracking-[0.5px] text-muted-text uppercase">
               {selected.rowCount === 1 ? "1 listing" : `last ${selected.rowCount}`}
@@ -225,7 +264,7 @@ export function GradedMarketTabs({
           href={selected.seeAllHref}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-4 inline-block text-sm font-black text-pokemon-red underline underline-offset-2 hover:text-foreground"
+          className="mt-4 inline-flex items-center gap-1.5 rounded-md border-2 border-black bg-pokemon-red px-3.5 py-2 text-xs font-black tracking-[0.3px] text-white uppercase shadow-hard-sm transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-md"
         >
           See all {selected.count} {type} listings ↗
         </a>
@@ -236,72 +275,82 @@ export function GradedMarketTabs({
           </div>
         )}
 
-        <div className="mt-6 rounded-md border-2 border-black bg-muted-surface p-4">
-          <div className="mb-1 flex flex-wrap items-center gap-2 text-xs font-black tracking-[0.3px] text-muted-text uppercase">
-            Grading ROI — raw → PSA 10
-            {!roi.isReal && <IllustrativeTag label="Preview — eBay not connected yet" />}
-          </div>
-          <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-            <span className={`text-2xl font-black tabular-nums ${roi.percent >= 0 ? "text-success-green" : "text-pokemon-red"}`}>
-              {roi.percent >= 0 ? "+" : ""}
-              {roi.percent.toFixed(0)}%
-            </span>
-            <span className="text-xs font-bold text-muted-text">
-              {roi.currency} {roi.rawMedian.toLocaleString()} raw + {roi.currency} {roi.gradingCostUsd} grading vs {roi.currency}{" "}
-              {roi.psa10Median.toLocaleString()} PSA 10, {roi.isReal ? "today's active listings" : "preview numbers"}.
-            </span>
+        <div className="mt-6 overflow-hidden rounded-md border-2 border-black bg-pokemon-yellow shadow-hard-md">
+          <div className="p-4">
+            <div className="mb-1 flex flex-wrap items-center gap-2 text-xs font-black tracking-[0.3px] text-[#5a4600] uppercase">
+              Grading ROI — raw → PSA 10
+              {!roi.isReal && <IllustrativeTag label="Preview — eBay not connected yet" />}
+            </div>
+            <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+              <span className="text-3xl font-black tracking-[-0.6px] text-foreground tabular-nums">
+                {roi.percent >= 0 ? "+" : ""}
+                {roi.percent.toFixed(0)}%
+              </span>
+              <span className="text-xs font-bold text-[#5a4600]">
+                {roi.currency} {roi.rawMedian.toLocaleString()} raw + {roi.currency} {roi.gradingCostUsd} grading vs {roi.currency}{" "}
+                {roi.psa10Median.toLocaleString()} PSA 10, {roi.isReal ? "today's active listings" : "preview numbers"}.
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
       <div hidden={market !== "France"}>
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
-          <span className="text-sm font-black tracking-[0.2px]">Just listed — {vinted.title}</span>
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
+          <span className="text-base font-black tracking-[-0.3px]">Just listed — {vinted.title}</span>
           {/* Not "Live": every number here is illustrative (no real Vinted
               source yet) — a pulsing "Live" badge on fabricated data would
               contradict every other real/illustrative signal on this site.
-              Same slot, honest label instead. */}
-          <span className="flex items-center gap-1.5 rounded-full bg-muted-surface px-2.5 py-1 text-[11px] font-black tracking-[0.3px] text-muted-text uppercase">
+              Dashed border keeps the same slot honestly "sketch"-flavored
+              instead of borrowing the confident solid-pill look real
+              connected data gets elsewhere on this page. */}
+          <span className="flex items-center gap-1.5 rounded-full border border-dashed border-[#9a9a9a] bg-white px-2.5 py-1 text-[11px] font-black tracking-[0.3px] text-muted-text uppercase">
             <span className="h-1.5 w-1.5 rounded-full bg-[#9a9a9a]" />
             Preview
           </span>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border-2 border-black bg-muted-surface p-4">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border-2 border-black bg-pokemon-blue p-4 shadow-hard-md">
           <div>
-            <div className="mb-1.5 text-[11px] font-black tracking-[0.5px] text-muted-text uppercase">
+            <div className="mb-1.5 text-[11px] font-black tracking-[0.5px] text-white/70 uppercase">
               Avg · last {vinted.rows.length} new listings
             </div>
-            <div className="text-3xl font-black tracking-[-0.6px] tabular-nums">
-              {vinted.avgLabel}
-            </div>
+            <div className="text-3xl font-black tracking-[-0.6px] text-white tabular-nums">{vinted.avgLabel}</div>
           </div>
-          <div className="text-right text-[11px] font-bold text-muted-text uppercase">estimate, not real-time</div>
+          <div className="text-right text-[11px] font-bold text-white/70 uppercase">estimate, not real-time</div>
         </div>
 
         <div className="mt-5 mb-1 flex items-center justify-between gap-3">
           <span className="text-[11px] font-black tracking-[0.5px] text-muted-text uppercase">Newly listed</span>
-          <span className="flex items-center gap-1.5 text-[10px] font-bold text-muted-text uppercase">
+          <span className="flex items-center gap-1.5 rounded-sm border-2 border-black bg-white px-1.5 py-0.5 text-[10px] font-bold text-muted-text uppercase">
             via
             {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, not an optimizable remote domain */}
-            <img src={VINTED_LOGO_URL} alt="Vinted" className="h-4 w-auto" />
+            <img src={VINTED_LOGO_URL} alt="Vinted" className="h-3.5 w-auto" />
           </span>
         </div>
 
         <div>
           {vinted.rows.map((row, i) => {
-            const colors = DEAL_TIER_COLORS[row.dealTier];
+            const dealColors = DEAL_TIER_COLORS[row.dealTier];
+            const conditionColors = CONDITION_COLORS[row.condition] ?? CHIP_COLORS.grey;
             return (
               <div key={i} className="flex items-center gap-3 border-t border-dashed border-border-subtle py-3 first:border-t-0">
                 {vinted.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element -- TCGdex/apitcg CDN image, domain not allowlisted for next/image (same as CardImage)
-                  <img src={vinted.imageUrl} alt="" className="h-14 w-10 flex-none rounded-sm border-2 border-black object-cover" />
+                  <img
+                    src={vinted.imageUrl}
+                    alt=""
+                    className="h-14 w-10 flex-none rounded-sm border-2 border-black object-cover shadow-hard-sm"
+                  />
                 ) : (
-                  <div className="h-14 w-10 flex-none rounded-sm border-2 border-black bg-white" />
+                  <div className="h-14 w-10 flex-none rounded-sm border-2 border-black bg-white shadow-hard-sm" />
                 )}
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="rounded-full border-2 border-black bg-white px-2 py-0.5 text-[10px] font-black tracking-[0.3px] uppercase">
+                    <span
+                      className="rounded-full px-2 py-0.5 text-[10px] font-black tracking-[0.3px] uppercase"
+                      style={{ backgroundColor: conditionColors.bg, color: conditionColors.text }}
+                    >
                       {row.condition}
                     </span>
                     <span className="text-[11px] font-bold text-muted-text">{row.timeAgo}</span>
@@ -311,7 +360,7 @@ export function GradedMarketTabs({
                   <span className="text-sm font-black tabular-nums">{row.priceLabel}</span>
                   <span
                     className="rounded-full px-2 py-0.5 text-[10px] font-black tabular-nums"
-                    style={{ backgroundColor: colors.bg, color: colors.text }}
+                    style={{ backgroundColor: dealColors.bg, color: dealColors.text }}
                   >
                     {dealPctLabel(row.dealPct)}
                   </span>
@@ -325,20 +374,22 @@ export function GradedMarketTabs({
           href={vinted.searchHref}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-4 inline-block text-sm font-black text-pokemon-red underline underline-offset-2 hover:text-foreground"
+          className="mt-4 inline-flex items-center gap-1.5 rounded-md border-2 border-black bg-pokemon-red px-3.5 py-2 text-xs font-black tracking-[0.3px] text-white uppercase shadow-hard-sm transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-md"
         >
           Search on Vinted ↗
         </a>
 
-        <div className="mt-5 rounded-md border-2 border-black bg-muted-surface p-4">
-          <div className="mb-2 text-[11px] font-black tracking-[0.5px] text-muted-text uppercase">Deal density · last {vinted.totalCount} listings</div>
-          <div className="mb-2.5 h-2 overflow-hidden rounded-full border border-black bg-white">
+        <div className="mt-5 rounded-md border-2 border-black p-4" style={{ backgroundColor: CHIP_COLORS.green.bg }}>
+          <div className="mb-2 text-[11px] font-black tracking-[0.5px] uppercase" style={{ color: CHIP_COLORS.green.text }}>
+            Deal density · last {vinted.totalCount} listings
+          </div>
+          <div className="mb-2.5 h-2 overflow-hidden rounded-full border-2 border-black bg-white">
             <span
               className="block h-full bg-success-green"
               style={{ width: `${Math.round((vinted.belowAverageCount / vinted.totalCount) * 100)}%` }}
             />
           </div>
-          <p className="text-xs font-bold text-muted-text">
+          <p className="text-xs font-bold" style={{ color: CHIP_COLORS.green.text }}>
             <span className="text-foreground">
               {vinted.belowAverageCount} of {vinted.totalCount}
             </span>{" "}
