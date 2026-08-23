@@ -305,15 +305,18 @@ function ModelSignalPanel({ nameFull, bestDeal }: { nameFull: string; bestDeal?:
   return (
     <div className="mt-3.5 rounded-md border-2 border-black bg-foreground p-5" style={{ boxShadow: "6px 6px 0 0 rgba(10,10,10,.3)" }}>
       <div className="flex flex-wrap items-center gap-2.5">
-        <span className="text-[10px] font-black tracking-[1.1px] text-pokemon-yellow uppercase">{nameFull} — Premium</span>
+        {/* Name alone here — "Premium" said once, by the pill, not twice. */}
+        <span className="text-[10px] font-black tracking-[1.1px] text-pokemon-yellow uppercase">{nameFull}</span>
         <span className="inline-flex items-center gap-1.5 rounded-full border-[1.5px] border-pokemon-yellow bg-pokemon-yellow/15 px-2 py-px">
           <span className="h-[5px] w-[5px] animate-pulse rounded-full bg-pokemon-yellow" />
           <span className="text-[9px] font-black tracking-[0.7px] text-pokemon-yellow uppercase">Premium</span>
         </span>
       </div>
 
-      <div className="mt-1.5 text-[22px] font-black tracking-[-0.6px] text-white text-pretty">
-        Something&rsquo;s up with {nameFull}. Premium tells you what.
+      <div className="mt-1.5 text-[22px] font-black tracking-[-0.6px] text-pretty">
+        <span className="text-white">Something&rsquo;s up with {nameFull}.</span>
+        <br />
+        <span className="text-pokemon-yellow">Premium tells you what.</span>
       </div>
       <p className="mt-1.5 max-w-[460px] text-xs leading-[18px] text-[#b9b9b9] text-pretty">
         Every time a new listing lands, we check if it&rsquo;s worth acting on — and Premium members see the call, plus the reasoning, right when it happens.
@@ -356,12 +359,14 @@ function ModelSignalPanel({ nameFull, bestDeal }: { nameFull: string; bestDeal?:
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-3.5">
+      <div className="mt-6 flex flex-wrap items-center gap-3.5">
         <button
           type="button"
-          className="inline-flex items-center gap-2.5 rounded-md border-2 border-pokemon-yellow bg-pokemon-yellow px-[18px] py-2.5 text-[13px] font-black tracking-[0.8px] text-foreground uppercase transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pokemon-yellow"
+          className="inline-flex items-center gap-2.5 rounded-md border-2 border-pokemon-yellow bg-pokemon-yellow py-2.5 pr-[18px] pl-3 text-[13px] font-black tracking-[0.8px] text-foreground uppercase transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pokemon-yellow"
           style={{ boxShadow: "4px 4px 0 0 rgba(255,205,5,.28)" }}
         >
+          {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, same convention as masterball-bg.tsx */}
+          <img src="/masterball.png" alt="" className="h-6 w-6 flex-none" />
           Unlock with Premium <span aria-hidden="true">→</span>
         </button>
         <span className="text-[10px] font-bold tracking-[0.3px] text-[#8b8b8b] uppercase">{PREMIUM_TEASER_NOTICE}</span>
