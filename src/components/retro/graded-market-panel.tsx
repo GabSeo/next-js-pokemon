@@ -1,5 +1,6 @@
 import { GradedMarketTabs, type ConditionEntry, type MarketTab, type TypeSummary, type VintedSummary } from "@/components/retro/graded-market-tabs";
 import { getGradedMarketData, type GradedMarketTypeData } from "@/lib/graded-market";
+import { relativeTimeLabel } from "@/lib/vinted-listings";
 import type { Card } from "@/lib/types";
 
 /** One row, real or illustrative — real rows get a working per-item link, illustrative rows never do (see lib/illustrative.ts). */
@@ -73,12 +74,17 @@ export async function GradedMarketPanel({ card, defaultMarket }: { card: Card; d
     avgLabel: `${data.vinted.currency} ${data.vinted.avgPrice.toLocaleString()}`,
     belowAverageCount: data.vinted.belowAverageCount,
     totalCount: data.vinted.rows.length,
+    conditionFilter: data.vinted.conditionFilter,
+    collectedLabel: data.vinted.collectedAtMs ? relativeTimeLabel(data.vinted.collectedAtMs) : undefined,
     rows: data.vinted.rows.map((row) => ({
       timeAgo: row.timeAgo,
       condition: row.condition,
       priceLabel: `${row.currency} ${row.price.toLocaleString()}`,
       dealPct: row.dealPct,
       dealTier: row.dealTier,
+      title: row.title,
+      url: row.url,
+      imageUrl: row.imageUrl,
     })),
   };
 

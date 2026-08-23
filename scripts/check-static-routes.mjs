@@ -41,15 +41,31 @@ try {
 
 const routeKeys = Object.keys(manifest.routes ?? {});
 
+/** Reads JAPANESE_MARKET_ENABLED out of graded-market.ts. Defaults to false if the file moves or its shape changes — a skipped check is better than a build that fails over a route deliberately switched off. */
+function japaneseMarketEnabled() {
+  try {
+    const src = readFileSync(new URL("../src/lib/graded-market.ts", import.meta.url), "utf8");
+    return /JAPANESE_MARKET_ENABLED\s*=\s*true/.test(src);
+  } catch {
+    return false;
+  }
+}
+
 // Every pattern here draws from getAllCards() or getCardsByFranchise("pokemon")
 // — both resilient to apitcg being down (Pokemon falls back to TCGdex; see
 // commit 1a8ef71) — so a zero-page result can only mean this specific route's
 // own generateStaticParams (or its render tree) is broken, not that an
 // external dependency is unavailable. Fails the build.
 const REQUIRED_PATTERNS = [
+  // /ja is required only while the Japanese market is switched on. It is
+  // gated on JAPANESE_MARKET_ENABLED in src/lib/graded-market.ts, and with
+  // Japan off the route prerenders zero pages BY DESIGN — demanding them
+  // would fail every build, and warning about them every build would be
+  // noise. Read from the source rather than duplicated here, so flipping
+  // that one flag re-arms this check automatically.
+  ...(japaneseMarketEnabled() ? [{ label: "/products/[slug]/ja", test: (r) => /^\/products\/[^/]+\/ja$/.test(r) }] : []),
   { label: "/products/[slug]", test: (r) => /^\/products\/[^/]+$/.test(r) },
   { label: "/products/[slug]/fr", test: (r) => /^\/products\/[^/]+\/fr$/.test(r) },
-  { label: "/products/[slug]/ja", test: (r) => /^\/products\/[^/]+\/ja$/.test(r) },
   { label: "/products/[slug]/index.md", test: (r) => /^\/products\/[^/]+\/index\.md$/.test(r) },
   { label: "/products/[slug]/fr/index.md", test: (r) => /^\/products\/[^/]+\/fr\/index\.md$/.test(r) },
   { label: "/api/pokemon/[id]", test: (r) => /^\/api\/pokemon\/[^/]+$/.test(r) },

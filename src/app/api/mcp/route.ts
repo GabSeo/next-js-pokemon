@@ -193,22 +193,26 @@ const handler = createMcpHandler((server) => {
   });
 
   const vintedFeedRowSchema = z.object({
-    timeAgo: z.string(),
-    condition: z.string(),
+    timeAgo: z.string().describe("How long ago the listing appeared, e.g. \"12 min\". Empty string when the listing's age isn't known."),
+    condition: z.string().describe("Always \"Tr\u00e8s bon \u00e9tat\" — the feed is filtered to that one condition."),
     price: z.number(),
     currency: z.string(),
     dealPct: z.number(),
     dealTier: z.enum(["good", "fair", "high"]),
+    title: z.string().optional().describe("Seller-written listing title. Real listings only."),
+    url: z.string().optional().describe("Link to the listing on Vinted. Real listings only — never present on preview rows."),
+    imageUrl: z.string().optional().describe("The listing's own photo. Real listings only."),
   });
   const vintedMarketSchema = z.object({
-    isReal: z.boolean(),
-    searchUrl: z.string(),
+    isReal: z.boolean().describe("true = scraped Vinted listings; false = illustrative preview, treat every price as fabricated."),
+    searchUrl: z.string().describe("Unfiltered Vinted search for this card — shows all conditions, unlike rows below."),
     title: z.string(),
     imageUrl: z.string().optional(),
-    avgPrice: z.number(),
+    avgPrice: z.number().describe("Mean asking price across the listings. A true average: 1 EUR hidden-auction listings are excluded before it is computed."),
     currency: z.string(),
     rows: z.array(vintedFeedRowSchema),
     belowAverageCount: z.number(),
+    conditionFilter: z.string().describe("The single condition every row is filtered to: \"Tr\u00e8s bon \u00e9tat\"."),
   });
 
   server.registerTool(
@@ -261,7 +265,9 @@ const handler = createMcpHandler((server) => {
               psa10English.active.isReal ? "real, eBay" : "preview, eBay not connected"
             }, English). Grading ROI raw -> PSA 10: ${data.roi.percent >= 0 ? "+" : ""}${data.roi.percent.toFixed(0)}% (${
               data.roi.isReal ? "real" : "preview"
-            }). France/Vinted, avg of last ${data.vinted.rows.length} listings: ${data.vinted.currency} ${data.vinted.avgPrice} (preview, Vinted not connected).`,
+            }). France/Vinted (${data.vinted.conditionFilter} only), avg of ${data.vinted.rows.length} listings: ${data.vinted.currency} ${data.vinted.avgPrice} (${
+              data.vinted.isReal ? "real, scraped via Lobstr" : "preview, no scraped listings yet"
+            }).`,
           },
         ],
         structuredContent: { found: true, conditions: data.conditions, roi: data.roi, vinted: data.vinted },

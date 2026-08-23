@@ -1,6 +1,6 @@
 import { computeAlertBands, downsamplePriceHistory, getAllCards, getCardsByFranchise, franchiseLabel } from "@/lib/cards";
 import { cardRefs } from "@/data/card-refs";
-import { getGradedMarketData } from "@/lib/graded-market";
+import { getGradedMarketData, GRADED_MARKET_LANGUAGES } from "@/lib/graded-market";
 import { absoluteUrl, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 import type { Card, Franchise } from "@/lib/types";
 
@@ -33,12 +33,19 @@ async function gradedMarketMarkdown(card: Card): Promise<string> {
   const roiSource = roi.isReal ? "real active listings, English" : "preview numbers, eBay not connected yet";
 
   const vintedRows = data.vinted.rows
-    .map((r) => `| ${r.timeAgo} | ${r.condition} | ${r.currency} ${r.price} | ${r.dealPct > 0 ? "+" : ""}${r.dealPct}% (${r.dealTier}) |`)
+    .map(
+      (r) =>
+        `| ${r.timeAgo || "unknown"} | ${r.condition} | ${r.currency} ${r.price} | ${r.dealPct > 0 ? "+" : ""}${r.dealPct}% (${r.dealTier}) | ${r.url ? `[${r.title ?? "listing"}](${r.url})` : "—"} |`
+    )
     .join("\n");
+
+  const vintedSource = data.vinted.isReal
+    ? `Real listings, scraped from Vinted via Lobstr.io. Asking prices on active listings, not completed sales.`
+    : `Preview — no scraped Vinted listings for this card yet (no finished scrape run, or nothing currently listed in ${data.vinted.conditionFilter}). Every row below is illustrative, not real data.`;
 
   return `## Pokémon market overview
 
-### English / Japanese (eBay) — up to 4 recent active listings + illustrative sold, per condition x market
+### ${GRADED_MARKET_LANGUAGES.join(" / ")} (eBay) — up to 4 recent active listings + illustrative sold, per condition x market
 
 | Condition | Market | Active median | Active source | Sold median (illustrative) |
 | --- | --- | --- | --- | --- |
@@ -48,15 +55,19 @@ Grading ROI, raw → PSA 10: ${roi.percent >= 0 ? "+" : ""}${roi.percent.toFixed
 
 Sold data is always illustrative: eBay's sold/completed-listing API (Marketplace Insights) is restricted and closed to new applicants — see lib/ebay-browse.ts.
 
-### France (Vinted) — illustrative "newly listed" preview
+### France (Vinted) — "${data.vinted.conditionFilter}" listings only
 
-eBay.fr isn't a good fit for the French Pokémon TCG market, so the French market view is a simulated Vinted listing feed instead of PSA grades — no active/sold split, no known public Vinted API yet, so every row below is a clearly-marked preview, not real data. Average: ${data.vinted.currency} ${data.vinted.avgPrice} across the last ${data.vinted.rows.length} listings; ${data.vinted.belowAverageCount} of them priced below that average.
+eBay.fr isn't a good fit for the French Pokémon TCG market, so the French market view is a Vinted listing feed instead of PSA grades — no grading, no active/sold split (Vinted has no public sold feed).
 
-| Listed | Condition | Price | vs. average |
-| --- | --- | --- | --- |
+**This feed is filtered to one condition: ${data.vinted.conditionFilter}.** Listings in Vinted's other condition tiers (Bon état, Satisfaisant, Neuf avec/sans étiquette) are excluded — by Vinted itself, via the status_ids[]=2 filter on the search this scrapes. It answers "what is listed in ${data.vinted.conditionFilter}", not "what does this market look like".
+
+${vintedSource} Average asking price: ${data.vinted.currency} ${data.vinted.avgPrice} across ${data.vinted.rows.length} listings; ${data.vinted.belowAverageCount} of them priced below it. Listings priced at ${data.vinted.currency} 1 are excluded before this is computed: on Vinted that is a hidden auction soliciting private offers, not an asking price.
+
+| Listed | Condition | Price | vs. average | Listing |
+| --- | --- | --- | --- | --- |
 ${vintedRows}
 
-Search on Vinted: ${data.vinted.searchUrl}`;
+Search on Vinted (same ${data.vinted.conditionFilter} filter applied): ${data.vinted.searchUrl}`;
 }
 
 /**

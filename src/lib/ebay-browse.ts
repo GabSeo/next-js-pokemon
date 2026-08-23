@@ -235,8 +235,18 @@ type BrowseSearchResponse = {
   }[];
 };
 
-/** Fetched per search — larger than DISPLAY_LIMIT on purpose, so wrong-card/wrong-grade noise (see titleMatchesCard) has real candidates left to filter down from instead of leaving a rare card with nothing. Free: `limit` doesn't cost extra API quota, it's still one call. */
-const FETCH_LIMIT = 10;
+/**
+ * Fetched per search — deliberately far larger than DISPLAY_LIMIT, because
+ * titleMatchesCard rejects a large share of what eBay returns (wrong grade,
+ * wrong card sharing a name prefix, wrong number). At 10 the survivors
+ * regularly fell short of the four rows the panel wants, leaving the
+ * English market looking thinner than it is; 20 gives that filter enough
+ * candidates to actually produce four.
+ *
+ * Free to raise: `limit` is one page of one call, so this costs no extra
+ * API quota against eBay's daily cap.
+ */
+const FETCH_LIMIT = 20;
 /** Shown to the user (and used for the median) — the first this-many survivors of titleMatchesCard, still newest-first. */
 const DISPLAY_LIMIT = 4;
 
