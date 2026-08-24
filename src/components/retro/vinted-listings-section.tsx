@@ -303,7 +303,7 @@ function ModelSignalPanel({ nameFull, bestDeal }: { nameFull: string; bestDeal?:
   const firstSignal = bestDeal ? `${bestDeal.priceLabel} ask entered under fair value` : "New ask entered under fair value";
 
   return (
-    <div className="mt-3.5 rounded-md border-2 border-black bg-foreground p-5" style={{ boxShadow: "6px 6px 0 0 rgba(10,10,10,.3)" }}>
+    <div className="relative mt-3.5 overflow-hidden rounded-md border-2 border-black bg-foreground p-5" style={{ boxShadow: "6px 6px 0 0 rgba(10,10,10,.3)" }}>
       <div className="flex flex-wrap items-center gap-2.5">
         {/* Name alone here — "Premium" said once, by the pill, not twice. */}
         <span className="text-[10px] font-black tracking-[1.1px] text-pokemon-yellow uppercase">{nameFull}</span>
@@ -387,21 +387,22 @@ function ModelSignalPanel({ nameFull, bestDeal }: { nameFull: string; bestDeal?:
         </div>
       </div>
 
-      <div className="mt-3.5 flex items-end justify-between gap-3">
-        <p className="max-w-[65%] text-[9px] font-bold tracking-[0.2px] text-[#6b6b6b]">{PREMIUM_TEASER_NOTICE}</p>
-        {/* Mascot, on the same line as (and bottom-aligned with) the
-            footnote — the panel's actual last row, so he adds only the
-            height his own frame needs and nothing more. */}
-        <div aria-hidden="true" className="relative flex-none">
-          <span className="absolute -inset-2 rounded-full bg-pokemon-yellow/20 blur-md" />
-          {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, animated GIF (next/image can't animate) */}
-          <img
-            src="/gengar.gif"
-            alt=""
-            className="relative h-16 w-16 [image-rendering:pixelated]"
-            style={{ filter: "drop-shadow(3px 3px 0 rgba(0,0,0,0.45))" }}
-          />
-        </div>
+      <p className="mt-2.5 max-w-[65%] text-[9px] font-bold tracking-[0.2px] text-[#6b6b6b]">{PREMIUM_TEASER_NOTICE}</p>
+
+      {/* Mascot, cornered bottom-right — absolutely positioned against the
+          panel (not a flex sibling) so his frame never dictates a row's
+          height; -bottom-1 tucks him level with the footnote text instead
+          of floating above it. overflow-hidden on the panel clips him to
+          the rounded corner instead of poking past it. */}
+      <div aria-hidden="true" className="pointer-events-none absolute -right-1 -bottom-1">
+        <span className="absolute -inset-2 rounded-full bg-pokemon-yellow/20 blur-md" />
+        {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, animated GIF (next/image can't animate) */}
+        <img
+          src="/gengar.gif"
+          alt=""
+          className="relative h-16 w-16 [image-rendering:pixelated]"
+          style={{ filter: "drop-shadow(3px 3px 0 rgba(0,0,0,0.45))" }}
+        />
       </div>
     </div>
   );
