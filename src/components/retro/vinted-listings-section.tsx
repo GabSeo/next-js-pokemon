@@ -165,15 +165,41 @@ const revealChild = (reduce: boolean | null, delay = 0) => ({
  * initial HTML, so an AI crawler reading raw HTML (or a human with
  * reduced-motion/no-JS) still has the full real feed, just not laid out the
  * way a sighted, animated visit sees it.
+ *
+ * `visible` is also passed in, purely so the post-reveal "Caught all N"
+ * strip can compute the true cheapest ask across every row now on screen —
+ * an earlier version computed it from `held` alone and silently missed a
+ * cheaper row that happened to sit in the always-visible set.
  */
-function CatchEmAllReveal({ held, cardImageUrl, nameFull, totalCount }: { held: VintedFeedRowSummary[]; cardImageUrl?: string; nameFull: string; totalCount: number }) {
+function CatchEmAllReveal({
+  visible,
+  held,
+  cardImageUrl,
+  nameFull,
+  totalCount,
+}: {
+  visible: VintedFeedRowSummary[];
+  held: VintedFeedRowSummary[];
+  cardImageUrl?: string;
+  nameFull: string;
+  totalCount: number;
+}) {
   const reduce = useReducedMotion();
   const [phase, setPhase] = useState<"locked" | "catching" | "open">("locked");
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => () => clearTimeout(timer.current), []);
 
-  const cheapest = held.length ? Math.min(...held.map((l) => l.price)) : undefined;
+  // Teaser (pre-reveal): cheapest among the HELD rows specifically — "here's
+  // what's hidden, starting from X" is the whole point of the tease.
+  const heldCheapest = held.length ? Math.min(...held.map((l) => l.price)) : undefined;
+  // Confirmation (post-reveal): "Caught all N" claims to summarize every row
+  // now on screen, so its cheapest must be the true minimum across visible
+  // + held together — held alone silently missed a cheaper row sitting in
+  // the always-visible set (confirmed live: 4 rows at 600/875/780/780, the
+  // strip claimed 780 because held was only the last two).
+  const allRows = visible.concat(held);
+  const overallCheapest = allRows.length ? Math.min(...allRows.map((l) => l.price)) : undefined;
   const currency = held[0]?.priceLabel.split(" ")[0];
 
   const start = useCallback(() => {
@@ -238,7 +264,7 @@ function CatchEmAllReveal({ held, cardImageUrl, nameFull, totalCount }: { held: 
                   {phase === "catching" ? "Catching…" : `Catch all ${totalCount} ${nameFull} asks`}
                 </div>
                 <div className="mt-0.5 text-[11px] font-bold leading-4 text-muted-text">
-                  Press the ball — {held.length} held{cheapest !== undefined ? `, from ${currency} ${cheapest}` : ""}
+                  Press the ball — {held.length} held{heldCheapest !== undefined ? `, from ${currency} ${heldCheapest}` : ""}
                 </div>
               </div>
             </div>
@@ -261,12 +287,12 @@ function CatchEmAllReveal({ held, cardImageUrl, nameFull, totalCount }: { held: 
             >
               <span className="text-xs font-black tracking-[0.4px] text-foreground">
                 Caught all {totalCount}
-                {cheapest !== undefined ? ` — cheapest ask is ${currency} ${cheapest}` : ""}
+                {overallCheapest !== undefined ? ` — cheapest ask is ${currency} ${overallCheapest}` : ""}
               </span>
             </motion.div>
 
             <motion.div variants={revealChild(reduce, 0.28)}>
-              <ModelSignalPanel nameFull={nameFull} bestDeal={held.find((r) => r.dealTier === "good")} />
+              <ModelSignalPanel nameFull={nameFull} bestDeal={allRows.find((r) => r.dealTier === "good")} />
             </motion.div>
           </motion.div>
         )}
@@ -292,10 +318,12 @@ function CatchEmAllReveal({ held, cardImageUrl, nameFull, totalCount }: { held: 
  * crawler as to a human" rule — an agent reading raw HTML should no more
  * mistake "84/100" for a real fact about this card than a human should.
  *
- * `bestDeal` is the one exception: when a genuinely good-tier row exists in
- * the just-revealed held set, its real price backs the one legible "signal"
- * line instead of inventing one — the two blurred rows below it are the
- * only fully-fabricated part of this panel.
+ * `bestDeal` is the one exception: when a genuinely good-tier row exists
+ * anywhere in the feed now on screen (visible + held together, not held
+ * alone — a good deal sitting in the always-visible rows still counts),
+ * its real price backs the one legible "signal" line instead of inventing
+ * one — the two blurred rows below it are the only fully-fabricated part
+ * of this panel.
  */
 const PREMIUM_TEASER_NOTICE = "Preview of a planned feature — no live signal model behind these numbers yet.";
 
@@ -481,7 +509,7 @@ export function VintedListingsSection({ vinted }: { vinted: VintedSummary }) {
         </div>
 
         {vinted.isReal && held.length > 0 && (
-          <CatchEmAllReveal held={held} cardImageUrl={vinted.imageUrl} nameFull={vinted.title} totalCount={vinted.totalCount} />
+          <CatchEmAllReveal visible={visible} held={held} cardImageUrl={vinted.imageUrl} nameFull={vinted.title} totalCount={vinted.totalCount} />
         )}
       </div>
 
