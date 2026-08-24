@@ -56,6 +56,19 @@ function dealPctLabel(pct: number): string {
 }
 
 /**
+ * The single most-discounted "good"-tier row, not just the first one found
+ * in display order (rows are sorted newest-first, not by deal quality — an
+ * earlier version used `.find()`, which surfaced a -9% row ahead of a -11%
+ * row sitting later in the list purely because it was scraped/listed more
+ * recently, not because it was the better deal). Ties broken by lower price.
+ */
+function strongestGoodDeal(rows: VintedFeedRowSummary[]): VintedFeedRowSummary | undefined {
+  return rows
+    .filter((r) => r.dealTier === "good")
+    .sort((a, b) => a.dealPct - b.dealPct || a.price - b.price)[0];
+}
+
+/**
  * Rows kept free before the catch-'em-all reveal. Only real, scraped rows
  * are ever capped (see the `vinted.isReal` gate in the main component) — the
  * illustrative preview is already a small fake set, and teasing an unlock
@@ -292,7 +305,7 @@ function CatchEmAllReveal({
             </motion.div>
 
             <motion.div variants={revealChild(reduce, 0.28)}>
-              <ModelSignalPanel nameFull={nameFull} bestDeal={allRows.find((r) => r.dealTier === "good")} />
+              <ModelSignalPanel nameFull={nameFull} bestDeal={strongestGoodDeal(allRows)} />
             </motion.div>
           </motion.div>
         )}
