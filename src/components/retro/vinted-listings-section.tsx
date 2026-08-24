@@ -289,31 +289,49 @@ function CatchEmAllReveal({
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {phase === "open" && (
-          <motion.div initial="hidden" animate="shown" variants={{ shown: { transition: { staggerChildren: reduce ? 0 : 0.07 } } }}>
-            {held.map((row, i) => (
-              <motion.div key={row.url ?? i} variants={revealChild(reduce)}>
-                <Row row={row} cardImageUrl={cardImageUrl} />
-              </motion.div>
-            ))}
+      {/* Always rendered, never conditionally mounted — `display: none`
+          while locked, shown by the reveal. Nothing about the design
+          changes: a display:none subtree takes no layout space, so the
+          locked panel looks and measures exactly as it did when this block
+          didn't exist, and the reveal still runs the same staggered
+          entrance.
 
-            <motion.div
-              variants={revealChild(reduce)}
-              className="mt-3 flex items-center justify-between gap-3 rounded-md border-2 border-black bg-pokemon-yellow px-3.5 py-2.5 shadow-hard-sm"
-            >
-              <span className="text-xs font-black tracking-[0.4px] text-foreground">
-                Caught all {totalCount}
-                {overallCheapest !== undefined ? ` — cheapest ask is ${currency} ${overallCheapest}` : ""}
-              </span>
-            </motion.div>
+          What changes is the HTML. Gating the mount on `phase` meant these
+          rows existed only after a human clicked the ball, so the
+          server-rendered markup — the thing an AI agent or Googlebot
+          actually reads — never contained them. Now they ship in the SSR
+          output like the rest of the page. Same bytes for every requester,
+          no user-agent branch.
 
-            <motion.div variants={revealChild(reduce, 0.28)}>
-              <ModelSignalPanel nameFull={nameFull} bestDeal={strongestGoodDeal(allRows)} character={character} />
-            </motion.div>
+          `phase` only ever moves locked -> catching -> open and never back,
+          so this block has no exit animation to preserve and no longer
+          needs AnimatePresence around it. */}
+      <motion.div
+        className={phase === "open" ? undefined : "hidden"}
+        initial="hidden"
+        animate={phase === "open" ? "shown" : "hidden"}
+        variants={{ shown: { transition: { staggerChildren: reduce ? 0 : 0.07 } } }}
+      >
+        {held.map((row, i) => (
+          <motion.div key={row.url ?? i} variants={revealChild(reduce)}>
+            <Row row={row} cardImageUrl={cardImageUrl} />
           </motion.div>
-        )}
-      </AnimatePresence>
+        ))}
+
+        <motion.div
+          variants={revealChild(reduce)}
+          className="mt-3 flex items-center justify-between gap-3 rounded-md border-2 border-black bg-pokemon-yellow px-3.5 py-2.5 shadow-hard-sm"
+        >
+          <span className="text-xs font-black tracking-[0.4px] text-foreground">
+            Caught all {totalCount}
+            {overallCheapest !== undefined ? ` — cheapest ask is ${currency} ${overallCheapest}` : ""}
+          </span>
+        </motion.div>
+
+        <motion.div variants={revealChild(reduce, 0.28)}>
+          <ModelSignalPanel nameFull={nameFull} bestDeal={strongestGoodDeal(allRows)} character={character} />
+        </motion.div>
+      </motion.div>
     </>
   );
 }
