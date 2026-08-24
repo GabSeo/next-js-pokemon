@@ -1,4 +1,15 @@
+import { memoizeFetch } from "@/lib/memo-fetch";
+
 const API_BASE = "https://api.apitcg.com/api";
+
+/**
+ * Collapses redundant identical requests (including failed ones) across
+ * every route needing the same card within a single build/warm instance —
+ * see memo-fetch.ts's doc comment for the production incident this fixes.
+ * 60s comfortably spans a full `next build` static-generation pass without
+ * meaningfully delaying production recovery once apitcg.com is back up.
+ */
+const MEMO_TTL_MS = 60_000;
 
 /**
  * Fails a hung request fast rather than eating fetch's platform default
@@ -87,15 +98,17 @@ function apiKey(): string {
 }
 
 async function apitcgFetch<T>(path: string, revalidateSeconds: number): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: { "x-api-key": apiKey() },
-    next: { revalidate: revalidateSeconds },
-    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  return memoizeFetch(path, MEMO_TTL_MS, async () => {
+    const res = await fetch(`${API_BASE}${path}`, {
+      headers: { "x-api-key": apiKey() },
+      next: { revalidate: revalidateSeconds },
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
+    if (!res.ok) {
+      throw new Error(`apitcg request failed (${res.status}): ${path}`);
+    }
+    return res.json() as Promise<T>;
   });
-  if (!res.ok) {
-    throw new Error(`apitcg request failed (${res.status}): ${path}`);
-  }
-  return res.json() as Promise<T>;
 }
 
 /** Exact lookup by card code, e.g. "OP07-113". Reliable for One Piece. */

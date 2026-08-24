@@ -19,7 +19,18 @@
  * short set code; there's no separate `code` field on the Set object.
  */
 
+import { memoizeFetch } from "@/lib/memo-fetch";
+
 const API_BASE = "https://api.tcgdex.net/v2";
+
+/**
+ * Collapses redundant identical requests (including failed ones) across
+ * every route needing the same card within a single build/warm instance —
+ * see memo-fetch.ts's doc comment for the production incident this fixes.
+ * 60s comfortably spans a full `next build` static-generation pass without
+ * meaningfully delaying production recovery once TCGdex is back up.
+ */
+const MEMO_TTL_MS = 60_000;
 
 /**
  * Fails a hung request fast rather than eating fetch's platform default
@@ -164,14 +175,16 @@ export function tcgplayerSnapshot(card: TcgdexCard): { price?: number; updated?:
 }
 
 async function tcgdexFetch<T>(lang: TcgdexLang, path: string): Promise<T> {
-  const res = await fetch(`${API_BASE}/${lang}${path}`, {
-    next: { revalidate: REVALIDATE_SECONDS },
-    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  return memoizeFetch(`${lang}${path}`, MEMO_TTL_MS, async () => {
+    const res = await fetch(`${API_BASE}/${lang}${path}`, {
+      next: { revalidate: REVALIDATE_SECONDS },
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
+    if (!res.ok) {
+      throw new Error(`tcgdex request failed (${res.status}): /${lang}${path}`);
+    }
+    return res.json() as Promise<T>;
   });
-  if (!res.ok) {
-    throw new Error(`tcgdex request failed (${res.status}): /${lang}${path}`);
-  }
-  return res.json() as Promise<T>;
 }
 
 export async function getCard(id: string, lang: TcgdexLang = "en"): Promise<TcgdexCard | undefined> {
