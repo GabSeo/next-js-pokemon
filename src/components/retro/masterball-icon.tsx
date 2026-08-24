@@ -3,36 +3,26 @@
 import { motion, useReducedMotion } from "motion/react";
 
 /**
- * The Master Ball SVG used by the Vinted "catch 'em all" reveal
- * (vinted-listings-section.tsx) — not the same file as masterball-bg.tsx's
- * decorative page background, which renders public/masterball.png as an
- * <Image>. This one is inline SVG so its glint sweep can be driven by the
- * same `motion/react` the rest of the reveal interaction already uses,
- * rather than mixing in a styled-jsx keyframe (unused anywhere else in this
- * codebase) for one component.
+ * The Master Ball used by the Vinted "catch 'em all" reveal
+ * (vinted-listings-section.tsx) — renders the same public/masterball.png
+ * asset masterball-bg.tsx uses for the site's decorative page background,
+ * rather than a separate hand-drawn inline SVG recreation of it (what this
+ * file used to be). One real asset, one look, instead of two Master Balls
+ * that don't quite match.
  *
- * Colors are literal hex, not theme tokens — a Master Ball's purple/pink/
- * black/white is a fixed real-world design, not a brand color that should
- * follow a future palette change the way bg-pokemon-red etc. do.
+ * Plain <img>, not next/image: this asset already goes through next/image
+ * elsewhere (masterball-bg.tsx), but here it's small, decorative, and
+ * layered under a Motion-animated glint overlay — next/image's automatic
+ * sizing/loading machinery buys nothing for that and only adds a layout
+ * wrapper the glint's absolute positioning would have to fight.
  */
 export function MasterballIcon({ size = 56 }: { size?: number }) {
   const reduce = useReducedMotion();
 
   return (
-    <span className="relative block overflow-hidden" style={{ width: size, height: size }}>
-      <svg viewBox="0 0 64 64" width={size} height={size} aria-hidden="true">
-        <circle cx="32" cy="32" r="29" fill="#fff" />
-        <path d="M3 32a29 29 0 0 1 58 0Z" fill="#6b21a8" />
-        <circle cx="19" cy="17" r="4.5" fill="#ec4899" />
-        <circle cx="45" cy="17" r="4.5" fill="#ec4899" />
-        <text x="32" y="24" textAnchor="middle" fontFamily="Inter, sans-serif" fontSize="15" fontWeight="900" fill="#ec4899">
-          M
-        </text>
-        <rect x="3" y="27.5" width="58" height="9" fill="#0a0a0a" />
-        <circle cx="32" cy="32" r="10" fill="#fff" stroke="#0a0a0a" strokeWidth="3.5" />
-        <circle cx="32" cy="32" r="3.4" fill="#e4e4e4" />
-        <circle cx="32" cy="32" r="29" fill="none" stroke="#0a0a0a" strokeWidth="3.5" />
-      </svg>
+    <span className="relative block overflow-hidden rounded-full" style={{ width: size, height: size }}>
+      {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, same asset as masterball-bg.tsx */}
+      <img src="/masterball.png" alt="" width={size} height={size} className="h-full w-full object-contain" />
       {/* Sweeping glint — a bright diagonal band drifting left to right on a
           loop, pure decoration. Off entirely under reduced motion rather
           than a static remnant, same rule the rotation/shake in the parent
