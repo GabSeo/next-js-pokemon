@@ -4,6 +4,7 @@ import { ProductPageContent, type LocaleLink } from "@/components/product-page-c
 import { JAPANESE_MARKET_ENABLED } from "@/lib/graded-market";
 import { franchiseLabel, getAllCards, getCardBySlug, getFrenchCardText } from "@/lib/cards";
 import { absoluteUrl } from "@/lib/site";
+import { priceStatement } from "@/lib/price-display";
 
 // 36 hours (must be a literal — Next.js statically parses this export).
 // Kept in sync with apitcg.ts's REVALIDATE_SECONDS.
@@ -33,7 +34,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   return {
     title: `${card.name} (${card.number ?? ""}) price`,
-    description: `${card.name} — ${card.set} ${card.number ?? ""}. Current market price: ${card.currency} ${card.currentPrice} as of ${card.asOfDate}.`,
+    description: `${card.name} — ${card.set} ${card.number ?? ""}. ${priceStatement(card)}`,
     alternates: {
       canonical: `/products/${card.slug}`,
       languages,
@@ -58,14 +59,22 @@ export default async function ProductPage({ params }: PageProps) {
     category: label,
     description: card.description ?? `${card.name} — ${card.set} ${card.number ?? ""}`,
     url: absoluteUrl(`/products/${card.slug}`),
-    offers: {
-      "@type": "Offer",
-      price: card.currentPrice,
-      priceCurrency: card.currency,
-      priceValidUntil: card.asOfDate,
-      availability: "https://schema.org/InStock",
-      url: absoluteUrl(`/products/${card.slug}`),
-    },
+    // An Offer with the placeholder price would publish "this card costs 0
+    // USD" as structured data — the one representation search engines and
+    // assistants are most likely to quote without the page's own caveat
+    // next to it. A card with no readable price ships no offer at all.
+    ...(card.priceUnavailable
+      ? {}
+      : {
+          offers: {
+            "@type": "Offer",
+            price: card.currentPrice,
+            priceCurrency: card.currency,
+            priceValidUntil: card.asOfDate,
+            availability: "https://schema.org/InStock",
+            url: absoluteUrl(`/products/${card.slug}`),
+          },
+        }),
   };
 
   const breadcrumbJsonLd = {
@@ -97,7 +106,9 @@ export default async function ProductPage({ params }: PageProps) {
         name: `How much is ${card.name} (${card.number ?? ""}) worth right now?`,
         acceptedAnswer: {
           "@type": "Answer",
-          text: `The current market price for ${card.name} (${card.set}, ${card.number ?? ""}) is ${card.currency} ${card.currentPrice} as of ${card.asOfDate}, sourced from TCGPlayer.`,
+          text: card.priceUnavailable
+            ? `The market price for ${card.name} (${card.set}, ${card.number ?? ""}) is temporarily unavailable — no price source could be reached.`
+            : `The current market price for ${card.name} (${card.set}, ${card.number ?? ""}) is ${card.currency} ${card.currentPrice} as of ${card.asOfDate}, sourced from TCGPlayer.`,
         },
       },
     ],

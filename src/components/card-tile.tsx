@@ -53,9 +53,16 @@ export function CardTile({ card }: { card: Card }) {
         </p>
         <div className="mt-auto flex items-center justify-between border-t-2 border-border-subtle pt-2">
           <span className="text-xs font-bold tracking-[0.3px] text-muted-text uppercase">Market price</span>
-          <data value={String(card.currentPrice)} className="text-base font-black tabular-nums">
-            {card.currency} {card.currentPrice}
-          </data>
+          {/* No price source could be reached for this card — see
+              placeholderCard in lib/cards.ts. Showing the placeholder's 0
+              here would read as "free", which is worse than saying so. */}
+          {card.priceUnavailable ? (
+            <span className="text-base font-black">—</span>
+          ) : (
+            <data value={String(card.currentPrice)} className="text-base font-black tabular-nums">
+              {card.currency} {card.currentPrice}
+            </data>
+          )}
         </div>
       </div>
     </Link>

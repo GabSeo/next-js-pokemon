@@ -170,7 +170,9 @@ export async function entityMapDocument() {
       if (!card) continue; // matches the site-wide pattern: a resolution failure omits data rather than crashing
       chunks.push({
         chunkId: `c_${ref.slug}`,
-        text: `The current market price for ${card.name} (${card.set}, ${card.number ?? ""}) is ${card.currency} ${card.currentPrice} as of ${card.asOfDate}.`,
+        text: card.priceUnavailable
+          ? `${card.name} (${card.set}, ${card.number ?? ""}) — market price temporarily unavailable, no price source could be reached.`
+          : `The current market price for ${card.name} (${card.set}, ${card.number ?? ""}) is ${card.currency} ${card.currentPrice} as of ${card.asOfDate}.`,
         sourceUrl: absoluteUrl(`/products/${ref.slug}`),
         pageTitle: `${card.name} price`,
         publisher: SITE_NAME,

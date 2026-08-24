@@ -45,6 +45,10 @@ const handler = createMcpHandler((server) => {
             rarity: z.string().optional(),
             currency: z.string(),
             currentPrice: z.number(),
+            // Only ever true, and only present when no price source could
+            // be reached — currentPrice is a placeholder 0 in that case and
+            // must not be read as a real valuation.
+            priceUnavailable: z.literal(true).optional(),
             productUrl: z.string(),
           })
         ),
@@ -62,6 +66,7 @@ const handler = createMcpHandler((server) => {
         rarity: c.rarity,
         currency: c.currency,
         currentPrice: c.currentPrice,
+        ...(c.priceUnavailable ? { priceUnavailable: true as const } : {}),
         productUrl: absoluteUrl(`/products/${c.slug}`),
       }));
       return {
@@ -162,7 +167,9 @@ const handler = createMcpHandler((server) => {
         content: [
           {
             type: "text",
-            text: `${card.name} (${card.set}${card.number ? ` ${card.number}` : ""}) — ${card.currency} ${card.currentPrice} as of ${card.asOfDate}.`,
+            text: card.priceUnavailable
+              ? `${card.name} (${card.set}${card.number ? ` ${card.number}` : ""}) — market price temporarily unavailable, no price source could be reached.`
+              : `${card.name} (${card.set}${card.number ? ` ${card.number}` : ""}) — ${card.currency} ${card.currentPrice} as of ${card.asOfDate}.`,
           },
         ],
         structuredContent: { found: true, card: toPublicCard(card) },

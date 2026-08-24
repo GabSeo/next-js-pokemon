@@ -2,6 +2,7 @@ import { computeAlertBands, downsamplePriceHistory, getAllCards, getCardsByFranc
 import { cardRefs } from "@/data/card-refs";
 import { getGradedMarketData, GRADED_MARKET_LANGUAGES } from "@/lib/graded-market";
 import { absoluteUrl, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
+import { priceLabel } from "@/lib/price-display";
 import type { Card, Franchise } from "@/lib/types";
 
 function priceRangeMarkdown(card: Card): string {
@@ -123,7 +124,11 @@ ${card.description ?? `${display.name} — ${display.set} (${card.number ?? ""})
 
 ## Current price
 
-${card.currency} ${card.currentPrice} as of ${card.asOfDate}. Source: [TCGPlayer](${card.sourceUrl ?? "https://www.tcgplayer.com"}).
+${
+    card.priceUnavailable
+      ? "Temporarily unavailable — no price source could be reached for this card. Every other field on this page is unaffected, and the price returns on the next successful refresh."
+      : `${card.currency} ${card.currentPrice} as of ${card.asOfDate}. Source: [TCGPlayer](${card.sourceUrl ?? "https://www.tcgplayer.com"}).`
+  }
 
 ## Price history
 
@@ -167,7 +172,7 @@ export async function collectionToMarkdown(franchise: Franchise): Promise<string
   const rows = cards
     .map(
       (c) =>
-        `- **${c.name}** (${c.number ?? ""}, ${c.rarity ?? "Unknown"}) — ${c.currency} ${c.currentPrice} — ${absoluteUrl(
+        `- **${c.name}** (${c.number ?? ""}, ${c.rarity ?? "Unknown"}) — ${priceLabel(c, "price unavailable")} — ${absoluteUrl(
           `/products/${c.slug}`
         )}`
     )
@@ -193,7 +198,9 @@ ${rows}
  * page as the canonical source for the card itself.
  */
 export async function priceCheckResultMarkdown(card: Card): Promise<string> {
-  const bands = computeAlertBands(card.currentPrice);
+  // Bands are percentages of the current price, so they'd all be 0 for a
+  // card whose price couldn't be read — see priceStatement's own note.
+  const bands = card.priceUnavailable ? [] : computeAlertBands(card.currentPrice);
   const bandRows = bands
     .map((b) => `| ${b.pct > 0 ? "+" : ""}${b.pct}% | ${card.currency} ${b.price} |`)
     .join("\n");
@@ -219,7 +226,7 @@ export async function priceCheckResultMarkdown(card: Card): Promise<string> {
 
 Card ID: ${card.id}
 Franchise: ${franchiseLabel(card.franchise)}
-Current price: ${card.currency} ${card.currentPrice} as of ${card.asOfDate}
+Current price: ${card.priceUnavailable ? "temporarily unavailable (no price source could be reached)" : `${card.currency} ${card.currentPrice} as of ${card.asOfDate}`}
 Product page (canonical): ${absoluteUrl(`/products/${card.slug}`)}
 Product markdown: ${absoluteUrl(`/products/${card.slug}/index.md`)}
 
@@ -227,7 +234,7 @@ Product markdown: ${absoluteUrl(`/products/${card.slug}/index.md`)}
 
 | Band | Trigger price |
 | --- | --- |
-${bandRows}
+${bandRows || "Unavailable while this card has no readable market price."}
 
 ## Recent price snapshots
 
@@ -284,7 +291,7 @@ export async function homepageMarkdown(): Promise<string> {
   const rows = cards
     .map(
       (c) =>
-        `- ${franchiseLabel(c.franchise)} — **${c.name}** (${c.number ?? ""}) — ${c.currency} ${c.currentPrice} — ${absoluteUrl(`/products/${c.slug}`)}`
+        `- ${franchiseLabel(c.franchise)} — **${c.name}** (${c.number ?? ""}) — ${priceLabel(c, "price unavailable")} — ${absoluteUrl(`/products/${c.slug}`)}`
     )
     .join("\n");
 

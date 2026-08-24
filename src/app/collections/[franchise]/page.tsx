@@ -49,8 +49,12 @@ export default async function CollectionPage({ params }: PageProps) {
   const otherLabel = franchiseLabel(other);
 
   const setsRepresented = new Set(cards.map((c) => c.set)).size;
-  const avgPrice = cards.length > 0 ? Math.round((cards.reduce((sum, c) => sum + c.currentPrice, 0) / cards.length) * 100) / 100 : 0;
-  const featured = cards.length > 0 ? cards.reduce((best, c) => (c.currentPrice > best.currentPrice ? c : best), cards[0]) : undefined;
+  // Averaging in a card whose price couldn't be read would drag the figure
+  // toward 0 and present the result as the collection's real average, so
+  // those cards sit the stat out entirely rather than counting as free.
+  const priced = cards.filter((c) => !c.priceUnavailable);
+  const avgPrice = priced.length > 0 ? Math.round((priced.reduce((sum, c) => sum + c.currentPrice, 0) / priced.length) * 100) / 100 : 0;
+  const featured = priced.length > 0 ? priced.reduce((best, c) => (c.currentPrice > best.currentPrice ? c : best), priced[0]) : undefined;
 
   const itemListJsonLd = {
     "@context": "https://schema.org",
@@ -108,9 +112,11 @@ export default async function CollectionPage({ params }: PageProps) {
           <div className="rounded-lg border-2 border-black bg-card-surface p-5 shadow-hard-md">
             <div className="mb-3 text-[11px] font-black tracking-[0.6px] text-muted-text uppercase">Avg. Price</div>
             <div className="text-[28px] font-black tracking-[-0.6px] tabular-nums">
-              {cards.length > 0 ? `${cards[0].currency} ${avgPrice}` : "—"}
+              {priced.length > 0 ? `${priced[0].currency} ${avgPrice}` : "—"}
             </div>
-            <div className="mt-1 text-xs font-bold text-muted-text">Current market price</div>
+            <div className="mt-1 text-xs font-bold text-muted-text">
+              {priced.length > 0 ? "Current market price" : "No price source reachable right now"}
+            </div>
           </div>
           <div className="rounded-lg border-2 border-black bg-card-surface p-5 shadow-hard-md">
             <div className="mb-3 text-[11px] font-black tracking-[0.6px] text-muted-text uppercase">Data Formats</div>

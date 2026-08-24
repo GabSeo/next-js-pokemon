@@ -20,6 +20,7 @@
  */
 
 import { memoizeFetch } from "@/lib/memo-fetch";
+import { resilientFetch } from "@/lib/upstream";
 
 const API_BASE = "https://api.tcgdex.net/v2";
 
@@ -176,10 +177,11 @@ export function tcgplayerSnapshot(card: TcgdexCard): { price?: number; updated?:
 
 async function tcgdexFetch<T>(lang: TcgdexLang, path: string): Promise<T> {
   return memoizeFetch(`${lang}${path}`, MEMO_TTL_MS, async () => {
-    const res = await fetch(`${API_BASE}/${lang}${path}`, {
-      next: { revalidate: REVALIDATE_SECONDS },
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-    });
+    const res = await resilientFetch(
+      `${API_BASE}/${lang}${path}`,
+      { next: { revalidate: REVALIDATE_SECONDS } },
+      FETCH_TIMEOUT_MS
+    );
     if (!res.ok) {
       throw new Error(`tcgdex request failed (${res.status}): /${lang}${path}`);
     }
