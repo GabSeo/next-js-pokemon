@@ -22,6 +22,16 @@
 const API_BASE = "https://api.tcgdex.net/v2";
 
 /**
+ * Fails a hung request fast rather than eating fetch's platform default
+ * (10s) — see apitcg.ts's own FETCH_TIMEOUT_MS comment for the production
+ * incident that motivated this: TCGdex being unreachable during a build
+ * meant every card lookup, across every route needing one, independently
+ * paid the full default timeout, stacking into enough dead time to blow
+ * the build's time budget. Same value as apitcg.ts, for the same reason.
+ */
+const FETCH_TIMEOUT_MS = 6000;
+
+/**
  * Matches apitcg.ts's own 36h REVALIDATE_SECONDS — deliberately, even
  * though the identity fields on this same response (name/set/rarity/
  * types/image) change far less often than that. TCGdex bundles identity
@@ -156,6 +166,7 @@ export function tcgplayerSnapshot(card: TcgdexCard): { price?: number; updated?:
 async function tcgdexFetch<T>(lang: TcgdexLang, path: string): Promise<T> {
   const res = await fetch(`${API_BASE}/${lang}${path}`, {
     next: { revalidate: REVALIDATE_SECONDS },
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
   if (!res.ok) {
     throw new Error(`tcgdex request failed (${res.status}): /${lang}${path}`);

@@ -1,6 +1,22 @@
 const API_BASE = "https://api.apitcg.com/api";
 
 /**
+ * Fails a hung request fast rather than eating fetch's platform default
+ * (10s, confirmed live: a Vercel build where apitcg.com was rate-limited
+ * AND TCGdex was unreachable timed out on every single card lookup across
+ * every route that needed one — product page, its markdown mirror, JSON
+ * API, OKF page, French page, French markdown, collections page, homepage,
+ * entitymap page — each paying the full 10s independently, since the
+ * request-scoped resolveCardSafe cache doesn't carry across separate
+ * top-level page builds. That's dozens of 10s waits stacking into enough
+ * dead time to blow a build's time budget and get killed with no clean
+ * error, which is exactly what happened. This doesn't change what a caller
+ * sees on failure (still the same caught-and-degrades-to-illustrative
+ * path) — it just bounds how long any one attempt can cost.
+ */
+const FETCH_TIMEOUT_MS = 6000;
+
+/**
  * How long Next.js's fetch cache treats apitcg.com responses as fresh.
  * apitcg.com's free tier caps at 1000 calls/month; every request that lands
  * after this window elapses triggers a full-catalog refresh (2 calls per
@@ -74,6 +90,7 @@ async function apitcgFetch<T>(path: string, revalidateSeconds: number): Promise<
   const res = await fetch(`${API_BASE}${path}`, {
     headers: { "x-api-key": apiKey() },
     next: { revalidate: revalidateSeconds },
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
   if (!res.ok) {
     throw new Error(`apitcg request failed (${res.status}): ${path}`);
