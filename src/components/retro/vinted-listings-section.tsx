@@ -377,8 +377,8 @@ function ModelSignalPanel({ nameFull, bestDeal, character }: { nameFull: string;
   const [spriteFailed, setSpriteFailed] = useState(false);
 
   return (
-    <div className="mt-3.5 rounded-md border-2 border-black bg-foreground p-5" style={{ boxShadow: "6px 6px 0 0 rgba(10,10,10,.3)" }}>
-      <div className="flex flex-wrap items-center gap-2.5">
+    <div className="mt-3.5 rounded-md border-2 border-black bg-foreground p-6" style={{ boxShadow: "6px 6px 0 0 rgba(10,10,10,.3)" }}>
+      <div className="flex flex-wrap items-center gap-3">
         {/* Name alone here — "Premium" said once, by the pill, not twice. */}
         <span className="text-[10px] font-black tracking-[1.1px] text-pokemon-yellow uppercase">{nameFull}</span>
         <span className="inline-flex items-center gap-1.5 rounded-full border-[1.5px] border-pokemon-yellow bg-pokemon-yellow/15 px-2 py-px">
@@ -387,24 +387,26 @@ function ModelSignalPanel({ nameFull, bestDeal, character }: { nameFull: string;
         </span>
       </div>
 
-      <div className="mt-1.5 text-[22px] font-black tracking-[-0.6px] text-pretty">
-        <span className="text-white">Something&rsquo;s up with {nameFull}.</span>
+      {/* No trailing periods — these two lines read as one continuous
+          headline, and a mid-headline full stop breaks that read. */}
+      <div className="mt-2.5 text-[22px] font-black tracking-[-0.6px] text-pretty">
+        <span className="text-white">Something&rsquo;s up with {nameFull}</span>
         <br />
-        <span className="text-pokemon-yellow">Premium tells you what.</span>
+        <span className="text-pokemon-yellow">Premium tells you what</span>
       </div>
-      <p className="mt-1.5 max-w-[460px] text-xs leading-[18px] text-[#b9b9b9] text-pretty">
+      <p className="mt-2.5 max-w-[460px] text-xs leading-[18px] text-[#b9b9b9] text-pretty">
         Every time a new listing lands, we check if it&rsquo;s worth acting on — and Premium members see the call, plus the reasoning, right when it happens.
       </p>
 
-      <div className="mt-4 flex items-stretch gap-3">
+      <div className="mt-5 flex items-stretch gap-4">
         {/* conviction score — no real model behind it, see PREMIUM_TEASER_NOTICE */}
-        <div className="w-[120px] flex-none rounded-[5px] border-2 border-[#2a2a2a] bg-[#161616] px-3 py-2.5">
+        <div className="w-[120px] flex-none rounded-[5px] border-2 border-[#2a2a2a] bg-[#161616] px-3.5 py-3">
           <div className="text-[9px] font-bold tracking-[0.8px] text-[#8b8b8b] uppercase">Conviction</div>
-          <div aria-hidden="true" className="mt-px flex items-baseline gap-0.5 blur-[5px] select-none">
+          <div aria-hidden="true" className="mt-1 flex items-baseline gap-0.5 blur-[5px] select-none">
             <span className="text-[32px] font-black tracking-[-1.4px] text-pokemon-yellow">84</span>
             <span className="text-xs font-black text-[#8b8b8b]">/100</span>
           </div>
-          <div className="mt-1.5 flex gap-[3px]">
+          <div className="mt-2 flex gap-[3px]">
             {[0, 1, 2, 3, 4].map((i) => (
               <div key={i} className={`h-1.5 flex-1 rounded-sm ${i < 3 ? "bg-pokemon-yellow" : "bg-[#2a2a2a]"}`} />
             ))}
@@ -412,16 +414,16 @@ function ModelSignalPanel({ nameFull, bestDeal, character }: { nameFull: string;
         </div>
 
         {/* signal log — one real (the best held deal, if any), two illustrative */}
-        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          <div className="flex items-center gap-2.5 rounded-[5px] border-2 border-[#2a2a2a] bg-[#161616] px-2.5 py-[7px]">
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
+          <div className="flex items-center gap-2.5 rounded-[5px] border-2 border-[#2a2a2a] bg-[#161616] px-3 py-2.5">
             <span className="flex-none rounded-sm border-[1.5px] border-black bg-success-green px-1.5 text-[9px] font-black tracking-[0.6px] text-black uppercase">
               Buy
             </span>
             <span className="min-w-0 flex-1 truncate text-[11px] font-bold text-[#e4e4e4]">{firstSignal}</span>
           </div>
-          <div aria-hidden="true" className="flex flex-col gap-1.5 blur-[4px]">
+          <div aria-hidden="true" className="flex flex-col gap-2 blur-[4px]">
             {(["Buy", "Sell"] as const).map((k) => (
-              <div key={k} className="flex items-center gap-2.5 rounded-[5px] border-2 border-[#2a2a2a] bg-[#161616] px-2.5 py-[7px]">
+              <div key={k} className="flex items-center gap-2.5 rounded-[5px] border-2 border-[#2a2a2a] bg-[#161616] px-3 py-2.5">
                 <span className={`flex-none rounded-sm px-1.5 text-[9px] font-black uppercase ${k === "Buy" ? "bg-success-green text-black" : "bg-pokemon-red text-white"}`}>
                   {k}
                 </span>
@@ -439,15 +441,15 @@ function ModelSignalPanel({ nameFull, bestDeal, character }: { nameFull: string;
           height the way a panel-wide grid would. Single column below `sm`:
           Gengar drops under the CTA instead of squeezing into a fixed
           auto-width column beside it on a narrow card. */}
-      <div className="mt-6 grid grid-cols-1 items-center gap-4 sm:grid-cols-[1fr_auto]">
-        <div className="flex flex-col items-start gap-2">
+      <div className="mt-7 grid grid-cols-1 items-center gap-4 sm:grid-cols-[1fr_auto]">
+        <div className="flex flex-col items-start gap-2.5">
           {/* Compact single-line CTA — lead + separator + value + arrow, no
               leading icon (Gengar is this panel's one mascot now, not a
               second ball here too). flex-wrap so it folds onto two lines on
               a narrow card instead of overflowing the panel. */}
           <button
             type="button"
-            className="inline-flex flex-wrap items-center gap-x-2.5 gap-y-1 rounded-md border-2 border-pokemon-yellow bg-pokemon-yellow py-2.5 pr-4 pl-4 text-foreground transition-all duration-150 hover:-translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pokemon-yellow"
+            className="inline-flex flex-wrap items-center gap-x-2.5 gap-y-1 rounded-md border-2 border-pokemon-yellow bg-pokemon-yellow py-3 pr-4 pl-4 text-foreground transition-all duration-150 hover:-translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pokemon-yellow"
             style={{ boxShadow: "0 0 0 0 rgba(255,205,5,.3)" }}
           >
             <span className="text-[14px] font-black tracking-[-0.1px]">Create your account</span>
@@ -460,7 +462,7 @@ function ModelSignalPanel({ nameFull, bestDeal, character }: { nameFull: string;
               →
             </span>
           </button>
-          <div className="flex flex-wrap items-center gap-1.5 text-[9.5px] font-bold tracking-[0.5px] text-[#8b8b8b] uppercase">
+          <div className="flex flex-wrap items-center gap-2 text-[9.5px] font-bold tracking-[0.5px] text-[#8b8b8b] uppercase">
             <span>No card needed</span>
             <span>·</span>
             <span>30 seconds</span>
@@ -468,7 +470,7 @@ function ModelSignalPanel({ nameFull, bestDeal, character }: { nameFull: string;
             <span className="text-[#8b8b8b]">Already a member?</span>
           </div>
 
-          <p className="mt-1 text-[9px] font-bold tracking-[0.2px] text-[#6b6b6b]">{PREMIUM_TEASER_NOTICE}</p>
+          <p className="mt-1.5 text-[9px] font-bold tracking-[0.2px] text-[#6b6b6b]">{PREMIUM_TEASER_NOTICE}</p>
         </div>
 
         {/* Mascot — second column of the grid scoped just above, so it's
