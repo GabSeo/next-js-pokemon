@@ -247,20 +247,15 @@ function CatchEmAllReveal({
                 whileHover={reduce ? undefined : { y: -2 }}
                 whileTap={reduce ? undefined : { scale: 0.94 }}
               >
-                {!reduce && (
-                  // Purple, not pokemon-yellow — matches the Master Ball's
-                  // own real color (see masterball-icon.tsx) instead of
-                  // clashing with it. No purple theme token exists (only
-                  // red/yellow/blue), so this is the same literal hex the
-                  // ball's own SVG-era purple used, kept as a real-world
-                  // fixed color rather than a token that should follow a
-                  // future palette change.
-                  <motion.span
-                    className="absolute inset-0 rounded-full bg-[#6b21a8]"
-                    animate={{ scale: [1, 1.12, 1], opacity: [0.35, 0.7, 0.35] }}
-                    transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-                  />
-                )}
+                {/* No halo behind the ball. A filled 62px circle sitting
+                    behind a 56px ball reads as a second, softer Master Ball
+                    rather than as a glow — it has the ball's own silhouette,
+                    and pulsing its opacity and scale gives that silhouette
+                    an out-of-focus edge. Matching it to the ball's real
+                    purple (the state before this) made the resemblance
+                    stronger, not weaker. The button already announces itself
+                    through its hover lift, tap scale, the ball's idle wobble
+                    and the glint sweeping across it. */}
                 <motion.span
                   className="relative"
                   style={{ filter: "drop-shadow(3px 3px 0 #0a0a0a)" }}
