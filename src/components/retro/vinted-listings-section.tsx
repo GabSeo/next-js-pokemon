@@ -141,19 +141,6 @@ function Row({ row, cardImageUrl }: { row: VintedFeedRowSummary; cardImageUrl?: 
 }
 
 /** Skeleton stand-in for a held row — pure decoration, never real data. Widths vary so three in a row don't read as a repeated tile. */
-function GhostRow({ width }: { width: string }) {
-  return (
-    <div className="flex items-center gap-3.5 border-t border-dashed border-border-subtle py-2.5 first:border-t-0">
-      <div className="h-[60px] w-11 flex-none rounded-sm bg-border-subtle" />
-      <div className="flex-1">
-        <div className="h-3 w-24 rounded-full" style={{ backgroundColor: CHIP_COLORS.green.bg }} />
-        <div className="mt-1.5 h-[13px] rounded-full bg-border-subtle" style={{ width }} />
-      </div>
-      <div className="h-4 w-[58px] flex-none rounded-full bg-border-subtle" />
-    </div>
-  );
-}
-
 const revealChild = (reduce: boolean | null, delay = 0) => ({
   hidden: reduce ? { opacity: 0 } : { opacity: 0, y: 7, filter: "blur(5px)" },
   shown: reduce
@@ -164,7 +151,7 @@ const revealChild = (reduce: boolean | null, delay = 0) => ({
 /* -------------------------------------------------- catch-'em-all reveal */
 
 /**
- * The free hook: `held` listings stay blurred behind ghost rows, with the
+ * The free hook: `held` listings render in full but blurred, with the
  * Master Ball centered on top of the thing it unlocks. Press it (click,
  * Enter, Space) and it shakes 3x over ~1.15s, the blur clears, the held rows
  * stagger in, and a yellow confirmation strip lands. This step is entirely
@@ -232,9 +219,29 @@ function CatchEmAllReveal({
       <AnimatePresence initial={false}>
         {phase !== "open" && (
           <motion.div key="locked" className="relative pt-0.5" exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
+            {/* The real held rows, blurred — not grey skeletons standing in
+                for them. This site's whole premise is that every number on a
+                page is there for an agent or a crawler to read (PLAN.md §4),
+                and a row that only mounts after a human clicks the ball is
+                readable by neither: Googlebot renders JS but never presses
+                anything. Rendering them here puts the data in the prerendered
+                HTML, where the .md and JSON mirrors have always had it —
+                `cardToMarkdown` and the /api route both serialize the full
+                `vinted.rows`, held ones included, so this exposes nothing
+                that wasn't already public, it just stops the HTML being the
+                one representation missing it.
+
+                Blur is the whole lock: the rows are present and visible,
+                simply unreadable until the reveal clears it. Same content
+                for everyone, no branch on user-agent — the visible-links
+                rule in PLAN.md §4.2, which rejects showing bots something
+                humans don't get. `aria-hidden` because the readable copy
+                below announces itself properly once opened, and
+                `pointer-events-none` so a blurred listing link can't be
+                clicked by accident. */}
             <div aria-hidden="true" className="pointer-events-none opacity-90 blur-[4px]">
-              {["76%", "62%", "70%"].slice(0, Math.min(held.length, 3)).map((w) => (
-                <GhostRow key={w} width={w} />
+              {held.map((row, i) => (
+                <Row key={row.url ?? i} row={row} cardImageUrl={cardImageUrl} />
               ))}
             </div>
 
