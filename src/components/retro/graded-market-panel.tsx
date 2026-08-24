@@ -71,6 +71,7 @@ export async function GradedMarketPanel({ card, defaultMarket }: { card: Card; d
     searchHref: data.vinted.searchUrl,
     title: data.vinted.title,
     imageUrl: data.vinted.imageUrl,
+    character: data.vinted.character,
     avgLabel: `${data.vinted.currency} ${data.vinted.avgPrice.toLocaleString()}`,
     belowAverageCount: data.vinted.belowAverageCount,
     totalCount: data.vinted.rows.length,

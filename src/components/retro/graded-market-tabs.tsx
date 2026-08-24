@@ -52,6 +52,8 @@ export type VintedSummary = {
   searchHref: string;
   title: string;
   imageUrl?: string;
+  /** The real-world character this card depicts (Card.character) — vinted-listings-section.tsx uses it to pick a Pokémon Showdown sprite for the panel's mascot. */
+  character: string;
   /** The feed's mean asking price, already formatted. A true average — 1 EUR hidden auctions are excluded upstream, so nothing in the sample distorts it. */
   avgLabel: string;
   belowAverageCount: number;

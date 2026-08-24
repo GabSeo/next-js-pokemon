@@ -105,6 +105,8 @@ export type VintedMarketData = {
   title: string;
   /** The card's own real image — every row shares it (same physical card, different sellers/conditions), never a fabricated per-listing photo. */
   imageUrl?: string;
+  /** The real-world character this card depicts (Card.character) — e.g. picking a Pokémon Showdown sprite for the panel's mascot. */
+  character: string;
   /**
    * The feed's mean asking price. A real arithmetic average, safe to
    * compute because 1 EUR hidden auctions are excluded before it — see
@@ -303,6 +305,7 @@ async function buildVintedMarket(card: Card): Promise<VintedMarketData> {
       searchUrl,
       title: query,
       imageUrl: card.imageUrl,
+      character: card.character,
       avgPrice,
       currency: real[0].currency,
       rows,
@@ -330,6 +333,7 @@ async function buildVintedMarket(card: Card): Promise<VintedMarketData> {
     searchUrl,
     title: query,
     imageUrl: card.imageUrl,
+    character: card.character,
     avgPrice,
     currency: card.currency,
     rows,

@@ -234,6 +234,7 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
     id: product ? String(product._id) : tcgdexCard!.id,
     slug: ref.slug,
     franchise: ref.franchise,
+    character: ref.character,
     ...identity,
     asOfDate: identity.asOfDate.slice(0, 10),
     currency: "USD",

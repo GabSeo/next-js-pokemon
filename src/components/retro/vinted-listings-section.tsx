@@ -190,12 +190,14 @@ function CatchEmAllReveal({
   cardImageUrl,
   nameFull,
   totalCount,
+  character,
 }: {
   visible: VintedFeedRowSummary[];
   held: VintedFeedRowSummary[];
   cardImageUrl?: string;
   nameFull: string;
   totalCount: number;
+  character: string;
 }) {
   const reduce = useReducedMotion();
   const [phase, setPhase] = useState<"locked" | "catching" | "open">("locked");
@@ -305,7 +307,7 @@ function CatchEmAllReveal({
             </motion.div>
 
             <motion.div variants={revealChild(reduce, 0.28)}>
-              <ModelSignalPanel nameFull={nameFull} bestDeal={strongestGoodDeal(allRows)} />
+              <ModelSignalPanel nameFull={nameFull} bestDeal={strongestGoodDeal(allRows)} character={character} />
             </motion.div>
           </motion.div>
         )}
@@ -340,8 +342,39 @@ function CatchEmAllReveal({
  */
 const PREMIUM_TEASER_NOTICE = "Preview of a planned feature — no live signal model behind these numbers yet.";
 
-function ModelSignalPanel({ nameFull, bestDeal }: { nameFull: string; bestDeal?: VintedFeedRowSummary }) {
+/**
+ * Pokémon Showdown's animated sprite for whichever character this card
+ * depicts (Card.character — "Gengar", "Lugia", "Typhlosion" for the cards
+ * tracked today), replacing the one static gengar.gif every card's panel
+ * used to show regardless of which Pokémon the page was actually about.
+ *
+ * Showdown's filenames are the character name lowercased with every
+ * non-alphanumeric character stripped — confirmed against the three real
+ * cases this site currently has (all single, plain words) and matching
+ * Showdown's own documented convention for the harder ones ("Mr. Mime" ->
+ * mrmime, "Ho-Oh" -> hooh, "Farfetch'd" -> farfetchd). Not exhaustively
+ * verified against every regional form/gender-variant naming edge case —
+ * <img>'s onError below hides the mascot entirely rather than showing a
+ * broken-image icon if a given name doesn't resolve to a real sprite.
+ *
+ * Only ever called for Pokémon cards in practice: this mascot only renders
+ * inside the Vinted "France" panel, which only ever gets real data (the
+ * isReal gate this sits behind) for Pokémon refs — One Piece characters
+ * like "Roronoa Zoro" would never reach this function today, but the
+ * onError fallback means it wouldn't render a broken image if it ever did.
+ */
+function pokemonShowdownSpriteUrl(character: string): string {
+  const slug = character.toLowerCase().replace(/[^a-z0-9]/g, "");
+  return `https://play.pokemonshowdown.com/sprites/ani/${slug}.gif`;
+}
+
+function ModelSignalPanel({ nameFull, bestDeal, character }: { nameFull: string; bestDeal?: VintedFeedRowSummary; character: string }) {
   const firstSignal = bestDeal ? `${bestDeal.priceLabel} ask entered under fair value` : "New ask entered under fair value";
+  // Hides the mascot entirely (rather than a broken-image icon) if this
+  // character's name doesn't resolve to a real Showdown sprite — see
+  // pokemonShowdownSpriteUrl's own doc comment on why that's not guaranteed
+  // for every possible character name.
+  const [spriteFailed, setSpriteFailed] = useState(false);
 
   return (
     <div className="mt-3.5 rounded-md border-2 border-black bg-foreground p-5" style={{ boxShadow: "6px 6px 0 0 rgba(10,10,10,.3)" }}>
@@ -438,19 +471,22 @@ function ModelSignalPanel({ nameFull, bestDeal }: { nameFull: string; bestDeal?:
           <p className="mt-1 text-[9px] font-bold tracking-[0.2px] text-[#6b6b6b]">{PREMIUM_TEASER_NOTICE}</p>
         </div>
 
-        {/* Gengar — second column of the grid scoped just above, so he's
+        {/* Mascot — second column of the grid scoped just above, so it's
             vertically centered on the button/fine-print/footnote block
             specifically, not stretched to the bottom of the whole panel. */}
-        <div aria-hidden="true" className="relative flex-none justify-self-start sm:justify-self-end">
-          <span className="absolute -inset-2.5 rounded-full bg-pokemon-yellow/20 blur-md" />
-          {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, animated GIF (next/image can't animate) */}
-          <img
-            src="/gengar.gif"
-            alt=""
-            className="relative h-16 w-16 [image-rendering:pixelated]"
-            style={{ filter: "drop-shadow(3px 3px 0 rgba(0,0,0,0.45))" }}
-          />
-        </div>
+        {!spriteFailed && (
+          <div aria-hidden="true" className="relative flex-none justify-self-start sm:justify-self-end">
+            <span className="absolute -inset-2.5 rounded-full bg-pokemon-yellow/20 blur-md" />
+            {/* eslint-disable-next-line @next/next/no-img-element -- external Showdown CDN, not a next/image-allowlisted domain, and it's an animated GIF (next/image can't animate) either way */}
+            <img
+              src={pokemonShowdownSpriteUrl(character)}
+              alt=""
+              className="relative h-16 w-16 [image-rendering:pixelated]"
+              style={{ filter: "drop-shadow(3px 3px 0 rgba(0,0,0,0.45))" }}
+              onError={() => setSpriteFailed(true)}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -522,7 +558,14 @@ export function VintedListingsSection({ vinted }: { vinted: VintedSummary }) {
         </div>
 
         {vinted.isReal && held.length > 0 && (
-          <CatchEmAllReveal visible={visible} held={held} cardImageUrl={vinted.imageUrl} nameFull={vinted.title} totalCount={vinted.totalCount} />
+          <CatchEmAllReveal
+            visible={visible}
+            held={held}
+            cardImageUrl={vinted.imageUrl}
+            nameFull={vinted.title}
+            totalCount={vinted.totalCount}
+            character={vinted.character}
+          />
         )}
       </div>
 
