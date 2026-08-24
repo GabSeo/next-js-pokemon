@@ -362,19 +362,22 @@ function ModelSignalPanel({ nameFull, bestDeal }: { nameFull: string; bestDeal?:
       {/* Scoped to just this block (button + fine print + footnote), not
           the whole panel — Gengar's row is this grid's row, so items-center
           aligns him with this block specifically, not the panel's full
-          height the way a panel-wide grid would. */}
-      <div className="mt-6 grid grid-cols-[1fr_auto] items-center gap-4">
+          height the way a panel-wide grid would. Single column below `sm`:
+          Gengar drops under the CTA instead of squeezing into a fixed
+          auto-width column beside it on a narrow card. */}
+      <div className="mt-6 grid grid-cols-1 items-center gap-4 sm:grid-cols-[1fr_auto]">
         <div className="flex flex-col items-start gap-2">
           {/* Compact single-line CTA — lead + separator + value + arrow, no
               leading icon (Gengar is this panel's one mascot now, not a
-              second ball here too). */}
+              second ball here too). flex-wrap so it folds onto two lines on
+              a narrow card instead of overflowing the panel. */}
           <button
             type="button"
-            className="inline-flex items-center gap-2.5 rounded-md border-2 border-pokemon-yellow bg-pokemon-yellow py-2.5 pr-4 pl-4 text-foreground transition-all duration-150 hover:-translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pokemon-yellow"
+            className="inline-flex flex-wrap items-center gap-x-2.5 gap-y-1 rounded-md border-2 border-pokemon-yellow bg-pokemon-yellow py-2.5 pr-4 pl-4 text-foreground transition-all duration-150 hover:-translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pokemon-yellow"
             style={{ boxShadow: "0 0 0 0 rgba(255,205,5,.3)" }}
           >
             <span className="text-[14px] font-black tracking-[-0.1px]">Create your account</span>
-            <span className="h-4 w-px flex-none bg-black/28" />
+            <span className="hidden h-4 w-px flex-none bg-black/28 sm:block" />
             {/* Muted brown, not black — same secondary-text-on-yellow convention as the Grading ROI callout box, so this reads as the supporting value, not a second equally-loud claim. */}
             <span className="text-xs font-bold" style={{ color: "rgba(10,10,10,.72)" }}>
               Track 5 cards free
@@ -397,14 +400,14 @@ function ModelSignalPanel({ nameFull, bestDeal }: { nameFull: string; bestDeal?:
         {/* Gengar — second column of the grid scoped just above, so he's
             vertically centered on the button/fine-print/footnote block
             specifically, not stretched to the bottom of the whole panel. */}
-        <div aria-hidden="true" className="relative flex-none justify-self-end">
-          <span className="absolute -inset-3 rounded-full bg-pokemon-yellow/20 blur-md" />
+        <div aria-hidden="true" className="relative flex-none justify-self-start sm:justify-self-end">
+          <span className="absolute -inset-2.5 rounded-full bg-pokemon-yellow/20 blur-md" />
           {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, animated GIF (next/image can't animate) */}
           <img
             src="/gengar.gif"
             alt=""
-            className="relative h-24 w-24 [image-rendering:pixelated]"
-            style={{ filter: "drop-shadow(4px 4px 0 rgba(0,0,0,0.45))" }}
+            className="relative h-16 w-16 [image-rendering:pixelated]"
+            style={{ filter: "drop-shadow(3px 3px 0 rgba(0,0,0,0.45))" }}
           />
         </div>
       </div>
