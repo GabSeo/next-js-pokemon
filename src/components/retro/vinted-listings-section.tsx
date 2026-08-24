@@ -303,7 +303,7 @@ function ModelSignalPanel({ nameFull, bestDeal }: { nameFull: string; bestDeal?:
   const firstSignal = bestDeal ? `${bestDeal.priceLabel} ask entered under fair value` : "New ask entered under fair value";
 
   return (
-    <div className="relative mt-3.5 overflow-hidden rounded-md border-2 border-black bg-foreground p-5" style={{ boxShadow: "6px 6px 0 0 rgba(10,10,10,.3)" }}>
+    <div className="mt-3.5 rounded-md border-2 border-black bg-foreground p-5" style={{ boxShadow: "6px 6px 0 0 rgba(10,10,10,.3)" }}>
       <div className="flex flex-wrap items-center gap-2.5">
         {/* Name alone here — "Premium" said once, by the pill, not twice. */}
         <span className="text-[10px] font-black tracking-[1.1px] text-pokemon-yellow uppercase">{nameFull}</span>
@@ -359,50 +359,54 @@ function ModelSignalPanel({ nameFull, bestDeal }: { nameFull: string; bestDeal?:
         </div>
       </div>
 
-      <div className="mt-6 flex flex-col items-start gap-2">
-        {/* Compact single-line CTA — lead + separator + value + arrow, no
-            leading icon (Gengar is this panel's one mascot now, not a
-            second ball here too). */}
-        <button
-          type="button"
-          className="inline-flex items-center gap-2.5 rounded-md border-2 border-pokemon-yellow bg-pokemon-yellow py-2.5 pr-4 pl-4 text-foreground transition-all duration-150 hover:-translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pokemon-yellow"
-          style={{ boxShadow: "0 0 0 0 rgba(255,205,5,.3)" }}
-        >
-          <span className="text-[14px] font-black tracking-[-0.1px]">Create your account</span>
-          <span className="h-4 w-px flex-none bg-black/28" />
-          {/* Muted brown, not black — same secondary-text-on-yellow convention as the Grading ROI callout box, so this reads as the supporting value, not a second equally-loud claim. */}
-          <span className="text-xs font-bold" style={{ color: "rgba(10,10,10,.72)" }}>
-            Track 5 cards free
-          </span>
-          <span aria-hidden="true" className="text-[15px] font-black">
-            →
-          </span>
-        </button>
-        <div className="flex flex-wrap items-center gap-1.5 text-[9.5px] font-bold tracking-[0.5px] text-[#8b8b8b] uppercase">
-          <span>No card needed</span>
-          <span>·</span>
-          <span>30 seconds</span>
-          <span>·</span>
-          <span className="text-[#8b8b8b]">Already a member?</span>
+      {/* Scoped to just this block (button + fine print + footnote), not
+          the whole panel — Gengar's row is this grid's row, so items-center
+          aligns him with this block specifically, not the panel's full
+          height the way a panel-wide grid would. */}
+      <div className="mt-6 grid grid-cols-[1fr_auto] items-center gap-4">
+        <div className="flex flex-col items-start gap-2">
+          {/* Compact single-line CTA — lead + separator + value + arrow, no
+              leading icon (Gengar is this panel's one mascot now, not a
+              second ball here too). */}
+          <button
+            type="button"
+            className="inline-flex items-center gap-2.5 rounded-md border-2 border-pokemon-yellow bg-pokemon-yellow py-2.5 pr-4 pl-4 text-foreground transition-all duration-150 hover:-translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pokemon-yellow"
+            style={{ boxShadow: "0 0 0 0 rgba(255,205,5,.3)" }}
+          >
+            <span className="text-[14px] font-black tracking-[-0.1px]">Create your account</span>
+            <span className="h-4 w-px flex-none bg-black/28" />
+            {/* Muted brown, not black — same secondary-text-on-yellow convention as the Grading ROI callout box, so this reads as the supporting value, not a second equally-loud claim. */}
+            <span className="text-xs font-bold" style={{ color: "rgba(10,10,10,.72)" }}>
+              Track 5 cards free
+            </span>
+            <span aria-hidden="true" className="text-[15px] font-black">
+              →
+            </span>
+          </button>
+          <div className="flex flex-wrap items-center gap-1.5 text-[9.5px] font-bold tracking-[0.5px] text-[#8b8b8b] uppercase">
+            <span>No card needed</span>
+            <span>·</span>
+            <span>30 seconds</span>
+            <span>·</span>
+            <span className="text-[#8b8b8b]">Already a member?</span>
+          </div>
+
+          <p className="mt-1 text-[9px] font-bold tracking-[0.2px] text-[#6b6b6b]">{PREMIUM_TEASER_NOTICE}</p>
         </div>
-      </div>
 
-      <p className="mt-2.5 max-w-[65%] text-[9px] font-bold tracking-[0.2px] text-[#6b6b6b]">{PREMIUM_TEASER_NOTICE}</p>
-
-      {/* Mascot, cornered bottom-right — absolutely positioned against the
-          panel (not a flex sibling) so his frame never dictates a row's
-          height; -bottom-1 tucks him level with the footnote text instead
-          of floating above it. overflow-hidden on the panel clips him to
-          the rounded corner instead of poking past it. */}
-      <div aria-hidden="true" className="pointer-events-none absolute -right-1 -bottom-1">
-        <span className="absolute -inset-2 rounded-full bg-pokemon-yellow/20 blur-md" />
-        {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, animated GIF (next/image can't animate) */}
-        <img
-          src="/gengar.gif"
-          alt=""
-          className="relative h-16 w-16 [image-rendering:pixelated]"
-          style={{ filter: "drop-shadow(3px 3px 0 rgba(0,0,0,0.45))" }}
-        />
+        {/* Gengar — second column of the grid scoped just above, so he's
+            vertically centered on the button/fine-print/footnote block
+            specifically, not stretched to the bottom of the whole panel. */}
+        <div aria-hidden="true" className="relative flex-none justify-self-end">
+          <span className="absolute -inset-3 rounded-full bg-pokemon-yellow/20 blur-md" />
+          {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, animated GIF (next/image can't animate) */}
+          <img
+            src="/gengar.gif"
+            alt=""
+            className="relative h-24 w-24 [image-rendering:pixelated]"
+            style={{ filter: "drop-shadow(4px 4px 0 rgba(0,0,0,0.45))" }}
+          />
+        </div>
       </div>
     </div>
   );
