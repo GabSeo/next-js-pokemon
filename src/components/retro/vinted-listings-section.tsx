@@ -248,8 +248,15 @@ function CatchEmAllReveal({
                 whileTap={reduce ? undefined : { scale: 0.94 }}
               >
                 {!reduce && (
+                  // Purple, not pokemon-yellow — matches the Master Ball's
+                  // own real color (see masterball-icon.tsx) instead of
+                  // clashing with it. No purple theme token exists (only
+                  // red/yellow/blue), so this is the same literal hex the
+                  // ball's own SVG-era purple used, kept as a real-world
+                  // fixed color rather than a token that should follow a
+                  // future palette change.
                   <motion.span
-                    className="absolute inset-0 rounded-full bg-pokemon-yellow"
+                    className="absolute inset-0 rounded-full bg-[#6b21a8]"
                     animate={{ scale: [1, 1.12, 1], opacity: [0.35, 0.7, 0.35] }}
                     transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
                   />
