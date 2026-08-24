@@ -72,7 +72,16 @@ export function ProductPageContent({
   defaultMarketTab,
   structuredData,
 }: ProductPageContentProps) {
-  const bands = computeAlertBands(card.currentPrice);
+  // Every panel below this line is a function of card.currentPrice, which
+  // the offline placeholder doesn't have (see placeholderCard in
+  // lib/cards.ts). Rendering them anyway would publish a wall of confident
+  // $0.00 conversions, population estimates and alert triggers, so they're
+  // replaced by a single honest notice until a price source is reachable
+  // again. The graded-market panel and the price chart stay: their data
+  // comes from eBay and from apitcg's history endpoint respectively, and
+  // both already render their own empty state.
+  const priceKnown = !card.priceUnavailable;
+  const bands = priceKnown ? computeAlertBands(card.currentPrice) : [];
 
   return (
     <div className="min-h-screen bg-muted-surface">
@@ -206,17 +215,26 @@ export function ProductPageContent({
                   <div className="rounded-lg border-2 border-black bg-card-surface p-6 shadow-hard-md">
                     <div className="mb-3 flex items-center gap-2 text-xs font-black tracking-[0.6px] text-muted-text uppercase">
                       🛒 TCGplayer
-                      <span className="ml-auto font-bold text-[#999] normal-case">{card.asOfDate}</span>
+                      <span className="ml-auto font-bold text-[#999] normal-case">{priceKnown ? card.asOfDate : "—"}</span>
                     </div>
                     <span className="mb-1 inline-block rounded-full border-2 border-black bg-muted-surface px-2.5 py-0.5 text-[11px] font-black tracking-[0.35px] uppercase">
                       Market price
                     </span>
-                    <data value={String(card.currentPrice)} className="block text-4xl font-black tracking-[-1px] tabular-nums">
-                      {card.currency} {card.currentPrice}
-                    </data>
+                    {priceKnown ? (
+                      <data value={String(card.currentPrice)} className="block text-4xl font-black tracking-[-1px] tabular-nums">
+                        {card.currency} {card.currentPrice}
+                      </data>
+                    ) : (
+                      <p className="block text-lg font-black tracking-[-0.4px]">
+                        Temporarily unavailable
+                        <span className="mt-1 block text-xs font-bold text-muted-text">
+                          Our price sources couldn&apos;t be reached for this card. Nothing else on this page has changed.
+                        </span>
+                      </p>
+                    )}
                   </div>
 
-                  <InternationalPricesPanel card={card} />
+                  {priceKnown && <InternationalPricesPanel card={card} />}
                 </div>
 
                 <GradedMarketPanel card={card} defaultMarket={defaultMarketTab} />
@@ -245,17 +263,26 @@ export function ProductPageContent({
             {/* Grading & population — no real source exists yet for either
                 (see tcggo-integration-plan.md §1). Kept visually separate
                 on purpose, not just below the fold by coincidence. */}
-            <section>
-              <div className="mb-4 flex items-center gap-2">
-                <h2 className="text-xs font-black tracking-[0.6px] text-muted-text uppercase">Grading &amp; population — still illustrative</h2>
-                <span className="h-px flex-1 bg-border-subtle" />
-              </div>
-              <PopulationPanel card={card} />
-            </section>
+            {priceKnown && (
+              <section>
+                <div className="mb-4 flex items-center gap-2">
+                  <h2 className="text-xs font-black tracking-[0.6px] text-muted-text uppercase">Grading &amp; population — still illustrative</h2>
+                  <span className="h-px flex-1 bg-border-subtle" />
+                </div>
+                <PopulationPanel card={card} />
+              </section>
+            )}
 
             <div className="rounded-lg border-2 border-black bg-card-surface p-6 shadow-hard-md">
               <h2 className="mb-4 text-lg font-black tracking-[-0.45px]">Price alerts</h2>
-              <AlertSubscribe cardId={card.id} currency={card.currency} bands={bands} />
+              {priceKnown ? (
+                <AlertSubscribe cardId={card.id} currency={card.currency} bands={bands} />
+              ) : (
+                <p className="text-sm text-muted-text">
+                  Alert thresholds are set as a percentage of the current market price, so they&apos;re unavailable until
+                  this card&apos;s price can be read again.
+                </p>
+              )}
             </div>
           </div>
         </div>

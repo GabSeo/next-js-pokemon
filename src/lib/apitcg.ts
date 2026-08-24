@@ -1,4 +1,5 @@
 import { memoizeFetch } from "@/lib/memo-fetch";
+import { resilientFetch } from "@/lib/upstream";
 
 const API_BASE = "https://api.apitcg.com/api";
 
@@ -99,11 +100,11 @@ function apiKey(): string {
 
 async function apitcgFetch<T>(path: string, revalidateSeconds: number): Promise<T> {
   return memoizeFetch(path, MEMO_TTL_MS, async () => {
-    const res = await fetch(`${API_BASE}${path}`, {
-      headers: { "x-api-key": apiKey() },
-      next: { revalidate: revalidateSeconds },
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-    });
+    const res = await resilientFetch(
+      `${API_BASE}${path}`,
+      { headers: { "x-api-key": apiKey() }, next: { revalidate: revalidateSeconds } },
+      FETCH_TIMEOUT_MS
+    );
     if (!res.ok) {
       throw new Error(`apitcg request failed (${res.status}): ${path}`);
     }

@@ -7,6 +7,7 @@ import {
   type ApitcgProduct,
 } from "@/lib/apitcg";
 import { absoluteUrl } from "@/lib/site";
+import { describeUpstreamError, logUpstreamOnce } from "@/lib/upstream";
 import { findCardByNameAndSet, getCard, cardImageUrl, tcgplayerSnapshot, type TcgdexCard } from "@/lib/tcgdex";
 import type {
   AlertBand,
@@ -115,7 +116,7 @@ async function resolveTcgdexCard(ref: CardRef): Promise<TcgdexCard | undefined> 
   try {
     return await findCardByNameAndSet(ref.lookup.name, ref.lookup.setName, ref.lookup.number);
   } catch (err) {
-    console.error(`[cards] tcgdex lookup failed for ${ref.slug}:`, err);
+    logUpstreamOnce(`tcgdex:${ref.slug}`, `[cards] TCGdex lookup failed for ${ref.slug} — ${describeUpstreamError(err)}`);
     return undefined;
   }
 }
@@ -132,7 +133,10 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
   // two independent sources failing while the other succeeds.
   const [product, tcgdexCard] = await Promise.all([
     resolveProduct(ref).catch((err) => {
-      console.error(`[cards] apitcg lookup failed for ${ref.slug} (quota exhausted or outage?):`, err);
+      logUpstreamOnce(
+        `apitcg:${ref.slug}`,
+        `[cards] apitcg lookup failed for ${ref.slug} (quota exhausted or outage?) — ${describeUpstreamError(err)}`
+      );
       return undefined;
     }),
     resolveTcgdexCard(ref),
@@ -295,9 +299,58 @@ export async function getFrenchCardText(card: Card): Promise<LocalizedCardText> 
       translated: true,
     };
   } catch (err) {
-    console.error(`[cards] French TCGdex lookup failed for ${card.slug}:`, err);
+    logUpstreamOnce(`tcgdex-fr:${card.slug}`, `[cards] French TCGdex lookup failed for ${card.slug} — ${describeUpstreamError(err)}`);
     return fallback;
   }
+}
+
+/**
+ * The card as we can state it with no network at all: everything here comes
+ * from the hand-authored CardRef in data/card-refs.ts, so nothing is
+ * guessed and nothing is stale — it is simply the subset of a Card that
+ * doesn't depend on apitcg or TCGdex. Price, image, rarity and history have
+ * no offline source, so they are absent and the card is flagged
+ * `priceUnavailable` rather than being shown as a $0 market price.
+ *
+ * This exists so that an upstream outage degrades the catalog instead of
+ * emptying it. Before it, both upstreams being unreachable meant
+ * getAllCards() returned `[]`, which meant every generateStaticParams
+ * returned no params, which meant the postbuild static-route gate failed
+ * the whole deploy (scripts/check-static-routes.mjs) — an outage at a third
+ * party could block shipping unrelated work. Worse, the same emptiness at
+ * *runtime* turned an ISR revalidation into notFound(), replacing a
+ * perfectly good cached product page with a 404 until the upstream came
+ * back. A placeholder page keeps the URL, the metadata, the machine-readable
+ * mirrors and the internal links alive, and the next successful
+ * revalidation fills the prices back in.
+ */
+function placeholderCard(ref: CardRef): Card {
+  return {
+    // No apitcg product id exists to use here; the slug is the only stable
+    // identifier this card has offline, and it's already what every
+    // internal link and /api/{franchise}/{id} lookup accepts.
+    id: ref.slug,
+    slug: ref.slug,
+    franchise: ref.franchise,
+    name: ref.displayName,
+    // A "nameSet" ref carries the real set name and printed number; a
+    // "code" ref (One Piece) carries only the code, which is exactly what
+    // Card.number holds for those cards anyway.
+    set: ref.lookup.by === "nameSet" ? ref.lookup.setName : "",
+    number: ref.lookup.by === "nameSet" ? ref.lookup.number : ref.lookup.code,
+    currency: "USD",
+    // Kept a number (rather than making Card["currentPrice"] optional and
+    // touching every consumer) but never presented as a real price:
+    // `priceUnavailable` is what every price-rendering surface checks.
+    currentPrice: 0,
+    priceUnavailable: true,
+    asOfDate: new Date().toISOString().slice(0, 10),
+    priceHistory: [],
+    recentSnapshots: [],
+    trend: computeTrend([]),
+    priceRange: null,
+    character: ref.character,
+  };
 }
 
 /**
@@ -312,28 +365,27 @@ export async function getFrenchCardText(card: Card): Promise<LocalizedCardText> 
  * gets it from the same module-level `cardRefs` array (same object
  * reference for the same slug every time), not a freshly constructed one.
  */
-const resolveCardSafe = cache(async (ref: CardRef): Promise<Card | undefined> => {
+const resolveCardSafe = cache(async (ref: CardRef): Promise<Card> => {
   try {
     const card = await resolveCard(ref);
-    if (!card) {
-      console.error(`[cards] no data source matched ${ref.slug} (${JSON.stringify(ref.lookup)}) — both apitcg and TCGdex came back empty`);
-    }
-    return card;
+    if (card) return card;
+    logUpstreamOnce(
+      `unmatched:${ref.slug}`,
+      `[cards] no data source matched ${ref.slug} (${JSON.stringify(ref.lookup)}) — serving the offline placeholder`
+    );
   } catch (err) {
-    console.error(`[cards] failed to resolve ${ref.slug}:`, err);
-    return undefined;
+    logUpstreamOnce(`resolve:${ref.slug}`, `[cards] failed to resolve ${ref.slug} — ${describeUpstreamError(err)}`);
   }
+  return placeholderCard(ref);
 });
 
 export async function getAllCards(): Promise<Card[]> {
-  const cards = await Promise.all(cardRefs.map(resolveCardSafe));
-  return cards.filter((c): c is Card => c !== undefined);
+  return Promise.all(cardRefs.map(resolveCardSafe));
 }
 
 export async function getCardsByFranchise(franchise: Franchise): Promise<Card[]> {
   const refs = cardRefs.filter((r) => r.franchise === franchise);
-  const cards = await Promise.all(refs.map(resolveCardSafe));
-  return cards.filter((c): c is Card => c !== undefined);
+  return Promise.all(refs.map(resolveCardSafe));
 }
 
 export async function getCardBySlug(slug: string): Promise<Card | undefined> {
@@ -426,6 +478,9 @@ export function toPublicCard(card: Card) {
     agentIndexUrl: absoluteUrl("/llms.txt"),
     currency: card.currency,
     currentPrice: card.currentPrice,
+    // Present (and true) only when no price source could be reached, so a
+    // consumer never reads the 0 above as "this card is worth nothing".
+    ...(card.priceUnavailable ? { priceUnavailable: true as const } : {}),
     asOfDate: card.asOfDate,
     // Downsampled to 25 evenly-spaced points — see downsamplePriceHistory's
     // own doc comment on why the full-resolution field stays on the HTML

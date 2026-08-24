@@ -24,7 +24,7 @@
  * later in production logs. Wired in as `postbuild` (see package.json), so
  * it runs automatically after every `next build`, including on Vercel.
  */
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -51,11 +51,49 @@ function japaneseMarketEnabled() {
   }
 }
 
-// Every pattern here draws from getAllCards() or getCardsByFranchise("pokemon")
-// — both resilient to apitcg being down (Pokemon falls back to TCGdex; see
-// commit 1a8ef71) — so a zero-page result can only mean this specific route's
-// own generateStaticParams (or its render tree) is broken, not that an
-// external dependency is unavailable. Fails the build.
+/**
+ * Hosts that failed in a connection-level way during this build, as recorded
+ * by lib/upstream.ts's markBuildOutage. Read once and deleted, so a marker
+ * can never survive into a later build and quietly soften its checks.
+ *
+ * This exists because "this route built zero pages" has two completely
+ * different causes that used to look identical here: a real regression, and
+ * a third-party API being unreachable from the build container. The routes
+ * below whose *only* data source is TCGdex genuinely have nothing to build
+ * when TCGdex is down, and failing the deploy for that blocks shipping
+ * unrelated work over someone else's outage.
+ */
+function upstreamOutages() {
+  const dir = path.join(rootDir, ".next", "upstream-outage");
+  if (!existsSync(dir)) return new Set();
+  try {
+    const hosts = readdirSync(dir)
+      .filter((f) => f.endsWith(".json"))
+      .map((f) => f.slice(0, -".json".length));
+    return new Set(hosts);
+  } catch {
+    return new Set();
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+const outages = upstreamOutages();
+const tcgdexDown = outages.has("api.tcgdex.net");
+
+// Every pattern here draws from getAllCards() or getCardsByFranchise("pokemon"),
+// which always return one entry per card in data/card-refs.ts — a card whose
+// price sources are all unreachable falls back to an offline placeholder
+// rather than disappearing (see placeholderCard in lib/cards.ts). So a
+// zero-page result means this specific route's own generateStaticParams (or
+// its render tree) is broken, not that an external dependency is
+// unavailable. Fails the build.
+//
+// The exception is the French route pair: a French page only exists when
+// TCGdex returns a real translation, so with TCGdex unreachable there is
+// legitimately nothing to prerender and no offline substitute that wouldn't
+// be a fabricated translation. Those two drop to warnings for that build
+// only, on the evidence of the outage marker above — never unconditionally.
 const REQUIRED_PATTERNS = [
   // /ja is required only while the Japanese market is switched on. It is
   // gated on JAPANESE_MARKET_ENABLED in src/lib/graded-market.ts, and with
@@ -65,20 +103,24 @@ const REQUIRED_PATTERNS = [
   // that one flag re-arms this check automatically.
   ...(japaneseMarketEnabled() ? [{ label: "/products/[slug]/ja", test: (r) => /^\/products\/[^/]+\/ja$/.test(r) }] : []),
   { label: "/products/[slug]", test: (r) => /^\/products\/[^/]+$/.test(r) },
-  { label: "/products/[slug]/fr", test: (r) => /^\/products\/[^/]+\/fr$/.test(r) },
   { label: "/products/[slug]/index.md", test: (r) => /^\/products\/[^/]+\/index\.md$/.test(r) },
-  { label: "/products/[slug]/fr/index.md", test: (r) => /^\/products\/[^/]+\/fr\/index\.md$/.test(r) },
+  ...(tcgdexDown
+    ? []
+    : [
+        { label: "/products/[slug]/fr", test: (r) => /^\/products\/[^/]+\/fr$/.test(r) },
+        { label: "/products/[slug]/fr/index.md", test: (r) => /^\/products\/[^/]+\/fr\/index\.md$/.test(r) },
+      ]),
   { label: "/api/pokemon/[id]", test: (r) => /^\/api\/pokemon\/[^/]+$/.test(r) },
   { label: "/okf/products/[slug]", test: (r) => /^\/okf\/products\/[^/]+$/.test(r) },
 ];
 
-// One Piece has zero TCGdex coverage — getCardsByFranchise("one-piece")
-// depends on apitcg *unconditionally*, with no fallback (see cards.ts's
-// resolveCard). A zero-page result here can genuinely mean "apitcg's quota
-// is exhausted right now" rather than a code regression, and blocking the
-// *entire* deploy over a real external outage — even when the resilient
-// Pokemon routes above built fine — is worse than the problem it prevents.
-// Warns, doesn't fail the build.
+// One Piece has zero TCGdex coverage, so getCardsByFranchise("one-piece")
+// gets its real data from apitcg alone (see cards.ts's resolveCard). Since
+// the offline placeholder covers every card in data/card-refs.ts regardless
+// of franchise, this should now always prerender — but it stays a warning
+// rather than a hard failure, because it's the one required-ish route whose
+// real content has a single point of failure, and blocking the *entire*
+// deploy over apitcg's quota is worse than the problem it prevents.
 const SOFT_PATTERNS = [{ label: "/api/one-piece/[id]", test: (r) => /^\/api\/one-piece\/[^/]+$/.test(r) }];
 
 let failed = false;
@@ -106,6 +148,14 @@ for (const { label, test } of SOFT_PATTERNS) {
   } else {
     console.log(`[check-static-routes] OK: ${label} — ${matches.length} static page(s).`);
   }
+}
+
+if (tcgdexDown) {
+  console.warn(`[check-static-routes] WARN: api.tcgdex.net was unreachable during this build.`);
+  console.warn(`  The French routes (/products/[slug]/fr and its .md mirror) have no other translation source,`);
+  console.warn(`  so they were not required this time — they prerender again on the next build that reaches`);
+  console.warn(`  TCGdex. Pokemon cards themselves still built: they fall back to an offline placeholder with`);
+  console.warn(`  no price (see placeholderCard in src/lib/cards.ts), which refreshes on the next revalidation.`);
 }
 
 if (failed) {

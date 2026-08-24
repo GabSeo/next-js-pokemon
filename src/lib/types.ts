@@ -47,6 +47,15 @@ export type Card = {
   types?: string[];
   currency: "USD";
   currentPrice: number;
+  /**
+   * True when neither price source could be reached and this card is the
+   * offline placeholder built from data/card-refs.ts alone (see
+   * placeholderCard in lib/cards.ts). `currentPrice` is 0 in that case
+   * purely because the field is required — it is not a real market price,
+   * so every surface that prints a price checks this flag first rather than
+   * publishing "USD 0" as fact.
+   */
+  priceUnavailable?: boolean;
   asOfDate: string; // ISO date the current price was last updated
   priceHistory: PriceHistoryPoint[];
   recentSnapshots: PriceSnapshot[]; // real daily market-price records, not itemized sales

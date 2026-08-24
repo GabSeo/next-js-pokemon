@@ -12,6 +12,7 @@ import { GradedMarketPanel } from "@/components/retro/graded-market-panel";
 import { InternationalPricesPanel } from "@/components/retro/international-prices-panel";
 import { PopulationPanel } from "@/components/retro/population-panel";
 import { computeAlertBands, findCard, franchiseLabel } from "@/lib/cards";
+import { priceStatement } from "@/lib/price-display";
 import { SITE_NAME, absoluteUrl } from "@/lib/site";
 import { cardRefs } from "@/data/card-refs";
 
@@ -27,7 +28,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   return {
     title: card ? `${card.name} price checker` : "Price checker",
     description: card
-      ? `${card.name} — current market price ${card.currency} ${card.currentPrice} as of ${card.asOfDate}.`
+      ? `${card.name} — ${priceStatement(card)}`
       : "Enter a Pokémon or One Piece card ID to see current market prices, price history, and set a price alert.",
     alternates: {
       canonical: "/tools/price-checker",
@@ -39,7 +40,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
 export default async function PriceCheckerPage({ searchParams }: PageProps) {
   const { cardId } = await searchParams;
   const card = cardId ? await findCard(cardId) : undefined;
-  const bands = card ? computeAlertBands(card.currentPrice) : [];
+  const bands = card && !card.priceUnavailable ? computeAlertBands(card.currentPrice) : [];
 
   const webAppJsonLd = {
     "@context": "https://schema.org",
@@ -98,9 +99,13 @@ export default async function PriceCheckerPage({ searchParams }: PageProps) {
                   {franchiseLabel(card.franchise)} · {card.set} · {card.number ?? ""}
                 </p>
               </div>
-              <data value={String(card.currentPrice)} className="text-3xl font-black tracking-[-1px] tabular-nums">
-                {card.currency} {card.currentPrice}
-              </data>
+              {card.priceUnavailable ? (
+                <p className="text-base font-black tracking-[-0.3px]">Price temporarily unavailable</p>
+              ) : (
+                <data value={String(card.currentPrice)} className="text-3xl font-black tracking-[-1px] tabular-nums">
+                  {card.currency} {card.currentPrice}
+                </data>
+              )}
             </div>
 
             <div className="mb-1 flex items-center gap-2">

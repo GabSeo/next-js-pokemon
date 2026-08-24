@@ -39,7 +39,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   return {
     title: `${fr.name} (${card.number ?? ""}) prix`,
-    description: `${fr.name} — ${fr.set} ${card.number ?? ""}. Prix actuel du marché : ${card.currency} ${card.currentPrice} au ${card.asOfDate}.`,
+    description: `${fr.name} — ${fr.set} ${card.number ?? ""}. ${
+      card.priceUnavailable
+        ? "Prix du marché temporairement indisponible."
+        : `Prix actuel du marché : ${card.currency} ${card.currentPrice} au ${card.asOfDate}.`
+    }`,
     alternates: {
       canonical: `/products/${card.slug}/fr`,
       languages: {
@@ -79,14 +83,19 @@ export default async function ProductPageFrench({ params }: PageProps) {
     category: label,
     description: card.description ?? `${fr.name} — ${fr.set} ${card.number ?? ""}`,
     url: absoluteUrl(`/products/${card.slug}/fr`),
-    offers: {
-      "@type": "Offer",
-      price: card.currentPrice,
-      priceCurrency: card.currency,
-      priceValidUntil: card.asOfDate,
-      availability: "https://schema.org/InStock",
-      url: absoluteUrl(`/products/${card.slug}/fr`),
-    },
+    // Same reasoning as the English page: no readable price, no Offer.
+    ...(card.priceUnavailable
+      ? {}
+      : {
+          offers: {
+            "@type": "Offer",
+            price: card.currentPrice,
+            priceCurrency: card.currency,
+            priceValidUntil: card.asOfDate,
+            availability: "https://schema.org/InStock",
+            url: absoluteUrl(`/products/${card.slug}/fr`),
+          },
+        }),
   };
 
   const breadcrumbJsonLd = {
@@ -118,7 +127,9 @@ export default async function ProductPageFrench({ params }: PageProps) {
         name: `How much is ${fr.name} (${card.number ?? ""}) worth right now?`,
         acceptedAnswer: {
           "@type": "Answer",
-          text: `The current market price for ${fr.name} (${fr.set}, ${card.number ?? ""}) is ${card.currency} ${card.currentPrice} as of ${card.asOfDate}, sourced from TCGPlayer.`,
+          text: card.priceUnavailable
+            ? `The market price for ${fr.name} (${fr.set}, ${card.number ?? ""}) is temporarily unavailable — no price source could be reached.`
+            : `The current market price for ${fr.name} (${fr.set}, ${card.number ?? ""}) is ${card.currency} ${card.currentPrice} as of ${card.asOfDate}, sourced from TCGPlayer.`,
         },
       },
     ],
