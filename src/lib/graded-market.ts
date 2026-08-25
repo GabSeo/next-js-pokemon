@@ -409,3 +409,69 @@ export async function getGradedMarketData(card: Card): Promise<GradedMarketData>
     vinted,
   };
 }
+
+export type MarketplaceOfferJsonLd = {
+  "@type": "Offer";
+  url: string;
+  price: number;
+  priceCurrency: string;
+  availability: "https://schema.org/InStock";
+  itemCondition: "https://schema.org/UsedCondition";
+  seller: { "@type": "Organization"; name: string };
+};
+
+/**
+ * Real per-listing Offer objects for embedding in this card's Product
+ * JSON-LD — eBay active + Vinted, only ever built from `isReal` rows (never
+ * fabricates an Offer for an illustrative preview row — same real/
+ * illustrative honesty rule every other surface on this site follows).
+ *
+ * Why this exists: a browsing AI agent reading the rendered page or its
+ * markdown mirror can still hallucinate an exact listing URL even when the
+ * real one is sitting right there in a table — confirmed live (ChatGPT
+ * invented a wrong Vinted listing count/average for a card whose real data
+ * was correct). Models are unreliable at verbatim-transcribing long,
+ * unfamiliar third-party URLs out of prose, especially deep in a long
+ * document. JSON-LD is parsed mechanically rather than read, so a listing's
+ * `url` field here can't be mistranscribed the way a table cell can — this
+ * is the same `rows[].url` data already in the JSON API and the
+ * `get_graded_market` MCP tool, just also reachable by anything that only
+ * parses structured data in place rather than following a second link.
+ */
+export function gradedMarketOffersJsonLd(data: GradedMarketData): MarketplaceOfferJsonLd[] {
+  const offers: MarketplaceOfferJsonLd[] = [];
+
+  for (const condition of data.conditions) {
+    const english = condition.languages.find((l) => l.language === "English");
+    if (!english?.active.isReal) continue;
+    for (const row of english.active.rows) {
+      if (!row.url) continue;
+      offers.push({
+        "@type": "Offer",
+        url: row.url,
+        price: row.price,
+        priceCurrency: row.currency,
+        availability: "https://schema.org/InStock",
+        itemCondition: "https://schema.org/UsedCondition",
+        seller: { "@type": "Organization", name: "eBay" },
+      });
+    }
+  }
+
+  if (data.vinted.isReal) {
+    for (const row of data.vinted.rows) {
+      if (!row.url) continue;
+      offers.push({
+        "@type": "Offer",
+        url: row.url,
+        price: row.price,
+        priceCurrency: row.currency,
+        availability: "https://schema.org/InStock",
+        itemCondition: "https://schema.org/UsedCondition",
+        seller: { "@type": "Organization", name: "Vinted" },
+      });
+    }
+  }
+
+  return offers;
+}

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductPageContent, type LocaleLink } from "@/components/product-page-content";
-import { JAPANESE_MARKET_ENABLED } from "@/lib/graded-market";
+import { JAPANESE_MARKET_ENABLED, getGradedMarketData, gradedMarketOffersJsonLd } from "@/lib/graded-market";
 import { franchiseLabel, getAllCards, getCardBySlug, getFrenchCardText } from "@/lib/cards";
 import { absoluteUrl } from "@/lib/site";
 import { priceStatement } from "@/lib/price-display";
@@ -50,6 +50,31 @@ export default async function ProductPage({ params }: PageProps) {
 
   const label = franchiseLabel(card.franchise);
   const fr = await getFrenchCardText(card);
+  const gradedMarket = await getGradedMarketData(card);
+
+  // An Offer with the placeholder price would publish "this card costs 0
+  // USD" as structured data — the one representation search engines and
+  // assistants are most likely to quote without the page's own caveat next
+  // to it — so a card with no readable price contributes no canonical
+  // offer. Real eBay/Vinted listings (each carrying its own real price) are
+  // unaffected by apitcg/TCGdex being down and still get included either
+  // way. If neither source has anything real, `offers` is omitted entirely
+  // rather than published as an empty array.
+  const offers = [
+    ...(card.priceUnavailable
+      ? []
+      : [
+          {
+            "@type": "Offer" as const,
+            price: card.currentPrice,
+            priceCurrency: card.currency,
+            priceValidUntil: card.asOfDate,
+            availability: "https://schema.org/InStock",
+            url: absoluteUrl(`/products/${card.slug}`),
+          },
+        ]),
+    ...gradedMarketOffersJsonLd(gradedMarket),
+  ];
 
   const productJsonLd = {
     "@context": "https://schema.org",
@@ -59,22 +84,7 @@ export default async function ProductPage({ params }: PageProps) {
     category: label,
     description: card.description ?? `${card.name} — ${card.set} ${card.number ?? ""}`,
     url: absoluteUrl(`/products/${card.slug}`),
-    // An Offer with the placeholder price would publish "this card costs 0
-    // USD" as structured data — the one representation search engines and
-    // assistants are most likely to quote without the page's own caveat
-    // next to it. A card with no readable price ships no offer at all.
-    ...(card.priceUnavailable
-      ? {}
-      : {
-          offers: {
-            "@type": "Offer",
-            price: card.currentPrice,
-            priceCurrency: card.currency,
-            priceValidUntil: card.asOfDate,
-            availability: "https://schema.org/InStock",
-            url: absoluteUrl(`/products/${card.slug}`),
-          },
-        }),
+    ...(offers.length > 0 ? { offers } : {}),
   };
 
   const breadcrumbJsonLd = {

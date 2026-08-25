@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductPageContent, type LocaleLink } from "@/components/product-page-content";
-import { JAPANESE_MARKET_ENABLED } from "@/lib/graded-market";
+import { JAPANESE_MARKET_ENABLED, getGradedMarketData, gradedMarketOffersJsonLd } from "@/lib/graded-market";
 import { franchiseLabel, getAllCards, getCardBySlug, getFrenchCardText } from "@/lib/cards";
 import { absoluteUrl } from "@/lib/site";
 import type { Card } from "@/lib/types";
@@ -74,6 +74,26 @@ export default async function ProductPageFrench({ params }: PageProps) {
 
   const displayCard: Card = { ...card, name: fr.name, set: fr.set, rarity: fr.rarity, imageUrl: fr.imageUrl, types: fr.types };
   const label = franchiseLabel(card.franchise);
+  const gradedMarket = await getGradedMarketData(card);
+
+  // Same reasoning as the English page's own comment: no readable price,
+  // no canonical Offer, but real eBay/Vinted listings still get included
+  // either way; `offers` is omitted entirely only if neither exists.
+  const offers = [
+    ...(card.priceUnavailable
+      ? []
+      : [
+          {
+            "@type": "Offer" as const,
+            price: card.currentPrice,
+            priceCurrency: card.currency,
+            priceValidUntil: card.asOfDate,
+            availability: "https://schema.org/InStock",
+            url: absoluteUrl(`/products/${card.slug}/fr`),
+          },
+        ]),
+    ...gradedMarketOffersJsonLd(gradedMarket),
+  ];
 
   const productJsonLd = {
     "@context": "https://schema.org",
@@ -83,19 +103,7 @@ export default async function ProductPageFrench({ params }: PageProps) {
     category: label,
     description: card.description ?? `${fr.name} — ${fr.set} ${card.number ?? ""}`,
     url: absoluteUrl(`/products/${card.slug}/fr`),
-    // Same reasoning as the English page: no readable price, no Offer.
-    ...(card.priceUnavailable
-      ? {}
-      : {
-          offers: {
-            "@type": "Offer",
-            price: card.currentPrice,
-            priceCurrency: card.currency,
-            priceValidUntil: card.asOfDate,
-            availability: "https://schema.org/InStock",
-            url: absoluteUrl(`/products/${card.slug}/fr`),
-          },
-        }),
+    ...(offers.length > 0 ? { offers } : {}),
   };
 
   const breadcrumbJsonLd = {

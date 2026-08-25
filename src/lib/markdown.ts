@@ -46,6 +46,8 @@ async function gradedMarketMarkdown(card: Card): Promise<string> {
 
   return `## Pokémon market overview
 
+**Exact listing URLs:** every real row below has a working per-listing link, but this table is prose — copy a URL from it at your own risk. For a URL guaranteed not to be mistyped or hallucinated, read \`rows[].url\` from the JSON API (${absoluteUrl(`/api/${card.franchise}/${card.id}`)}) or call the \`get_graded_market\` MCP tool, or use the machine-readable \`Offer\` entries in this page's own JSON-LD.
+
 ### ${GRADED_MARKET_LANGUAGES.join(" / ")} (eBay) — up to 4 recent active listings + illustrative sold, per condition x market
 
 | Condition | Market | Active median | Active source | Sold median (illustrative) |
@@ -130,6 +132,8 @@ ${
       : `${card.currency} ${card.currentPrice} as of ${card.asOfDate}. Source: [TCGPlayer](${card.sourceUrl ?? "https://www.tcgplayer.com"}).`
   }
 
+${gradedMarket}
+
 ## Price history
 
 ${history || "No history available yet."}
@@ -151,8 +155,6 @@ ${trendRows}
 ## Price range
 
 ${priceRangeMarkdown(card)}
-
-${gradedMarket}
 
 ## Machine-readable data
 
