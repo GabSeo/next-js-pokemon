@@ -363,10 +363,18 @@ function CatchEmAllReveal({
 const PREMIUM_TEASER_NOTICE = "Preview of a planned feature — no live signal model behind these numbers yet.";
 
 /**
- * Pokémon Showdown's animated sprite for whichever character this card
- * depicts (Card.character — "Gengar", "Lugia", "Typhlosion" for the cards
- * tracked today), replacing the one static gengar.gif every card's panel
- * used to show regardless of which Pokémon the page was actually about.
+ * Self-hosted copy of Pokémon Showdown's animated sprite for whichever
+ * character this card depicts (Card.character — "Gengar", "Lugia",
+ * "Typhlosion" for the cards tracked today), replacing the one static
+ * gengar.gif every card's panel used to show regardless of which Pokémon
+ * the page was actually about.
+ *
+ * Self-hosted under /public/pokemon-sprites rather than linked straight to
+ * play.pokemonshowdown.com: confirmed live, Showdown serves these with
+ * Cache-Control: max-age=691200 (8 days, not theirs to change for us) —
+ * flagged by PageSpeed Insights as a real repeat-visit cost for an asset
+ * that never changes. Serving our own copy from /public gets Vercel's
+ * standard far-future immutable caching instead (see next.config.ts).
  *
  * Showdown's filenames are the character name lowercased with every
  * non-alphanumeric character stripped — confirmed against the three real
@@ -377,6 +385,12 @@ const PREMIUM_TEASER_NOTICE = "Preview of a planned feature — no live signal m
  * <img>'s onError below hides the mascot entirely rather than showing a
  * broken-image icon if a given name doesn't resolve to a real sprite.
  *
+ * Trade-off of self-hosting: a NEW character (a new card added later) needs
+ * its sprite downloaded into /public/pokemon-sprites by hand before it'll
+ * show — same one-time manual step lib/entitymap.ts's CHARACTER_ENTITIES
+ * map already requires per new character, not a new maintenance pattern.
+ * Until that file exists, onError just hides the mascot, same as today.
+ *
  * Only ever called for Pokémon cards in practice: this mascot only renders
  * inside the Vinted "France" panel, which only ever gets real data (the
  * isReal gate this sits behind) for Pokémon refs — One Piece characters
@@ -385,7 +399,7 @@ const PREMIUM_TEASER_NOTICE = "Preview of a planned feature — no live signal m
  */
 function pokemonShowdownSpriteUrl(character: string): string {
   const slug = character.toLowerCase().replace(/[^a-z0-9]/g, "");
-  return `https://play.pokemonshowdown.com/sprites/ani/${slug}.gif`;
+  return `/pokemon-sprites/${slug}.gif`;
 }
 
 function ModelSignalPanel({ nameFull, bestDeal, character }: { nameFull: string; bestDeal?: VintedFeedRowSummary; character: string }) {

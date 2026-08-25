@@ -227,7 +227,7 @@ export default async function HomePage() {
           <div className="relative z-[2] flex flex-col items-center gap-3">
             {heroCard ? (
               <PsaTiltCard>
-                <CardImage card={heroCard} className="aspect-[300/420] w-full" priority />
+                <CardImage card={heroCard} className="aspect-[300/420] w-full" priority sizes="(min-width: 1024px) 300px, 100vw" />
               </PsaTiltCard>
             ) : (
               <div className="flex aspect-[300/420] w-full max-w-[300px] items-center justify-center rounded-[14px] border-2 border-black bg-muted-surface text-sm text-muted-text shadow-hard-lg">

@@ -44,7 +44,7 @@ export function CardTile({ card }: { card: Card }) {
             {card.rarity}
           </span>
         )}
-        <CardImage card={card} className="aspect-[300/420] w-full overflow-hidden rounded-md" />
+        <CardImage card={card} className="aspect-[300/420] w-full overflow-hidden rounded-md" sizes="(min-width: 640px) 33vw, 50vw" />
       </div>
       <div className="flex flex-1 flex-col gap-1 border-t-2 border-black p-4">
         <h3 className="text-sm font-black tracking-[-0.3px]">{card.name}</h3>

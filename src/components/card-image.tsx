@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { Card } from "@/lib/types";
 
 type CardImageProps = {
@@ -14,6 +15,14 @@ type CardImageProps = {
   priority?: boolean;
   /** Show the figcaption visually (product hero) instead of screen-reader-only (grid tiles, where the name/set/price are already shown as visible text right below). */
   showCaption?: boolean;
+  /**
+   * The `sizes` next/image needs to pick a correctly-sized variant instead
+   * of defaulting to 100vw for every layout this component appears in
+   * (hero, grid tile, homepage feature all render at very different actual
+   * widths). Required whenever `card.imageUrl` is set; every current call
+   * site passes one tailored to its own layout.
+   */
+  sizes?: string;
 };
 
 function imageTitle(card: Card): string {
@@ -59,21 +68,22 @@ function paletteFor(id: string): [string, string] {
  * of that default; callers must set it explicitly per-image since the
  * component has no way to know its own position on the page.
  */
-export function CardImage({ card, className, priority = false, showCaption = false }: CardImageProps) {
+export function CardImage({ card, className, priority = false, showCaption = false, sizes }: CardImageProps) {
   const alt = `${card.name}, ${card.set}${card.number ? ` ${card.number}` : ""}${card.rarity ? `, ${card.rarity}` : ""}`;
   const title = imageTitle(card);
   const figcaptionClassName = showCaption ? "mt-2 text-sm text-muted-foreground" : "sr-only";
 
   if (card.imageUrl) {
     return (
-      <figure className={`${className ?? ""} overflow-hidden`}>
-        {/* eslint-disable-next-line @next/next/no-img-element -- external CDN image, domain not yet allowlisted for next/image */}
-        <img
+      <figure className={`${className ?? ""} relative overflow-hidden`}>
+        <Image
           src={card.imageUrl}
           alt={alt}
           title={title}
-          className="h-full w-full object-cover"
-          {...(priority ? { fetchPriority: "high" as const } : { loading: "lazy" as const })}
+          fill
+          sizes={sizes ?? "100vw"}
+          className="object-cover"
+          priority={priority}
         />
         <figcaption className={figcaptionClassName}>{imageCaption(card)}</figcaption>
       </figure>

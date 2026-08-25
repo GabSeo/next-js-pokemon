@@ -159,7 +159,7 @@ export function ProductPageContent({
         <div className="grid grid-cols-1 gap-9 lg:grid-cols-[320px_1fr] lg:items-start">
           <div className="lg:sticky lg:top-[88px]">
             <PsaTiltCard>
-              <CardImage card={displayCard} className="aspect-[300/420] w-full" priority />
+              <CardImage card={displayCard} className="aspect-[300/420] w-full" priority sizes="(min-width: 1024px) 320px, 100vw" />
             </PsaTiltCard>
 
             {card.description && <p className="mt-4 text-sm leading-5 text-muted-text">{card.description}</p>}
