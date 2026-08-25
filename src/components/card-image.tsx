@@ -84,6 +84,16 @@ export function CardImage({ card, className, priority = false, showCaption = fal
           sizes={sizes ?? "100vw"}
           className="object-cover"
           priority={priority}
+          // `priority` alone only controls eager-vs-lazy loading and
+          // whether a preload <link> gets generated at all — it does NOT
+          // set fetchPriority on either the <img> or that preload link in
+          // this Next version (confirmed against
+          // node_modules/next/dist/shared/lib/get-img-props.js: fetchPriority
+          // is destructured and passed through as its own independent prop,
+          // never derived from `priority`). Lighthouse/PageSpeed flags a
+          // priority image's preload request for missing fetchpriority=high
+          // specifically, so this has to be set explicitly.
+          {...(priority ? { fetchPriority: "high" as const } : {})}
         />
         <figcaption className={figcaptionClassName}>{imageCaption(card)}</figcaption>
       </figure>
