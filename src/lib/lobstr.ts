@@ -135,6 +135,18 @@ const RESULTS_REVALIDATE_SECONDS = 6 * 60 * 60;
  */
 const RUNS_REVALIDATE_SECONDS = 6 * 60 * 60;
 
+/**
+ * One cache tag on every cached Lobstr read, so a single revalidateTag call
+ * drops the run list AND every page of results together.
+ *
+ * The TTLs above answer "how stale may this get on its own"; this answers
+ * "the data just changed, catch up now". Re-running the squid from Lobstr's
+ * dashboard is invisible to this app — no webhook, no polling — so without
+ * an explicit nudge a fresh collection waits out RUNS_REVALIDATE_SECONDS
+ * before it is even discovered. See app/api/vinted/publish/route.ts.
+ */
+export const VINTED_CACHE_TAG = "vinted-lobstr";
+
 export function hasLobstrCredentials(): boolean {
   return Boolean(process.env.LOBSTR_API_KEY);
 }
@@ -246,7 +258,20 @@ async function lobstrRequest<T>(path: string, options: LobstrRequestOptions = {}
       ...(body ? { "Content-Type": "application/json" } : {}),
     },
     body: body ? JSON.stringify(body) : undefined,
-    next: { revalidate },
+    // Cache mode stated explicitly in both directions rather than inferred
+    // from `revalidate` alone. Next 16 does not cache fetch by default, and
+    // its own reference says force-cache is what opts a request in
+    // "including ... requests that send `authorization` or `cookie`
+    // headers" — which is every call in this file. Relying on a revalidate
+    // number by itself risked none of these reads being cached at all, and
+    // an uncached read path re-walks the whole paginated /results ladder on
+    // every single regeneration, straight into the documented 2 req/s cap.
+    // (force-cache alongside revalidate is a normal pairing; it is
+    // `no-store` + revalidate that the docs call conflicting and ignore,
+    // which is why the two cases are kept apart here.)
+    ...(revalidate > 0
+      ? { cache: "force-cache" as const, next: { revalidate, tags: [VINTED_CACHE_TAG] } }
+      : { cache: "no-store" as const }),
   });
 
   if (res.status === 429 && retriesLeft > 0) {
@@ -527,20 +552,26 @@ export async function resolveVintedResults(squid: string | undefined, pinnedRun:
 
   if (!squid) return { rows: [], source: null, attempts };
 
-  // 2 — results directly by squid. Confirmed working in production, and
-  // the reason the run lookup below is now a fallback rather than the path.
-  try {
-    const { rows, payloadShape, pagesRead } = await fetchAllResults({ squid });
-    attempts.push({ strategy: "/results?squid=", rows: rows.length, pagesRead, payloadShape });
-    if (rows.length > 0) return { rows, source: `squid:${squid}`, attempts };
-  } catch (err) {
-    attempts.push({ strategy: "/results?squid=", rows: 0, error: (err as Error).message });
-  }
-
-  // 3 and 4 — find a run, then read it.
+  // 2 and 3 — find the squid's NEWEST run, then read that run's results.
+  //
+  // This used to sit below the squid-scoped read, which meant it never ran:
+  // /results?squid= always answered, so the lookup was dead code. That was
+  // fine while the squid had exactly one run and dangerous the moment it
+  // had two, because a squid-scoped read is not "the latest collection" —
+  // it is every row the squid has ever produced, behind a 30-result export
+  // ceiling whose ordering (newest 30? oldest 30?) is undocumented. Reading
+  // the newest run by hash is the only formulation that means "what was
+  // collected most recently", and it needs no stored state: re-run the
+  // squid, and the newest run is by definition the one to read.
+  //
+  // The run lookup was ALSO believed dead — GET /v1/runs?squid= appeared to
+  // return an empty list. attemptRunList's comment records what that
+  // actually was: a 200 with a real run in it, under an envelope key
+  // unwrapCollection didn't know. That parser is shape-based now, so the
+  // lookup is worth trying first rather than keeping as a last resort.
   for (const { strategy, path, query } of [
-    { strategy: "/squids/<hash>/runs", path: `/squids/${squid}/runs`, query: {} },
     { strategy: "/runs?squid=", path: "/runs", query: { squid } },
+    { strategy: "/squids/<hash>/runs", path: `/squids/${squid}/runs`, query: {} },
   ]) {
     let runIds: string[] = [];
     try {
@@ -564,6 +595,20 @@ export async function resolveVintedResults(squid: string | undefined, pinnedRun:
       const resolved = await readRun(run, `${strategy} -> run ${run}`);
       if (resolved) return resolved;
     }
+  }
+
+  // 4 — last resort: every row the squid has, newest-first ordering not
+  // guaranteed. Correct only while the squid has a single run; kept because
+  // returning the right answer by luck beats returning nothing, and because
+  // it is what covers a plan where run discovery genuinely doesn't work.
+  // ?debug=1 names the strategy that won, so a page served from here rather
+  // than from a run hash is visible rather than assumed.
+  try {
+    const { rows, payloadShape, pagesRead } = await fetchAllResults({ squid });
+    attempts.push({ strategy: "/results?squid=", rows: rows.length, pagesRead, payloadShape });
+    if (rows.length > 0) return { rows, source: `squid:${squid}`, attempts };
+  } catch (err) {
+    attempts.push({ strategy: "/results?squid=", rows: 0, error: (err as Error).message });
   }
 
   return { rows: [], source: null, attempts };

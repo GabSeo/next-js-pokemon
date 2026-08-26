@@ -67,6 +67,7 @@ READ      product page render        (results cached 14 days,
 | `src/lib/lobstr.ts` | Transport: auth, squids, tasks, runs, stats, results |
 | `src/lib/vinted-listings.ts` | Domain: the Très bon état filter, field mapping, per-card bucketing |
 | `src/app/api/vinted/refresh/route.ts` | Write path: queue tasks, start a run (POST); run status (GET) |
+| `src/app/api/vinted/publish/route.ts` | "The squid just ran" — drops the read caches and marks the pages for rebuild. Free, idempotent, spends no credits |
 | `src/lib/graded-market.ts` | Joins real listings into the panel's data, falls back to preview |
 | `scripts/lobstr-setup.mjs` | One-time squid creation + result-shape inspection |
 
@@ -77,7 +78,7 @@ READ      product page render        (results cached 14 days,
 | `LOBSTR_API_KEY` | yes | From the Lobstr dashboard. Sent as `Authorization: Token <key>`. |
 | `LOBSTR_VINTED_SQUID` | yes | The reused squid's hash, printed by `scripts/lobstr-setup.mjs --create`. |
 | `LOBSTR_REFRESH_SECRET` | yes | Gates `/api/vinted/refresh`. `CRON_SECRET` is accepted as a fallback so Vercel Cron works unchanged. |
-| `LOBSTR_VINTED_RUN` | no | Pins the read path to one run hash instead of resolving the squid's latest run. |
+| `LOBSTR_VINTED_RUN` | no | **Pins** the read to one run hash forever. It wins over run discovery, so setting it means the site will not pick up new collections until you change or delete it — an escape hatch for when discovery misbehaves, not a normal setting. Leave it unset. |
 | `VINTED_DOMAIN` | no | Which Vinted marketplace to search. Defaults to `www.vinted.fr`, matching the panel's France tab. Each country is a separate site with its own sellers and shipping, so this changes which listings come back — point it elsewhere and the tab label should move with it. |
 
 Without any of these the site still builds and renders — the France tab just stays on its clearly-marked preview.
@@ -165,7 +166,7 @@ It prints the real keys on a result row, plus every distinct value of any condit
 
 Two smaller unverified spots, both marked in the code and both failing soft (they degrade to the preview, never to a wrong number):
 
-- `listRuns` reads `GET /v1/runs?squid=<hash>`, a conventional REST reading of the documented `POST /v1/runs`. Set `LOBSTR_VINTED_RUN` to bypass it.
+- `listRuns` reads `GET /v1/runs?squid=<hash>`, a conventional REST reading of the documented `POST /v1/runs`. It is now the FIRST thing the read path tries, so `?debug=1`'s `resultAttempts` will say plainly whether it works. Set `LOBSTR_VINTED_RUN` to bypass it.
 - The results envelope (`[...]` vs `{data: [...]}` vs `{results: [...]}`) is unwrapped defensively rather than assumed.
 
 ## Deliberate design choices
@@ -230,15 +231,56 @@ stops pointing at a `next` page — with two deliberate exceptions, both meaning
 a `total_results` larger than what arrived when the payload carried the soft
 ceiling warning. `?debug=1` reports `pagesRead` alongside the row count.
 
-**Open question, and the reason run-scoped reads are worth revisiting.** The
-read is scoped by squid (`/v1/results?squid=<hash>`), because run discovery is
-dead on this plan: `/v1/squids/<hash>/runs` answers `404` and
-`/v1/runs?squid=<hash>` answers with an empty list. A squid accumulates runs,
-so once a second collection lands there will be 60 results behind that one
-squid and a 30-result ceiling in front of them. Whether the ceiling then hands
-back the newest 30 or the oldest 30 is not documented and cannot be determined
-until a second run exists. If it turns out to be the oldest, the fix is to
-scope the read to a run — which means persisting the run hash the collection
-route already receives in its POST response, since it cannot be discovered
-afterwards. Until then, `selectVintedListings` sorts by collection time so the
-most recently scraped rows win the display slots whatever order the API uses.
+**Resolved: the read is run-scoped again.** The read used to be scoped by
+squid (`/v1/results?squid=<hash>`) because run discovery looked dead —
+`/v1/squids/<hash>/runs` answered `404` and `/v1/runs?squid=<hash>` answered
+with an empty list. That second failure was never the request: it returned a
+real run under an envelope key `unwrapCollection` didn't recognise, and the
+shape-based parser fixed it. Nobody re-tested discovery afterwards, so the
+squid-scoped read stayed in front of it and the lookup became dead code.
+
+That mattered because a squid-scoped read is not "the latest collection" —
+it is every row the squid has ever produced, behind a 30-result export
+ceiling whose ordering (newest 30? oldest 30?) is undocumented and untestable
+until a second run exists. Correct with one run, a coin flip with two.
+
+`resolveVintedResults` now tries, in order:
+
+1. `LOBSTR_VINTED_RUN`, if set — an explicit pin that blocks everything below it.
+2. **The squid's newest run**, via `listRuns` → `/v1/results?run=<hash>`. This is the path production should take, and it needs no stored state: re-run the squid and the newest run is by definition the one to read.
+3. `/v1/results?squid=` — last resort, kept because the right answer by luck beats no answer, and because it covers a plan where discovery genuinely doesn't work.
+
+`?debug=1` names the strategy that won, so a page served from the fallback
+is visible rather than assumed.
+
+## Making a manual run show up
+
+Re-running the squid from Lobstr's dashboard is invisible to this app —
+Lobstr does not call us, and the render path deliberately does not poll. Left
+alone, a fresh collection waits out two independent caches: the read caches
+(six hours) and the rendered HTML of every product page (ISR, 36 hours).
+
+`POST /api/vinted/publish` collapses both to seconds:
+
+```bash
+curl -X POST "https://<host>/api/vinted/publish" -H "Authorization: Bearer $LOBSTR_REFRESH_SECRET"
+```
+
+It expires the `vinted-lobstr` cache tag carried by every cached Lobstr read
+and marks each Vinted-bearing route for rebuild. It is the **read** side
+only: no scrape, no credits, and hitting it twice is the same as hitting it
+once — which is exactly why it is its own path rather than a flag on
+`/api/vinted/refresh`, whose POST spends a full collection.
+
+`GET` works too and the secret is accepted as `?secret=`, so the URL can be
+pasted into a browser or handed to a Lobstr webhook on run completion (the
+pattern Lobstr's own docs prefer over polling). That does put the secret in
+access logs — an accepted trade for an endpoint whose whole power is
+"recompute something you could have recomputed by waiting".
+
+The tag is expired outright (`{ expire: 0 }`) rather than marked stale with
+the recommended `"max"` profile. `"max"` is stale-while-revalidate: the next
+visitor gets the OLD feed while the new one loads behind them, which is the
+"refresh a few times and it comes back" behaviour this endpoint exists to
+end. One blocking request is the right price for "I re-ran it, show me"
+meaning that.
