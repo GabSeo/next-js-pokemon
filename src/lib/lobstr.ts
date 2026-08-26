@@ -63,7 +63,14 @@ export const VINTED_PRODUCTS_CRAWLER = "ffd34f9b42a79b7323a048f09fc158e6";
  *
  * Card prices on a peer-to-peer resale market move slowly enough that a
  * fortnightly snapshot is honest. If that ever needs to be weekly, this is
- * the single constant to change — the cache TTLs below are derived from it.
+ * the single constant to change.
+ *
+ * Deliberately NOT the source of any cache TTL any more. It used to feed
+ * RESULTS_REVALIDATE_SECONDS, which coupled two unrelated things: how often
+ * we SPEND credits (this — a real budget decision) and how long a free read
+ * is allowed to go unrefreshed (not a budget decision at all). The practical
+ * cost of that coupling was that one bad read got pinned in front of the
+ * feed for a fortnight.
  */
 export const COLLECTION_INTERVAL_DAYS = 14;
 
@@ -97,19 +104,27 @@ export const COLLECTION_INTERVAL_DAYS = 14;
 export const VINTED_RESULTS_PER_CARD = 10;
 
 /**
- * Results are cached for the full collection interval, not minutes.
+ * How long a page of results may be served from Next's Data Cache.
  *
- * That's safe rather than stale because the cache key includes the RUN
- * HASH, and a finished run's results are immutable — they are a snapshot of
- * one scrape, and nothing will ever change them. When the next collection
- * happens it produces a *new* run hash, so it lands on a fresh cache entry
- * and appears immediately; it never has to wait for this TTL to lapse.
+ * This was the collection interval (14 days), justified by "the cache key
+ * includes the RUN HASH, and a finished run's results are immutable". That
+ * justification stopped being true when the read path moved to the
+ * squid-scoped route: the URL that actually gets cached in production is
+ * `/results?squid=<hash>&page=N&limit=M`, which carries no run hash and
+ * whose contents change the moment another collection lands. A fortnight
+ * was therefore long enough to hide a whole new collection.
  *
- * A cache miss (eviction, a new deployment) costs one API read, not a
- * re-scrape — no credits. The expensive operation is starting a run, and
- * nothing on the render path can do that.
+ * Six hours, matching RUNS_REVALIDATE_SECONDS and the refresh route's
+ * LISTING_DISCOVERY_HOURS promise, so a finished run reaches product pages
+ * within the window the API already tells callers to expect. Reading
+ * results costs no credits — only scraping does — so the only thing a
+ * shorter TTL spends is a handful of free API reads a day.
+ *
+ * Pairs with readResultPages' all-or-nothing rule: a partial read now
+ * throws instead of returning, and Next does not cache a thrown fetch, so
+ * nothing that reaches this cache is ever a short read.
  */
-const RESULTS_REVALIDATE_SECONDS = COLLECTION_INTERVAL_DAYS * 24 * 60 * 60;
+const RESULTS_REVALIDATE_SECONDS = 6 * 60 * 60;
 
 /**
  * The run *listing* is the one thing that has to stay fresher than the
@@ -586,6 +601,60 @@ export async function resolveVintedResults(squid: string | undefined, pinnedRun:
 const RESULTS_PAGE_SIZES = [30, 10] as const;
 const RESULTS_MAX_PAGES = 5;
 
+/**
+ * /v1/results is documented at 2 req/s — the tightest cap in this API, and
+ * this pager is the only thing that hits it in a burst. Pages used to be
+ * fired back-to-back with no delay at all, so any read that needed three
+ * pages was guaranteed to breach the cap; the resulting 429 on page 2 was
+ * then swallowed and the half-read feed rendered as a market.
+ *
+ * 550ms keeps a sequential pager just under 2/s with margin for clock skew.
+ * A three-page read costs ~1.1s of added wall time on a static render,
+ * which is cheap next to the eBay and TCGdex calls the same render makes.
+ */
+const RESULTS_PAGE_INTERVAL_MS = 550;
+
+/**
+ * More than lobstrRequest's default of one. A single retry is fine when a
+ * failure is allowed to degrade quietly; now that a failed page fails the
+ * whole read (and drops the card to its preview), it's worth actually
+ * riding out a rate limit. Capped at 2s per wait by lobstrRequest, so the
+ * worst case this adds to a render is ~6s.
+ */
+const RESULTS_RETRIES = 3;
+
+/** A read that came back short. Distinct from a transport error so the ladder in fetchAllResults can tell "ask smaller" from "this read is incomplete". */
+class IncompleteResultsError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "IncompleteResultsError";
+  }
+}
+
+/** The run's own row count, when the envelope reports one. Used only as a second opinion — see readResultPages. */
+function readTotalResults(payload: unknown): number | undefined {
+  if (!payload || typeof payload !== "object") return undefined;
+  const record = payload as Record<string, unknown>;
+  for (const key of ["total_results", "count", "total"]) {
+    const value = record[key];
+    if (typeof value === "number" && Number.isFinite(value) && value >= 0) return value;
+  }
+  return undefined;
+}
+
+/**
+ * The free plan's soft "Export limit reached - only N results returned"
+ * note, which rides along on a 200. It means the short read IS the whole
+ * exportable set, so the total_results check below must stand down —
+ * otherwise a read that is as complete as the plan allows gets rejected as
+ * truncated, and the panel shows a preview forever.
+ */
+function hasExportCeilingWarning(payload: unknown): boolean {
+  if (!payload || typeof payload !== "object") return false;
+  const warning = (payload as Record<string, unknown>).warning;
+  return typeof warning === "string" && /limit/i.test(warning);
+}
+
 type ResultsPage = { rows: Record<string, unknown>[]; payloadShape: string; pagesRead: number };
 
 /**
@@ -620,39 +689,98 @@ async function fetchAllResults(query: Record<string, string | number | undefined
 /**
  * Pages through /v1/results at a fixed page size, following `next`.
  *
- * A failure on the FIRST page propagates: nothing was read, so the caller
- * should try a smaller page or a different route. A failure on any LATER
- * page does not — pages 1..n-1 already arrived, and the free plan's export
- * ceiling is exactly the kind of thing that lets you read the first page
- * and then refuses the second. Half a market beats none, and the shortfall
- * shows up in ?debug=1 as a pagesRead that stopped early.
+ * ALL OR NOTHING, which is the whole point of this rewrite.
+ *
+ * It used to stop at the first failed page and return whatever had already
+ * arrived, on the reasoning that "half a market beats none". Production
+ * disagreed: two renders of the SAME card against the SAME immutable run
+ * (61edae5a, 30 results, the only run on the squid) rendered 4 listings on
+ * /products/gengar-vmax-271 and 1 listing on /products/gengar-vmax-271/fr,
+ * with identical search text on both. selectVintedListings is pure, so the
+ * only variable left was how many rows this function handed back. Each
+ * wrong answer was then frozen by ISR for 36h.
+ *
+ * fetchAllResults' own comment already had the rule right and the code
+ * simply didn't follow it: "A partial market that looks complete is worse
+ * than an empty one." An error here drops the card to its clearly-marked
+ * preview, which is honest. One of four asks, rendered as the market, is
+ * not.
+ *
+ * Completeness is judged structurally rather than by trusting a count: the
+ * read is complete only when the API stopped pointing at a `next` page.
+ * Two things are deliberately NOT treated as failures:
+ *
+ * - The export-ceiling 400 on a LATER page. That refusal means we have
+ *   already read everything this plan will ever hand back, so it completes
+ *   the read rather than truncating it. (On page 1 it still propagates, so
+ *   the ladder can step down to a smaller page size.)
+ * - A `total_results` larger than what arrived, when the payload carried
+ *   the ceiling warning — same reason.
  */
 async function readResultPages(query: Record<string, string | number | undefined>, limit: number): Promise<ResultsPage> {
   const rows: Record<string, unknown>[] = [];
   let payloadShape = "";
   let pagesRead = 0;
+  let expected: number | undefined;
+  let ceilingReached = false;
+  let complete = false;
 
   for (let page = 1; page <= RESULTS_MAX_PAGES; page++) {
+    // Sequential and paced — see RESULTS_PAGE_INTERVAL_MS on the 2 req/s cap.
+    if (page > 1) await new Promise((resolve) => setTimeout(resolve, RESULTS_PAGE_INTERVAL_MS));
+
     let payload: unknown;
     try {
       payload = await lobstrFetch<unknown>("/results", {
         query: { ...query, page, limit },
         revalidate: RESULTS_REVALIDATE_SECONDS,
+        retriesLeft: RESULTS_RETRIES,
       });
     } catch (err) {
       if (page === 1) throw err;
-      console.warn(`[lobstr] /results stopped at page ${page} with ${rows.length} rows already read: ${(err as Error).message}`);
-      break;
+      if (looksLikePageTooLarge(err)) {
+        // The plan refusing page N is the end of the exportable set, not a
+        // short read — everything it will give us is already in `rows`.
+        ceilingReached = true;
+        complete = true;
+        break;
+      }
+      throw new IncompleteResultsError(
+        `lobstr /results failed on page ${page} of a limit=${limit} read after ${rows.length} rows: ${(err as Error).message}`
+      );
     }
 
     pagesRead = page;
-    if (page === 1) payloadShape = describePayload(payload);
+    if (page === 1) {
+      payloadShape = describePayload(payload);
+      expected = readTotalResults(payload);
+    }
+    if (hasExportCeilingWarning(payload)) ceilingReached = true;
 
     const batch = unwrapCollection<Record<string, unknown>>(payload);
     rows.push(...batch);
 
     const next = payload && typeof payload === "object" ? (payload as Record<string, unknown>).next : null;
-    if (!next || batch.length === 0) break;
+    if (!next || batch.length === 0) {
+      complete = true;
+      break;
+    }
+  }
+
+  // Ran out of page budget with the API still offering more. Rendering this
+  // would be the exact bug above, one loop iteration later.
+  if (!complete) {
+    throw new IncompleteResultsError(
+      `lobstr /results still had a next page after ${RESULTS_MAX_PAGES} pages at limit=${limit} (${rows.length} rows read)`
+    );
+  }
+
+  // Second opinion, only where it can be trusted: with the ceiling in play a
+  // short read is the complete one, so the count must not overrule it.
+  if (!ceilingReached && expected !== undefined && rows.length < expected) {
+    throw new IncompleteResultsError(
+      `lobstr /results returned ${rows.length} of ${expected} rows at limit=${limit} across ${pagesRead} page(s)`
+    );
   }
 
   return { rows, payloadShape, pagesRead };

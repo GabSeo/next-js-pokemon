@@ -139,9 +139,13 @@ Override deliberately when you need to (still requires the secret):
 curl -X POST "https://<host>/api/vinted/refresh?force=1" -H "Authorization: Bearer $LOBSTR_REFRESH_SECRET"
 ```
 
-### What "stored 2 weeks" means here
+### How long results are cached
 
-Results are cached for the full 14 days rather than minutes. That's safe rather than stale because **the cache key includes the run hash**, and a finished run's results are immutable — a snapshot of one scrape that nothing will ever change. The next collection produces a *new* run hash, so it lands on a fresh entry and shows up immediately; it never waits for the TTL to lapse.
+**Six hours**, matching the run listing and the refresh route's `LISTING_DISCOVERY_HOURS` promise.
+
+It used to be the full 14 days, justified by "the cache key includes the run hash, and a finished run's results are immutable". That justification died when the read path moved to the squid-scoped route: the URL production actually caches is `/results?squid=<hash>&page=N&limit=M`, which carries no run hash and whose contents change as soon as another collection lands. A fortnight was long enough to hide an entire new collection behind a stale entry.
+
+Reading results costs no credits — only scraping does — so a shorter TTL spends nothing but a few free API reads a day. And because a partial read now throws (below) and Next does not cache a thrown fetch, nothing that reaches this cache is ever a short read.
 
 The run *listing* is the only thing that needs to stay fresher, since it's how a new run gets discovered — 6 hours, about four API reads a day.
 
@@ -178,7 +182,9 @@ Two smaller unverified spots, both marked in the code and both failing soft (the
 
 Documented per-endpoint caps: `/v1/squids` 120/min, `/v1/tasks` 90/min, `/v1/results` **2/sec**. Responses carry `X-RateLimit-Remaining` and `Retry-After`, and `lobstr.ts` includes both in its error text so a 429 reads as "back off" rather than as a generic failure.
 
-The read path caches results for 30 minutes and run listings for 5, which keeps product pages statically renderable and well clear of the results cap under real traffic.
+The read path caches results and run listings for six hours each, which keeps product pages statically renderable and well clear of the results cap under real traffic.
+
+The pager is the one thing here that can hit `/v1/results` in a burst, so it is **sequential and paced** at `RESULTS_PAGE_INTERVAL_MS` (550ms), which keeps a multi-page read just under 2/s. It previously fired pages back-to-back with no delay at all: any read needing three pages was guaranteed to breach the cap, and the 429 that came back was swallowed.
 
 ## Reading results: the page-size trap
 
@@ -205,11 +211,24 @@ currently `[30, 10]`): it asks for the largest page that should hold a whole
 free-tier run in one request, and if the server rejects that as too large it
 drops to the size production has already proven and pages through with `next`.
 An untested page size can then only ever cost one extra request instead of the
-whole feed. Failures on a *later* page are swallowed rather than thrown — the
-earlier pages already arrived, and the export ceiling is exactly the sort of
-thing that lets you read page 1 and refuses page 2. `?debug=1` reports
-`pagesRead` alongside the row count so a short read is visible instead of
-looking like a small market.
+whole feed.
+
+**The read is all-or-nothing.** Later-page failures used to be swallowed on the
+reasoning that half a market beats none. Production disagreed: two renders of
+the same card against the same immutable run (30 results, one run on the squid)
+rendered **4 listings** on `/products/gengar-vmax-271` and **1 listing** on
+`/products/gengar-vmax-271/fr`, with identical search text on both.
+`selectVintedListings` is pure, so the only variable was how many rows the read
+handed back — and ISR then froze each wrong answer for 36h. A partial market
+that looks complete is worse than an empty one; an error drops the card to its
+clearly-marked preview, which is honest.
+
+Completeness is judged structurally — the read is complete only once the API
+stops pointing at a `next` page — with two deliberate exceptions, both meaning
+"this short read IS the whole exportable set": the export-ceiling `400` on a
+*later* page (on page 1 it still propagates, so the ladder can step down), and
+a `total_results` larger than what arrived when the payload carried the soft
+ceiling warning. `?debug=1` reports `pagesRead` alongside the row count.
 
 **Open question, and the reason run-scoped reads are worth revisiting.** The
 read is scoped by squid (`/v1/results?squid=<hash>`), because run discovery is
