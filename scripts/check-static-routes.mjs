@@ -103,6 +103,14 @@ const REQUIRED_PATTERNS = [
   // that one flag re-arms this check automatically.
   ...(japaneseMarketEnabled() ? [{ label: "/products/[slug]/ja", test: (r) => /^\/products\/[^/]+\/ja$/.test(r) }] : []),
   { label: "/products/[slug]", test: (r) => /^\/products\/[^/]+$/.test(r) },
+  // The prebuilt twin behind /tools/price-checker?cardId= (see the
+  // beforeFiles rewrite in next.config.ts). Its whole purpose is to be
+  // static: if it ever stops prerendering, the query-string URL silently
+  // falls back to rendering four eBay searches plus the Vinted read inside
+  // every visitor's request, which is exactly the regression this fixed and
+  // is invisible from the outside. Its params come from card-refs.ts, so
+  // zero pages can only mean a code regression, never an upstream outage.
+  { label: "/tools/price-checker/[cardId]", test: (r) => /^\/tools\/price-checker\/[^/]+$/.test(r) },
   { label: "/products/[slug]/index.md", test: (r) => /^\/products\/[^/]+\/index\.md$/.test(r) },
   ...(tcgdexDown
     ? []

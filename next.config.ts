@@ -22,6 +22,44 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "tcgplayer-cdn.tcgplayer.com" },
     ],
   },
+  async rewrites() {
+    return {
+      /**
+       * Make `/tools/price-checker?cardId=x` serve the PREBUILT
+       * `/tools/price-checker/x` page, without the visible URL changing.
+       *
+       * The query-string address is SEO-load-bearing and cannot move, but a
+       * route that reads searchParams is request-time by definition — Next
+       * cannot prebuild a page whose identity arrives in the query string.
+       * So that URL was re-running four eBay searches, the Vinted read and a
+       * TCGdex lookup on every single visit, while /products/[slug] rendered
+       * the same panel from the same data as a prebuilt file.
+       *
+       * `beforeFiles`, not the default array form. The array form is
+       * `afterFiles`, which is consulted only AFTER the filesystem — and
+       * /tools/price-checker is a real page that would match first, so the
+       * rewrite would silently never fire. beforeFiles runs ahead of that
+       * check.
+       *
+       * The named capture group is what carries the value through: per
+       * Next's rewrite contract, a `has` value of `(?<cardId>.*)` makes
+       * `:cardId` usable in the destination. No cardId, no match — the bare
+       * /tools/price-checker form keeps being served by its own page.
+       *
+       * No loop is possible: the destination path does not match this
+       * source, which is the bare route exactly.
+       */
+      beforeFiles: [
+        {
+          source: "/tools/price-checker",
+          has: [{ type: "query", key: "cardId", value: "(?<cardId>.*)" }],
+          destination: "/tools/price-checker/:cardId",
+        },
+      ],
+      afterFiles: [],
+      fallback: [],
+    };
+  },
   async headers() {
     // rel="index" is the IANA-registered relation for "the index of this
     // resource's collection" — generic crawlers/link-followers that already
