@@ -26,6 +26,8 @@ function ListingRow({ date, description, price, currency, url }: { date: string;
 function toTypeSummary(data: GradedMarketTypeData): TypeSummary {
   return {
     avgLabel: `${data.currency} ${data.medianPrice.toLocaleString()}`,
+    medianPrice: data.medianPrice,
+    currency: data.currency,
     count: data.count,
     rowCount: data.rows.length,
     isReal: data.isReal,

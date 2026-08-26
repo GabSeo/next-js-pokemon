@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { FloatingPreviewChip } from "@/components/retro/floating-preview-chip";
 import { IllustrativeTag } from "@/components/retro/illustrative-tag";
 import { VintedListingsSection } from "@/components/retro/vinted-listings-section";
 import type { EbayCondition, EbayLanguage } from "@/lib/ebay-browse";
@@ -9,6 +10,15 @@ import { EBAY_LOGO_URL } from "@/lib/marketplace-logos";
 
 export type TypeSummary = {
   avgLabel: string;
+  /**
+   * The number behind avgLabel, kept alongside the formatted string rather
+   * than parsed back out of it — the same rule VintedFeedRowSummary.price
+   * follows, and for the same reason: the grading-tier preview does real
+   * arithmetic (active vs sold) and a locale-formatted string is not a
+   * number you can subtract.
+   */
+  medianPrice: number;
+  currency: string;
   count: number;
   /** How many rows are actually shown — not always the same fixed number: a rare card can turn up fewer real listings after quality filtering (see lib/ebay-browse.ts's titleMatchesCard). */
   rowCount: number;
@@ -78,6 +88,78 @@ function pressable(isSelected: boolean): string {
   return isSelected
     ? "translate-x-[2px] translate-y-[2px] shadow-none"
     : "shadow-hard-sm hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-md";
+}
+
+/**
+ * What a grading-tier pill shows on hover/focus: the tier's current median
+ * ask, and how far that sits from what the same tier sells for.
+ *
+ * On the trend indicator, and why it is active-vs-sold rather than the
+ * "vs previous snapshot" a preview card like this usually implies: there is
+ * no per-grade price history anywhere in this codebase to compare against.
+ * `Card.priceHistory` and `Card.trend` are the RAW card's series from
+ * apitcg/TCGdex — labelling those as a PSA 10 movement would be the same
+ * class of error as printing a EUR figure with a dollar sign, so they are
+ * not used here. Active-vs-sold is the one genuine per-tier comparison the
+ * data already carries, it is the comparison the two big buttons below
+ * these pills are already making, and it reads the way a trend reads: asks
+ * above recent sales, or below them.
+ *
+ * Colour follows the site's existing deal vocabulary (see
+ * vinted-listings-section.tsx): green means the asks are BELOW sold, which
+ * is the buyer-favourable direction, red means they are running hot.
+ *
+ * Sold data is illustrative everywhere on this site — eBay's sold API is
+ * closed (lib/illustrative.ts) — so the delta inherits that and says so
+ * with the same IllustrativeTag the rest of the panel uses. When a real
+ * per-tier series does land, this function is the only thing that changes.
+ */
+function GradeTierPreview({
+  label,
+  market,
+  active,
+  sold,
+}: {
+  label: string;
+  market: EbayLanguage;
+  active: TypeSummary;
+  sold: TypeSummary;
+}) {
+  const deltaPct = sold.medianPrice > 0 ? ((active.medianPrice - sold.medianPrice) / sold.medianPrice) * 100 : null;
+  const above = (deltaPct ?? 0) >= 0;
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-[10px] font-black tracking-[0.5px] text-muted-text uppercase">
+        {label} · {market}
+      </span>
+
+      <div className="flex items-baseline gap-2">
+        <span className="text-lg font-black tracking-[-0.4px] text-foreground tabular-nums">{active.avgLabel}</span>
+        {deltaPct !== null && (
+          <span
+            className={`text-xs font-black tabular-nums ${above ? "text-pokemon-red" : "text-success-green"}`}
+            /* The arrow is decorative — the sign is already in the text that follows it. */
+            aria-hidden="true"
+          >
+            {above ? "▲" : "▼"} {Math.abs(deltaPct).toFixed(0)}%
+          </span>
+        )}
+      </div>
+
+      <span className="text-[11px] font-bold text-muted-text">
+        {deltaPct === null
+          ? `Median ask · ${active.count} active`
+          : `Median ask, ${Math.abs(deltaPct).toFixed(0)}% ${above ? "above" : "below"} sold · ${active.count} active`}
+      </span>
+
+      {(!active.isReal || !sold.isReal) && (
+        <span className="mt-0.5">
+          <IllustrativeTag label={active.isReal ? "Sold data illustrative" : "Preview — eBay not connected yet"} />
+        </span>
+      )}
+    </div>
+  );
 }
 
 /** A top-level market tab — the two real eBay-backed languages, plus France, which isn't eBay at all (see graded-market-tabs.tsx's file doc comment). */
@@ -186,22 +268,35 @@ export function GradedMarketTabs({
 
       <div hidden={market === "France"}>
         <div role="tablist" aria-label="Condition" className="mt-5 flex flex-wrap gap-7 border-b-2 border-border-subtle">
-          {entries.map((entry) => (
-            <button
-              key={entry.id}
-              type="button"
-              role="tab"
-              aria-selected={conditionId === entry.id}
-              onClick={() => setConditionId(entry.id)}
-              className={`-mb-0.5 border-b-[3px] pb-2.5 text-sm font-black tracking-[0.3px] uppercase transition-colors ${
-                conditionId === entry.id
-                  ? "border-pokemon-red text-foreground"
-                  : "border-transparent text-[#9a9a9a] hover:text-foreground"
-              }`}
-            >
-              {entry.label}
-            </button>
-          ))}
+          {entries.map((entry) => {
+            // The tier's numbers for whichever market is currently selected.
+            // France has no eBay language entry (and hides this tablist
+            // entirely), so fall back rather than reaching into undefined.
+            const tier = entry.languages.find((l) => l.language === market) ?? entry.languages[0];
+            return (
+              <FloatingPreviewChip
+                key={entry.id}
+                preview={<GradeTierPreview label={entry.label} market={tier.language} active={tier.active} sold={tier.sold} />}
+              >
+                {(trigger) => (
+                  <button
+                    {...trigger}
+                    type="button"
+                    role="tab"
+                    aria-selected={conditionId === entry.id}
+                    onClick={() => setConditionId(entry.id)}
+                    className={`-mb-0.5 border-b-[3px] pb-2.5 text-sm font-black tracking-[0.3px] uppercase transition-colors ${
+                      conditionId === entry.id
+                        ? "border-pokemon-red text-foreground"
+                        : "border-transparent text-[#9a9a9a] hover:text-foreground"
+                    }`}
+                  >
+                    {entry.label}
+                  </button>
+                )}
+              </FloatingPreviewChip>
+            );
+          })}
         </div>
 
         <div className="my-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
