@@ -110,9 +110,17 @@ export function cardSearchTerms(card: Card, nameOverride?: string, numberOverrid
  * for Marshall D. Teach, "Wanted Poster OP09-093 PSA 10" returned 3 results
  * and 0 survived the title check, while "Wanted OP09-093 PSA 10" (first
  * word only) returned 7 real, correctly-filtered matches.
+ *
+ * Trailing period stripped ("Vol." -> "Vol") — an abbreviation's own period
+ * is punctuation for the query text (cleanQueryText's job elsewhere, not
+ * repeated here since this value normally flows through it anyway), and for
+ * titleMatchesCard's own prefix check (see its own comment) a bare period
+ * would only ever prevent the exact match this whole fallback exists to
+ * catch: a listing that spells the word out in full ("Volume") has no
+ * period to match against at all.
  */
 export function tagFirstWord(tag: string): string {
-  return tag.trim().split(/\s+/)[0];
+  return tag.trim().split(/\s+/)[0].replace(/\.$/, "");
 }
 
 /**

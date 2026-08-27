@@ -36,6 +36,7 @@ if (!number || !condition || !language) {
 
 const { searchActiveListings } = await import("../src/lib/ebay-browse");
 import type { EbayCondition, EbayLanguage } from "../src/lib/ebay-browse";
+const { tagFirstWord } = await import("../src/lib/ebay-search");
 import type { Card } from "../src/lib/types";
 
 if (!["PSA 10", "PSA 9", "PSA 8", "Raw"].includes(condition)) {
@@ -63,7 +64,10 @@ const bare = await searchActiveListings(fakeCard, typedCondition, typedLanguage,
 console.log(`total=${bare.total}, shown=${bare.listings.length}`);
 bare.listings.forEach((l) => console.log(`  - ${l.title}`));
 
-const tagsForQuery = variantTags.length ? variantTags.join(" ") : "";
+// Matches graded-market.ts's own oneNameOverride exactly: tagFirstWord per
+// tag, not the tags verbatim (confirmed live the full phrase performs worse
+// — see that file's own comment).
+const tagsForQuery = variantTags.length ? variantTags.map(tagFirstWord).join(" ") : "";
 console.log(`\n=== Real query shape: variantTags in the query text ("${tagsForQuery || "(none)"}") + title filter ===`);
 const withTags = await searchActiveListings(
   fakeCard,

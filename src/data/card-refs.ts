@@ -174,7 +174,27 @@ export const cardRefs: CardRef[] = [
     slug: "monkey-d-luffy-op09-061",
     displayName: "Monkey D. Luffy",
     character: "Monkey D. Luffy",
+    // Not the same card as the P-033 ref below despite the same character —
+    // confirmed via BerryWallet: different card_number, different card_type
+    // (Leader vs Character), different color, different real price.
     lookup: { by: "code", code: "OP09-061", variantTags: ["2nd Anniversary Set"] },
+    berryWalletEnabled: true,
+  },
+  {
+    // A different card_number and product entirely from OP09-061 above,
+    // despite being the same character — P-033 (BerryWallet's generic
+    // promo-number series) has 3 real, separate products sharing that one
+    // code: "Event Pack Vol. 2" (this one — matches the real reference,
+    // French "Pack Événement Vol.2"), "CS 2023 Event Pack", and "CS 2023
+    // Event Pack Finalist Ver.". All three names share the substring "Event
+    // Pack", so ["Event Pack"] alone wouldn't disambiguate — "Vol. 2" is
+    // the one string only this specific product's name contains.
+    franchise: "one-piece",
+    tcg: "one-piece",
+    slug: "monkey-d-luffy-p-033",
+    displayName: "Monkey D. Luffy",
+    character: "Monkey D. Luffy",
+    lookup: { by: "code", code: "P-033", variantTags: ["Event Pack", "Vol. 2"] },
     berryWalletEnabled: true,
   },
 ];

@@ -175,6 +175,29 @@ function precisionAspectFilter(condition: EbayCondition, language?: EbayLanguage
 }
 
 /**
+ * True when `number` (the card's own real number, e.g. "P-033" or
+ * "OP09-093") plausibly appears in a real listing's title — either
+ * verbatim, or, for a letter-prefixed promo code specifically, as a bare
+ * "#<digits>" with the letter prefix dropped. Confirmed live this second
+ * form is real, not theoretical: "2023 ONE PIECE PROMOS EVENT PACK VOL.2
+ * #033 MONKEY D. LUFFY PSA 9" is a genuine, correctly-priced listing for
+ * card_number "P-033" that writes it as "#033" — a strict `\bP-033\b` check
+ * rejects it outright, the same way requiring a variant tag's full phrase
+ * verbatim rejects "Wanted" for "Wanted Poster" (see titleMatchesCard's own
+ * comment on variantTags — this is the same shape of gap, just for the
+ * number instead of the variant name). General on purpose: any future
+ * promo-style code (a single letter, a dash, digits) gets this fallback for
+ * free, nothing here names a specific card or prefix letter.
+ */
+function numberMatchesTitle(number: string, title: string): boolean {
+  if (new RegExp(`\\b${number}\\b`).test(title)) return true;
+  const promoDigits = number.match(/^[A-Za-z]+-(\d+)$/)?.[1];
+  if (!promoDigits) return false;
+  const stripped = promoDigits.replace(/^0+(?=\d)/, "");
+  return new RegExp(`#0*${stripped}\\b`).test(title);
+}
+
+/**
  * Sanity check on a returned listing's title, not just trust in the
  * structured filters — precisionAspectFilter is still unverified against
  * the API (confirmed working on eBay's website, not confirmed there), and
@@ -231,7 +254,7 @@ function titleMatchesCard(title: string, card: Card, condition: EbayCondition, n
   if (!gradeOk) return false;
 
   const primaryNumber = (numberOverride ?? card.number)?.split("/")[0];
-  if (primaryNumber && !new RegExp(`\\b${primaryNumber}\\b`).test(title)) return false;
+  if (primaryNumber && !numberMatchesTitle(primaryNumber, title)) return false;
 
   if (variantTags && variantTags.length > 0) {
     const titleLower = title.toLowerCase();
