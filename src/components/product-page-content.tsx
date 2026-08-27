@@ -16,10 +16,35 @@ import { PsaTiltCard } from "@/components/retro/psa-tilt-card";
 import { TypeBadge } from "@/components/retro/type-badge";
 import { computeAlertBands } from "@/lib/cards";
 import { CARDMARKET_HOMEPAGE_URL } from "@/lib/cardmarket-search";
+import { JAPANESE_MARKET_ENABLED } from "@/lib/graded-market";
 import type { Card } from "@/lib/types";
 
-/** `code` is a real ISO 3166-1 alpha-2 country code (e.g. "US", "FR", "JP") — used both as the visible label and, lowercased, to build the flag image URL below. */
-export type LocaleLink = { code: string; href: string; active: boolean };
+/**
+ * `code` is a real ISO 3166-1 alpha-2 country code (e.g. "US", "FR", "JP") —
+ * used both as the visible label and, lowercased, to build the flag image
+ * URL below. `href` is optional: omitted (with `disabled: true`) renders a
+ * visible-but-inert toggle for a market whose real page doesn't exist yet —
+ * shown so visitors know it's coming, never a dead link to a page that 404s
+ * or, worse, a link to a page showing fabricated data under a real-looking
+ * flag. `active` still means "this is the market currently being viewed";
+ * a disabled entry is never active.
+ */
+export type LocaleLink = { code: string; href?: string; active: boolean; disabled?: boolean };
+
+/**
+ * The Japan toggle for a Pokémon product page, shown on every page
+ * regardless of JAPANESE_MARKET_ENABLED — visible now, wired later. Real
+ * and clickable once the flag is on (same route this always pointed to);
+ * an inert placeholder until then, since no source wired into this codebase
+ * has real Japanese Pokémon data yet (TCGdex has zero Japanese coverage,
+ * confirmed live — see tcgdex.ts's own file header) and the flag itself
+ * also still gates a second, separate problem (eBay's Japanese-market
+ * search returning almost nothing usable — see graded-market.ts's own
+ * comment) that turning this toggle on wouldn't fix by itself.
+ */
+export function japanLocaleLink(hrefWhenEnabled: string, active: boolean): LocaleLink {
+  return JAPANESE_MARKET_ENABLED ? { code: "JP", href: hrefWhenEnabled, active } : { code: "JP", active: false, disabled: true };
+}
 
 /**
  * Flag *emoji* are unreliable cross-platform — Windows in particular often
@@ -111,20 +136,45 @@ export function ProductPageContent({
             <div className="flex items-center gap-2" role="group" aria-label="Market">
               <span className="text-xs font-black tracking-[0.3px] text-muted-text uppercase">Market</span>
               <div className="flex overflow-hidden rounded-md border-2 border-black">
-                {localeLinks.map((l, i) => (
-                  <Link
-                    key={l.href}
-                    href={l.href}
-                    aria-current={l.active ? "page" : undefined}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-black tracking-[0.3px] uppercase transition-colors ${
-                      i > 0 ? "border-l-2 border-black" : ""
-                    } ${l.active ? "bg-pokemon-red text-white" : "bg-white text-foreground hover:bg-muted-surface"}`}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element -- external CDN image, domain not allowlisted for next/image */}
-                    <img src={flagSvgUrl(l.code)} alt="" className="h-3 w-4 rounded-[1px] object-cover" />
-                    {l.code}
-                  </Link>
-                ))}
+                {localeLinks.map((l, i) => {
+                  const content = (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element -- external CDN image, domain not allowlisted for next/image */}
+                      <img src={flagSvgUrl(l.code)} alt="" className="h-3 w-4 rounded-[1px] object-cover" />
+                      {l.code}
+                    </>
+                  );
+                  const sharedClassName = `flex items-center gap-1.5 px-3 py-1.5 text-xs font-black tracking-[0.3px] uppercase transition-colors ${
+                    i > 0 ? "border-l-2 border-black" : ""
+                  }`;
+                  // A disabled entry (or one with no real page to link to)
+                  // is visible but never a <Link> — a market visitors can
+                  // see is coming, not a dead link or a fabricated page
+                  // dressed up behind a real-looking flag. See LocaleLink's
+                  // own doc comment.
+                  if (l.disabled || !l.href) {
+                    return (
+                      <span
+                        key={l.code}
+                        aria-disabled="true"
+                        title="Coming soon"
+                        className={`${sharedClassName} cursor-not-allowed bg-muted-surface text-muted-text opacity-60`}
+                      >
+                        {content}
+                      </span>
+                    );
+                  }
+                  return (
+                    <Link
+                      key={l.href}
+                      href={l.href}
+                      aria-current={l.active ? "page" : undefined}
+                      className={`${sharedClassName} ${l.active ? "bg-pokemon-red text-white" : "bg-white text-foreground hover:bg-muted-surface"}`}
+                    >
+                      {content}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           )}

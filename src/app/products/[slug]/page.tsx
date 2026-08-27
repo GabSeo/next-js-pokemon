@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ProductPageContent, type LocaleLink } from "@/components/product-page-content";
-import { JAPANESE_MARKET_ENABLED, getGradedMarketData, gradedMarketOffersJsonLd } from "@/lib/graded-market";
+import { ProductPageContent, type LocaleLink, japanLocaleLink } from "@/components/product-page-content";
+import { getGradedMarketData, gradedMarketOffersJsonLd } from "@/lib/graded-market";
 import { franchiseLabel, getAllCards, getCardBySlug, getFrenchCardText } from "@/lib/cards";
 import { absoluteUrl } from "@/lib/site";
 import { priceStatement } from "@/lib/price-display";
+import { cardRefs } from "@/data/card-refs";
 
 // 36 hours (must be a literal — Next.js statically parses this export).
 // Kept in sync with apitcg.ts's REVALIDATE_SECONDS.
@@ -124,11 +125,30 @@ export default async function ProductPage({ params }: PageProps) {
     ],
   };
 
-  const localeLinks: LocaleLink[] = [
-    { code: "US", href: `/products/${card.slug}`, active: true },
-    ...(fr.translated ? [{ code: "FR", href: `/products/${card.slug}/fr`, active: false }] : []),
-    ...(JAPANESE_MARKET_ENABLED ? [{ code: "JP", href: `/products/${card.slug}/ja`, active: false }] : []),
-  ];
+  // One Piece has no /fr or /ja route at all (see those files' own
+  // generateStaticParams — TCGdex, the only French source, has zero One
+  // Piece coverage), so its Market toggle means something different from
+  // Pokémon's: not "view this same card in another language's real page,"
+  // but "which real language is this card's own identity actually sourced
+  // from" (see data/card-refs.ts's berryWalletLanguage) — US/JP show which
+  // one is real and active, FR is always an inert placeholder (BerryWallet,
+  // the only source with a real language split for One Piece, confirmed
+  // live to have zero French sets — see lib/berrywallet.ts's file header).
+  const oneRef = card.franchise === "one-piece" ? cardRefs.find((r) => r.slug === card.slug) : undefined;
+  const oneLanguage = oneRef?.berryWalletLanguage ?? "en";
+
+  const localeLinks: LocaleLink[] =
+    card.franchise === "one-piece"
+      ? [
+          { code: "US", href: oneLanguage === "en" ? `/products/${card.slug}` : undefined, active: oneLanguage === "en", disabled: oneLanguage !== "en" },
+          { code: "JP", href: oneLanguage === "jp" ? `/products/${card.slug}` : undefined, active: oneLanguage === "jp", disabled: oneLanguage !== "jp" },
+          { code: "FR", active: false, disabled: true },
+        ]
+      : [
+          { code: "US", href: `/products/${card.slug}`, active: true },
+          ...(fr.translated ? [{ code: "FR", href: `/products/${card.slug}/fr`, active: false }] : []),
+          japanLocaleLink(`/products/${card.slug}/ja`, false),
+        ];
 
   return (
     <ProductPageContent
