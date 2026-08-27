@@ -19,17 +19,17 @@ Covers available history from ${from} to ${to}.`;
  * page. Every value is explicitly marked Real or Preview so an agent
  * reading this file doesn't need to guess.
  *
- * Pokémon only — getGradedMarketData returns undefined for a One Piece card
- * (see its own comment), and this says so in plain text rather than silently
- * omitting the section, so an agent reading raw markdown knows this isn't a
- * fetch failure.
+ * getGradedMarketData can still return undefined (see its own comment, e.g.
+ * ONE_PIECE_MARKET_ENABLED flipped back off) — this says so in plain text
+ * rather than silently omitting the section, so an agent reading raw
+ * markdown knows this isn't a fetch failure.
  */
 async function gradedMarketMarkdown(card: Card): Promise<string> {
   const data = await getGradedMarketData(card);
   if (!data) {
     return `## Market overview
 
-Graded/eBay and Vinted market tracking isn't built for One Piece cards yet — this section is Pokémon-only for now. ${card.name}'s own real current price (above) still comes from a live source.`;
+Graded/eBay and Vinted market tracking isn't built for ${franchiseLabel(card.franchise)} cards yet. ${card.name}'s own real current price (above) still comes from a live source.`;
   }
   const rows = data.conditions
     .flatMap((c) =>
@@ -54,7 +54,7 @@ Graded/eBay and Vinted market tracking isn't built for One Piece cards yet — t
     ? `Real listings, scraped from Vinted via Lobstr.io. Asking prices on active listings, not completed sales.`
     : `Preview — no scraped Vinted listings for this card yet (no finished scrape run, or nothing currently listed in ${data.vinted.conditionFilter}). Every row below is illustrative, not real data.`;
 
-  return `## Pokémon market overview
+  return `## ${franchiseLabel(card.franchise)} market overview
 
 **Exact listing URLs:** every real row below has a working per-listing link, but this table is prose — copy a URL from it at your own risk. For a URL guaranteed not to be mistyped or hallucinated, read \`rows[].url\` from the JSON API (${absoluteUrl(`/api/${card.franchise}/${card.id}`)}) or call the \`get_graded_market\` MCP tool, or use the machine-readable \`Offer\` entries in this page's own JSON-LD.
 
@@ -70,7 +70,7 @@ Sold data is always illustrative: eBay's sold/completed-listing API (Marketplace
 
 ### France (Vinted) — "${data.vinted.conditionFilter}" listings only
 
-eBay.fr isn't a good fit for the French Pokémon TCG market, so the French market view is a Vinted listing feed instead of PSA grades — no grading, no active/sold split (Vinted has no public sold feed).
+eBay.fr isn't a good fit for the French ${franchiseLabel(card.franchise)} TCG market, so the French market view is a Vinted listing feed instead of PSA grades — no grading, no active/sold split (Vinted has no public sold feed).
 
 **This feed is filtered to one condition: ${data.vinted.conditionFilter}.** Listings in Vinted's other condition tiers (Bon état, Satisfaisant, Neuf avec/sans étiquette) are excluded — by Vinted itself, via the status_ids[]=2 filter on the search this scrapes. It answers "what is listed in ${data.vinted.conditionFilter}", not "what does this market look like".
 

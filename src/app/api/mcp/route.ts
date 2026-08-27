@@ -1,6 +1,6 @@
 import { createMcpHandler } from "mcp-handler";
 import { z } from "zod";
-import { findCard, getAllCards, getCardsByFranchise, toPublicCard } from "@/lib/cards";
+import { findCard, franchiseLabel, getAllCards, getCardsByFranchise, toPublicCard } from "@/lib/cards";
 import { getGradedMarketData } from "@/lib/graded-market";
 import { MCP_SERVER_INFO, mcpToolDescription } from "@/lib/mcp";
 import { absoluteUrl } from "@/lib/site";
@@ -273,7 +273,7 @@ const handler = createMcpHandler((server) => {
           content: [
             {
               type: "text",
-              text: `${card.name}: graded/eBay and Vinted market tracking isn't built for One Piece cards yet — this tool is Pokémon-only for now. Use get_card_info for ${card.name}'s own real current price.`,
+              text: `${card.name}: graded/eBay and Vinted market tracking isn't built for ${franchiseLabel(card.franchise)} cards yet. Use get_card_info for ${card.name}'s own real current price.`,
             },
           ],
           structuredContent: { found: true, available: false },

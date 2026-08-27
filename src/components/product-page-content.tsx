@@ -80,7 +80,7 @@ type ProductPageContentProps = {
   okfHref: string;
   /** The visible "no orphan pages" cross-links between market variants (PLAN.md §4.3). Framed as *market* focus (US/FR/JP), not *language* — honest either way: /fr is real translated content, /ja isn't (see that route's own doc comment), but both are legitimately a different market's data for this card. */
   localeLinks: LocaleLink[];
-  /** Which Pokémon Market Overview tab opens by default — English unless a locale page overrides it. */
+  /** Which Market Overview tab opens by default — English unless a locale page overrides it. */
   defaultMarketTab?: MarketTab;
   /** Omitted on the /ja workflow page: its content is identical to the English original, so it's meant to canonicalize back there rather than assert itself as separately-indexable content via schema.org. */
   structuredData?: { product: Record<string, unknown>; breadcrumb: Record<string, unknown>; faq: Record<string, unknown> };

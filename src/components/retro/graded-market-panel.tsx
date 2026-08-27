@@ -1,4 +1,5 @@
 import { GradedMarketTabs, type ConditionEntry, type MarketTab, type TypeSummary, type VintedSummary } from "@/components/retro/graded-market-tabs";
+import { franchiseLabel } from "@/lib/cards";
 import { getGradedMarketData, type GradedMarketTypeData } from "@/lib/graded-market";
 import { relativeTimeLabel } from "@/lib/vinted-listings";
 import type { Card } from "@/lib/types";
@@ -102,7 +103,7 @@ export async function GradedMarketPanel({ card, defaultMarket }: { card: Card; d
   return (
     <div className="rounded-lg border-2 border-black bg-card-surface p-7 shadow-hard-md">
       <div className="mb-5 flex flex-wrap items-center gap-2">
-        <span className="text-xs font-black tracking-[0.6px] text-pokemon-blue uppercase">📊 Pokémon Market Overview</span>
+        <span className="text-xs font-black tracking-[0.6px] text-pokemon-blue uppercase">📊 {franchiseLabel(card.franchise)} Market Overview</span>
         <span className="h-px flex-1 bg-border-subtle" />
       </div>
 

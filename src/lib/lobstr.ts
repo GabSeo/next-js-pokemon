@@ -1,6 +1,6 @@
 /**
  * Lobstr.io API client — the transport layer for the real Vinted data
- * behind the France tab of the Pokémon Market Overview
+ * behind the France tab of the Market Overview panel
  * (components/retro/graded-market-panel.tsx). Vinted has no public API of
  * its own (that's what lib/illustrative.ts's Vinted feed comment was
  * waiting on); Lobstr's hosted Vinted Products Scraper is the source we

@@ -50,11 +50,11 @@ import type { Card } from "@/lib/types";
  * regeneration), where the shell now paints immediately instead of the whole
  * page waiting on eBay.
  */
-function MarketPanelSkeleton() {
+function MarketPanelSkeleton({ franchise }: { franchise: Card["franchise"] }) {
   return (
     <div className="rounded-lg border-2 border-black bg-card-surface p-7 shadow-hard-md">
       <div className="mb-5 flex flex-wrap items-center gap-2">
-        <span className="text-xs font-black tracking-[0.6px] text-pokemon-blue uppercase">📊 Pokémon Market Overview</span>
+        <span className="text-xs font-black tracking-[0.6px] text-pokemon-blue uppercase">📊 {franchiseLabel(franchise)} Market Overview</span>
         <span className="h-px flex-1 bg-border-subtle" />
       </div>
       <p className="text-sm font-bold text-muted-text">Loading live marketplace data…</p>
@@ -138,7 +138,7 @@ export function PriceCheckerView({ cardId, card }: { cardId?: string; card?: Car
 
             <InternationalPricesPanel card={card} />
 
-            <Suspense fallback={<MarketPanelSkeleton />}>
+            <Suspense fallback={<MarketPanelSkeleton franchise={card.franchise} />}>
               <GradedMarketPanel card={card} />
             </Suspense>
 

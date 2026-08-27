@@ -239,12 +239,14 @@ export async function POST(request: Request) {
     }
     lastRunSeenAt = await lastRunTimestamp(squid);
 
-    // Pokémon only — deliberately not getAllCards(). This is the Pokémon
-    // Market Overview's France tab, and every card added here costs
+    // Pokémon only — deliberately not getAllCards(). This is the Market
+    // Overview panel's France tab, and every card added here costs
     // VINTED_RESULTS_PER_CARD results out of a 100/month tier. Scraping the
-    // One Piece cards too would double the bill for a panel nobody is
-    // reading in that context; their France tab stays on its clearly-marked
-    // preview, which is the honest way to show data that isn't collected.
+    // One Piece cards too would double the bill for a tab that franchise's
+    // own market panel (now enabled — see ONE_PIECE_MARKET_ENABLED in
+    // lib/graded-market.ts) doesn't yet get real traffic to justify; their
+    // France tab stays on its clearly-marked preview, which is the honest
+    // way to show data that isn't collected.
     const cards = await getCardsByFranchise("pokemon");
     const queries = await Promise.all(cards.map(async (card) => ({ slug: card.slug, ...(await vintedQueryForCard(card)) })));
     const urls = [...new Set(queries.map((q) => q.searchUrl))];

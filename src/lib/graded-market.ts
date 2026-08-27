@@ -411,26 +411,23 @@ async function buildVintedMarket(card: Card): Promise<VintedMarketData> {
  * cost), each cached for 1h. Fine at this site's scale; worth revisiting if
  * traffic grows enough to approach eBay's 5,000 calls/day default limit.
  *
- * One Piece is gated off by ONE_PIECE_MARKET_ENABLED above, not a permanent
- * Pokémon-only design — this function's PSA/eBay/Vinted shape is meant to
- * cover both franchises once One Piece's own identity resolution
- * (BerryWallet, see cards.ts) is settled. Until then, running the same 8
- * eBay searches + Vinted read against an identity still being debugged would
- * mean re-verifying match quality twice — once now, again once the identity
- * work lands — for a section a One Piece page can't show correctly yet
- * anyway (every consumer of this data renders it under a "Pokémon Market
- * Overview" header). Returning undefined while the flag is off is the same
+ * ONE_PIECE_MARKET_ENABLED above gates One Piece, not a permanent
+ * Pokémon-only design — this function's PSA/eBay/Vinted shape covers both
+ * franchises now that One Piece's own identity resolution (BerryWallet, see
+ * cards.ts) is settled, and every consumer (the panel, the markdown export,
+ * the JSON API, the MCP tool) renders it under a franchise-aware
+ * "<Franchise> Market Overview" header (franchiseLabel(card.franchise)),
+ * not a hardcoded Pokémon one. The flag stays here as an off switch — same
  * "only build what's ready" rule this codebase already applies to
- * JAPANESE_MARKET_ENABLED — every caller (the panel, the markdown export,
- * the JSON API, the MCP tool) skips the section cleanly rather than showing
- * it half-working. One Piece already has its own real "current price" from
- * BerryWallet regardless (resolveBerryWalletCard/berryWalletPrice in
- * lib/cards.ts) — this function was never that franchise's only source of
- * real market data, just the only source of this particular one. The query
- * shape and tier list below (conditionsFor, the One Piece query text/
- * variantTags block) are already built for both franchises even while the
- * flag is off, so flipping it is the only step left once the identity work
- * lands.
+ * JAPANESE_MARKET_ENABLED — for the same reason it existed before: running
+ * the 8 eBay searches + Vinted read is only worth doing once the identity
+ * behind a card is trustworthy, so flipping it back off (e.g. mid-regression
+ * on the identity work) makes every caller skip the section cleanly again
+ * rather than showing it half-working. One Piece already has its own real
+ * "current price" from BerryWallet regardless of this flag
+ * (resolveBerryWalletCard/berryWalletPrice in lib/cards.ts) — this function
+ * was never that franchise's only source of real market data, just the only
+ * source of this particular one.
  */
 export async function getGradedMarketData(card: Card): Promise<GradedMarketData | undefined> {
   if (card.franchise !== "pokemon" && !ONE_PIECE_MARKET_ENABLED) return undefined;
