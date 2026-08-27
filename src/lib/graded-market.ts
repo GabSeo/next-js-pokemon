@@ -1,5 +1,5 @@
 import { conditionSearchLink } from "@/lib/ebay-search";
-import { searchActiveListingsLadder, type EbayCondition, type EbayLanguage } from "@/lib/ebay-browse";
+import { searchActiveListings, type EbayCondition, type EbayLanguage } from "@/lib/ebay-browse";
 import { illustrativeActiveListings, illustrativeSoldListings, illustrativeVintedFeed } from "@/lib/illustrative";
 import { DEFAULT_PSA_GRADING_COST_USD, gradingRoi, median } from "@/lib/roi";
 import { getVintedListingsForCard, relativeTimeLabel, TRES_BON_ETAT, vintedQueryForCard } from "@/lib/vinted-listings";
@@ -172,81 +172,64 @@ export type GradedMarketData = {
  * to an illustrative preview, same resilience shape lib/cards.ts uses for
  * apitcg.
  *
- * `nameCandidates` is the query-text ladder (see searchActiveListingsLadder's
- * own comment, lib/ebay-browse.ts) — narrowest first. Pokémon always passes
- * a single-element `[undefined]` (no ladder, identical to the old
- * single-attempt behavior); One Piece passes its real print name followed by
- * a broader fallback (see getGradedMarketData's own comment on why it needs
- * this at all, unlike Pokémon). `numberOverride` is the Japanese Pokémon
- * print's own set number (resolved by the caller via getJapaneseCardText,
- * see that function's own comment on why it's genuinely different from
- * card.number) — searching or title-matching on card.number's English
- * number would silently reject real Japanese listings. The two are mutually
- * exclusive per call today (Pokémon passes numberOverride, One Piece passes
- * nameCandidates) but threaded independently since nothing stops a future
- * card needing both at once.
- *
- * Returns which candidate the search actually settled on alongside the
- * data, so the caller can keep buildSoldTier's "see all" link pointed at
- * the same search rather than always the narrowest guess.
+ * `nameOverride` is One Piece's own query text — an empty string, meaning
+ * "no name at all, just the card's own number" (see getGradedMarketData's
+ * own comment on why a bare-number query beats guessing at print-name text).
+ * `numberOverride` is the Japanese Pokémon print's own set number (resolved
+ * by the caller via getJapaneseCardText, see that function's own comment on
+ * why it's genuinely different from card.number) — searching or
+ * title-matching on card.number's English number would silently reject real
+ * Japanese listings. `variantTags` is One Piece's own variant precision —
+ * see titleMatchesCard's own comment (lib/ebay-browse.ts) for why it lives
+ * here, in the per-listing title check, rather than in the query text.
  */
 async function fetchActiveTier(
   card: Card,
   condition: EbayCondition,
   language: EbayLanguage,
-  nameCandidates: (string | undefined)[],
-  numberOverride?: string
-): Promise<{ data: GradedMarketTypeData; nameOverride: string | undefined }> {
+  nameOverride?: string,
+  numberOverride?: string,
+  variantTags?: string[]
+): Promise<GradedMarketTypeData> {
   try {
-    const { listings, total, nameOverride } = await searchActiveListingsLadder(card, condition, language, nameCandidates, numberOverride);
+    const { listings, total } = await searchActiveListings(card, condition, language, nameOverride, numberOverride, variantTags);
     if (listings.length === 0) {
       console.warn(
-        `[ebay] 0 active listings for ${card.id} [${condition}/${language}] — search succeeded but returned nothing across ` +
-          `${nameCandidates.length} candidate quer${nameCandidates.length === 1 ? "y" : "ies"}. Falling back to preview.`
+        `[ebay] 0 active listings for ${card.id} [${condition}/${language}] — search succeeded but returned nothing. ` +
+          `Likely conditionIds/aspect_filter/query mismatch for this card. Falling back to preview.`
       );
     }
     const med = listings.length > 0 ? median(listings.map((l) => l.price)) : null;
     if (med !== null) {
       return {
-        nameOverride,
-        data: {
-          isReal: true,
-          medianPrice: med,
-          currency: card.currency,
-          count: total,
-          seeAllUrl: conditionSearchLink(card, condition, language, nameOverride, numberOverride),
-          rows: listings.map((listing) => ({
-            date: listing.listedDate
-              ? new Date(listing.listedDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
-              : "Active",
-            description: listing.title,
-            price: listing.price,
-            currency: listing.currency,
-            url: listing.url,
-          })),
-        },
+        isReal: true,
+        medianPrice: med,
+        currency: card.currency,
+        count: total,
+        seeAllUrl: conditionSearchLink(card, condition, language, nameOverride, numberOverride),
+        rows: listings.map((listing) => ({
+          date: listing.listedDate
+            ? new Date(listing.listedDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+            : "Active",
+          description: listing.title,
+          price: listing.price,
+          currency: listing.currency,
+          url: listing.url,
+        })),
       };
     }
   } catch (err) {
     console.error(`[ebay] failed to fetch active ${condition}/${language} listings for ${card.id}:`, err);
   }
 
-  // Nothing real on any candidate (or the search itself failed) — the
-  // broadest candidate is the most likely to give a human something real to
-  // click through to, same reasoning searchActiveListingsLadder's own
-  // "nothing worked" return already uses.
-  const fallbackNameOverride = nameCandidates[nameCandidates.length - 1];
   const { rows, total } = illustrativeActiveListings(card, condition);
   return {
-    nameOverride: fallbackNameOverride,
-    data: {
-      isReal: false,
-      medianPrice: median(rows.map((r) => r.price))!,
-      currency: card.currency,
-      count: total,
-      seeAllUrl: conditionSearchLink(card, condition, language, fallbackNameOverride, numberOverride),
-      rows: rows.map((row) => ({ ...row, currency: card.currency })),
-    },
+    isReal: false,
+    medianPrice: median(rows.map((r) => r.price))!,
+    currency: card.currency,
+    count: total,
+    seeAllUrl: conditionSearchLink(card, condition, language, nameOverride, numberOverride),
+    rows: rows.map((row) => ({ ...row, currency: card.currency })),
   };
 }
 
@@ -444,9 +427,10 @@ async function buildVintedMarket(card: Card): Promise<VintedMarketData> {
  * BerryWallet regardless (resolveBerryWalletCard/berryWalletPrice in
  * lib/cards.ts) — this function was never that franchise's only source of
  * real market data, just the only source of this particular one. The query
- * shape and tier list below (conditionsFor, the One Piece terms block) are
- * already built for both franchises even while the flag is off, so flipping
- * it is the only step left once the identity work lands.
+ * shape and tier list below (conditionsFor, the One Piece query text/
+ * variantTags block) are already built for both franchises even while the
+ * flag is off, so flipping it is the only step left once the identity work
+ * lands.
  */
 export async function getGradedMarketData(card: Card): Promise<GradedMarketData | undefined> {
   if (card.franchise !== "pokemon" && !ONE_PIECE_MARKET_ENABLED) return undefined;
@@ -470,55 +454,60 @@ export async function getGradedMarketData(card: Card): Promise<GradedMarketData 
     }
   }
 
-  // One Piece's own query text ladder — narrowest first, see
-  // searchActiveListingsLadder's own comment (lib/ebay-browse.ts) for why
-  // a ladder at all and why it's bounded to two tiers:
-  //   1. The real BerryWallet print name (e.g. "Shanks (004) (Manga)"), in
-  //      place of the generic cleaned character name.
-  //   2. Just "One Piece" — cardSearchTerms then appends card.number by
-  //      default the same way it always does, so this tier's real text ends
-  //      up "One Piece OP09-093 [condition]": the card's own universal code
-  //      plus the franchise name, nothing character-specific to guess at.
-  // Neither tier is translated per language, same reasoning
-  // precisionAspectFilter's own comment already gives for Pokémon: sellers
-  // write English listing titles even for a genuine Japanese print, so
-  // `language` alone (the structured aspect_filter) is what actually
-  // distinguishes the English tab from the Japanese one, not the query text.
+  // One Piece's own query text: no name at all, just the card's own
+  // universal code — cardSearchTerms treats an explicit "" nameOverride as
+  // "no name" (not "use the default"; only `undefined` means that), so this
+  // produces "OP09-093 [condition]" with nothing character- or
+  // variant-specific in it. Confirmed live: that bare, broad query reliably
+  // finds real listings (46 results for OP09-093 PSA 10, correctly
+  // filtered) where guessing at print-name text sometimes found none at
+  // all. The variant precision this gives up moves to titleMatchesCard's
+  // own `variantTags` check below instead — filtering the real listings
+  // this broad query already found, rather than trying to get eBay's own
+  // text search to find only the right variant in the first place. Not
+  // translated per language: same reasoning precisionAspectFilter's own
+  // comment gives for Pokémon — `language` (the structured aspect_filter)
+  // is what distinguishes the English tab from the Japanese one, not query
+  // text, and a bare number needs no translation anyway (see cards.ts's own
+  // comment on why the code is language-universal for One Piece).
   //
-  // Deliberately excludes the full descriptive set name ("Emperors in the
-  // New World") from either tier — confirmed live: appending it on top of
-  // an already-specific print name took a real, well-matched eBay search to
-  // zero results with no fallback at all, where the print name alone, or
-  // paired with card.number (which real listings reliably include), kept
-  // returning genuine, correctly-filtered matches. One Piece listing titles
-  // apparently don't carry the spelled-out set name the way they carry the
-  // print name and code.
-  //
-  // Pokémon gets a single-element ladder — `[undefined]`, meaning "use the
-  // default name" — which searchActiveListingsLadder treats identically to
-  // the old one-shot searchActiveListings call: no extra requests, no
-  // behavior change. Pokémon's own printed fraction already reliably
-  // appears in real listing titles the way neither of these One Piece tiers
-  // needs to guess at.
-  const oneNameCandidates: (string | undefined)[] = card.franchise === "one-piece" ? [card.printName, "One Piece"] : [undefined];
+  // Pokémon keeps `undefined` (the default: cleanCardName(card) + number),
+  // unaffected — its own printed fraction already reliably appears in real
+  // listing titles, so it never needed this at all.
+  const oneNameOverride = card.franchise === "one-piece" ? "" : undefined;
+
+  // The specific print variant this card_number resolves to (e.g.
+  // ["Wanted Poster"]) — see CardRef's own doc comment (data/card-refs.ts).
+  // Only One Piece refs use the "code" lookup shape that carries this.
+  const oneVariantTags =
+    card.franchise === "one-piece"
+      ? (() => {
+          const ref = cardRefs.find((r) => r.slug === card.slug);
+          return ref && ref.lookup.by === "code" ? ref.lookup.variantTags : undefined;
+        })()
+      : undefined;
 
   const activeResults = await Promise.all(
     conditionTiers.flatMap((condition) =>
       GRADED_MARKET_LANGUAGES.map((language) =>
-        fetchActiveTier(card, condition, language, oneNameCandidates, language === "Japanese" ? japaneseNumberOverride : undefined)
+        fetchActiveTier(
+          card,
+          condition,
+          language,
+          oneNameOverride,
+          language === "Japanese" ? japaneseNumberOverride : undefined,
+          oneVariantTags
+        )
       )
     )
   );
   // flatMap order is condition-major, language-minor — same order as the
   // nested loop above, so this index math recovers [condition][language].
   const activeByKey = new Map<string, GradedMarketTypeData>();
-  const wonNameOverrideByKey = new Map<string, string | undefined>();
   let i = 0;
   for (const condition of conditionTiers) {
     for (const language of GRADED_MARKET_LANGUAGES) {
-      const { data, nameOverride } = activeResults[i++];
-      activeByKey.set(`${condition}:${language}`, data);
-      wonNameOverrideByKey.set(`${condition}:${language}`, nameOverride);
+      activeByKey.set(`${condition}:${language}`, activeResults[i++]);
     }
   }
 
@@ -527,16 +516,7 @@ export async function getGradedMarketData(card: Card): Promise<GradedMarketData 
     languages: GRADED_MARKET_LANGUAGES.map((language) => ({
       language,
       active: activeByKey.get(`${condition}:${language}`)!,
-      // Points "see all" at whichever ladder tier the active search above
-      // actually settled on, not always the narrowest guess — see
-      // fetchActiveTier's own comment on why.
-      sold: buildSoldTier(
-        card,
-        condition,
-        language,
-        wonNameOverrideByKey.get(`${condition}:${language}`),
-        language === "Japanese" ? japaneseNumberOverride : undefined
-      ),
+      sold: buildSoldTier(card, condition, language, oneNameOverride, language === "Japanese" ? japaneseNumberOverride : undefined),
     })),
   }));
 

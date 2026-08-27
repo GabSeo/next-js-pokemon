@@ -84,6 +84,14 @@ export function cleanCardName(card: Card): string {
  *
  * Every composed string passes through cleanQueryText below before it's
  * returned — see that function's own comment for why.
+ *
+ * `nameOverride` distinguishes "" from `undefined`: `undefined` means "use
+ * the default", but `""` means "no name at all" — a bare `<number>` (or
+ * `<number> <condition>`) query, which cleanQueryText's own whitespace
+ * collapse makes exactly as clean as a real name would. One Piece uses this
+ * deliberately (see graded-market.ts's own comment) — a bare card-number
+ * query reliably finds real listings; the caller doesn't need this function
+ * to also guess at a variant-specific name.
  */
 export function cardSearchTerms(card: Card, nameOverride?: string, numberOverride?: string): string {
   const name = nameOverride ?? cleanCardName(card);

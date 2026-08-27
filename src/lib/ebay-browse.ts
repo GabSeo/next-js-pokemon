@@ -201,8 +201,23 @@ function precisionAspectFilter(condition: EbayCondition, language?: EbayLanguage
  * carries the Japanese number, not the English one, so without the override
  * every real Japanese result fails this check and silently degrades to the
  * illustrative preview.
+ *
+ * `variantTags` is the third, One Piece-specific check — this is where
+ * variant precision actually lives now, not in the query text (see
+ * graded-market.ts's own comment on why: a broad "card number + grade"
+ * query reliably finds real listings; asking eBay's own text search to also
+ * pick out one specific print among several sharing that number does not).
+ * Each tag must appear in the title as either the full phrase or its own
+ * first word — confirmed live that sellers commonly abbreviate a multi-word
+ * variant name to its first word ("Wanted Poster" listed as just "Wanted"),
+ * so requiring the full phrase verbatim would reject genuine matches. This
+ * still isn't perfect (an abbreviation that drops the first word instead,
+ * e.g. "Alt Art" for "Alternate Art", won't match either form) — accepted
+ * as a real, known limitation rather than chased with a per-tag alias
+ * table, which is exactly the kind of per-card exception this design is
+ * trying to avoid.
  */
-function titleMatchesCard(title: string, card: Card, condition: EbayCondition, numberOverride?: string): boolean {
+function titleMatchesCard(title: string, card: Card, condition: EbayCondition, numberOverride?: string, variantTags?: string[]): boolean {
   const gradeOk =
     condition === "Raw"
       ? // Exclude anything that looks graded at all, rather than trying to
@@ -213,8 +228,19 @@ function titleMatchesCard(title: string, card: Card, condition: EbayCondition, n
   if (!gradeOk) return false;
 
   const primaryNumber = (numberOverride ?? card.number)?.split("/")[0];
-  if (!primaryNumber) return true; // nothing to check the number against
-  return new RegExp(`\\b${primaryNumber}\\b`).test(title);
+  if (primaryNumber && !new RegExp(`\\b${primaryNumber}\\b`).test(title)) return false;
+
+  if (variantTags && variantTags.length > 0) {
+    const titleLower = title.toLowerCase();
+    const tagOk = variantTags.every((tag) => {
+      const tagLower = tag.toLowerCase();
+      const firstWord = tagLower.split(/\s+/)[0];
+      return titleLower.includes(tagLower) || titleLower.includes(firstWord);
+    });
+    if (!tagOk) return false;
+  }
+
+  return true;
 }
 
 export type EbayActiveListing = {
@@ -270,7 +296,8 @@ async function runSearch(
   language: EbayLanguage | undefined,
   sort: "newlyListed" | undefined,
   nameOverride?: string,
-  numberOverride?: string
+  numberOverride?: string,
+  variantTags?: string[]
 ): Promise<EbaySearchResult> {
   const token = await getAccessToken();
   const query = conditionQuery(card, condition, nameOverride, numberOverride);
@@ -321,7 +348,7 @@ async function runSearch(
     // Defensive: never let a listing with no real price into the median —
     // a $0 entry would silently drag it down instead of erroring loudly.
     .filter((listing) => listing.price > 0)
-    .filter((listing) => titleMatchesCard(listing.title, card, condition, numberOverride))
+    .filter((listing) => titleMatchesCard(listing.title, card, condition, numberOverride, variantTags))
     .slice(0, DISPLAY_LIMIT);
 
   if (rawItems.length > 0 && listings.length === 0) {
@@ -359,64 +386,19 @@ async function runSearch(
  *
  * `nameOverride`/`numberOverride` are threaded straight through to
  * conditionQuery/cardSearchTerms and titleMatchesCard — see
- * cardSearchTerms's doc comment (lib/ebay-search.ts) for why.
+ * cardSearchTerms's doc comment (lib/ebay-search.ts) for why. `variantTags`
+ * is threaded to titleMatchesCard only (never into the query text itself) —
+ * see that function's own comment for why.
  */
 export async function searchActiveListings(
   card: Card,
   condition: EbayCondition,
   language?: EbayLanguage,
   nameOverride?: string,
-  numberOverride?: string
+  numberOverride?: string,
+  variantTags?: string[]
 ): Promise<EbaySearchResult> {
-  const primary = await runSearch(card, condition, language, "newlyListed", nameOverride, numberOverride);
+  const primary = await runSearch(card, condition, language, "newlyListed", nameOverride, numberOverride, variantTags);
   if (primary.listings.length > 0) return primary;
-  return runSearch(card, condition, language, undefined, nameOverride, numberOverride);
-}
-
-/**
- * Same fetch/dedup shape as searchActiveListings, but tries a SEQUENCE of
- * query-text candidates in order — narrowest first — stopping at the first
- * that returns real listings, for a franchise whose real listing titles
- * don't reliably contain one terse token the way Pokémon's printed
- * fraction does (see cardSearchTerms's own comment, lib/ebay-search.ts, and
- * graded-market.ts's own comment on why One Piece needs this ladder at
- * all). `nameCandidates` is ordered narrow -> wide by the caller; an
- * `undefined` entry means "use the card's own default name" the same way
- * omitting nameOverride always has.
- *
- * Bounded on purpose: only the FIRST candidate gets the newlyListed ->
- * Best Match sort fallback searchActiveListings already does — later
- * candidates try newlyListed only. If a specific name/number combination
- * was simply the wrong text, retrying it under a different sort won't fix
- * that; spending the attempt on the next, broader candidate is the better
- * bet. Caps the worst case (nothing real exists for this card/condition at
- * all) at `nameCandidates.length + 1` sequential eBay calls rather than
- * `nameCandidates.length * 2` — this only ever runs live (not served from a
- * pre-rendered page) on a dynamic path like the MCP tool or
- * /api/price-check, so an unbounded ladder would be real, felt latency
- * there, not just a cost graph.
- *
- * Returns which candidate actually won (or the LAST — broadest — one if
- * none did) alongside the result, so a caller building a human-facing "see
- * all" link can point it at whatever search this function actually
- * settled on rather than always the narrowest guess.
- */
-export async function searchActiveListingsLadder(
-  card: Card,
-  condition: EbayCondition,
-  language: EbayLanguage | undefined,
-  nameCandidates: (string | undefined)[],
-  numberOverride?: string
-): Promise<EbaySearchResult & { nameOverride: string | undefined }> {
-  let last: EbaySearchResult = { listings: [], total: 0 };
-  for (const [i, nameOverride] of nameCandidates.entries()) {
-    last =
-      i === 0
-        ? await searchActiveListings(card, condition, language, nameOverride, numberOverride)
-        : await runSearch(card, condition, language, "newlyListed", nameOverride, numberOverride);
-    if (last.listings.length > 0) return { ...last, nameOverride };
-  }
-  // Nothing real on any tier — report against the broadest (last) candidate,
-  // the one a human clicking "see all" is most likely to get something from.
-  return { ...last, nameOverride: nameCandidates[nameCandidates.length - 1] };
+  return runSearch(card, condition, language, undefined, nameOverride, numberOverride, variantTags);
 }
