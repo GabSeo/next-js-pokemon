@@ -27,20 +27,16 @@ export const GRADED_MARKET_CONDITIONS: EbayCondition[] = ["PSA 10", "PSA 9", "PS
 export const JAPANESE_MARKET_ENABLED = true;
 
 /**
- * One Piece is OFF — not an architectural decision (this function's own
- * PSA/eBay/Vinted shape is meant to cover both franchises eventually, same
- * as everything else on a product page), just not ready yet: One Piece
- * identity resolution (BerryWallet, see cards.ts's resolveBerryWalletCard/
- * getOnePieceJapaneseText) still has open card-detail issues being worked on
- * separately, and shipping the graded-market panel on top of an identity
- * that isn't settled yet would mean re-verifying eBay/Vinted match quality
- * twice. Until then, this saves the 8 eBay searches + Vinted read a One
- * Piece render would otherwise make for a section that isn't ready to show
- * — same "one flag gates a whole feature" shape as JAPANESE_MARKET_ENABLED
- * above. Flip to true once the identity work lands; nothing else in this
- * file needs to change.
+ * One Piece is ON — same PSA/eBay/Vinted shape as Pokémon, same eBay US
+ * marketplace, print-name + set-name query text (see getGradedMarketData's
+ * own comment) instead of Pokémon's name + number, PSA 10/9/Raw only (no
+ * PSA 8 — population too thin for this game). Turned on for live preview
+ * review; flip back to false if match quality against real listings turns
+ * out to need more work before this is ready for production traffic — same
+ * "one flag gates a whole feature" shape as JAPANESE_MARKET_ENABLED above,
+ * nothing else in this file needs to change either way.
  */
-export const ONE_PIECE_MARKET_ENABLED = false;
+export const ONE_PIECE_MARKET_ENABLED = true;
 
 /**
  * One Piece's own condition tiers — PSA 8-and-below population is too thin
