@@ -104,17 +104,18 @@ export default async function ProductPageJapan({ params }: PageProps) {
     setCode: ja.setCode ?? card.setCode,
   };
   const fr = card.franchise === "pokemon" ? await getFrenchCardText(card) : undefined;
+  // Fixed US -> FR -> JP order, same as the base page's own comment on why.
   const localeLinks: LocaleLink[] =
     card.franchise === "one-piece"
       ? [
           { code: "US", href: `/products/${card.slug}`, active: false },
-          { code: "JP", href: `/products/${card.slug}/ja`, active: true },
           { code: "FR", active: false, disabled: true },
+          { code: "JP", href: `/products/${card.slug}/ja`, active: true },
         ]
       : [
           { code: "US", href: `/products/${card.slug}`, active: false },
-          { code: "JP", href: `/products/${card.slug}/ja`, active: true },
           { code: "FR", href: fr?.translated ? `/products/${card.slug}/fr` : undefined, active: false, disabled: !fr?.translated },
+          { code: "JP", href: `/products/${card.slug}/ja`, active: true },
         ];
 
   return (

@@ -143,16 +143,25 @@ export default async function ProductPage({ params }: PageProps) {
   const oneJapanese = card.franchise === "one-piece" && ref ? await getOnePieceJapaneseText(card, ref) : undefined;
   const pokemonJapanese = card.franchise === "pokemon" && ref ? await getJapaneseCardText(card, ref) : undefined;
 
+  // Fixed US -> FR -> JP order everywhere, regardless of franchise or which
+  // one is active/real — a flag's position shifting depending on the page
+  // (confirmed live: One Piece was rendering JP before FR while Pokémon
+  // rendered it after) reads as a UI bug even when every individual state
+  // is correct.
   const localeLinks: LocaleLink[] =
     card.franchise === "one-piece"
       ? [
           { code: "US", href: `/products/${card.slug}`, active: true },
-          { code: "JP", href: oneJapanese?.translated ? `/products/${card.slug}/ja` : undefined, active: false, disabled: !oneJapanese?.translated },
           { code: "FR", active: false, disabled: true },
+          { code: "JP", href: oneJapanese?.translated ? `/products/${card.slug}/ja` : undefined, active: false, disabled: !oneJapanese?.translated },
         ]
       : [
           { code: "US", href: `/products/${card.slug}`, active: true },
-          ...(fr.translated ? [{ code: "FR", href: `/products/${card.slug}/fr`, active: false }] : []),
+          // Always rendered (even when no real match exists), same reason
+          // japanLocaleLink always renders JP — an omitted flag would also
+          // shift FR/JP's fixed positions for whichever Pokémon card (none
+          // currently) has no real French match.
+          { code: "FR", href: fr.translated ? `/products/${card.slug}/fr` : undefined, active: false, disabled: !fr.translated },
           japanLocaleLink(`/products/${card.slug}/ja`, false, !!pokemonJapanese?.translated),
         ];
 
