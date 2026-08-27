@@ -21,17 +21,23 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "assets.tcgdex.net" },
       { protocol: "https", hostname: "tcgplayer-cdn.tcgplayer.com" },
     ],
+    // Specifying `localPatterns` at all turns it into an allowlist for
+    // *every* local next/image src, not just the one route that needed it —
+    // confirmed live: scoping this to only "/api/berrywallet-image/**"
+    // broke every other local image on the site (/masterball.png,
+    // /ebay-logo.png, /pokemon-sprites/*.gif, ...) with the exact same
+    // "does not match images.localPatterns" error. "/**" covers all of
+    // them, same as the implicit default before this config existed.
+    //
+    // The one local src that actually needed this entry in the first place:
     // BerryWallet-sourced One Piece cards route their image through our own
     // proxy (app/api/berrywallet-image/[id]/route.ts, not a remote URL —
     // see its own doc comment on why: BerryWallet's image endpoint needs an
     // API key header a browser <img> can't send). next/image treats a
     // *local* URL carrying a query string (`?size=high`) as needing
     // explicit allowlisting same as a remote one — confirmed live, the
-    // build fails without this.
-    // `search` deliberately omitted (not ""), which would match only a
-    // bare URL with no query string at all — our proxy always carries
-    // `?size=high` or `?size=low`. Omitting it allows any search string.
-    localPatterns: [{ pathname: "/api/berrywallet-image/**" }],
+    // build failed without some localPatterns entry covering it.
+    localPatterns: [{ pathname: "/**" }],
   },
   async rewrites() {
     return {
