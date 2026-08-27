@@ -78,6 +78,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       alternates: {
         canonical: `/products/${card.slug}`,
         languages: { "x-default": `/products/${card.slug}`, en: `/products/${card.slug}`, ja: `/products/${card.slug}/ja` },
+        types: { "text/markdown": `/products/${card.slug}/ja/index.md` },
       },
     };
   }
@@ -119,7 +120,7 @@ export default async function ProductPageJapan({ params }: PageProps) {
         displayCard={displayCard}
         franchiseLabel={label}
         collectionHref={`/collections/${card.franchise}`}
-        markdownHref={`/products/${card.slug}/index.md`}
+        markdownHref={`/products/${card.slug}/ja/index.md`}
         jsonHref={`/api/${card.franchise}/${card.id}`}
         okfHref={`/okf/products/${card.slug}`}
         localeLinks={localeLinks}
