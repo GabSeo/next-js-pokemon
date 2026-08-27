@@ -16,7 +16,6 @@ import { PsaTiltCard } from "@/components/retro/psa-tilt-card";
 import { TypeBadge } from "@/components/retro/type-badge";
 import { computeAlertBands } from "@/lib/cards";
 import { CARDMARKET_HOMEPAGE_URL } from "@/lib/cardmarket-search";
-import { JAPANESE_MARKET_ENABLED } from "@/lib/graded-market";
 import type { Card } from "@/lib/types";
 
 /**
@@ -32,18 +31,18 @@ import type { Card } from "@/lib/types";
 export type LocaleLink = { code: string; href?: string; active: boolean; disabled?: boolean };
 
 /**
- * The Japan toggle for a Pokémon product page, shown on every page
- * regardless of JAPANESE_MARKET_ENABLED — visible now, wired later. Real
- * and clickable once the flag is on (same route this always pointed to);
- * an inert placeholder until then, since no source wired into this codebase
- * has real Japanese Pokémon data yet (TCGdex has zero Japanese coverage,
- * confirmed live — see tcgdex.ts's own file header) and the flag itself
- * also still gates a second, separate problem (eBay's Japanese-market
- * search returning almost nothing usable — see graded-market.ts's own
- * comment) that turning this toggle on wouldn't fix by itself.
+ * The Japan toggle for a Pokémon product page, shown on every page — real
+ * and clickable when `translated` is true (a confirmed PokéWallet match
+ * exists for this specific card, see data/card-refs.ts's pokeWalletCardId
+ * and cards.ts's getJapaneseCardText), an inert placeholder otherwise.
+ * Deliberately keyed to per-card identity availability, not
+ * JAPANESE_MARKET_ENABLED — that flag gates a separate, narrower concern
+ * (whether the Graded Market panel defaults to the Japanese eBay tab, whose
+ * real data is currently thin — see graded-market.ts's own comment), not
+ * whether this page has real content to show.
  */
-export function japanLocaleLink(hrefWhenEnabled: string, active: boolean): LocaleLink {
-  return JAPANESE_MARKET_ENABLED ? { code: "JP", href: hrefWhenEnabled, active } : { code: "JP", active: false, disabled: true };
+export function japanLocaleLink(hrefWhenReal: string, active: boolean, translated: boolean): LocaleLink {
+  return translated ? { code: "JP", href: hrefWhenReal, active } : { code: "JP", active: false, disabled: true };
 }
 
 /**
@@ -188,11 +187,11 @@ export function ProductPageContent({
             ))}
             <span className="rounded-full border-2 border-black bg-pokemon-blue px-3.5 py-1 text-xs font-black tracking-[0.35px] text-white uppercase">
               {displayCard.set}
-              {card.setCode ? ` · ${card.setCode}` : ""}
+              {displayCard.setCode ? ` · ${displayCard.setCode}` : ""}
             </span>
-            {card.number && (
+            {displayCard.number && (
               <span className="rounded-full border-2 border-black bg-white px-3.5 py-1 text-xs font-black tracking-[0.35px] uppercase">
-                #{card.number}
+                #{displayCard.number}
               </span>
             )}
             {displayCard.rarity && (

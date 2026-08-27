@@ -7,6 +7,7 @@ import {
   type ApitcgProduct,
 } from "@/lib/apitcg";
 import { findCardInLanguage, cardImageUrl as berryWalletCardImageUrl, type BerryWalletCard, type BerryWalletSet } from "@/lib/berrywallet";
+import { getCard as getPokeWalletCard, cardImageUrl as pokeWalletCardImageUrl } from "@/lib/pokewallet";
 import { absoluteUrl } from "@/lib/site";
 import { describeUpstreamError, logUpstreamOnce } from "@/lib/upstream";
 import { findCardByNameAndSet, getCard, cardImageUrl, tcgplayerSnapshot, type TcgdexCard } from "@/lib/tcgdex";
@@ -339,7 +340,22 @@ export type LocalizedCardText = {
   imageUrl?: string;
   /** Localized energy-type labels (e.g. "Obscurité" for "Darkness"), same order as `card.types` — color for each badge still comes from the English `card.types[i]`, since color is keyed by the canonical name, not the display label. */
   types?: string[];
-  /** True only when a real TCGdex French match was found — false means every field above is just the English original echoed back, never a fabricated translation. */
+  /**
+   * Left undefined when the real printed number/set code is the same as
+   * the canonical card's — true for French Pokémon (confirmed: French and
+   * English prints share one international numbering) and for One Piece
+   * (which uses one universal card code across every region — see
+   * data/card-refs.ts's berryWalletEnabled comment). Set for Japanese
+   * Pokémon specifically, where the printed number is genuinely different
+   * from the international one (e.g. Ethan's Typhlosion is 190/182
+   * internationally but 070/063 in its real Japanese set) — showing the
+   * international number on a page presenting itself as the real Japanese
+   * card would be exactly the kind of mismatched-field fabrication this
+   * site's honesty rules exist to prevent elsewhere.
+   */
+  number?: string;
+  setCode?: string;
+  /** True only when a real translation/match was found — false means every field above is just the canonical original echoed back, never a fabricated translation. */
   translated: boolean;
 };
 
@@ -416,12 +432,58 @@ export async function getOnePieceJapaneseText(card: Card, ref: CardRef): Promise
     return {
       name: card.name, // BerryWallet's raw name isn't presentation-ready (see resolveBerryWalletCard's own comment) — the character's real name doesn't change across languages here anyway.
       set: match.set.name,
+      // number deliberately NOT overridden: One Piece uses one universal
+      // card code across every region (see CardRef's own doc comment), so
+      // ref.lookup.code (already card.number) is correct for Japanese too —
+      // unlike Pokémon, there's no separate real printed number to show.
+      setCode: match.set.set_code,
       rarity: match.card.rarity ?? card.rarity,
       imageUrl: berryWalletCardImageUrl(match.card.id),
       translated: true,
     };
   } catch (err) {
     logUpstreamOnce(`berrywallet-ja:${ref.slug}`, `[cards] BerryWallet Japanese lookup failed for ${ref.slug} — ${describeUpstreamError(err)}`);
+    return fallback;
+  }
+}
+
+/**
+ * Japanese display text for a Pokémon card — the Pokémon counterpart to
+ * getOnePieceJapaneseText above, same contract (name/set/rarity/image only,
+ * `translated: false` echoes the canonical English fields back) and same
+ * non-fatal resilience shape, but a simpler lookup: `ref.pokeWalletCardId`
+ * is an already-confirmed id (see that field's own doc comment on why this
+ * is stored rather than searched live — automated English->Japanese
+ * matching isn't reliable for the specific chase cards this site tracks),
+ * so this is a single `getCard(id)` call, not a search.
+ */
+export async function getJapaneseCardText(card: Card, ref: CardRef): Promise<LocalizedCardText> {
+  const fallback: LocalizedCardText = {
+    name: card.name,
+    set: card.set,
+    rarity: card.rarity,
+    imageUrl: card.imageUrl,
+    translated: false,
+  };
+  if (!ref.pokeWalletCardId) return fallback;
+  try {
+    const match = await getPokeWalletCard(ref.pokeWalletCardId);
+    if (!match) return fallback;
+    return {
+      name: card.name, // Same reasoning as getOnePieceJapaneseText — the character's real name doesn't change across languages here.
+      set: match.card_info.set_name,
+      // Genuinely different from card.number here, unlike French/One Piece
+      // — confirmed live during this integration's own research (e.g.
+      // Ethan's Typhlosion: 190/182 internationally, 070/063 in its real
+      // Japanese set) — see LocalizedCardText's own doc comment.
+      number: match.card_info.card_number,
+      setCode: match.card_info.set_code,
+      rarity: match.card_info.rarity ?? card.rarity,
+      imageUrl: pokeWalletCardImageUrl(match.id),
+      translated: true,
+    };
+  } catch (err) {
+    logUpstreamOnce(`pokewallet-ja:${ref.slug}`, `[cards] PokéWallet Japanese lookup failed for ${ref.slug} — ${describeUpstreamError(err)}`);
     return fallback;
   }
 }

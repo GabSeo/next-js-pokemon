@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductPageContent, type LocaleLink, japanLocaleLink } from "@/components/product-page-content";
 import { getGradedMarketData, gradedMarketOffersJsonLd } from "@/lib/graded-market";
-import { franchiseLabel, getAllCards, getCardBySlug, getFrenchCardText, getOnePieceJapaneseText } from "@/lib/cards";
+import { franchiseLabel, getAllCards, getCardBySlug, getFrenchCardText, getJapaneseCardText, getOnePieceJapaneseText } from "@/lib/cards";
 import { absoluteUrl } from "@/lib/site";
 import { priceStatement } from "@/lib/price-display";
 import { cardRefs } from "@/data/card-refs";
@@ -32,11 +32,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     en: absoluteUrl(`/products/${card.slug}`),
   };
   if (fr.translated) languages.fr = absoluteUrl(`/products/${card.slug}/fr`);
-  if (card.franchise === "one-piece") {
-    const ref = cardRefs.find((r) => r.slug === card.slug);
-    const ja = ref ? await getOnePieceJapaneseText(card, ref) : undefined;
-    if (ja?.translated) languages.ja = absoluteUrl(`/products/${card.slug}/ja`);
-  }
+  const metaRef = cardRefs.find((r) => r.slug === card.slug);
+  const ja = metaRef
+    ? card.franchise === "one-piece"
+      ? await getOnePieceJapaneseText(card, metaRef)
+      : await getJapaneseCardText(card, metaRef)
+    : undefined;
+  if (ja?.translated) languages.ja = absoluteUrl(`/products/${card.slug}/ja`);
 
   return {
     title: `${card.name} (${card.number ?? ""}) price`,
@@ -137,8 +139,9 @@ export default async function ProductPage({ params }: PageProps) {
   // stays a permanent inert placeholder: confirmed live, BerryWallet has
   // zero French sets, so there's no real source to link to at all (see
   // lib/berrywallet.ts's file header).
-  const oneRef = card.franchise === "one-piece" ? cardRefs.find((r) => r.slug === card.slug) : undefined;
-  const oneJapanese = oneRef ? await getOnePieceJapaneseText(card, oneRef) : undefined;
+  const ref = cardRefs.find((r) => r.slug === card.slug);
+  const oneJapanese = card.franchise === "one-piece" && ref ? await getOnePieceJapaneseText(card, ref) : undefined;
+  const pokemonJapanese = card.franchise === "pokemon" && ref ? await getJapaneseCardText(card, ref) : undefined;
 
   const localeLinks: LocaleLink[] =
     card.franchise === "one-piece"
@@ -150,7 +153,7 @@ export default async function ProductPage({ params }: PageProps) {
       : [
           { code: "US", href: `/products/${card.slug}`, active: true },
           ...(fr.translated ? [{ code: "FR", href: `/products/${card.slug}/fr`, active: false }] : []),
-          japanLocaleLink(`/products/${card.slug}/ja`, false),
+          japanLocaleLink(`/products/${card.slug}/ja`, false, !!pokemonJapanese?.translated),
         ];
 
   return (

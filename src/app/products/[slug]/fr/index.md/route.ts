@@ -30,7 +30,7 @@ export async function GET(
     // markdown mirror for a card TCGdex couldn't translate.
     return new Response("Not found", { status: 404 });
   }
-  const body = await cardToMarkdown(card, { name: fr.name, set: fr.set, rarity: fr.rarity }, `/products/${card.slug}/fr`);
+  const body = await cardToMarkdown(card, { name: fr.name, set: fr.set, rarity: fr.rarity, number: fr.number, setCode: fr.setCode }, `/products/${card.slug}/fr`);
   return new Response(body, {
     headers: { "Content-Type": "text/markdown; charset=utf-8" },
   });

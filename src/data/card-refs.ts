@@ -43,6 +43,29 @@ export type CardRef = {
    * Omitted keeps the plain apitcg-only path (every Pokémon ref).
    */
   berryWalletEnabled?: boolean;
+  /**
+   * Pokémon only: a confirmed PokéWallet card id (`pk_...`) for this card's
+   * real Japanese-print counterpart — powers the real `/products/[slug]/ja`
+   * alternate, the same role berryWalletEnabled plays for One Piece.
+   *
+   * Deliberately a stored, hand-confirmed id, not a live search — confirmed
+   * during this integration's own research that automated English->Japanese
+   * matching isn't reliable for the specific alt-art/secret-rare chase
+   * prints this site tracks (ordinary base-set cards map cleanly by
+   * sequence number across a consistent set pairing, e.g. English "SV10:
+   * Destined Rivals" 001/182 = Japanese "SV9a: Heat Wave Arena" 001/063 —
+   * but a chase card routinely doesn't follow that pairing at all: Gengar
+   * VMAX's real match isn't in the mainline Japanese set corresponding to
+   * "Fusion Strike," it's a standalone "High-Class Deck" promotional
+   * product; Ethan's Typhlosion's is in the mainline Japanese set but at an
+   * unrelated number). Each id below was found by hand — search PokéWallet
+   * by character name, then cross-reference rarity tier and real price
+   * against this card's own known price to confirm which of several
+   * same-name candidates is actually the right one (see lib/pokewallet.ts's
+   * file header for the full worked examples). Omitted keeps the /ja route
+   * on its existing English-echo placeholder for that card.
+   */
+  pokeWalletCardId?: string;
 };
 
 /**
@@ -52,28 +75,47 @@ export type CardRef = {
  */
 export const cardRefs: CardRef[] = [
   {
+    // Japanese counterpart: "Gengar VMAX - 020/019", SS: Gengar VMAX
+    // High-Class Deck (set_code sGG) — a standalone promotional product, not
+    // the mainline Japanese Fusion Strike counterpart. Confirmed by hand:
+    // real Cardmarket pricing (avg €2200) in the same tier as this card's
+    // own real chase-card price.
     franchise: "pokemon",
     tcg: "pokemon",
     slug: "gengar-vmax-271",
     displayName: "Gengar VMAX",
     character: "Gengar",
     lookup: { by: "nameSet", name: "Gengar VMAX", setName: "Fusion Strike", number: "271" },
+    pokeWalletCardId: "pk_50b5047203194416e4c69f82722dcb9ec4a2fcc8626f50e7059c66ffba22f7ab44e0725622462923379d4833b2c194",
   },
   {
+    // Japanese counterpart: "Lugia V - 110/098", S12: Paradigm Trigger,
+    // rarity Super Rare — confirmed by hand: real price ($474.99 TCGPlayer /
+    // €818.50 Cardmarket) nearly matches this card's own real $526.43,
+    // versus a same-set, same-rarity-tier-name decoy candidate (109/098) at
+    // just $16 — the price match is what actually confirms this is the
+    // right one among several same-name results.
     franchise: "pokemon",
     tcg: "pokemon",
     slug: "lugia-v-186",
     displayName: "Lugia V",
     character: "Lugia",
     lookup: { by: "nameSet", name: "Lugia V", setName: "Silver Tempest", number: "186" },
+    pokeWalletCardId: "pk_e88868d2c977bac87817cde39138f729bb1cd10824fcb08241d47c722c2c1a1fb566c0d9f9f343eae836188d9acb02c7",
   },
   {
+    // Japanese counterpart: "Ethan's Typhlosion - 070/063", SV9a: Heat Wave
+    // Arena, rarity Art Rare (the direct Japanese-rarity equivalent of
+    // English "Illustration Rare") — confirmed by hand: real price ($13.98)
+    // in the same tier as this card's own $24.89, versus the same set's
+    // plain "Rare" 017/063 at $0.37, which is a different, ordinary print.
     franchise: "pokemon",
     tcg: "pokemon",
     slug: "ethans-typhlosion-190",
     displayName: "Ethan's Typhlosion",
     character: "Typhlosion",
     lookup: { by: "nameSet", name: "Ethan's Typhlosion", setName: "Destined Rivals", number: "190" },
+    pokeWalletCardId: "pk_c7a601e8ac53e07dad8f184bdd431dc8aabadf6572cb198b19a3b62594a69dbc0e43347324b52f347ebf32f01c8022",
   },
   {
     // Both English and Japanese identity real, via BerryWallet — confirmed

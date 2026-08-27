@@ -8,25 +8,21 @@ import type { Card } from "@/lib/types";
 export const GRADED_MARKET_CONDITIONS: EbayCondition[] = ["PSA 10", "PSA 9", "PSA 8", "Raw"];
 
 /**
- * Japan is OFF until a real Japanese source is wired in.
+ * Japan is ON — same eBay US marketplace, same `Language: Japanese` aspect
+ * filter, as English. The original concern here (see git history) was that
+ * this filter returns almost nothing that survives titleMatchesCard, but
+ * that check (ebay-browse.ts) only ever verifies grade text and the card's
+ * own number — never the card's name — so it was never going to reject a
+ * real Japanese-print listing just because its seller-written title is in
+ * English (confirmed live: sellers write English titles — "PSA 10", the
+ * card number — even for genuine Japanese prints). Re-verified live after
+ * re-enabling: real active listings come back for the tracked cards, not
+ * an empty illustrative fallback.
  *
- * The tab was never Japanese data — it was eBay's US marketplace with a
- * `Language: Japanese` aspect filter, which returns almost nothing that
- * survives titleMatchesCard. Every card logged four `[ebay] 0 active
- * listings ... falling back to preview` warnings per build, drowning the
- * real English failures, and the tab itself showed an illustrative preview
- * dressed as a market.
- *
- * Turning it off is one flag, and it is genuinely one flag: the market tab,
- * the /products/[slug]/ja route, and the JP locale links all read from
- * here, so nothing is left half-disabled and re-enabling is the same single
- * edit. It also halves the eBay calls per card — 4 conditions x 1 market
- * instead of x 2.
- *
- * Flip to true once a source that actually has Japanese listings exists
- * (eBay.jp, or a Japanese marketplace the way Vinted covers France).
+ * One flag: the market tab, the /products/[slug]/ja route, and the JP
+ * locale links all read from here.
  */
-export const JAPANESE_MARKET_ENABLED = false;
+export const JAPANESE_MARKET_ENABLED = true;
 
 /**
  * eBay-backed markets. French was removed from here (not from

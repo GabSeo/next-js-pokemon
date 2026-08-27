@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductPageContent, type LocaleLink, japanLocaleLink } from "@/components/product-page-content";
+import { cardRefs } from "@/data/card-refs";
 import { getGradedMarketData, gradedMarketOffersJsonLd } from "@/lib/graded-market";
-import { franchiseLabel, getAllCards, getCardBySlug, getFrenchCardText } from "@/lib/cards";
+import { franchiseLabel, getAllCards, getCardBySlug, getFrenchCardText, getJapaneseCardText } from "@/lib/cards";
 import { absoluteUrl } from "@/lib/site";
 import type { Card } from "@/lib/types";
 
@@ -72,7 +73,16 @@ export default async function ProductPageFrench({ params }: PageProps) {
   if (!resolved) notFound();
   const { card, fr } = resolved;
 
-  const displayCard: Card = { ...card, name: fr.name, set: fr.set, rarity: fr.rarity, imageUrl: fr.imageUrl, types: fr.types };
+  const displayCard: Card = {
+    ...card,
+    name: fr.name,
+    set: fr.set,
+    rarity: fr.rarity,
+    imageUrl: fr.imageUrl,
+    types: fr.types,
+    number: fr.number ?? card.number,
+    setCode: fr.setCode ?? card.setCode,
+  };
   const label = franchiseLabel(card.franchise);
   const gradedMarket = await getGradedMarketData(card);
 
@@ -143,10 +153,12 @@ export default async function ProductPageFrench({ params }: PageProps) {
     ],
   };
 
+  const ref = cardRefs.find((r) => r.slug === card.slug);
+  const japanese = ref ? await getJapaneseCardText(card, ref) : undefined;
   const localeLinks: LocaleLink[] = [
     { code: "US", href: `/products/${card.slug}`, active: false },
     { code: "FR", href: `/products/${card.slug}/fr`, active: true },
-    japanLocaleLink(`/products/${card.slug}/ja`, false),
+    japanLocaleLink(`/products/${card.slug}/ja`, false, !!japanese?.translated),
   ];
 
   return (

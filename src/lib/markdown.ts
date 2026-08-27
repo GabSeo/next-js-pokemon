@@ -75,16 +75,20 @@ Search on Vinted (same ${data.vinted.conditionFilter} filter applied): ${data.vi
 
 /**
  * `display` overrides only what's actually shown for the identity fields
- * (name/set/rarity) — everything else (price, history, description,
- * graded-market data) always comes from `card` itself. This is what backs
- * the /products/[slug]/fr/index.md mirror: gradedMarketMarkdown(card) below
- * must keep receiving the real English `card` (its French search term comes
- * from `card.tcgdexId`, not from the display name — see graded-market.ts),
- * so a `display` override is layered on top rather than baked into `card`.
+ * (name/set/rarity, plus number/setCode when the real localized printing
+ * genuinely differs — see LocalizedCardText's own doc comment on why that's
+ * Japanese-Pokémon-specific, not French or One Piece) — everything else
+ * (price, history, description, graded-market data) always comes from
+ * `card` itself. This is what backs the /products/[slug]/fr and /ja
+ * index.md mirrors: gradedMarketMarkdown(card) below must keep receiving
+ * the real English `card` (its French/Japanese search term comes from the
+ * card's own stored id/ref, not from the display name — see
+ * graded-market.ts and cards.ts's getJapaneseCardText), so a `display`
+ * override is layered on top rather than baked into `card`.
  */
 export async function cardToMarkdown(
   card: Card,
-  display: Pick<Card, "name" | "set" | "rarity"> = card,
+  display: Pick<Card, "name" | "set" | "rarity"> & Partial<Pick<Card, "number" | "setCode">> = card,
   pagePath: string = `/products/${card.slug}`
 ): Promise<string> {
   // Downsampled to 25 evenly-spaced points, same as the JSON mirror
@@ -109,12 +113,14 @@ export async function cardToMarkdown(
     .join("\n");
 
   const gradedMarket = await gradedMarketMarkdown(card);
+  const number = display.number ?? card.number;
+  const setCode = display.setCode ?? card.setCode;
 
-  return `# ${display.name} — ${display.set} (${card.number ?? ""})
+  return `# ${display.name} — ${display.set} (${number ?? ""})
 
 Franchise: ${franchiseLabel(card.franchise)}
 Card ID: ${card.id}
-Set: ${display.set}${card.setCode ? ` (${card.setCode})` : ""}
+Set: ${display.set}${setCode ? ` (${setCode})` : ""}
 Rarity: ${display.rarity ?? "Unknown"}
 Canonical page: ${absoluteUrl(pagePath)}
 Markdown: ${absoluteUrl(`${pagePath}/index.md`)}
@@ -122,7 +128,7 @@ Last updated: ${card.asOfDate}
 
 ## Summary
 
-${card.description ?? `${display.name} — ${display.set} (${card.number ?? ""}).`}
+${card.description ?? `${display.name} — ${display.set} (${number ?? ""}).`}
 
 ## Current price
 
