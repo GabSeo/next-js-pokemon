@@ -80,6 +80,15 @@ function upstreamOutages() {
 
 const outages = upstreamOutages();
 const tcgdexDown = outages.has("api.tcgdex.net");
+// PokeWallet (Pokémon /ja) and BerryWallet (One Piece /ja) are two client
+// files but the same actual host and API key (see lib/berrywallet.ts's own
+// file header) — one outage or rate limit on that account takes out /ja's
+// data for both franchises at once, the same "genuinely nothing to build,
+// not a regression" situation the TCGdex/French case already handles.
+// Confirmed live: this account's own rate limit, exhausted during a session
+// of live verification testing, tripped during a real `next build` too and
+// hard-failed the whole deploy before this exemption existed.
+const pokewalletDown = outages.has("api.pokewallet.io");
 
 // Every pattern here draws from getAllCards() or getCardsByFranchise("pokemon"),
 // which always return one entry per card in data/card-refs.ts — a card whose
@@ -89,19 +98,25 @@ const tcgdexDown = outages.has("api.tcgdex.net");
 // its render tree) is broken, not that an external dependency is
 // unavailable. Fails the build.
 //
-// The exception is the French route pair: a French page only exists when
-// TCGdex returns a real translation, so with TCGdex unreachable there is
-// legitimately nothing to prerender and no offline substitute that wouldn't
-// be a fabricated translation. Those two drop to warnings for that build
-// only, on the evidence of the outage marker above — never unconditionally.
+// The exception is the French route pair and /ja: both only exist when
+// their one real translation source returned something, so with that source
+// unreachable there is legitimately nothing to prerender and no offline
+// substitute that wouldn't be a fabricated translation. They drop to
+// warnings for that build only, on the evidence of the outage marker above —
+// never unconditionally.
 const REQUIRED_PATTERNS = [
-  // /ja is required only while the Japanese market is switched on. It is
-  // gated on JAPANESE_MARKET_ENABLED in src/lib/graded-market.ts, and with
-  // Japan off the route prerenders zero pages BY DESIGN — demanding them
-  // would fail every build, and warning about them every build would be
-  // noise. Read from the source rather than duplicated here, so flipping
-  // that one flag re-arms this check automatically.
-  ...(japaneseMarketEnabled() ? [{ label: "/products/[slug]/ja", test: (r) => /^\/products\/[^/]+\/ja$/.test(r) }] : []),
+  // /ja is required only while the Japanese market is switched on AND
+  // PokeWallet/BerryWallet were actually reachable this build — same
+  // exemption shape as the French pair below, just gated on a second
+  // condition too. It's gated on JAPANESE_MARKET_ENABLED in
+  // src/lib/graded-market.ts, and with Japan off the route prerenders zero
+  // pages BY DESIGN — demanding them would fail every build, and warning
+  // about them every build would be noise. Read from the source rather than
+  // duplicated here, so flipping that one flag re-arms this check
+  // automatically.
+  ...(japaneseMarketEnabled() && !pokewalletDown
+    ? [{ label: "/products/[slug]/ja", test: (r) => /^\/products\/[^/]+\/ja$/.test(r) }]
+    : []),
   { label: "/products/[slug]", test: (r) => /^\/products\/[^/]+$/.test(r) },
   // The prebuilt twin behind /tools/price-checker?cardId= (see the
   // beforeFiles rewrite in next.config.ts). Its whole purpose is to be
@@ -164,6 +179,15 @@ if (tcgdexDown) {
   console.warn(`  so they were not required this time — they prerender again on the next build that reaches`);
   console.warn(`  TCGdex. Pokemon cards themselves still built: they fall back to an offline placeholder with`);
   console.warn(`  no price (see placeholderCard in src/lib/cards.ts), which refreshes on the next revalidation.`);
+}
+
+if (pokewalletDown && japaneseMarketEnabled()) {
+  console.warn(`[check-static-routes] WARN: api.pokewallet.io was unreachable (or rate-limited) during this build.`);
+  console.warn(`  /products/[slug]/ja has no other Japanese source for either franchise — PokeWallet backs`);
+  console.warn(`  Pokémon, BerryWallet backs One Piece, both the same host and API key — so it was not`);
+  console.warn(`  required this time. It prerenders again on the next build that reaches pokewallet.io.`);
+  console.warn(`  Every other card page still built: Japanese identity is only ever an enhancement on top`);
+  console.warn(`  of the canonical English page, never a dependency of it.`);
 }
 
 if (failed) {

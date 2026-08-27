@@ -179,8 +179,15 @@ function pickVariantByTag(matches: BerryWalletCard[], variantTags?: string[]): B
  * carries the same "(V.N)" on the Japanese side too (though never on the
  * English side, which names variants by tag instead — "Wanted Poster", not
  * "V.3"), so it's a safe second source rather than a second convention.
+ *
+ * Exported so cards.ts can compute and store a resolved English card's own
+ * index on Card.printVariantIndex at the point it's already being read
+ * (resolveCard, One Piece identity) — letting a later Japanese lookup for
+ * that same card skip re-fetching and re-resolving English from scratch
+ * just to re-derive a number already sitting in memory. See
+ * findCardInLanguage's own `knownEnglishVariant` parameter.
  */
-function variantIndex(card: BerryWalletCard): number | undefined {
+export function variantIndex(card: BerryWalletCard): number | undefined {
   const source = card.cardmarket?.product_name ?? card.name;
   const match = source.match(/\(V\.(\d+)\)/);
   return match ? Number(match[1]) : undefined;
@@ -212,24 +219,34 @@ function highestVariant(matches: BerryWalletCard[]): BerryWalletCard {
  * already-resolved English pick's `variantIndex` generalizes correctly to
  * any card sharing this pattern, without a per-card tag table.
  *
- * Returns undefined — no guess at all — when the English target is a
+ * Returns undefined — no guess at all — when the English side is a
  * confirmed promo product (findVariantAcrossProducts' own case: a real
  * match, just outside the normal V.1-V.4 tiering, so it has no parseable
- * variantIndex). That's a different situation from "nothing resolved on the
- * English side" (still worth a best-guess fallback, same as before this
- * function existed): here we positively know the requested print doesn't
- * follow the guessed set's ordinary tiering, so assuming its Japanese
- * counterpart is simply "whichever ordinary variant is priciest" would be
- * a fabricated pairing, not a real one — confirmed live, OP09-061's English
- * "2nd Anniversary Set" promo has no Japanese counterpart discoverable this
- * way, and the old blind guess landed on the unrelated V.2 Parallel print
- * instead. "No real Japanese match for this card" is the honest answer,
- * matching every other real/illustrative honesty rule in this codebase —
- * not a print that merely happens to share the card_number.
+ * variantIndex). That's a different situation from "nothing known about the
+ * English side at all" (still worth a best-guess fallback, same as before
+ * this function existed): here we positively know the requested print
+ * doesn't follow the guessed set's ordinary tiering, so assuming its
+ * Japanese counterpart is simply "whichever ordinary variant is priciest"
+ * would be a fabricated pairing, not a real one — confirmed live, OP09-061's
+ * English "2nd Anniversary Set" promo has no Japanese counterpart
+ * discoverable this way, and the old blind guess landed on the unrelated
+ * V.2 Parallel print instead. "No real Japanese match for this card" is the
+ * honest answer, matching every other real/illustrative honesty rule in
+ * this codebase — not a print that merely happens to share the card_number.
+ *
+ * Takes the target as a plain `number | undefined` index rather than a full
+ * BerryWalletCard — see findCardInLanguage's own `knownEnglishVariant`
+ * comment for why: the caller normally already has this number in hand
+ * (Card.printVariantIndex) without needing the whole English card object.
+ * `hasEnglishSignal` distinguishes "the index is undefined because we
+ * positively resolved a promo with no V-number" from "the index is
+ * undefined because we don't know anything about the English side at all"
+ * — the same distinction the old englishTarget-or-undefined parameter used
+ * to carry via its own presence, now carried explicitly since a bare
+ * `undefined` number can no longer speak for both.
  */
-function pickVariantForJapanese(matches: BerryWalletCard[], englishTarget: BerryWalletCard | undefined): BerryWalletCard | undefined {
-  if (!englishTarget) return highestVariant(matches);
-  const targetIndex = variantIndex(englishTarget);
+function pickVariantForJapanese(matches: BerryWalletCard[], targetIndex: number | undefined, hasEnglishSignal: boolean): BerryWalletCard | undefined {
+  if (!hasEnglishSignal) return highestVariant(matches);
   if (targetIndex === undefined) return undefined;
   return matches.find((c) => variantIndex(c) === targetIndex) ?? highestVariant(matches);
 }
@@ -286,18 +303,30 @@ async function findVariantAcrossProducts(cardNumber: string, variantTags: string
  * testing — for the rarer case the guess misses (a starter-deck/promo code
  * that isn't its own set, or a reprint living in a different set).
  *
- * For Japanese with more than one candidate, this also re-resolves the
- * SAME card_number+variantTags in English (one extra, cheap, memoized call —
- * see berryWalletFetch's own 36h dedup) purely to align variant identity by
- * V-number; see pickVariantForJapanese's own comment for why that beats
- * guessing blind. A failure there degrades to the old "highest V-number"
- * guess rather than failing the whole lookup — same non-fatal shape every
- * other cross-source call in this codebase follows.
+ * For Japanese with more than one candidate, this needs the English variant
+ * index to align against (see pickVariantForJapanese's own comment for
+ * why). `knownEnglishVariant` lets a caller that's already resolved English
+ * — every real caller in this codebase, since a Japanese lookup only ever
+ * happens for a card_number whose canonical identity is already built —
+ * hand that number straight in, skipping a second live English resolution
+ * entirely: no getSets/getSetCards round trip, no findVariantAcrossProducts
+ * fallback, none of it, just the number itself. Confirmed live this isn't a
+ * small saving: a Japanese lookup for a promo-shaped card without this
+ * shortcut costs 4-5 raw HTTP calls (its own getSets+getSetCards, PLUS a
+ * full English re-resolution behind it); with the number already in hand,
+ * it's 2. Omitting the parameter entirely falls back to the old behavior
+ * (a real, live English re-resolution) — for a hypothetical future caller
+ * that doesn't already have the number, not because any caller in this
+ * codebase actually takes that path today. Either way, a failure to
+ * determine the index degrades to the old "highest V-number" guess rather
+ * than failing the whole lookup — same non-fatal shape every other
+ * cross-source call in this codebase follows.
  */
 export async function findCardInLanguage(
   cardNumber: string,
   language: BerryWalletLanguage,
-  variantTags?: string[]
+  variantTags?: string[],
+  knownEnglishVariant?: { index: number | undefined }
 ): Promise<{ card: BerryWalletCard; set: BerryWalletSet } | undefined> {
   const sets = await getSets(language);
   const guessedCode = language === "jp" ? `${cardNumber.split("-")[0]}-JP` : cardNumber.split("-")[0];
@@ -324,19 +353,30 @@ export async function findCardInLanguage(
       return { card: highestVariant(matches), set };
     }
 
-    let englishTarget: BerryWalletCard | undefined;
-    try {
-      const englishMatch = await findCardInLanguage(cardNumber, "en", variantTags);
-      englishTarget = englishMatch?.card;
-    } catch {
-      // Non-fatal — pickVariantForJapanese's own fallback (highest
-      // V-number) covers this exactly the way the old code always did.
+    let targetIndex: number | undefined;
+    let hasEnglishSignal: boolean;
+    if (knownEnglishVariant) {
+      targetIndex = knownEnglishVariant.index;
+      hasEnglishSignal = true;
+    } else {
+      hasEnglishSignal = false;
+      try {
+        const englishMatch = await findCardInLanguage(cardNumber, "en", variantTags);
+        if (englishMatch) {
+          targetIndex = variantIndex(englishMatch.card);
+          hasEnglishSignal = true;
+        }
+      } catch {
+        // Non-fatal — hasEnglishSignal stays false, pickVariantForJapanese's
+        // own fallback (highest V-number) covers this exactly the way the
+        // old code always did.
+      }
     }
     // undefined here means pickVariantForJapanese positively determined
     // there's no honest Japanese match — see its own comment — not a
     // failure to look; correctly propagates as "no match" rather than
     // falling through to try another set for a card_number already found.
-    const japaneseCard = pickVariantForJapanese(matches, englishTarget);
+    const japaneseCard = pickVariantForJapanese(matches, targetIndex, hasEnglishSignal);
     return japaneseCard ? { card: japaneseCard, set } : undefined;
   }
   return undefined;

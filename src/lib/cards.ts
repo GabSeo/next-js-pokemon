@@ -6,7 +6,13 @@ import {
   getHistoryPrices,
   type ApitcgProduct,
 } from "@/lib/apitcg";
-import { findCardInLanguage, cardImageUrl as berryWalletCardImageUrl, type BerryWalletCard, type BerryWalletSet } from "@/lib/berrywallet";
+import {
+  findCardInLanguage,
+  cardImageUrl as berryWalletCardImageUrl,
+  variantIndex as berryWalletVariantIndex,
+  type BerryWalletCard,
+  type BerryWalletSet,
+} from "@/lib/berrywallet";
 import { getCard as getPokeWalletCard, cardImageUrl as pokeWalletCardImageUrl } from "@/lib/pokewallet";
 import { absoluteUrl } from "@/lib/site";
 import { describeUpstreamError, logUpstreamOnce } from "@/lib/upstream";
@@ -285,6 +291,12 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
               url: berryWalletMatch.card.cardmarket.product_url,
             }
           : undefined,
+        // The English match's own (V.N) index, computed here since the raw
+        // BerryWalletCard is already in hand — see Card.printVariantIndex's
+        // own doc comment (lib/types.ts) for why this exists at all and why
+        // `null` (a real print, confirmed no V-number) is kept distinct from
+        // `undefined` (not resolved via BerryWallet here).
+        printVariantIndex: berryWalletVariantIndex(berryWalletMatch.card) ?? null,
       }
     : tcgdexCard
       ? {
@@ -436,8 +448,28 @@ export async function getFrenchCardText(card: Card): Promise<LocalizedCardText> 
  * entries with unrelated `op_` ids (see berrywallet.ts's file header), so
  * this needs `ref` for a fresh `findCardInLanguage(code, "jp", ...)`
  * search, the same shape resolveBerryWalletCard already does for English.
+ *
+ * Passes `card.printVariantIndex` straight through as the Japanese
+ * search's `knownEnglishVariant` — resolveCard already computed this once,
+ * when it resolved the English side to build `card` in the first place, so
+ * this call skips a second live English resolution entirely (see
+ * findCardInLanguage's own comment on why that's the expensive part, not a
+ * nicety). `null` vs `undefined` here matters — see Card.printVariantIndex's
+ * own doc comment (lib/types.ts) — so the conversion to
+ * findCardInLanguage's `{ index: number | undefined }` shape stays explicit
+ * rather than a bare `?? undefined` collapsing the distinction back out.
  */
-export async function getOnePieceJapaneseText(card: Card, ref: CardRef): Promise<LocalizedCardText> {
+/**
+ * cache()-wrapped for the same reason resolveCardSafe is (see its own
+ * comment) — `ref` is always the same object reference (from the shared
+ * cardRefs array) and `card` is always resolveCardSafe's own cached result
+ * for that ref, so repeat calls within one request/render pass (a page's
+ * generateMetadata and its body, a route's generateStaticParams and its own
+ * render) share one resolution instead of each re-running the search.
+ */
+export const getOnePieceJapaneseText = cache(resolveOnePieceJapaneseText);
+
+async function resolveOnePieceJapaneseText(card: Card, ref: CardRef): Promise<LocalizedCardText> {
   const fallback: LocalizedCardText = {
     name: card.name,
     set: card.set,
@@ -447,7 +479,9 @@ export async function getOnePieceJapaneseText(card: Card, ref: CardRef): Promise
   };
   if (!ref.berryWalletEnabled || ref.lookup.by !== "code") return fallback;
   try {
-    const match = await findCardInLanguage(ref.lookup.code, "jp", ref.lookup.variantTags);
+    const knownEnglishVariant =
+      card.printVariantIndex === undefined ? undefined : { index: card.printVariantIndex === null ? undefined : card.printVariantIndex };
+    const match = await findCardInLanguage(ref.lookup.code, "jp", ref.lookup.variantTags, knownEnglishVariant);
     if (!match) return fallback;
     return {
       name: card.name, // The curated character name (see resolveBerryWalletCard's own comment) — the character's real name doesn't change across languages here anyway. printName below carries the real Japanese print string.
@@ -498,8 +532,13 @@ export async function getOnePieceJapaneseText(card: Card, ref: CardRef): Promise
  * is stored rather than searched live — automated English->Japanese
  * matching isn't reliable for the specific chase cards this site tracks),
  * so this is a single `getCard(id)` call, not a search.
+ *
+ * cache()-wrapped for the same reason getOnePieceJapaneseText is — see its
+ * own comment.
  */
-export async function getJapaneseCardText(card: Card, ref: CardRef): Promise<LocalizedCardText> {
+export const getJapaneseCardText = cache(resolveJapaneseCardText);
+
+async function resolveJapaneseCardText(card: Card, ref: CardRef): Promise<LocalizedCardText> {
   const fallback: LocalizedCardText = {
     name: card.name,
     set: card.set,

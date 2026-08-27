@@ -99,6 +99,21 @@ export type Card = {
    * BerryWallet match carries no Cardmarket block at all.
    */
   cardmarket?: { avg?: number; low?: number; trend?: number; url?: string };
+  /**
+   * One Piece only — the English BerryWallet match's own `(V.N)` rarity-tier
+   * index (see lib/berrywallet.ts's variantIndex), stored here purely so a
+   * later Japanese lookup for this same card_number can align by variant
+   * without a second live English resolution — see findCardInLanguage's own
+   * `knownEnglishVariant` comment for the request-count reasoning. `null`
+   * (not `undefined`) means "resolved a real English print, confirmed no
+   * V-number" (a promo product outside the normal tiering) — a real,
+   * positive answer, distinct from `undefined`'s "not resolved via
+   * BerryWallet at all," the same distinction pickVariantForJapanese's own
+   * `hasEnglishSignal` parameter carries. Not meaningful to any external
+   * consumer (JSON API, MCP, markdown) — internal to the identity-resolution
+   * pipeline only.
+   */
+  printVariantIndex?: number | null;
   /** TCGdex card id (e.g. "swsh3-136"), Pokémon only — lets graded-market.ts fetch a localized name for the French Vinted search (and getFrenchCardText for the /fr page) without re-searching TCGdex. */
   tcgdexId?: string;
   /** The real-world character this card depicts (e.g. "Gengar", "Monkey D. Luffy") — copied straight from CardRef.character. Same value entitymap.ts already keys EntityMap's character entities by, now also available off a resolved Card for anything that needs "which character is this" without re-reading card-refs.ts (e.g. picking a Pokémon Showdown sprite for a Pokémon card). */
