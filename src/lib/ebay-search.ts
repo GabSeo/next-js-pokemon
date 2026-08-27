@@ -123,6 +123,20 @@ export function cardSearchTerms(card: Card, nameOverride?: string, numberOverrid
  * Authenticator (PSA)") + `_fsrp=1`; for Raw, `Graded=No` instead and none
  * of the grade-specific params.
  *
+ * `_sop=10` (eBay's own code for "Time: newly listed") is deliberate, not
+ * incidental — confirmed live comparing two otherwise-identical searches for
+ * the same One Piece card: without it (the default, Best Match) eBay blends
+ * real exact-keyword matches together with looser related items into one
+ * undivided list; with it, eBay visibly separates the two — a small "exact
+ * match" cluster, then a labeled "Results matching fewer words" section
+ * below it for everything else. Best Match alone can't be told apart from
+ * that blended state by a human clicking through. This also matches what
+ * lib/ebay-browse.ts's own real API search already prefers — its primary
+ * attempt is `sort: "newlyListed"`, only falling back to Best Match if that
+ * comes back empty — so the human-facing fallback link and the real search
+ * behind the panel are now consistent instead of one defaulting to the
+ * weaker mode.
+ *
  * Deliberately NOT restricted to Buy-It-Now (no `LH_BIN=1`), unlike the
  * real API search in lib/ebay-browse.ts which does restrict to fixed-price
  * — this is a link a human clicks through to browse, and excluding
@@ -151,6 +165,9 @@ export function conditionSearchLink(
     _nkw: nkw,
     rt: "nc",
     Language: language,
+    // See this function's own doc comment on why "newly listed" sort,
+    // not Best Match.
+    _sop: "10",
   };
   if (condition === "Raw") {
     params.Graded = "No";
