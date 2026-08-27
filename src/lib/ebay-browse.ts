@@ -372,3 +372,51 @@ export async function searchActiveListings(
   if (primary.listings.length > 0) return primary;
   return runSearch(card, condition, language, undefined, nameOverride, numberOverride);
 }
+
+/**
+ * Same fetch/dedup shape as searchActiveListings, but tries a SEQUENCE of
+ * query-text candidates in order — narrowest first — stopping at the first
+ * that returns real listings, for a franchise whose real listing titles
+ * don't reliably contain one terse token the way Pokémon's printed
+ * fraction does (see cardSearchTerms's own comment, lib/ebay-search.ts, and
+ * graded-market.ts's own comment on why One Piece needs this ladder at
+ * all). `nameCandidates` is ordered narrow -> wide by the caller; an
+ * `undefined` entry means "use the card's own default name" the same way
+ * omitting nameOverride always has.
+ *
+ * Bounded on purpose: only the FIRST candidate gets the newlyListed ->
+ * Best Match sort fallback searchActiveListings already does — later
+ * candidates try newlyListed only. If a specific name/number combination
+ * was simply the wrong text, retrying it under a different sort won't fix
+ * that; spending the attempt on the next, broader candidate is the better
+ * bet. Caps the worst case (nothing real exists for this card/condition at
+ * all) at `nameCandidates.length + 1` sequential eBay calls rather than
+ * `nameCandidates.length * 2` — this only ever runs live (not served from a
+ * pre-rendered page) on a dynamic path like the MCP tool or
+ * /api/price-check, so an unbounded ladder would be real, felt latency
+ * there, not just a cost graph.
+ *
+ * Returns which candidate actually won (or the LAST — broadest — one if
+ * none did) alongside the result, so a caller building a human-facing "see
+ * all" link can point it at whatever search this function actually
+ * settled on rather than always the narrowest guess.
+ */
+export async function searchActiveListingsLadder(
+  card: Card,
+  condition: EbayCondition,
+  language: EbayLanguage | undefined,
+  nameCandidates: (string | undefined)[],
+  numberOverride?: string
+): Promise<EbaySearchResult & { nameOverride: string | undefined }> {
+  let last: EbaySearchResult = { listings: [], total: 0 };
+  for (const [i, nameOverride] of nameCandidates.entries()) {
+    last =
+      i === 0
+        ? await searchActiveListings(card, condition, language, nameOverride, numberOverride)
+        : await runSearch(card, condition, language, "newlyListed", nameOverride, numberOverride);
+    if (last.listings.length > 0) return { ...last, nameOverride };
+  }
+  // Nothing real on any tier — report against the broadest (last) candidate,
+  // the one a human clicking "see all" is most likely to get something from.
+  return { ...last, nameOverride: nameCandidates[nameCandidates.length - 1] };
+}
