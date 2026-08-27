@@ -18,9 +18,19 @@ Covers available history from ${from} to ${to}.`;
  * so the markdown mirror can never show different numbers than the HTML
  * page. Every value is explicitly marked Real or Preview so an agent
  * reading this file doesn't need to guess.
+ *
+ * Pokémon only — getGradedMarketData returns undefined for a One Piece card
+ * (see its own comment), and this says so in plain text rather than silently
+ * omitting the section, so an agent reading raw markdown knows this isn't a
+ * fetch failure.
  */
 async function gradedMarketMarkdown(card: Card): Promise<string> {
   const data = await getGradedMarketData(card);
+  if (!data) {
+    return `## Market overview
+
+Graded/eBay and Vinted market tracking isn't built for One Piece cards yet — this section is Pokémon-only for now. ${card.name}'s own real current price (above) still comes from a live source.`;
+  }
   const rows = data.conditions
     .flatMap((c) =>
       c.languages.map((l) => {

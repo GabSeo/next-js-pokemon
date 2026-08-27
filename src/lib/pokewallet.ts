@@ -89,7 +89,11 @@ async function pokeWalletFetch<T>(path: string, revalidateSeconds: number): Prom
   return memoizeFetch(path, revalidateSeconds * 1000, async () => {
     const res = await resilientFetch(
       `${API_BASE}${path}`,
-      { headers: { "X-API-Key": apiKey() }, next: { revalidate: revalidateSeconds } },
+      // cache: "force-cache" — see apitcg.ts's apitcgFetch for why this is
+      // required (not implied by next.revalidate alone) on this Next
+      // version, doubly so here: a GET carrying an X-API-Key header is
+      // exactly the case the fetch reference calls out as needing it.
+      { headers: { "X-API-Key": apiKey() }, cache: "force-cache", next: { revalidate: revalidateSeconds } },
       FETCH_TIMEOUT_MS
     );
     if (!res.ok) {
@@ -112,6 +116,13 @@ export async function getCard(id: string): Promise<PokeWalletCard | undefined> {
 export async function fetchCardImage(id: string, size: "low" | "high" = "high"): Promise<{ body: ReadableStream<Uint8Array>; contentType: string } | undefined> {
   const res = await fetch(`${API_BASE}/images/${encodeURIComponent(id)}?size=${size}`, {
     headers: { "X-API-Key": apiKey() },
+    // force-cache — same reasoning as pokeWalletFetch above. This route
+    // (app/api/pokewallet-image/[id]/route.ts) already sends a year-long
+    // immutable Cache-Control to the browser/CDN, but that only helps once
+    // an edge has actually cached the response; force-cache is what keeps
+    // *this* server-side fetch from re-hitting pokewallet.io with the API
+    // key on every cold/uncached-region request in the meantime.
+    cache: "force-cache",
     next: { revalidate: REVALIDATE_SECONDS },
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });

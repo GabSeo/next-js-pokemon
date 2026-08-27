@@ -27,6 +27,10 @@ export async function GET(
     );
   }
 
+  // Always undefined for One Piece (getGradedMarketData's own franchise
+  // gate) — omitted from the response entirely rather than sent as `null`,
+  // so a consumer checking `"gradedMarket" in data` gets a real signal
+  // instead of every One Piece card silently carrying a null field forever.
   const gradedMarket = await getGradedMarketData(card);
-  return NextResponse.json({ ...toPublicCard(card), gradedMarket });
+  return NextResponse.json({ ...toPublicCard(card), ...(gradedMarket ? { gradedMarket } : {}) });
 }

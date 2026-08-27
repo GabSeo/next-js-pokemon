@@ -57,6 +57,13 @@ function toTypeSummary(data: GradedMarketTypeData): TypeSummary {
  */
 export async function GradedMarketPanel({ card, defaultMarket }: { card: Card; defaultMarket?: MarketTab }) {
   const data = await getGradedMarketData(card);
+  // Defensive only — the real gate is the franchise check at this
+  // component's own call site (components/product-page-content.tsx), which
+  // is what actually skips the 8 eBay searches getGradedMarketData would
+  // otherwise still not make (see its own franchise check). This just means
+  // a future direct render of this component for a non-Pokémon card fails
+  // silently instead of crashing on the `!` assertions below.
+  if (!data) return null;
 
   const entries: ConditionEntry[] = data.conditions.map((c) => ({
     id: c.condition,

@@ -232,6 +232,11 @@ const handler = createMcpHandler((server) => {
       }),
       outputSchema: z.object({
         found: z.boolean(),
+        // False only for a real card whose franchise doesn't have this data
+        // (One Piece — see getGradedMarketData's own franchise gate in
+        // lib/graded-market.ts) — distinct from `found: false`, which means
+        // no card matched `cardId` at all.
+        available: z.boolean().optional(),
         conditions: z
           .array(
             z.object({
@@ -263,6 +268,17 @@ const handler = createMcpHandler((server) => {
         };
       }
       const data = await getGradedMarketData(card);
+      if (!data) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `${card.name}: graded/eBay and Vinted market tracking isn't built for One Piece cards yet — this tool is Pokémon-only for now. Use get_card_info for ${card.name}'s own real current price.`,
+            },
+          ],
+          structuredContent: { found: true, available: false },
+        };
+      }
       const psa10English = data.conditions.find((c) => c.condition === "PSA 10")!.languages.find((l) => l.language === "English")!;
       return {
         content: [
@@ -277,7 +293,7 @@ const handler = createMcpHandler((server) => {
             }).`,
           },
         ],
-        structuredContent: { found: true, conditions: data.conditions, roi: data.roi, vinted: data.vinted },
+        structuredContent: { found: true, available: true, conditions: data.conditions, roi: data.roi, vinted: data.vinted },
       };
     }
   );

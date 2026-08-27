@@ -97,11 +97,23 @@ export default async function ProductPageJapan({ params }: PageProps) {
   const displayCard: Card = {
     ...card,
     name: ja.name,
+    // One Piece only (undefined for Pokémon — getJapaneseCardText never
+    // sets it) — the real Japanese print name, e.g. "Shanks (OP09-004)
+    // (V.4)". Falls back to the English card's own printName rather than
+    // ja.name so a Pokémon /ja page's H1 is unaffected either way.
+    printName: ja.printName ?? card.printName,
     set: ja.set,
     rarity: ja.rarity,
     imageUrl: ja.imageUrl,
     number: ja.number ?? card.number,
     setCode: ja.setCode ?? card.setCode,
+    // One Piece only — the Japanese print's own real Cardmarket listing
+    // (different real numbers and a different real product_url from the
+    // English print's, not a relabeling — see getOnePieceJapaneseText's own
+    // comment). Falls back to the English card's cardmarket rather than
+    // undefined so a Japanese row with no cardmarket block of its own still
+    // shows something real instead of the panel disappearing outright.
+    cardmarket: ja.cardmarket ?? card.cardmarket,
   };
   const fr = card.franchise === "pokemon" ? await getFrenchCardText(card) : undefined;
   // Fixed US -> FR -> JP order, same as the base page's own comment on why.

@@ -30,6 +30,10 @@ export async function GET(
     );
   }
 
+  // Always real for this route (every card here is Pokémon), but typed
+  // optional since getGradedMarketData is shared with the One Piece route —
+  // see its own franchise gate (lib/graded-market.ts). Same explicit
+  // conditional-spread convention as that route, kept consistent.
   const gradedMarket = await getGradedMarketData(card);
-  return NextResponse.json({ ...toPublicCard(card), gradedMarket });
+  return NextResponse.json({ ...toPublicCard(card), ...(gradedMarket ? { gradedMarket } : {}) });
 }

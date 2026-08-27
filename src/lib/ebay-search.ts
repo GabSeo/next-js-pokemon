@@ -77,6 +77,15 @@ export function cleanCardName(card: Card): string {
  * English print's set numbering (only Japanese/Korean/Chinese don't), so
  * the number itself never needs to change, only the name.
  *
+ * `numberOverride` is the counterpart for the case French/German/etc DON'T
+ * hit: a Japanese print's own set number (e.g. PokéWallet's, via
+ * getJapaneseCardText) is frequently a completely different number from the
+ * English card's — same card, different print, different local numbering.
+ * Searching (or title-matching, see ebay-browse.ts's titleMatchesCard) on
+ * card.number there doesn't just fail to help, it actively rejects real
+ * Japanese listings whose titles correctly carry the Japanese number instead
+ * of the English one.
+ *
  * A bare "<name> <number>" query can still false-positive on a different
  * card that shares a name prefix and a loosely-matched number (e.g.
  * "Gengar VMAX 271/264" surfacing a "Gengar V 156/264" listing) — a keyword
@@ -85,10 +94,19 @@ export function cleanCardName(card: Card): string {
  * per-variant keywords isn't a clean, general way to fix a text-match
  * precision problem. Revisit with a more systematic approach if false
  * positives turn out to matter in practice.
+ *
+ * `termsOverride` bypasses the name/number composition entirely when given
+ * — One Piece's own query shape (see graded-market.ts) is "<real print
+ * name> <set name>", not "<name> <number>": a One Piece listing's title is
+ * far more reliably built from its variant name and set than from the bare
+ * OP##-### code the way a Pokémon listing reliably includes its printed
+ * fraction. nameOverride/numberOverride are ignored when this is set.
  */
-export function cardSearchTerms(card: Card, nameOverride?: string): string {
+export function cardSearchTerms(card: Card, nameOverride?: string, numberOverride?: string, termsOverride?: string): string {
+  if (termsOverride !== undefined) return termsOverride;
   const name = nameOverride ?? cleanCardName(card);
-  return card.number ? `${name} ${card.number}` : name;
+  const number = numberOverride ?? card.number;
+  return number ? `${name} ${number}` : name;
 }
 
 /**
@@ -113,16 +131,18 @@ export function cardSearchTerms(card: Card, nameOverride?: string): string {
  * search's own fixed-price restriction is about keeping *our* displayed
  * median a stable, comparable number, not about what's worth browsing.
  *
- * `nameOverride` is threaded straight through to cardSearchTerms — see its
- * doc comment.
+ * `nameOverride`/`numberOverride`/`termsOverride` are threaded straight
+ * through to cardSearchTerms — see its doc comment.
  */
 export function conditionSearchLink(
   card: Card,
   condition: EbayCondition,
   language: EbayLanguage = "English",
-  nameOverride?: string
+  nameOverride?: string,
+  numberOverride?: string,
+  termsOverride?: string
 ): string {
-  const terms = cardSearchTerms(card, nameOverride);
+  const terms = cardSearchTerms(card, nameOverride, numberOverride, termsOverride);
   const nkw = condition === "Raw" ? terms : `${terms} ${condition}`;
   const params: Record<string, string> = {
     _dcat: CCG_INDIVIDUAL_CARDS_CATEGORY,

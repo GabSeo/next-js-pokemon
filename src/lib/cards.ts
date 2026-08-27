@@ -252,12 +252,16 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
   const identity = berryWalletMatch
     ? {
         // BerryWallet's own `name` field bakes the card_number/variant into
-        // the string in an inconsistent, unpresentable way (e.g. `Shanks
+        // the string in an inconsistent way across cards (e.g. `Shanks
         // (OP09-004) (V.4)`, `Eustass"Captain"Kid (OP05-074) (Manga)` with
         // no space before the quote) — ref.displayName is the clean,
-        // curated name instead, same role it already plays in llms.txt/
-        // entitymap.ts, just also standing in for Card.name here.
+        // curated name used everywhere a plain character name is wanted
+        // (page titles, breadcrumbs, JSON-LD, MCP tool output), same role
+        // it already plays in llms.txt/entitymap.ts. The raw variant
+        // string is kept too, as printName below — the H1 wants the real
+        // print name, not the curated one.
         name: ref.displayName,
+        printName: berryWalletMatch.card.name,
         set: berryWalletMatch.set.name,
         setCode: berryWalletMatch.set.set_code,
         number: ref.lookup.by === "code" ? ref.lookup.code : berryWalletMatch.card.card_number,
@@ -269,6 +273,18 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
         currency: berryWalletPriceInfo?.currency ?? "USD",
         sourceUrl: berryWalletPriceInfo?.url,
         asOfDate: berryWalletPriceInfo?.asOfDate ?? new Date().toISOString(),
+        // Real Cardmarket EUR snapshot, independent of currentPrice/currency
+        // above (which prefer TCGPlayer/USD when it's real) — see Card.
+        // cardmarket's own doc comment (lib/types.ts) on why these can both
+        // be present at once.
+        cardmarket: berryWalletMatch.card.cardmarket
+          ? {
+              avg: berryWalletMatch.card.cardmarket.prices?.avg,
+              low: berryWalletMatch.card.cardmarket.prices?.low,
+              trend: berryWalletMatch.card.cardmarket.prices?.trend,
+              url: berryWalletMatch.card.cardmarket.product_url,
+            }
+          : undefined,
       }
     : tcgdexCard
       ? {
@@ -355,6 +371,10 @@ export type LocalizedCardText = {
    */
   number?: string;
   setCode?: string;
+  /** One Piece/getOnePieceJapaneseText only — see Card.printName's own doc comment (lib/types.ts). The real BerryWallet print name in this language, e.g. `"Shanks (OP09-004) (V.4)"` for Japanese. */
+  printName?: string;
+  /** One Piece/getOnePieceJapaneseText only — see Card.cardmarket's own doc comment (lib/types.ts). This print's own Japanese-catalog Cardmarket listing (avg/low/trend, EUR, and its own product_url) — a genuinely different listing from the English print's, not the same numbers relabeled. */
+  cardmarket?: { avg?: number; low?: number; trend?: number; url?: string };
   /** True only when a real translation/match was found — false means every field above is just the canonical original echoed back, never a fabricated translation. */
   translated: boolean;
 };
@@ -430,15 +450,37 @@ export async function getOnePieceJapaneseText(card: Card, ref: CardRef): Promise
     const match = await findCardInLanguage(ref.lookup.code, "jp", ref.lookup.variantTags);
     if (!match) return fallback;
     return {
-      name: card.name, // BerryWallet's raw name isn't presentation-ready (see resolveBerryWalletCard's own comment) — the character's real name doesn't change across languages here anyway.
+      name: card.name, // The curated character name (see resolveBerryWalletCard's own comment) — the character's real name doesn't change across languages here anyway. printName below carries the real Japanese print string.
+      printName: match.card.name,
       set: match.set.name,
       // number deliberately NOT overridden: One Piece uses one universal
       // card code across every region (see CardRef's own doc comment), so
       // ref.lookup.code (already card.number) is correct for Japanese too —
       // unlike Pokémon, there's no separate real printed number to show.
       setCode: match.set.set_code,
+      // BerryWallet's Japanese-side rows carry drastically less than the
+      // English side — confirmed live (op_a9fdca0a... Shanks V.4: rarity,
+      // card_type, clean_name, sub_type_name and tcgplayer all null, even
+      // from the single-card detail endpoint, not just the set listing).
+      // Falling back to the English card's own rarity here isn't a
+      // guess-fill: it's the same physical rarity tier, just missing from
+      // this specific catalog row.
       rarity: match.card.rarity ?? card.rarity,
       imageUrl: berryWalletCardImageUrl(match.card.id),
+      // Unlike rarity/card_type, cardmarket IS reliably present on a
+      // Japanese row (confirmed live: op_a9fdca0a... Shanks V.4 carried a
+      // full real cardmarket block even with rarity/card_type/tcgplayer all
+      // null) — and it's a genuinely different real listing from the
+      // English print's, not the same numbers relabeled, so no fallback to
+      // card.cardmarket here the way rarity falls back above.
+      cardmarket: match.card.cardmarket
+        ? {
+            avg: match.card.cardmarket.prices?.avg,
+            low: match.card.cardmarket.prices?.low,
+            trend: match.card.cardmarket.prices?.trend,
+            url: match.card.cardmarket.product_url,
+          }
+        : undefined,
       translated: true,
     };
   } catch (err) {

@@ -6,6 +6,7 @@ import { OpenDataLinks } from "@/components/open-data-links";
 import { PriceChart } from "@/components/price-chart";
 import { PriceDataTabs } from "@/components/price-data-tabs";
 import { StructuredData } from "@/components/structured-data";
+import { CardmarketPricesPanel } from "@/components/retro/cardmarket-prices-panel";
 import { ConditionFilterChips } from "@/components/retro/condition-filter-chips";
 import { GradedMarketPanel } from "@/components/retro/graded-market-panel";
 import type { MarketTab } from "@/components/retro/graded-market-tabs";
@@ -16,6 +17,7 @@ import { PsaTiltCard } from "@/components/retro/psa-tilt-card";
 import { TypeBadge } from "@/components/retro/type-badge";
 import { computeAlertBands } from "@/lib/cards";
 import { CARDMARKET_HOMEPAGE_URL } from "@/lib/cardmarket-search";
+import { ONE_PIECE_MARKET_ENABLED } from "@/lib/graded-market";
 import type { Card } from "@/lib/types";
 
 /**
@@ -181,7 +183,10 @@ export function ProductPageContent({
 
         <div className="mt-5 mb-8 flex flex-wrap items-center justify-between gap-3 rounded-lg border-2 border-black bg-card-surface p-6 shadow-hard-md">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl font-black tracking-[-0.6px] uppercase">{displayCard.name}</h1>
+            {/* printName (One Piece only, real BerryWallet print string —
+                e.g. "Shanks (004) (Manga)") when there is one; every other
+                card falls back to the clean name, unchanged. */}
+            <h1 className="text-2xl font-black tracking-[-0.6px] uppercase">{displayCard.printName ?? displayCard.name}</h1>
             {card.types?.map((englishType, i) => (
               <TypeBadge key={englishType} colorKey={englishType} label={displayCard.types?.[i] ?? englishType} />
             ))}
@@ -283,10 +288,34 @@ export function ProductPageContent({
                     )}
                   </div>
 
-                  {priceKnown && <InternationalPricesPanel card={card} />}
+                  {/* Real Cardmarket EUR figures (displayCard.cardmarket)
+                      replace the illustrative currency-conversion panel
+                      wherever they exist — currently only a One Piece card
+                      with a real BerryWallet match; every other card keeps
+                      the estimate panel it always had. Reads displayCard,
+                      not card: on /ja this is the Japanese print's own
+                      cardmarket listing (see that page's own comment on
+                      why it's a genuinely different real listing, not the
+                      English one relabeled) — priceKnown itself still
+                      checks card, since price *availability* is a canonical
+                      fact the display override never changes. */}
+                  {priceKnown &&
+                    (displayCard.cardmarket ? (
+                      <CardmarketPricesPanel card={displayCard} />
+                    ) : (
+                      <InternationalPricesPanel card={displayCard} />
+                    ))}
                 </div>
 
-                <GradedMarketPanel card={card} defaultMarket={defaultMarketTab} />
+                {/* Gated the same way getGradedMarketData itself is (see its
+                    own comment, lib/graded-market.ts) — One Piece isn't
+                    ready yet, not permanently excluded, so this mirrors
+                    ONE_PIECE_MARKET_ENABLED rather than hardcoding the
+                    franchise check. A One Piece card's own real price still
+                    shows above regardless, via BerryWallet. */}
+                {(card.franchise === "pokemon" || ONE_PIECE_MARKET_ENABLED) && (
+                  <GradedMarketPanel card={card} defaultMarket={defaultMarketTab} />
+                )}
 
                 <div>
                   <h3 className="mb-3 flex items-center gap-2 text-lg font-black tracking-[-0.45px]">📈 Raw Card Price History</h3>

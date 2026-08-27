@@ -21,10 +21,13 @@ export async function GET(request: Request) {
     );
   }
 
+  // Undefined for a One Piece card — see getGradedMarketData's own franchise
+  // gate (lib/graded-market.ts) — omitted from the response rather than
+  // sent as null, same convention as /api/pokemon and /api/one-piece.
   const gradedMarket = await getGradedMarketData(card);
   return NextResponse.json({
     ...toPublicCard(card),
     alertBands: computeAlertBands(card.currentPrice),
-    gradedMarket,
+    ...(gradedMarket ? { gradedMarket } : {}),
   });
 }

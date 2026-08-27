@@ -47,7 +47,11 @@ export function CardTile({ card }: { card: Card }) {
         <CardImage card={card} className="aspect-[300/420] w-full overflow-hidden rounded-md" sizes="(min-width: 640px) 33vw, 50vw" />
       </div>
       <div className="flex flex-1 flex-col gap-1 border-t-2 border-black p-4">
-        <h3 className="text-sm font-black tracking-[-0.3px]">{card.name}</h3>
+        {/* printName (One Piece only, real BerryWallet print string) when
+            there is one — see Card.printName's own doc comment
+            (lib/types.ts). Every Pokémon card falls back to the clean name,
+            unchanged. */}
+        <h3 className="text-sm font-black tracking-[-0.3px]">{card.printName ?? card.name}</h3>
         <p className="text-xs font-bold text-muted-text">
           {card.set} · {card.number ?? ""}
         </p>

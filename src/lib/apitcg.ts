@@ -102,7 +102,20 @@ async function apitcgFetch<T>(path: string, revalidateSeconds: number): Promise<
   return memoizeFetch(path, MEMO_TTL_MS, async () => {
     const res = await resilientFetch(
       `${API_BASE}${path}`,
-      { headers: { "x-api-key": apiKey() }, next: { revalidate: revalidateSeconds } },
+      // cache: "force-cache" is required, not implied by next.revalidate —
+      // this Next version's own fetch reference is explicit that caching is
+      // opt-in and that a GET request carrying an auth header (x-api-key,
+      // here) is exactly the case force-cache exists to cover. Without it,
+      // any render path where this request is discovered after a
+      // Request-time API (any Route Handler with dynamic params, e.g.
+      // /api/mcp, /api/price-check — see fetch.md's "Request-time APIs"
+      // rule) refetches apitcg on every single call, silently ignoring
+      // revalidateSeconds. Confirmed as a real, not just theoretical, gap by
+      // this codebase's own next.config.ts rewrite comment on
+      // /tools/price-checker?cardId=, which documented this exact symptom
+      // for the same reason before working around it by rewriting to a
+      // static path instead of fixing it here.
+      { headers: { "x-api-key": apiKey() }, cache: "force-cache", next: { revalidate: revalidateSeconds } },
       FETCH_TIMEOUT_MS
     );
     if (!res.ok) {

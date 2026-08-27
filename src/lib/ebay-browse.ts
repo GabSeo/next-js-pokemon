@@ -134,11 +134,14 @@ function conditionFilter(condition: EbayCondition): string {
  * often broke) the text match — language filtering is precisionAspectFilter's
  * job alone.
  *
- * `nameOverride` is threaded straight through to cardSearchTerms — see its
- * doc comment for why (localized name, e.g. TCGdex's French translation).
+ * `nameOverride`/`numberOverride`/`termsOverride` are threaded straight
+ * through to cardSearchTerms — see its doc comment for why (localized name,
+ * e.g. TCGdex's French translation; localized number, e.g. a Japanese
+ * print's own set number; a fully pre-built query, e.g. One Piece's own
+ * print-name + set-name shape).
  */
-function conditionQuery(card: Card, condition: EbayCondition, nameOverride?: string): string {
-  const base = cardSearchTerms(card, nameOverride);
+function conditionQuery(card: Card, condition: EbayCondition, nameOverride?: string, numberOverride?: string, termsOverride?: string): string {
+  const base = cardSearchTerms(card, nameOverride, numberOverride, termsOverride);
   return condition === "Raw" ? base : `${base} ${condition}`;
 }
 
@@ -191,8 +194,16 @@ function precisionAspectFilter(condition: EbayCondition, language?: EbayLanguage
  * number to literally appear in the title catches that a grade check alone
  * never would, since a wrong card can still happen to mention the right
  * grade.
+ *
+ * `numberOverride` swaps in a localized number (a Japanese print's own set
+ * number) for this check the same way it does for the search query itself —
+ * checking card.number's English number against a real Japanese listing's
+ * title would reject it: a genuine Japanese-print listing's title correctly
+ * carries the Japanese number, not the English one, so without the override
+ * every real Japanese result fails this check and silently degrades to the
+ * illustrative preview.
  */
-function titleMatchesCard(title: string, card: Card, condition: EbayCondition): boolean {
+function titleMatchesCard(title: string, card: Card, condition: EbayCondition, numberOverride?: string): boolean {
   const gradeOk =
     condition === "Raw"
       ? // Exclude anything that looks graded at all, rather than trying to
@@ -202,7 +213,7 @@ function titleMatchesCard(title: string, card: Card, condition: EbayCondition): 
       : new RegExp(`\\bPSA\\s*-?\\s*${condition.replace("PSA ", "")}\\b`, "i").test(title);
   if (!gradeOk) return false;
 
-  const primaryNumber = card.number?.split("/")[0];
+  const primaryNumber = (numberOverride ?? card.number)?.split("/")[0];
   if (!primaryNumber) return true; // nothing to check the number against
   return new RegExp(`\\b${primaryNumber}\\b`).test(title);
 }
@@ -259,10 +270,12 @@ async function runSearch(
   condition: EbayCondition,
   language: EbayLanguage | undefined,
   sort: "newlyListed" | undefined,
-  nameOverride?: string
+  nameOverride?: string,
+  numberOverride?: string,
+  termsOverride?: string
 ): Promise<EbaySearchResult> {
   const token = await getAccessToken();
-  const query = conditionQuery(card, condition, nameOverride);
+  const query = conditionQuery(card, condition, nameOverride, numberOverride, termsOverride);
   const qs = new URLSearchParams({
     q: query,
     category_ids: CCG_INDIVIDUAL_CARDS_CATEGORY,
@@ -277,6 +290,20 @@ async function runSearch(
       Authorization: `Bearer ${token}`,
       "X-EBAY-C-MARKETPLACE-ID": "EBAY_US",
     },
+    // cache: "force-cache" is required, not implied by next.revalidate —
+    // this Next version's own fetch reference says caching is opt-in and
+    // explicitly calls out a GET carrying an Authorization header (this one)
+    // as needing it. Without it, this request is only ever cached on a
+    // statically-prerendered render pass; any dynamic path — /api/mcp's
+    // get_graded_market tool, /api/price-check, a product page that falls
+    // through to on-demand rendering — refetches all 8 eBay searches on
+    // every single call, ignoring REVALIDATE_SECONDS and burning real quota
+    // against eBay's 5,000 calls/day limit for no freshness benefit. Same
+    // gap this codebase's own next.config.ts rewrite comment on
+    // /tools/price-checker?cardId= already documented hitting for this exact
+    // reason, worked around there by rewriting to a static path instead of
+    // fixing it at the source.
+    cache: "force-cache",
     next: { revalidate: REVALIDATE_SECONDS },
   });
   if (!res.ok) {
@@ -296,7 +323,7 @@ async function runSearch(
     // Defensive: never let a listing with no real price into the median —
     // a $0 entry would silently drag it down instead of erroring loudly.
     .filter((listing) => listing.price > 0)
-    .filter((listing) => titleMatchesCard(listing.title, card, condition))
+    .filter((listing) => titleMatchesCard(listing.title, card, condition, numberOverride))
     .slice(0, DISPLAY_LIMIT);
 
   if (rawItems.length > 0 && listings.length === 0) {
@@ -332,16 +359,19 @@ async function runSearch(
  * Only fires when the first attempt is empty, so the common case (a card
  * with real recent activity) costs exactly one request, same as before.
  *
- * `nameOverride` is threaded straight through to conditionQuery/cardSearchTerms
- * — see cardSearchTerms's doc comment (lib/ebay-search.ts) for why.
+ * `nameOverride`/`numberOverride`/`termsOverride` are threaded straight
+ * through to conditionQuery/cardSearchTerms and titleMatchesCard — see
+ * cardSearchTerms's doc comment (lib/ebay-search.ts) for why.
  */
 export async function searchActiveListings(
   card: Card,
   condition: EbayCondition,
   language?: EbayLanguage,
-  nameOverride?: string
+  nameOverride?: string,
+  numberOverride?: string,
+  termsOverride?: string
 ): Promise<EbaySearchResult> {
-  const primary = await runSearch(card, condition, language, "newlyListed", nameOverride);
+  const primary = await runSearch(card, condition, language, "newlyListed", nameOverride, numberOverride, termsOverride);
   if (primary.listings.length > 0) return primary;
-  return runSearch(card, condition, language, undefined, nameOverride);
+  return runSearch(card, condition, language, undefined, nameOverride, numberOverride, termsOverride);
 }

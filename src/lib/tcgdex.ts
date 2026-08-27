@@ -179,7 +179,11 @@ async function tcgdexFetch<T>(lang: TcgdexLang, path: string): Promise<T> {
   return memoizeFetch(`${lang}${path}`, MEMO_TTL_MS, async () => {
     const res = await resilientFetch(
       `${API_BASE}/${lang}${path}`,
-      { next: { revalidate: REVALIDATE_SECONDS } },
+      // cache: "force-cache" — see apitcg.ts's apitcgFetch for why this is
+      // required (not implied by next.revalidate alone) on this Next
+      // version, and why omitting it silently defeats REVALIDATE_SECONDS on
+      // any dynamic render path (MCP tool, /api/price-check, etc).
+      { cache: "force-cache", next: { revalidate: REVALIDATE_SECONDS } },
       FETCH_TIMEOUT_MS
     );
     if (!res.ok) {

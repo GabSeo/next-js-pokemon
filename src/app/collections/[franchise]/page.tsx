@@ -136,7 +136,7 @@ export default async function CollectionPage({ params }: PageProps) {
                 <span className="mb-3 inline-block rounded-full border-2 border-black bg-white px-3 py-1 text-[11px] font-black tracking-[0.6px] text-pokemon-red uppercase">
                   🔥 Highest Tracked Price
                 </span>
-                <h2 className="mb-1 text-[32px] font-black tracking-[-0.8px]">{featured.name}</h2>
+                <h2 className="mb-1 text-[32px] font-black tracking-[-0.8px]">{featured.printName ?? featured.name}</h2>
                 <p className="max-w-[420px] text-sm leading-5 opacity-90">
                   {featured.set}
                   {featured.number ? `, ${featured.number}` : ""} — currently{" "}

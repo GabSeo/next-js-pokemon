@@ -75,6 +75,30 @@ export type Card = {
   imageUrl?: string; // real card image; falls back to a generated placeholder if absent
   sourceUrl?: string; // real TCGPlayer product page
   description?: string;
+  /**
+   * The real, full print/variant name as the data source itself writes it —
+   * e.g. BerryWallet's own `"Shanks (004) (Manga)"` for a One Piece card,
+   * as opposed to `name` above (`"Shanks"`, ref.displayName — the clean
+   * character name used everywhere else: page titles, breadcrumbs, JSON-LD,
+   * MCP tool output). Only ever set for a One Piece card with a real
+   * BerryWallet match; undefined everywhere else, including every Pokémon
+   * card. Rendered as the H1 specifically — see ProductPageContent, which
+   * falls back to `name` when this is absent.
+   */
+  printName?: string;
+  /**
+   * Real Cardmarket EUR figures for a One Piece card's own BerryWallet
+   * match — separate from `currentPrice`/`currency` above (which prefer
+   * TCGPlayer/USD when a real one exists, see cards.ts's berryWalletPrice)
+   * so a card WITH a real USD price can still show its real EUR Cardmarket
+   * numbers too, rather than the two being mutually exclusive. Powers
+   * CardmarketPricesPanel in place of the illustrative
+   * InternationalPricesPanel for any card that has this — real data
+   * replacing a fabricated currency conversion, not sitting alongside it.
+   * Undefined for every Pokémon card and any One Piece card whose
+   * BerryWallet match carries no Cardmarket block at all.
+   */
+  cardmarket?: { avg?: number; low?: number; trend?: number; url?: string };
   /** TCGdex card id (e.g. "swsh3-136"), Pokémon only — lets graded-market.ts fetch a localized name for the French Vinted search (and getFrenchCardText for the /fr page) without re-searching TCGdex. */
   tcgdexId?: string;
   /** The real-world character this card depicts (e.g. "Gengar", "Monkey D. Luffy") — copied straight from CardRef.character. Same value entitymap.ts already keys EntityMap's character entities by, now also available off a resolved Card for anything that needs "which character is this" without re-reading card-refs.ts (e.g. picking a Pokémon Showdown sprite for a Pokémon card). */
