@@ -83,15 +83,20 @@ const CHARACTER_ENTITIES: Record<string, { entityId: string; description: string
     description: "A Fire-type Pokémon species, the final evolution of Cyndaquil.",
     sameAs: "https://www.wikidata.org/wiki/Q2295649",
   },
-  "Roronoa Zoro": {
-    entityId: "e_roronoa-zoro",
-    description: "A fictional character from the One Piece manga and anime, one of the Straw Hat Pirates.",
-    sameAs: "https://www.wikidata.org/wiki/Q858432",
+  Shanks: {
+    entityId: "e_shanks",
+    description: "A fictional character from the One Piece manga and anime, captain of the Red Haired Pirates and one of the Four Emperors.",
+    sameAs: "https://www.wikidata.org/wiki/Q2321523",
   },
-  "Monkey D. Luffy": {
-    entityId: "e_monkey-d-luffy",
-    description: "A fictional character from the One Piece manga and anime, captain of the Straw Hat Pirates.",
-    sameAs: "https://www.wikidata.org/wiki/Q477948",
+  'Eustass "Captain" Kid': {
+    entityId: "e_eustass-captain-kid",
+    description: "A fictional character from the One Piece manga and anime, captain of the Kid Pirates.",
+    sameAs: "https://www.wikidata.org/wiki/Q5148704",
+  },
+  "Marshall D. Teach": {
+    entityId: "e_marshall-d-teach",
+    description: "A fictional character from the One Piece manga and anime, known as Blackbeard, captain of the Blackbeard Pirates and one of the Four Emperors.",
+    sameAs: "https://www.wikidata.org/wiki/Q4991940",
   },
 };
 

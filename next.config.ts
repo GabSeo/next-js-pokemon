@@ -21,6 +21,17 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "assets.tcgdex.net" },
       { protocol: "https", hostname: "tcgplayer-cdn.tcgplayer.com" },
     ],
+    // BerryWallet-sourced One Piece cards route their image through our own
+    // proxy (app/api/berrywallet-image/[id]/route.ts, not a remote URL —
+    // see its own doc comment on why: BerryWallet's image endpoint needs an
+    // API key header a browser <img> can't send). next/image treats a
+    // *local* URL carrying a query string (`?size=high`) as needing
+    // explicit allowlisting same as a remote one — confirmed live, the
+    // build fails without this.
+    // `search` deliberately omitted (not ""), which would match only a
+    // bare URL with no query string at all — our proxy always carries
+    // `?size=high` or `?size=low`. Omitting it allows any search string.
+    localPatterns: [{ pathname: "/api/berrywallet-image/**" }],
   },
   async rewrites() {
     return {

@@ -6,6 +6,7 @@ import {
   getHistoryPrices,
   type ApitcgProduct,
 } from "@/lib/apitcg";
+import { findCardInLanguage, cardImageUrl as berryWalletCardImageUrl, type BerryWalletCard, type BerryWalletSet } from "@/lib/berrywallet";
 import { absoluteUrl } from "@/lib/site";
 import { describeUpstreamError, logUpstreamOnce } from "@/lib/upstream";
 import { findCardByNameAndSet, getCard, cardImageUrl, tcgplayerSnapshot, type TcgdexCard } from "@/lib/tcgdex";
@@ -92,7 +93,7 @@ function marketPrice(markets: ApitcgProduct["markets"]): number | undefined {
 
 async function resolveProduct(ref: CardRef): Promise<ApitcgProduct | undefined> {
   if (ref.lookup.by === "code") {
-    return findProductByCode(ref.tcg, ref.lookup.code);
+    return findProductByCode(ref.tcg, ref.lookup.code, ref.lookup.variantTags);
   }
   return findProductByNameAndSet(
     ref.tcg,
@@ -100,6 +101,51 @@ async function resolveProduct(ref: CardRef): Promise<ApitcgProduct | undefined> 
     ref.lookup.setName,
     ref.lookup.number
   );
+}
+
+/**
+ * BerryWallet match for a One Piece ref with a real language source
+ * (`berryWalletLanguage` set on the CardRef) — non-fatal on any failure,
+ * same resilience shape as resolveTcgdexCard. Only ever attempted for a
+ * "code" lookup (every current One Piece ref), since BerryWallet is keyed
+ * by card_number the same way apitcg's code lookup is. This supplies
+ * identity only (name/set/rarity/image/current price) — price HISTORY still
+ * always comes from apitcg below, since BerryWallet has no history endpoint
+ * on its free tier (see lib/berrywallet.ts's file header).
+ */
+async function resolveBerryWalletCard(ref: CardRef): Promise<{ card: BerryWalletCard; set: BerryWalletSet } | undefined> {
+  if (ref.tcg !== "one-piece" || !ref.berryWalletLanguage || ref.lookup.by !== "code") return undefined;
+  try {
+    return await findCardInLanguage(ref.lookup.code, ref.berryWalletLanguage, ref.lookup.variantTags);
+  } catch (err) {
+    logUpstreamOnce(`berrywallet:${ref.slug}`, `[cards] BerryWallet lookup failed for ${ref.slug} — ${describeUpstreamError(err)}`);
+    return undefined;
+  }
+}
+
+/**
+ * BerryWallet's own live price for a matched card — prefers TCGPlayer/USD
+ * when present (the same currency every other card on this site uses), and
+ * falls back to Cardmarket/EUR when it isn't. That fallback is real, not a
+ * gap papered over: confirmed live, a Japanese-print card (e.g. Shanks
+ * OP09-004 in BerryWallet's JP catalog) has no `tcgplayer` block at all —
+ * TCGPlayer's own catalog simply doesn't carry that print — so EUR is the
+ * only real price that exists for it. Showing a fabricated USD conversion
+ * would be exactly the kind of invented-precision this site's honesty rules
+ * exist to prevent elsewhere (see tcgdex.ts's own note on why GBP/CAD stay
+ * illustrative rather than converted); a real EUR number is more honest
+ * than a fake USD one.
+ */
+function berryWalletPrice(card: BerryWalletCard): { price: number; currency: "USD" | "EUR"; url?: string; asOfDate?: string } | undefined {
+  const tcgplayer = card.tcgplayer?.prices;
+  if (tcgplayer?.market_price !== undefined) {
+    return { price: tcgplayer.market_price, currency: "USD", url: card.tcgplayer?.url, asOfDate: tcgplayer.updated_at };
+  }
+  const cardmarket = card.cardmarket?.prices;
+  if (cardmarket?.avg !== undefined) {
+    return { price: cardmarket.avg, currency: "EUR", url: card.cardmarket?.product_url, asOfDate: cardmarket.updated_at };
+  }
+  return undefined;
 }
 
 /**
@@ -131,7 +177,7 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
   // outer try/catch — that outer catch is a last-resort safety net for
   // *this function* failing outright, not a substitute for handling one of
   // two independent sources failing while the other succeeds.
-  const [product, tcgdexCard] = await Promise.all([
+  const [product, tcgdexCard, berryWalletMatch] = await Promise.all([
     resolveProduct(ref).catch((err) => {
       logUpstreamOnce(
         `apitcg:${ref.slug}`,
@@ -140,11 +186,13 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
       return undefined;
     }),
     resolveTcgdexCard(ref),
+    resolveBerryWalletCard(ref),
   ]);
 
-  // Genuinely nothing to build a card from — apitcg has no match (or
-  // failed) and TCGdex has no match either (always true for One Piece).
-  if (!product && !tcgdexCard) return undefined;
+  // Genuinely nothing to build a card from — none of the three sources has
+  // a match (or all failed). Always true for a franchise/card combination
+  // with no real source at all (e.g. One Piece + TCGdex, unconditionally).
+  if (!product && !tcgdexCard && !berryWalletMatch) return undefined;
 
   // apitcg's product record is the only source with a numeric product id,
   // which price history below needs regardless of franchise (TCGdex has no
@@ -187,61 +235,91 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
     }));
 
   const tcgdexPrice = tcgdexCard ? tcgplayerSnapshot(tcgdexCard) : undefined;
+  const berryWalletPriceInfo = berryWalletMatch ? berryWalletPrice(berryWalletMatch.card) : undefined;
 
-  const identity = tcgdexCard
+  // BerryWallet takes precedence over apitcg for a One Piece ref that has
+  // one (real English/Japanese identity beats apitcg's English-only
+  // TCGPlayer catalog — the whole reason BerryWallet was wired in), then
+  // TCGdex (Pokémon only), then apitcg as the final fallback — same
+  // "exclusive, never blended field-by-field" rule the TCGdex/apitcg split
+  // already followed: no `berryWallet ?? tcgdex ?? apitcg` chains mixing
+  // one source's name with another's image.
+  const identity = berryWalletMatch
     ? {
-        name: tcgdexCard.name,
-        set: tcgdexCard.set.name,
-        setCode: tcgdexCard.set.id,
-        // The full printed fraction (e.g. "271/264") when the set's base
-        // print-run size is known, falling back to the bare localId
-        // otherwise — see TcgdexSetBrief's doc comment on `cardCount`.
-        number: tcgdexCard.set.cardCount?.official
-          ? `${tcgdexCard.localId}/${tcgdexCard.set.cardCount.official}`
-          : tcgdexCard.localId,
-        rarity: tcgdexCard.rarity,
-        types: tcgdexCard.types,
-        imageUrl: tcgdexCard.image ? cardImageUrl(tcgdexCard.image) : undefined,
-        // TCGdex has no card-description field at all — rather than
-        // borrowing apitcg's generic-catalog description text alongside
-        // otherwise-exclusively-TCGdex fields, a TCGdex-matched card simply
-        // has none. The page already renders this paragraph conditionally.
-        description: undefined as string | undefined,
-        currentPrice: tcgdexPrice?.price ?? 0,
-        sourceUrl: tcgdexPrice?.url,
-        asOfDate: tcgdexPrice?.updated ?? new Date().toISOString(),
+        // BerryWallet's own `name` field bakes the card_number/variant into
+        // the string in an inconsistent, unpresentable way (e.g. `Shanks
+        // (OP09-004) (V.4)`, `Eustass"Captain"Kid (OP05-074) (Manga)` with
+        // no space before the quote) — ref.displayName is the clean,
+        // curated name instead, same role it already plays in llms.txt/
+        // entitymap.ts, just also standing in for Card.name here.
+        name: ref.displayName,
+        set: berryWalletMatch.set.name,
+        setCode: berryWalletMatch.set.set_code,
+        number: ref.lookup.by === "code" ? ref.lookup.code : berryWalletMatch.card.card_number,
+        rarity: berryWalletMatch.card.rarity,
+        types: undefined as string[] | undefined,
+        imageUrl: berryWalletCardImageUrl(berryWalletMatch.card.id),
+        description: berryWalletMatch.card.ext_description ? stripHtml(berryWalletMatch.card.ext_description) : undefined,
+        currentPrice: berryWalletPriceInfo?.price ?? 0,
+        currency: berryWalletPriceInfo?.currency ?? "USD",
+        sourceUrl: berryWalletPriceInfo?.url,
+        asOfDate: berryWalletPriceInfo?.asOfDate ?? new Date().toISOString(),
       }
-    : product
+    : tcgdexCard
       ? {
-          name: product.name,
-          set: product.set?.name ?? "",
-          setCode: product.set?.code,
-          number: product.attributes?.Number ?? product.code,
-          rarity: product.attributes?.Rarity,
-          // apitcg has no energy-type field — One Piece and any unmatched
-          // Pokémon card simply have none, rather than a fabricated guess.
-          types: undefined as string[] | undefined,
-          imageUrl: product.images?.[0]?.large ?? product.images?.[0]?.medium,
-          description: product.attributes?.Description ? stripHtml(product.attributes.Description) : undefined,
-          currentPrice: marketPrice(product.markets) ?? 0,
-          sourceUrl: product.markets?.tcgplayer?.url,
-          asOfDate: product.updatedAt ?? new Date().toISOString(),
+          name: tcgdexCard.name,
+          set: tcgdexCard.set.name,
+          setCode: tcgdexCard.set.id,
+          // The full printed fraction (e.g. "271/264") when the set's base
+          // print-run size is known, falling back to the bare localId
+          // otherwise — see TcgdexSetBrief's doc comment on `cardCount`.
+          number: tcgdexCard.set.cardCount?.official
+            ? `${tcgdexCard.localId}/${tcgdexCard.set.cardCount.official}`
+            : tcgdexCard.localId,
+          rarity: tcgdexCard.rarity,
+          types: tcgdexCard.types,
+          imageUrl: tcgdexCard.image ? cardImageUrl(tcgdexCard.image) : undefined,
+          // TCGdex has no card-description field at all — rather than
+          // borrowing apitcg's generic-catalog description text alongside
+          // otherwise-exclusively-TCGdex fields, a TCGdex-matched card simply
+          // has none. The page already renders this paragraph conditionally.
+          description: undefined as string | undefined,
+          currentPrice: tcgdexPrice?.price ?? 0,
+          currency: "USD" as const,
+          sourceUrl: tcgdexPrice?.url,
+          asOfDate: tcgdexPrice?.updated ?? new Date().toISOString(),
         }
-      : undefined;
+      : product
+        ? {
+            name: product.name,
+            set: product.set?.name ?? "",
+            setCode: product.set?.code,
+            number: product.attributes?.Number ?? product.code,
+            rarity: product.attributes?.Rarity,
+            // apitcg has no energy-type field — One Piece and any unmatched
+            // Pokémon card simply have none, rather than a fabricated guess.
+            types: undefined as string[] | undefined,
+            imageUrl: product.images?.[0]?.large ?? product.images?.[0]?.medium,
+            description: product.attributes?.Description ? stripHtml(product.attributes.Description) : undefined,
+            currentPrice: marketPrice(product.markets) ?? 0,
+            currency: "USD" as const,
+            sourceUrl: product.markets?.tcgplayer?.url,
+            asOfDate: product.updatedAt ?? new Date().toISOString(),
+          }
+        : undefined;
 
-  // Unreachable given the `!product && !tcgdexCard` guard above, but keeps
-  // the branches above type-safe (TypeScript can't express "at least one of
-  // these two is defined" as a single narrowing) without an unsafe `!`.
+  // Unreachable given the guard above, but keeps the branches above
+  // type-safe (TypeScript can't express "at least one of these three is
+  // defined" as a single narrowing) without an unsafe `!`.
   if (!identity) return undefined;
 
   return {
-    id: product ? String(product._id) : tcgdexCard!.id,
+    id: berryWalletMatch ? berryWalletMatch.card.id : product ? String(product._id) : tcgdexCard!.id,
     slug: ref.slug,
     franchise: ref.franchise,
     character: ref.character,
     ...identity,
     asOfDate: identity.asOfDate.slice(0, 10),
-    currency: "USD",
     priceHistory,
     recentSnapshots,
     trend: computeTrend(priceHistory),

@@ -45,7 +45,18 @@ export type Card = {
   rarity?: string;
   /** Pokémon TCG energy types (Fire, Water, Darkness, ...) — TCGdex-only, Pokémon-category cards only. See lib/pokemon-types.ts. */
   types?: string[];
-  currency: "USD";
+  /**
+   * "USD" everywhere except one real, deliberate exception: a One Piece
+   * card whose only identity source is BerryWallet's Japanese-print catalog
+   * has no USD price at all (TCGPlayer's own catalog doesn't carry that
+   * print), only Cardmarket's EUR — see cards.ts's berryWalletPrice. A real
+   * EUR number beats a fabricated USD conversion, same reasoning tcgdex.ts
+   * already documents for why GBP/CAD estimates stay illustrative rather
+   * than converted. Kept as a closed union (not a bare `string`) so every
+   * currency actually shown anywhere on the site stays a deliberate,
+   * type-checked choice, not a typo.
+   */
+  currency: "USD" | "EUR";
   currentPrice: number;
   /**
    * True when neither price source could be reached and this card is the

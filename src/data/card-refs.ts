@@ -1,6 +1,18 @@
 import type { Franchise } from "@/lib/types";
 
-type CodeLookup = { by: "code"; code: string };
+type CodeLookup = {
+  by: "code";
+  code: string;
+  /**
+   * Disambiguates among multiple real print variants sharing the same code
+   * — apitcg's `findProductByCode` and BerryWallet's `findCardInLanguage`
+   * both take this as a full-combination match (every tag must appear in
+   * the candidate's name), not any-of. See either function's own doc
+   * comment for why "SP" and the other named variants never co-occur on one
+   * card, so a request naming two mutually-exclusive tags has to pick one.
+   */
+  variantTags?: string[];
+};
 type NameSetLookup = { by: "nameSet"; name: string; setName: string; number: string };
 
 export type CardRef = {
@@ -8,9 +20,24 @@ export type CardRef = {
   tcg: "pokemon" | "one-piece";
   slug: string;
   displayName: string;
-  /** The real-world character this card depicts — the EntityMap entity it's evidence for. Two cards can share a character (see the two Luffy cards below); that's the point, not a duplicate. */
+  /** The real-world character this card depicts — the EntityMap entity it's evidence for. Two cards can share a character; that's the point, not a duplicate. */
   character: string;
   lookup: CodeLookup | NameSetLookup;
+  /**
+   * One Piece only: card identity (name/set/rarity/image/current price)
+   * comes from BerryWallet in this language instead of apitcg's
+   * English-only TCGPlayer catalog — apitcg's own `lookup.code` (+
+   * `variantTags`) match still supplies price HISTORY, since BerryWallet
+   * has no history endpoint on its free tier (see lib/berrywallet.ts's file
+   * header). Omitted keeps the existing apitcg-only path: every Pokémon
+   * ref, and any One Piece ref with no real non-English source — see
+   * Marshall D. Teach below, which stays pure apitcg/English on purpose,
+   * because no French source exists anywhere (confirmed live: BerryWallet
+   * has zero French sets) — same honesty rule getFrenchCardText already
+   * follows for Pokémon: echo the real identity back rather than fabricate
+   * a translation that doesn't exist.
+   */
+  berryWalletLanguage?: "en" | "jp";
 };
 
 /**
@@ -44,27 +71,44 @@ export const cardRefs: CardRef[] = [
     lookup: { by: "nameSet", name: "Ethan's Typhlosion", setName: "Destined Rivals", number: "190" },
   },
   {
+    // Japanese-print identity, via BerryWallet's JP-language set catalog —
+    // confirmed live: card_number OP09-004 has 4 real Japanese variants
+    // (V.1-V.4), and the highest (V.4) is the Manga print (price-confirmed
+    // against the English side's separately-listed Manga variant — see
+    // lib/berrywallet.ts's pickVariant doc comment).
     franchise: "one-piece",
     tcg: "one-piece",
-    slug: "roronoa-zoro-op07-113",
-    displayName: "Roronoa Zoro",
-    character: "Roronoa Zoro",
-    lookup: { by: "code", code: "OP07-113" },
+    slug: "shanks-op09-004",
+    displayName: "Shanks",
+    character: "Shanks",
+    lookup: { by: "code", code: "OP09-004", variantTags: ["Manga"] },
+    berryWalletLanguage: "jp",
   },
   {
+    // English-print identity, via BerryWallet's EN-language set catalog.
     franchise: "one-piece",
     tcg: "one-piece",
-    slug: "monkey-d-luffy-st01-001",
-    displayName: "Monkey.D.Luffy",
-    character: "Monkey D. Luffy",
-    lookup: { by: "code", code: "ST01-001" },
+    slug: "eustass-captain-kid-op05-074",
+    displayName: 'Eustass "Captain" Kid',
+    character: 'Eustass "Captain" Kid',
+    lookup: { by: "code", code: "OP05-074", variantTags: ["Manga"] },
+    berryWalletLanguage: "en",
   },
   {
+    // No berryWalletLanguage: no French source exists anywhere for One
+    // Piece (see CardRef's own doc comment) — this card represents the
+    // "French" test case precisely by staying on the plain apitcg/English
+    // path, same as every One Piece card before BerryWallet existed.
+    // variantTags picks the Wanted Poster print specifically — apitcg's own
+    // catalog for OP09-093 also has an SP Gold/Silver variant, but Wanted
+    // Poster is the one actually wanted here, not SP (the two names were
+    // originally given together despite being mutually exclusive prints;
+    // Wanted Poster wins per that clarification).
     franchise: "one-piece",
     tcg: "one-piece",
-    slug: "monkey-d-luffy-op05-119",
-    displayName: "Monkey.D.Luffy",
-    character: "Monkey D. Luffy",
-    lookup: { by: "code", code: "OP05-119" },
+    slug: "marshall-d-teach-op09-093",
+    displayName: "Marshall D. Teach",
+    character: "Marshall D. Teach",
+    lookup: { by: "code", code: "OP09-093", variantTags: ["Wanted Poster"] },
   },
 ];

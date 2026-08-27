@@ -112,14 +112,33 @@ async function apitcgFetch<T>(path: string, revalidateSeconds: number): Promise<
   });
 }
 
-/** Exact lookup by card code, e.g. "OP07-113". Reliable for One Piece. */
+/**
+ * Exact lookup by card code, e.g. "OP07-113" — reliable for One Piece,
+ * where multiple real print variants (Manga, Alternate Art, Wanted Poster,
+ * SP Gold/Silver, assorted promo reprints) routinely share one exact code.
+ * Confirmed live: OP09-004 alone returns 9 distinct products for one code,
+ * which is also why `limit` is 20 here, not 5 — a low limit risked never
+ * even seeing the tagged variant a caller actually wants.
+ *
+ * `variantTags`, when given, picks the product whose name contains every
+ * tag (case-insensitive, full combination — not any-of; see
+ * lib/berrywallet.ts's pickVariant for the same rule and the reasoning
+ * behind it). Falls back to the first exact-code match — the previous,
+ * tag-blind behavior — when no tag combination matches or none are given.
+ */
 export async function findProductByCode(
   tcg: string,
-  code: string
+  code: string,
+  variantTags?: string[]
 ): Promise<ApitcgProduct | undefined> {
-  const qs = new URLSearchParams({ tcg, type: "card", code, limit: "5" });
+  const qs = new URLSearchParams({ tcg, type: "card", code, limit: "20" });
   const { data } = await apitcgFetch<ProductsResponse>(`/products?${qs}`, REVALIDATE_SECONDS);
-  return data.find((p) => p.code === code) ?? data[0];
+  const candidates = data.filter((p) => p.code === code);
+  if (variantTags && variantTags.length > 0) {
+    const tagged = candidates.find((p) => variantTags.every((tag) => p.name.toLowerCase().includes(tag.toLowerCase())));
+    if (tagged) return tagged;
+  }
+  return candidates[0] ?? data[0];
 }
 
 /**
