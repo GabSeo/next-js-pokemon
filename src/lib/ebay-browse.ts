@@ -134,14 +134,13 @@ function conditionFilter(condition: EbayCondition): string {
  * often broke) the text match — language filtering is precisionAspectFilter's
  * job alone.
  *
- * `nameOverride`/`numberOverride`/`termsOverride` are threaded straight
- * through to cardSearchTerms — see its doc comment for why (localized name,
- * e.g. TCGdex's French translation; localized number, e.g. a Japanese
- * print's own set number; a fully pre-built query, e.g. One Piece's own
- * print-name + set-name shape).
+ * `nameOverride`/`numberOverride` are threaded straight through to
+ * cardSearchTerms — see its doc comment for why (localized name, e.g.
+ * TCGdex's French translation or BerryWallet's real One Piece print name;
+ * localized number, e.g. a Japanese Pokémon print's own set number).
  */
-function conditionQuery(card: Card, condition: EbayCondition, nameOverride?: string, numberOverride?: string, termsOverride?: string): string {
-  const base = cardSearchTerms(card, nameOverride, numberOverride, termsOverride);
+function conditionQuery(card: Card, condition: EbayCondition, nameOverride?: string, numberOverride?: string): string {
+  const base = cardSearchTerms(card, nameOverride, numberOverride);
   return condition === "Raw" ? base : `${base} ${condition}`;
 }
 
@@ -271,11 +270,10 @@ async function runSearch(
   language: EbayLanguage | undefined,
   sort: "newlyListed" | undefined,
   nameOverride?: string,
-  numberOverride?: string,
-  termsOverride?: string
+  numberOverride?: string
 ): Promise<EbaySearchResult> {
   const token = await getAccessToken();
-  const query = conditionQuery(card, condition, nameOverride, numberOverride, termsOverride);
+  const query = conditionQuery(card, condition, nameOverride, numberOverride);
   const qs = new URLSearchParams({
     q: query,
     category_ids: CCG_INDIVIDUAL_CARDS_CATEGORY,
@@ -359,8 +357,8 @@ async function runSearch(
  * Only fires when the first attempt is empty, so the common case (a card
  * with real recent activity) costs exactly one request, same as before.
  *
- * `nameOverride`/`numberOverride`/`termsOverride` are threaded straight
- * through to conditionQuery/cardSearchTerms and titleMatchesCard — see
+ * `nameOverride`/`numberOverride` are threaded straight through to
+ * conditionQuery/cardSearchTerms and titleMatchesCard — see
  * cardSearchTerms's doc comment (lib/ebay-search.ts) for why.
  */
 export async function searchActiveListings(
@@ -368,10 +366,9 @@ export async function searchActiveListings(
   condition: EbayCondition,
   language?: EbayLanguage,
   nameOverride?: string,
-  numberOverride?: string,
-  termsOverride?: string
+  numberOverride?: string
 ): Promise<EbaySearchResult> {
-  const primary = await runSearch(card, condition, language, "newlyListed", nameOverride, numberOverride, termsOverride);
+  const primary = await runSearch(card, condition, language, "newlyListed", nameOverride, numberOverride);
   if (primary.listings.length > 0) return primary;
-  return runSearch(card, condition, language, undefined, nameOverride, numberOverride, termsOverride);
+  return runSearch(card, condition, language, undefined, nameOverride, numberOverride);
 }

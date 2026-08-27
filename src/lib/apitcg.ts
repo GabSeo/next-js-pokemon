@@ -135,7 +135,7 @@ async function apitcgFetch<T>(path: string, revalidateSeconds: number): Promise<
  *
  * `variantTags`, when given, picks the product whose name contains every
  * tag (case-insensitive, full combination — not any-of; see
- * lib/berrywallet.ts's pickVariant for the same rule and the reasoning
+ * lib/berrywallet.ts's pickVariantByTag for the same rule and the reasoning
  * behind it). Falls back to the first exact-code match — the previous,
  * tag-blind behavior — when no tag combination matches or none are given.
  */

@@ -163,32 +163,62 @@ export async function getSetCards(setCode: string, limit = 200): Promise<BerryWa
  * co-occur on one card, so a request naming two mutually-exclusive tags has
  * to resolve to whichever one the caller actually means, not a guess made
  * here.
- *
- * BerryWallet's own Japanese-side rows carry no semantic label at all
- * though — only English rows are named (Manga)/(Alternate Art)/etc.; the
- * Japanese side is just an ascending `(V.1)`, `(V.2)`, ... index — so tag
- * matching can't apply there, and the fallback when no tag match is found
- * (including "no tags given") is the highest V-number. That's not a guess:
- * it's confirmed against a community explanation of One Piece's own rarity
- * system (a Secret Rare's V1/V2/V3 variants are documented as standard ->
- * alternate art -> Manga Rare, each step strictly rarer/pricier than the
- * last) and a live price cross-check on OP09-004 Shanks specifically — the
- * Japanese V.4 row's low price (€950) matches the *English* side's
- * separately-listed "Manga" variant's low price exactly (also €950), the
- * same physical print confirmed from two independent data points.
  */
-function variantIndex(card: BerryWalletCard): number {
-  const match = card.name.match(/\(V\.(\d+)\)/);
-  return match ? Number(match[1]) : 0;
+function pickVariantByTag(matches: BerryWalletCard[], variantTags?: string[]): BerryWalletCard | undefined {
+  if (!variantTags || variantTags.length === 0) return undefined;
+  return matches.find((c) => variantTags.every((tag) => c.name.toLowerCase().includes(tag.toLowerCase())));
 }
 
-function pickVariant(matches: BerryWalletCard[], variantTags?: string[]): BerryWalletCard {
-  if (variantTags && variantTags.length > 0) {
-    const tagged = matches.find((c) => variantTags.every((tag) => c.name.toLowerCase().includes(tag.toLowerCase())));
-    if (tagged) return tagged;
+/**
+ * The `(V.N)` rarity-tier index BerryWallet's own `cardmarket.product_name`
+ * carries — confirmed to be the reliable cross-language variant identifier,
+ * not just an English-side label: it's present, and lines up by price tier,
+ * on BOTH languages' rows for a card_number (see pickVariantForJapanese's
+ * own comment for the confirmation). Reads `cardmarket.product_name` first
+ * since that's where it's most consistently present; the bare `name` field
+ * carries the same "(V.N)" on the Japanese side too (though never on the
+ * English side, which names variants by tag instead — "Wanted Poster", not
+ * "V.3"), so it's a safe second source rather than a second convention.
+ */
+function variantIndex(card: BerryWalletCard): number | undefined {
+  const source = card.cardmarket?.product_name ?? card.name;
+  const match = source.match(/\(V\.(\d+)\)/);
+  return match ? Number(match[1]) : undefined;
+}
+
+/** Highest parsed V-number, or the last candidate if none parse at all — the fallback both pickVariantByTag's "no tag given" case and pickVariantForJapanese's "nothing to align against" case share. */
+function highestVariant(matches: BerryWalletCard[]): BerryWalletCard {
+  const withIndex = matches.map((card) => ({ card, index: variantIndex(card) }));
+  if (withIndex.every((m) => m.index === undefined)) return matches[matches.length - 1];
+  return withIndex.reduce((best, m) => ((m.index ?? -1) > (best.index ?? -1) ? m : best)).card;
+}
+
+/**
+ * Japanese resolution: no tag words exist on this side at all — BerryWallet
+ * only ever labels a Japanese row "(V.N)", never "Manga"/"Wanted Poster"/etc
+ * (see this file's own header) — so this used to just guess "highest
+ * V-number, always". That guess is silently wrong whenever the wanted
+ * English variant ISN'T the rarest one: confirmed live comparing two real
+ * cards' full candidate lists (both language sides, both sorted by their own
+ * real price) — Shanks OP09-004's requested "Manga" tag happens to BE V.4,
+ * the highest, so the old guess got lucky there; Marshall D. Teach
+ * OP09-093's requested "Wanted Poster" tag is V.3, and the old guess landed
+ * on V.4 (Manga) instead — a real, different, far more expensive print, with
+ * a different image. On both cards, the two languages' price-sorted
+ * candidate lists lined up index-for-index by V-number exactly (V.1↔V.1
+ * cheapest through V.4↔V.4 priciest) — a card_number's variant tiering is
+ * evidently a fixed cross-language property, not an English-only label — so
+ * matching the Japanese candidate whose OWN `variantIndex` equals the
+ * already-resolved English pick's `variantIndex` generalizes correctly to
+ * any card sharing this pattern, without a per-card tag table.
+ */
+function pickVariantForJapanese(matches: BerryWalletCard[], englishTarget: BerryWalletCard | undefined): BerryWalletCard {
+  const targetIndex = englishTarget ? variantIndex(englishTarget) : undefined;
+  if (targetIndex !== undefined) {
+    const aligned = matches.find((c) => variantIndex(c) === targetIndex);
+    if (aligned) return aligned;
   }
-  const sorted = [...matches].sort((a, b) => variantIndex(a) - variantIndex(b));
-  return sorted[sorted.length - 1];
+  return highestVariant(matches);
 }
 
 /**
@@ -209,6 +239,14 @@ function pickVariant(matches: BerryWalletCard[], variantTags?: string[]): BerryW
  * walk of English's 77 sets exhausted it during this integration's own
  * testing — for the rarer case the guess misses (a starter-deck/promo code
  * that isn't its own set, or a reprint living in a different set).
+ *
+ * For Japanese with more than one candidate, this also re-resolves the
+ * SAME card_number+variantTags in English (one extra, cheap, memoized call —
+ * see berryWalletFetch's own 36h dedup) purely to align variant identity by
+ * V-number; see pickVariantForJapanese's own comment for why that beats
+ * guessing blind. A failure there degrades to the old "highest V-number"
+ * guess rather than failing the whole lookup — same non-fatal shape every
+ * other cross-source call in this codebase follows.
  */
 export async function findCardInLanguage(
   cardNumber: string,
@@ -223,7 +261,22 @@ export async function findCardInLanguage(
     const cards = await getSetCards(set.set_code);
     const matches = cards.filter((c) => c.card_number === cardNumber || c.name.includes(cardNumber));
     if (matches.length === 0) continue;
-    return { card: matches.length === 1 ? matches[0] : pickVariant(matches, variantTags), set };
+    if (matches.length === 1) return { card: matches[0], set };
+
+    if (language === "en") {
+      const card = pickVariantByTag(matches, variantTags) ?? highestVariant(matches);
+      return { card, set };
+    }
+
+    let englishTarget: BerryWalletCard | undefined;
+    try {
+      const englishMatch = await findCardInLanguage(cardNumber, "en", variantTags);
+      englishTarget = englishMatch?.card;
+    } catch {
+      // Non-fatal — pickVariantForJapanese's own fallback (highest
+      // V-number) covers this exactly the way the old code always did.
+    }
+    return { card: pickVariantForJapanese(matches, englishTarget), set };
   }
   return undefined;
 }

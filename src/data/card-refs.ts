@@ -120,11 +120,13 @@ export const cardRefs: CardRef[] = [
   {
     // Both English and Japanese identity real, via BerryWallet — confirmed
     // live: card_number OP09-004 has 4 real Japanese variants (V.1-V.4),
-    // and the highest (V.4) is the Manga print (price-confirmed against the
-    // English side's separately-listed Manga variant — see
-    // lib/berrywallet.ts's pickVariant doc comment). The canonical page
-    // shows English (see CardRef's own doc comment on why); Japanese lives
-    // at /products/shanks-op09-004/ja.
+    // and V.4 is the Manga print — the same V-number as the English side's
+    // separately-listed Manga variant, which is how the two are actually
+    // matched now (see lib/berrywallet.ts's pickVariantForJapanese doc
+    // comment; this pairing was the confirming half of that fix, alongside
+    // Marshall D. Teach's OP09-093, whose requested English variant is NOT
+    // the highest V-number). The canonical page shows English (see CardRef's
+    // own doc comment on why); Japanese lives at /products/shanks-op09-004/ja.
     franchise: "one-piece",
     tcg: "one-piece",
     slug: "shanks-op09-004",

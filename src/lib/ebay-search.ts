@@ -40,19 +40,6 @@ const PROFESSIONAL_GRADER_PARAM =
  * parenthetical breaks eBay's own query parsing, not just an aesthetic
  * concern. Stripped here, scoped to the search query only — card.name
  * itself (used in page titles, JSON-LD, breadcrumbs, etc.) is untouched.
- */
-/**
- * apitcg.com's `product.name` bakes the print-variant descriptor into the
- * name itself for some cards — e.g. "Gengar VMAX (Alternate Art Secret)" —
- * duplicating what `card.rarity` already carries separately ("Secret Rare"
- * etc). That parenthetical is real signal for a human reading the card's
- * own name, but it's noise in a *search query*: comparing two real,
- * hand-tested eBay search URLs for two different cards, the one WITHOUT a
- * parenthetical in its name triggered eBay's filters correctly, and the one
- * WITH one (this Gengar VMAX case) did not — direct evidence that the
- * parenthetical breaks eBay's own query parsing, not just an aesthetic
- * concern. Stripped here, scoped to the search query only — card.name
- * itself (used in page titles, JSON-LD, breadcrumbs, etc.) is untouched.
  *
  * Exported so lib/tcgdex.ts can search TCGdex's catalog using the same
  * clean name — the parenthetical would break TCGdex's own name search the
@@ -95,18 +82,36 @@ export function cleanCardName(card: Card): string {
  * precision problem. Revisit with a more systematic approach if false
  * positives turn out to matter in practice.
  *
- * `termsOverride` bypasses the name/number composition entirely when given
- * — One Piece's own query shape (see graded-market.ts) is "<real print
- * name> <set name>", not "<name> <number>": a One Piece listing's title is
- * far more reliably built from its variant name and set than from the bare
- * OP##-### code the way a Pokémon listing reliably includes its printed
- * fraction. nameOverride/numberOverride are ignored when this is set.
+ * Every composed string passes through cleanQueryText below before it's
+ * returned — see that function's own comment for why.
  */
-export function cardSearchTerms(card: Card, nameOverride?: string, numberOverride?: string, termsOverride?: string): string {
-  if (termsOverride !== undefined) return termsOverride;
+export function cardSearchTerms(card: Card, nameOverride?: string, numberOverride?: string): string {
   const name = nameOverride ?? cleanCardName(card);
   const number = numberOverride ?? card.number;
-  return number ? `${name} ${number}` : name;
+  return cleanQueryText(number ? `${name} ${number}` : name);
+}
+
+/**
+ * Strips punctuation that breaks eBay's own `_nkw` matching rather than
+ * helping it, and is common in exactly the kind of raw catalog name this
+ * function's caller substitutes in via `nameOverride` (e.g. BerryWallet's
+ * own One Piece names, see graded-market.ts). Confirmed live: BerryWallet's
+ * `Eustass"Captain"Kid` — quote marks jammed directly against the letters,
+ * unlike how real sellers write it ("Eustass "Captain" Kid", with spaces) —
+ * took a search from real, well-matched listings to zero results and no
+ * fallback at all; replacing each quote/apostrophe character with a space
+ * (never deleting it outright, which would instead merge the surrounding
+ * words together) recovered them. General on purpose, not a One Piece
+ * special case: this runs on every query this function builds, Pokémon
+ * included — a card whose real name carries an apostrophe (e.g. Pokémon's
+ * own "Farfetch'd") would hit the identical failure mode the moment one
+ * gets tracked, and this is what stops that from ever needing its own fix.
+ */
+function cleanQueryText(text: string): string {
+  return text
+    .replace(/["'‘’“”]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /**
@@ -145,18 +150,17 @@ export function cardSearchTerms(card: Card, nameOverride?: string, numberOverrid
  * search's own fixed-price restriction is about keeping *our* displayed
  * median a stable, comparable number, not about what's worth browsing.
  *
- * `nameOverride`/`numberOverride`/`termsOverride` are threaded straight
- * through to cardSearchTerms — see its doc comment.
+ * `nameOverride`/`numberOverride` are threaded straight through to
+ * cardSearchTerms — see its doc comment.
  */
 export function conditionSearchLink(
   card: Card,
   condition: EbayCondition,
   language: EbayLanguage = "English",
   nameOverride?: string,
-  numberOverride?: string,
-  termsOverride?: string
+  numberOverride?: string
 ): string {
-  const terms = cardSearchTerms(card, nameOverride, numberOverride, termsOverride);
+  const terms = cardSearchTerms(card, nameOverride, numberOverride);
   const nkw = condition === "Raw" ? terms : `${terms} ${condition}`;
   const params: Record<string, string> = {
     _dcat: CCG_INDIVIDUAL_CARDS_CATEGORY,
