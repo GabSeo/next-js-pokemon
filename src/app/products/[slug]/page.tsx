@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductPageContent, type LocaleLink, japanLocaleLink } from "@/components/product-page-content";
 import { getGradedMarketData, gradedMarketOffersJsonLd } from "@/lib/graded-market";
-import { franchiseLabel, getAllCards, getCardBySlug, getFrenchCardText } from "@/lib/cards";
+import { franchiseLabel, getAllCards, getCardBySlug, getFrenchCardText, getOnePieceJapaneseText } from "@/lib/cards";
 import { absoluteUrl } from "@/lib/site";
 import { priceStatement } from "@/lib/price-display";
 import { cardRefs } from "@/data/card-refs";
@@ -23,15 +23,20 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const card = await getCardBySlug(slug);
   if (!card) return {};
 
-  // Only claim an "fr" alternate when a real TCGdex translation exists —
-  // an hreflang pointing at a URL that doesn't get built (see the /fr
-  // route's dynamicParams = false) would be worse than not listing it.
+  // Only claim an "fr"/"ja" alternate when a real translation exists — an
+  // hreflang pointing at a URL that doesn't get built (see the /fr and /ja
+  // routes' own dynamicParams = false) would be worse than not listing it.
   const fr = await getFrenchCardText(card);
   const languages: Record<string, string> = {
     "x-default": absoluteUrl(`/products/${card.slug}`),
     en: absoluteUrl(`/products/${card.slug}`),
   };
   if (fr.translated) languages.fr = absoluteUrl(`/products/${card.slug}/fr`);
+  if (card.franchise === "one-piece") {
+    const ref = cardRefs.find((r) => r.slug === card.slug);
+    const ja = ref ? await getOnePieceJapaneseText(card, ref) : undefined;
+    if (ja?.translated) languages.ja = absoluteUrl(`/products/${card.slug}/ja`);
+  }
 
   return {
     title: `${card.name} (${card.number ?? ""}) price`,
@@ -125,23 +130,21 @@ export default async function ProductPage({ params }: PageProps) {
     ],
   };
 
-  // One Piece has no /fr or /ja route at all (see those files' own
-  // generateStaticParams — TCGdex, the only French source, has zero One
-  // Piece coverage), so its Market toggle means something different from
-  // Pokémon's: not "view this same card in another language's real page,"
-  // but "which real language is this card's own identity actually sourced
-  // from" (see data/card-refs.ts's berryWalletLanguage) — US/JP show which
-  // one is real and active, FR is always an inert placeholder (BerryWallet,
-  // the only source with a real language split for One Piece, confirmed
-  // live to have zero French sets — see lib/berrywallet.ts's file header).
+  // One Piece: the canonical page is always English (see data/card-refs.ts's
+  // berryWalletEnabled comment on why), and JP is a real link to /ja
+  // whenever BerryWallet actually has a Japanese match for this card — same
+  // "only link to what's real" rule /fr already follows for Pokémon. FR
+  // stays a permanent inert placeholder: confirmed live, BerryWallet has
+  // zero French sets, so there's no real source to link to at all (see
+  // lib/berrywallet.ts's file header).
   const oneRef = card.franchise === "one-piece" ? cardRefs.find((r) => r.slug === card.slug) : undefined;
-  const oneLanguage = oneRef?.berryWalletLanguage ?? "en";
+  const oneJapanese = oneRef ? await getOnePieceJapaneseText(card, oneRef) : undefined;
 
   const localeLinks: LocaleLink[] =
     card.franchise === "one-piece"
       ? [
-          { code: "US", href: oneLanguage === "en" ? `/products/${card.slug}` : undefined, active: oneLanguage === "en", disabled: oneLanguage !== "en" },
-          { code: "JP", href: oneLanguage === "jp" ? `/products/${card.slug}` : undefined, active: oneLanguage === "jp", disabled: oneLanguage !== "jp" },
+          { code: "US", href: `/products/${card.slug}`, active: true },
+          { code: "JP", href: oneJapanese?.translated ? `/products/${card.slug}/ja` : undefined, active: false, disabled: !oneJapanese?.translated },
           { code: "FR", active: false, disabled: true },
         ]
       : [

@@ -25,19 +25,24 @@ export type CardRef = {
   lookup: CodeLookup | NameSetLookup;
   /**
    * One Piece only: card identity (name/set/rarity/image/current price)
-   * comes from BerryWallet in this language instead of apitcg's
-   * English-only TCGPlayer catalog — apitcg's own `lookup.code` (+
-   * `variantTags`) match still supplies price HISTORY, since BerryWallet
-   * has no history endpoint on its free tier (see lib/berrywallet.ts's file
-   * header). Omitted keeps the existing apitcg-only path: every Pokémon
-   * ref, and any One Piece ref with no real non-English source — see
-   * Marshall D. Teach below, which stays pure apitcg/English on purpose,
-   * because no French source exists anywhere (confirmed live: BerryWallet
-   * has zero French sets) — same honesty rule getFrenchCardText already
-   * follows for Pokémon: echo the real identity back rather than fabricate
-   * a translation that doesn't exist.
+   * comes from BerryWallet instead of apitcg's English-only TCGPlayer
+   * catalog — apitcg's own `lookup.code` (+ `variantTags`) match still
+   * supplies price HISTORY regardless, since BerryWallet has no history
+   * endpoint on its free tier (see lib/berrywallet.ts's file header).
+   *
+   * When true, BOTH English and Japanese identity get resolved — English is
+   * always the canonical `/products/[slug]` page (same "the page/UI is
+   * English regardless of a card's real data language" rule the French page
+   * already follows), Japanese becomes the real `/products/[slug]/ja`
+   * alternate (see cards.ts's getOnePieceJapaneseText, the One Piece
+   * counterpart to getFrenchCardText). French gets neither: confirmed live,
+   * BerryWallet has zero French sets, so a One Piece card's FR toggle is
+   * always the inert "no real source" placeholder, never a fabricated
+   * translation — same honesty rule getFrenchCardText already follows.
+   *
+   * Omitted keeps the plain apitcg-only path (every Pokémon ref).
    */
-  berryWalletLanguage?: "en" | "jp";
+  berryWalletEnabled?: boolean;
 };
 
 /**
@@ -71,34 +76,31 @@ export const cardRefs: CardRef[] = [
     lookup: { by: "nameSet", name: "Ethan's Typhlosion", setName: "Destined Rivals", number: "190" },
   },
   {
-    // Japanese-print identity, via BerryWallet's JP-language set catalog —
-    // confirmed live: card_number OP09-004 has 4 real Japanese variants
-    // (V.1-V.4), and the highest (V.4) is the Manga print (price-confirmed
-    // against the English side's separately-listed Manga variant — see
-    // lib/berrywallet.ts's pickVariant doc comment).
+    // Both English and Japanese identity real, via BerryWallet — confirmed
+    // live: card_number OP09-004 has 4 real Japanese variants (V.1-V.4),
+    // and the highest (V.4) is the Manga print (price-confirmed against the
+    // English side's separately-listed Manga variant — see
+    // lib/berrywallet.ts's pickVariant doc comment). The canonical page
+    // shows English (see CardRef's own doc comment on why); Japanese lives
+    // at /products/shanks-op09-004/ja.
     franchise: "one-piece",
     tcg: "one-piece",
     slug: "shanks-op09-004",
     displayName: "Shanks",
     character: "Shanks",
     lookup: { by: "code", code: "OP09-004", variantTags: ["Manga"] },
-    berryWalletLanguage: "jp",
+    berryWalletEnabled: true,
   },
   {
-    // English-print identity, via BerryWallet's EN-language set catalog.
     franchise: "one-piece",
     tcg: "one-piece",
     slug: "eustass-captain-kid-op05-074",
     displayName: 'Eustass "Captain" Kid',
     character: 'Eustass "Captain" Kid',
     lookup: { by: "code", code: "OP05-074", variantTags: ["Manga"] },
-    berryWalletLanguage: "en",
+    berryWalletEnabled: true,
   },
   {
-    // No berryWalletLanguage: no French source exists anywhere for One
-    // Piece (see CardRef's own doc comment) — this card represents the
-    // "French" test case precisely by staying on the plain apitcg/English
-    // path, same as every One Piece card before BerryWallet existed.
     // variantTags picks the Wanted Poster print specifically — apitcg's own
     // catalog for OP09-093 also has an SP Gold/Silver variant, but Wanted
     // Poster is the one actually wanted here, not SP (the two names were
@@ -110,5 +112,6 @@ export const cardRefs: CardRef[] = [
     displayName: "Marshall D. Teach",
     character: "Marshall D. Teach",
     lookup: { by: "code", code: "OP09-093", variantTags: ["Wanted Poster"] },
+    berryWalletEnabled: true,
   },
 ];

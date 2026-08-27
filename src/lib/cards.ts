@@ -104,19 +104,23 @@ async function resolveProduct(ref: CardRef): Promise<ApitcgProduct | undefined> 
 }
 
 /**
- * BerryWallet match for a One Piece ref with a real language source
- * (`berryWalletLanguage` set on the CardRef) — non-fatal on any failure,
- * same resilience shape as resolveTcgdexCard. Only ever attempted for a
- * "code" lookup (every current One Piece ref), since BerryWallet is keyed
- * by card_number the same way apitcg's code lookup is. This supplies
- * identity only (name/set/rarity/image/current price) — price HISTORY still
- * always comes from apitcg below, since BerryWallet has no history endpoint
- * on its free tier (see lib/berrywallet.ts's file header).
+ * BerryWallet match for a One Piece ref with `berryWalletEnabled` set —
+ * always English, the canonical page's language (see CardRef's own doc
+ * comment on why); the real Japanese alternate is a separate resolution,
+ * getOnePieceJapaneseText below, mirroring how getFrenchCardText is a
+ * separate call from the canonical Pokémon resolution rather than baked
+ * into this same function. Non-fatal on any failure, same resilience shape
+ * as resolveTcgdexCard. Only ever attempted for a "code" lookup (every
+ * current One Piece ref), since BerryWallet is keyed by card_number the
+ * same way apitcg's code lookup is. This supplies identity only (name/set/
+ * rarity/image/current price) — price HISTORY still always comes from
+ * apitcg below, since BerryWallet has no history endpoint on its free tier
+ * (see lib/berrywallet.ts's file header).
  */
 async function resolveBerryWalletCard(ref: CardRef): Promise<{ card: BerryWalletCard; set: BerryWalletSet } | undefined> {
-  if (ref.tcg !== "one-piece" || !ref.berryWalletLanguage || ref.lookup.by !== "code") return undefined;
+  if (ref.tcg !== "one-piece" || !ref.berryWalletEnabled || ref.lookup.by !== "code") return undefined;
   try {
-    return await findCardInLanguage(ref.lookup.code, ref.berryWalletLanguage, ref.lookup.variantTags);
+    return await findCardInLanguage(ref.lookup.code, "en", ref.lookup.variantTags);
   } catch (err) {
     logUpstreamOnce(`berrywallet:${ref.slug}`, `[cards] BerryWallet lookup failed for ${ref.slug} — ${describeUpstreamError(err)}`);
     return undefined;
@@ -378,6 +382,46 @@ export async function getFrenchCardText(card: Card): Promise<LocalizedCardText> 
     };
   } catch (err) {
     logUpstreamOnce(`tcgdex-fr:${card.slug}`, `[cards] French TCGdex lookup failed for ${card.slug} — ${describeUpstreamError(err)}`);
+    return fallback;
+  }
+}
+
+/**
+ * Japanese display text for a One Piece card — the One Piece counterpart to
+ * getFrenchCardText above, same contract (name/set/rarity/image only,
+ * `translated: false` echoes the canonical English fields back rather than
+ * fabricating anything) and same non-fatal resilience shape.
+ *
+ * One real structural difference from the French/TCGdex case: TCGdex's `id`
+ * is one stable identifier that a different `lang` path re-fetches
+ * translated text for, so getFrenchCardText only needs `card.tcgdexId`.
+ * BerryWallet has no such thing — confirmed live, an English print and a
+ * Japanese print of "the same" card_number are entirely separate catalog
+ * entries with unrelated `op_` ids (see berrywallet.ts's file header), so
+ * this needs `ref` for a fresh `findCardInLanguage(code, "jp", ...)`
+ * search, the same shape resolveBerryWalletCard already does for English.
+ */
+export async function getOnePieceJapaneseText(card: Card, ref: CardRef): Promise<LocalizedCardText> {
+  const fallback: LocalizedCardText = {
+    name: card.name,
+    set: card.set,
+    rarity: card.rarity,
+    imageUrl: card.imageUrl,
+    translated: false,
+  };
+  if (!ref.berryWalletEnabled || ref.lookup.by !== "code") return fallback;
+  try {
+    const match = await findCardInLanguage(ref.lookup.code, "jp", ref.lookup.variantTags);
+    if (!match) return fallback;
+    return {
+      name: card.name, // BerryWallet's raw name isn't presentation-ready (see resolveBerryWalletCard's own comment) — the character's real name doesn't change across languages here anyway.
+      set: match.set.name,
+      rarity: match.card.rarity ?? card.rarity,
+      imageUrl: berryWalletCardImageUrl(match.card.id),
+      translated: true,
+    };
+  } catch (err) {
+    logUpstreamOnce(`berrywallet-ja:${ref.slug}`, `[cards] BerryWallet Japanese lookup failed for ${ref.slug} — ${describeUpstreamError(err)}`);
     return fallback;
   }
 }
