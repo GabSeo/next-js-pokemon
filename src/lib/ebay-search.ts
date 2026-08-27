@@ -100,6 +100,22 @@ export function cardSearchTerms(card: Card, nameOverride?: string, numberOverrid
 }
 
 /**
+ * The first word of a (possibly multi-word) variant tag — e.g. "Wanted"
+ * from "Wanted Poster". Shared between the One Piece query text
+ * (graded-market.ts) and titleMatchesCard's own variantTags check
+ * (lib/ebay-browse.ts) so both apply the same rule: confirmed live that
+ * real sellers commonly abbreviate a multi-word variant name to its first
+ * word alone, never the full official phrase — using the full tag in the
+ * QUERY text is actively worse than the first word, not just less precise:
+ * for Marshall D. Teach, "Wanted Poster OP09-093 PSA 10" returned 3 results
+ * and 0 survived the title check, while "Wanted OP09-093 PSA 10" (first
+ * word only) returned 7 real, correctly-filtered matches.
+ */
+export function tagFirstWord(tag: string): string {
+  return tag.trim().split(/\s+/)[0];
+}
+
+/**
  * Strips punctuation that breaks eBay's own `_nkw` matching rather than
  * helping it, and is common in exactly the kind of raw catalog name this
  * function's caller substitutes in via `nameOverride` (e.g. BerryWallet's

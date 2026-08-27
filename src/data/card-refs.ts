@@ -158,4 +158,23 @@ export const cardRefs: CardRef[] = [
     lookup: { by: "code", code: "OP09-093", variantTags: ["Wanted Poster"] },
     berryWalletEnabled: true,
   },
+  {
+    // A real, separately-catalogued promo product, not one of the ordinary
+    // V.1-V.4 tiered prints OP09-061's own guessed set lists — confirmed
+    // live via searchCards (BerryWallet's flat, cross-product index), not
+    // getSetCards on the guessed set alone, which never surfaces it (see
+    // findVariantAcrossProducts's own comment, lib/berrywallet.ts, for why
+    // and how this is found generally rather than hand-picked here). No
+    // Japanese counterpart found this way — the /ja route (and JP locale
+    // link) for this card stays on the inert placeholder rather than
+    // guessing one, same honesty rule pickVariantForJapanese's own comment
+    // documents for exactly this case.
+    franchise: "one-piece",
+    tcg: "one-piece",
+    slug: "monkey-d-luffy-op09-061",
+    displayName: "Monkey D. Luffy",
+    character: "Monkey D. Luffy",
+    lookup: { by: "code", code: "OP09-061", variantTags: ["2nd Anniversary Set"] },
+    berryWalletEnabled: true,
+  },
 ];

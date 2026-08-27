@@ -211,14 +211,60 @@ function highestVariant(matches: BerryWalletCard[]): BerryWalletCard {
  * matching the Japanese candidate whose OWN `variantIndex` equals the
  * already-resolved English pick's `variantIndex` generalizes correctly to
  * any card sharing this pattern, without a per-card tag table.
+ *
+ * Returns undefined — no guess at all — when the English target is a
+ * confirmed promo product (findVariantAcrossProducts' own case: a real
+ * match, just outside the normal V.1-V.4 tiering, so it has no parseable
+ * variantIndex). That's a different situation from "nothing resolved on the
+ * English side" (still worth a best-guess fallback, same as before this
+ * function existed): here we positively know the requested print doesn't
+ * follow the guessed set's ordinary tiering, so assuming its Japanese
+ * counterpart is simply "whichever ordinary variant is priciest" would be
+ * a fabricated pairing, not a real one — confirmed live, OP09-061's English
+ * "2nd Anniversary Set" promo has no Japanese counterpart discoverable this
+ * way, and the old blind guess landed on the unrelated V.2 Parallel print
+ * instead. "No real Japanese match for this card" is the honest answer,
+ * matching every other real/illustrative honesty rule in this codebase —
+ * not a print that merely happens to share the card_number.
  */
-function pickVariantForJapanese(matches: BerryWalletCard[], englishTarget: BerryWalletCard | undefined): BerryWalletCard {
-  const targetIndex = englishTarget ? variantIndex(englishTarget) : undefined;
-  if (targetIndex !== undefined) {
-    const aligned = matches.find((c) => variantIndex(c) === targetIndex);
-    if (aligned) return aligned;
-  }
-  return highestVariant(matches);
+function pickVariantForJapanese(matches: BerryWalletCard[], englishTarget: BerryWalletCard | undefined): BerryWalletCard | undefined {
+  if (!englishTarget) return highestVariant(matches);
+  const targetIndex = variantIndex(englishTarget);
+  if (targetIndex === undefined) return undefined;
+  return matches.find((c) => variantIndex(c) === targetIndex) ?? highestVariant(matches);
+}
+
+/**
+ * Cross-product fallback for a requested variant that isn't in the guessed
+ * set at all — a promotional release (an anniversary-set promo, a jumbo
+ * print, an event-pack exclusive) shares its card_number with the mainline
+ * card but is catalogued as its own separate BerryWallet product, which
+ * getSetCards on one guessed set can never surface (it only ever lists what
+ * that one set actually contains). searchCards's flat, language-blind index
+ * does find it, in one call: confirmed live, OP09-061's real "English
+ * Version 2nd Anniversary Set" promo ($528 real market price) doesn't
+ * appear among getSetCards("OP09")'s 2 candidates at all, but is 1 of 5
+ * exact-card_number results from a single searchCards("OP09-061") call.
+ *
+ * Only ever called when the guessed set already found *something* for this
+ * card_number but not the requested tag — a second cheap, 36h-memoized call
+ * (see berryWalletFetch), not the expensive full-set walk this file's own
+ * header describes almost exhausting the free tier's rate limit.
+ *
+ * English only. A promo product's own `name` is self-descriptive enough to
+ * tag-match directly ("English Version 2nd Anniversary Set" contains
+ * "2nd Anniversary Set"). This isn't attempted for Japanese: this file's own
+ * header already establishes the Japanese side carries no descriptive tags
+ * even under normal set-scoped search, so there's no confirmed reason to
+ * expect a promo product's Japanese name would be any more descriptive —
+ * a Japanese promo counterpart, if one even exists, stays unresolved rather
+ * than guessed at from an unconfirmed assumption.
+ */
+async function findVariantAcrossProducts(cardNumber: string, variantTags: string[]): Promise<BerryWalletCard | undefined> {
+  const candidates = await searchCards(cardNumber, 50);
+  return candidates.find(
+    (c) => c.card_number === cardNumber && variantTags.every((tag) => c.name.toLowerCase().includes(tag.toLowerCase()))
+  );
 }
 
 /**
@@ -261,11 +307,21 @@ export async function findCardInLanguage(
     const cards = await getSetCards(set.set_code);
     const matches = cards.filter((c) => c.card_number === cardNumber || c.name.includes(cardNumber));
     if (matches.length === 0) continue;
-    if (matches.length === 1) return { card: matches[0], set };
 
     if (language === "en") {
-      const card = pickVariantByTag(matches, variantTags) ?? highestVariant(matches);
-      return { card, set };
+      const tagged = pickVariantByTag(matches, variantTags);
+      if (tagged) return { card: tagged, set };
+      // The guessed set has this card_number but not the requested variant
+      // — check whether it's a separate promo product instead (see
+      // findVariantAcrossProducts' own comment) before settling for
+      // "highest in the wrong set". Reports the guessed set alongside a
+      // cross-product match too — it's the best real set label available;
+      // a promo product carries no set of its own to report instead.
+      if (variantTags && variantTags.length > 0) {
+        const crossProduct = await findVariantAcrossProducts(cardNumber, variantTags);
+        if (crossProduct) return { card: crossProduct, set };
+      }
+      return { card: highestVariant(matches), set };
     }
 
     let englishTarget: BerryWalletCard | undefined;
@@ -276,7 +332,12 @@ export async function findCardInLanguage(
       // Non-fatal — pickVariantForJapanese's own fallback (highest
       // V-number) covers this exactly the way the old code always did.
     }
-    return { card: pickVariantForJapanese(matches, englishTarget), set };
+    // undefined here means pickVariantForJapanese positively determined
+    // there's no honest Japanese match — see its own comment — not a
+    // failure to look; correctly propagates as "no match" rather than
+    // falling through to try another set for a card_number already found.
+    const japaneseCard = pickVariantForJapanese(matches, englishTarget);
+    return japaneseCard ? { card: japaneseCard, set } : undefined;
   }
   return undefined;
 }

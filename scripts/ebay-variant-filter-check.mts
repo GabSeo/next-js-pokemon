@@ -1,9 +1,11 @@
 #!/usr/bin/env -S npx tsx
 /**
- * Live end-to-end check of the new bare-number query + variantTags title
- * filter: calls the real searchActiveListings (real eBay Browse API call,
- * real EBAY_CLIENT_ID/SECRET) for a card, and prints what survives
- * titleMatchesCard's variantTags check vs what the raw broad query found.
+ * Live end-to-end check of the real query shape (see graded-market.ts's own
+ * comment: number + variantTags in the query text, not just as a title
+ * filter) — calls the real searchActiveListings (real eBay Browse API call,
+ * real EBAY_CLIENT_ID/SECRET) for a card, comparing a bare number-only
+ * query against number+variantTags, both still passed through
+ * titleMatchesCard's own variantTags check.
  *
  * Usage: npx tsx scripts/ebay-variant-filter-check.mts <number> <condition> <language> [variantTag...]
  *   npx tsx scripts/ebay-variant-filter-check.mts OP09-093 "PSA 10" English "Wanted Poster"
@@ -56,12 +58,20 @@ const fakeCard: Card = {
   priceRange: null, character: "test",
 };
 
-console.log(`\n=== WITHOUT variantTags (raw broad match) ===`);
-const broad = await searchActiveListings(fakeCard, typedCondition, typedLanguage, "", undefined, undefined);
-console.log(`total=${broad.total}, shown=${broad.listings.length}`);
-broad.listings.forEach((l) => console.log(`  - ${l.title}`));
+console.log(`\n=== Bare number query, no variantTags anywhere ===`);
+const bare = await searchActiveListings(fakeCard, typedCondition, typedLanguage, "", undefined, undefined);
+console.log(`total=${bare.total}, shown=${bare.listings.length}`);
+bare.listings.forEach((l) => console.log(`  - ${l.title}`));
 
-console.log(`\n=== WITH variantTags=${JSON.stringify(variantTags)} ===`);
-const filtered = await searchActiveListings(fakeCard, typedCondition, typedLanguage, "", undefined, variantTags.length ? variantTags : undefined);
-console.log(`total=${filtered.total}, shown=${filtered.listings.length}`);
-filtered.listings.forEach((l) => console.log(`  - ${l.title}`));
+const tagsForQuery = variantTags.length ? variantTags.join(" ") : "";
+console.log(`\n=== Real query shape: variantTags in the query text ("${tagsForQuery || "(none)"}") + title filter ===`);
+const withTags = await searchActiveListings(
+  fakeCard,
+  typedCondition,
+  typedLanguage,
+  tagsForQuery,
+  undefined,
+  variantTags.length ? variantTags : undefined
+);
+console.log(`total=${withTags.total}, shown=${withTags.listings.length}`);
+withTags.listings.forEach((l) => console.log(`  - ${l.title}`));

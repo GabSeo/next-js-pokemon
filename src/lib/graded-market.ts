@@ -1,4 +1,4 @@
-import { conditionSearchLink } from "@/lib/ebay-search";
+import { conditionSearchLink, tagFirstWord } from "@/lib/ebay-search";
 import { searchActiveListings, type EbayCondition, type EbayLanguage } from "@/lib/ebay-browse";
 import { illustrativeActiveListings, illustrativeSoldListings, illustrativeVintedFeed } from "@/lib/illustrative";
 import { DEFAULT_PSA_GRADING_COST_USD, gradingRoi, median } from "@/lib/roi";
@@ -454,31 +454,12 @@ export async function getGradedMarketData(card: Card): Promise<GradedMarketData 
     }
   }
 
-  // One Piece's own query text: no name at all, just the card's own
-  // universal code — cardSearchTerms treats an explicit "" nameOverride as
-  // "no name" (not "use the default"; only `undefined` means that), so this
-  // produces "OP09-093 [condition]" with nothing character- or
-  // variant-specific in it. Confirmed live: that bare, broad query reliably
-  // finds real listings (46 results for OP09-093 PSA 10, correctly
-  // filtered) where guessing at print-name text sometimes found none at
-  // all. The variant precision this gives up moves to titleMatchesCard's
-  // own `variantTags` check below instead — filtering the real listings
-  // this broad query already found, rather than trying to get eBay's own
-  // text search to find only the right variant in the first place. Not
-  // translated per language: same reasoning precisionAspectFilter's own
-  // comment gives for Pokémon — `language` (the structured aspect_filter)
-  // is what distinguishes the English tab from the Japanese one, not query
-  // text, and a bare number needs no translation anyway (see cards.ts's own
-  // comment on why the code is language-universal for One Piece).
-  //
-  // Pokémon keeps `undefined` (the default: cleanCardName(card) + number),
-  // unaffected — its own printed fraction already reliably appears in real
-  // listing titles, so it never needed this at all.
-  const oneNameOverride = card.franchise === "one-piece" ? "" : undefined;
-
   // The specific print variant this card_number resolves to (e.g.
   // ["Wanted Poster"]) — see CardRef's own doc comment (data/card-refs.ts).
   // Only One Piece refs use the "code" lookup shape that carries this.
+  // Whatever real tag a future card carries here — Manga, SP Gold, Treasure
+  // Rare, a numbered Anniversary special, anything — flows straight through
+  // to both places below with no per-tag handling needed.
   const oneVariantTags =
     card.franchise === "one-piece"
       ? (() => {
@@ -486,6 +467,49 @@ export async function getGradedMarketData(card: Card): Promise<GradedMarketData 
           return ref && ref.lookup.by === "code" ? ref.lookup.variantTags : undefined;
         })()
       : undefined;
+
+  // One Piece's own query text: the card's own universal code plus its
+  // variant tag(s), nothing else — no character name, no set name.
+  // cardSearchTerms treats an explicit "" nameOverride as "no name" (not
+  // "use the default"; only `undefined` means that), so with no
+  // variantTags this produces a bare "OP09-093 [condition]".
+  //
+  // The variant tag matters in the query text itself, not just as a filter
+  // on what comes back — confirmed live: a bare number query sorted newest-
+  // first can return 20 results spanning every print of that card_number,
+  // with the one variant actually being tracked barely represented (Shanks'
+  // own Manga print: 1 real survivor). Adding the variant word to the query
+  // — "OP09-004 Manga PSA 10" — narrows eBay's own match set to (mostly)
+  // that variant *before* the newest-first sort and fetch limit apply, so
+  // the fetched window is no longer diluted by every other print sharing
+  // the number. Same search jumped from 1 real result to 7. titleMatchesCard
+  // still checks variantTags independently below — eBay's own text
+  // matching isn't exact-phrase, so a query hint narrows the field but
+  // doesn't guarantee every result that comes back is actually the right
+  // print; the title check is what actually enforces that.
+  //
+  // tagFirstWord, not the tag verbatim — confirmed live this isn't just a
+  // precision nicety, the full phrase is actively worse: "Wanted Poster
+  // OP09-093 PSA 10" returned 3 results and 0 survived the title check,
+  // where "Wanted OP09-093 PSA 10" (first word only) returned 7 real,
+  // correctly-filtered matches. Real sellers write the short form, never
+  // the full official variant name, so asking eBay to match the full phrase
+  // asks it to match a word ("Poster") that doesn't actually appear
+  // anywhere in the real listings this is trying to find.
+  //
+  // Not translated per language, same reasoning precisionAspectFilter's own
+  // comment gives for Pokémon — `language` (the structured aspect_filter)
+  // is what distinguishes the English tab from the Japanese one, not query
+  // text, and neither the number nor the variant tag needs translation
+  // anyway (see cards.ts's own comment on why the code is language-
+  // universal for One Piece; variant tags are BerryWallet's own English-
+  // side naming, used as a search hint only, not shown anywhere as JP text).
+  //
+  // Pokémon keeps `undefined` (the default: cleanCardName(card) + number),
+  // unaffected — its own printed fraction already reliably appears in real
+  // listing titles, so it never needed any of this.
+  const oneNameOverride =
+    card.franchise === "one-piece" ? (oneVariantTags?.map(tagFirstWord).join(" ") ?? "") : undefined;
 
   const activeResults = await Promise.all(
     conditionTiers.flatMap((condition) =>

@@ -1,4 +1,4 @@
-import { cardSearchTerms } from "@/lib/ebay-search";
+import { cardSearchTerms, tagFirstWord } from "@/lib/ebay-search";
 import type { Card } from "@/lib/types";
 
 /**
@@ -202,20 +202,23 @@ function precisionAspectFilter(condition: EbayCondition, language?: EbayLanguage
  * every real Japanese result fails this check and silently degrades to the
  * illustrative preview.
  *
- * `variantTags` is the third, One Piece-specific check — this is where
- * variant precision actually lives now, not in the query text (see
- * graded-market.ts's own comment on why: a broad "card number + grade"
- * query reliably finds real listings; asking eBay's own text search to also
- * pick out one specific print among several sharing that number does not).
- * Each tag must appear in the title as either the full phrase or its own
- * first word — confirmed live that sellers commonly abbreviate a multi-word
- * variant name to its first word ("Wanted Poster" listed as just "Wanted"),
- * so requiring the full phrase verbatim would reject genuine matches. This
- * still isn't perfect (an abbreviation that drops the first word instead,
- * e.g. "Alt Art" for "Alternate Art", won't match either form) — accepted
- * as a real, known limitation rather than chased with a per-tag alias
- * table, which is exactly the kind of per-card exception this design is
- * trying to avoid.
+ * `variantTags` is the third, One Piece-specific check — the actual
+ * enforcement of variant precision, on real returned titles, rather than
+ * trusting the query text to have found only the right print (see
+ * graded-market.ts's own comment: the same tags also seed the query text
+ * now, via tagFirstWord below, but eBay's own text matching isn't
+ * exact-phrase, so a query hint narrows the field without guaranteeing
+ * every result that comes back is actually the right print — this check is
+ * what actually enforces that). Each tag must appear in the title as either
+ * the full phrase or its own first word (tagFirstWord, lib/ebay-search.ts,
+ * shared with the query-text builder) — confirmed live that sellers
+ * commonly abbreviate a multi-word variant name to its first word ("Wanted
+ * Poster" listed as just "Wanted"), so requiring the full phrase verbatim
+ * would reject genuine matches. This still isn't perfect (an abbreviation
+ * that drops the first word instead, e.g. "Alt Art" for "Alternate Art",
+ * won't match either form) — accepted as a real, known limitation rather
+ * than chased with a per-tag alias table, which is exactly the kind of
+ * per-card exception this design is trying to avoid.
  */
 function titleMatchesCard(title: string, card: Card, condition: EbayCondition, numberOverride?: string, variantTags?: string[]): boolean {
   const gradeOk =
@@ -234,8 +237,7 @@ function titleMatchesCard(title: string, card: Card, condition: EbayCondition, n
     const titleLower = title.toLowerCase();
     const tagOk = variantTags.every((tag) => {
       const tagLower = tag.toLowerCase();
-      const firstWord = tagLower.split(/\s+/)[0];
-      return titleLower.includes(tagLower) || titleLower.includes(firstWord);
+      return titleLower.includes(tagLower) || titleLower.includes(tagFirstWord(tagLower));
     });
     if (!tagOk) return false;
   }
