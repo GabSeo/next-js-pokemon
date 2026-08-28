@@ -1,4 +1,5 @@
 import { cardSearchTerms, tagFirstWord } from "@/lib/ebay-search";
+import { resilientFetch } from "@/lib/upstream";
 import type { Card } from "@/lib/types";
 
 /**
@@ -16,6 +17,19 @@ import type { Card } from "@/lib/types";
  * API call limits page) — if that hasn't been separately granted yet, the
  * token request below will fail with a scope/access error even with valid
  * client credentials.
+ *
+ * Both real requests here (the OAuth token, the search itself) go through
+ * upstream.ts's resilientFetch rather than a bare `fetch` — confirmed live
+ * this was the one client in the codebase still missing that: a burst of
+ * eBay 429s (up to 8 searches per card, times however many routes touch a
+ * card before graded-market.ts's own buildCached wrapper existed) had no
+ * circuit breaker to stop it from hammering an already-rate-limited eBay
+ * with the next card's 8 searches, unlike apitcg/TCGdex/PokéWallet/
+ * BerryWallet. See resilientFetch's RATE_LIMIT_BREAKER_OPEN_MS for what a
+ * 429 now does instead. A caught failure here still degrades to the
+ * clearly-tagged illustrative preview one tier at a time (see
+ * graded-market.ts's fetchActiveTier) — this only stops the retries from
+ * making the outage worse, it was never the reason a page could crash.
  */
 
 const TOKEN_URL = "https://api.ebay.com/identity/v1/oauth2/token";
@@ -25,6 +39,9 @@ const SEARCH_URL = "https://api.ebay.com/buy/browse/v1/item_summary/search";
 const CCG_INDIVIDUAL_CARDS_CATEGORY = "183454";
 
 const REVALIDATE_SECONDS = 60 * 60; // active listings churn much faster than apitcg's 36h card-data window
+
+/** Same value every other upstream client in this codebase uses — see apitcg.ts's own FETCH_TIMEOUT_MS comment. */
+const FETCH_TIMEOUT_MS = 6000;
 
 function credentials(): { id: string; secret: string } {
   const id = process.env.EBAY_CLIENT_ID;
@@ -58,29 +75,34 @@ async function getAccessToken(): Promise<string> {
   inFlightTokenRequest = (async () => {
     const { id, secret } = credentials();
     const basic = Buffer.from(`${id}:${secret}`).toString("base64");
-    const res = await fetch(TOKEN_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${basic}`,
-        "Content-Type": "application/x-www-form-urlencoded",
+    const res = await resilientFetch(
+      TOKEN_URL,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${basic}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          grant_type: "client_credentials",
+          scope: "https://api.ebay.com/oauth/api_scope",
+        }),
+        // NOT cache: "no-store" — that maps to Next's revalidate: 0, which
+        // taints the *entire calling route* as dynamic. This function only
+        // ever runs when the in-memory cachedToken above is empty or
+        // genuinely expired, so a real fresh token is always wanted
+        // regardless of what Next's Data Cache does here — and POST
+        // requests aren't cached by Next's Data Cache by default anyway, so
+        // a short positive revalidate costs nothing while staying
+        // compatible with /products/[slug]'s static generation. Confirmed
+        // live: omitting this (or using no-store) broke static rendering in
+        // production with "Dynamic server usage ... couldn't be rendered
+        // statically" and "Page changed from static to dynamic at runtime"
+        // errors.
+        next: { revalidate: 60 },
       },
-      body: new URLSearchParams({
-        grant_type: "client_credentials",
-        scope: "https://api.ebay.com/oauth/api_scope",
-      }),
-      // NOT cache: "no-store" — that maps to Next's revalidate: 0, which
-      // taints the *entire calling route* as dynamic. This function only
-      // ever runs when the in-memory cachedToken above is empty or genuinely
-      // expired, so a real fresh token is always wanted regardless of what
-      // Next's Data Cache does here — and POST requests aren't cached by
-      // Next's Data Cache by default anyway, so a short positive revalidate
-      // costs nothing while staying compatible with /products/[slug]'s
-      // static generation. Confirmed live: omitting this (or using
-      // no-store) broke static rendering in production with
-      // "Dynamic server usage ... couldn't be rendered statically" and
-      // "Page changed from static to dynamic at runtime" errors.
-      next: { revalidate: 60 },
-    });
+      FETCH_TIMEOUT_MS
+    );
     if (!res.ok) {
       throw new Error(`ebay oauth token request failed (${res.status}): ${await res.text()}`);
     }
@@ -335,27 +357,31 @@ async function runSearch(
   });
   if (sort) qs.set("sort", sort);
 
-  const res = await fetch(`${SEARCH_URL}?${qs}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "X-EBAY-C-MARKETPLACE-ID": "EBAY_US",
+  const res = await resilientFetch(
+    `${SEARCH_URL}?${qs}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "X-EBAY-C-MARKETPLACE-ID": "EBAY_US",
+      },
+      // cache: "force-cache" is required, not implied by next.revalidate —
+      // this Next version's own fetch reference says caching is opt-in and
+      // explicitly calls out a GET carrying an Authorization header (this
+      // one) as needing it. Without it, this request is only ever cached on
+      // a statically-prerendered render pass; any dynamic path — /api/mcp's
+      // get_graded_market tool, /api/price-check, a product page that falls
+      // through to on-demand rendering — refetches all 8 eBay searches on
+      // every single call, ignoring REVALIDATE_SECONDS and burning real
+      // quota against eBay's 5,000 calls/day limit for no freshness
+      // benefit. Same gap this codebase's own next.config.ts rewrite
+      // comment on /tools/price-checker?cardId= already documented hitting
+      // for this exact reason, worked around there by rewriting to a
+      // static path instead of fixing it at the source.
+      cache: "force-cache",
+      next: { revalidate: REVALIDATE_SECONDS },
     },
-    // cache: "force-cache" is required, not implied by next.revalidate —
-    // this Next version's own fetch reference says caching is opt-in and
-    // explicitly calls out a GET carrying an Authorization header (this one)
-    // as needing it. Without it, this request is only ever cached on a
-    // statically-prerendered render pass; any dynamic path — /api/mcp's
-    // get_graded_market tool, /api/price-check, a product page that falls
-    // through to on-demand rendering — refetches all 8 eBay searches on
-    // every single call, ignoring REVALIDATE_SECONDS and burning real quota
-    // against eBay's 5,000 calls/day limit for no freshness benefit. Same
-    // gap this codebase's own next.config.ts rewrite comment on
-    // /tools/price-checker?cardId= already documented hitting for this exact
-    // reason, worked around there by rewriting to a static path instead of
-    // fixing it at the source.
-    cache: "force-cache",
-    next: { revalidate: REVALIDATE_SECONDS },
-  });
+    FETCH_TIMEOUT_MS
+  );
   if (!res.ok) {
     throw new Error(`ebay browse search failed (${res.status}) for "${query}" [${condition}, sort=${sort ?? "bestMatch"}]: ${await res.text()}`);
   }
