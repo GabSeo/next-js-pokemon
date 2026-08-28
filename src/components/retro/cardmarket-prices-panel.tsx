@@ -21,7 +21,14 @@ export function CardmarketPricesPanel({ card }: { card: Card }) {
     { label: "Average", amount: cardmarket.avg },
     { label: "Low", amount: cardmarket.low },
     { label: "Trend", amount: cardmarket.trend },
-  ].filter((row): row is { label: string; amount: number } => row.amount !== undefined);
+    // `!= null` (not `!== undefined`) is deliberate: the type says `number`,
+    // but BerryWallet has been seen sending an explicit `null` through this
+    // exact field before it gets normalized in cards.ts — see
+    // BerryWalletCardmarketPrices's doc comment (lib/berrywallet.ts). A stale
+    // build cache or a future second cardmarket source could reintroduce a
+    // raw null here, and `.toLocaleString()` below would crash the whole
+    // page (and the static build) on it rather than just omitting one row.
+  ].filter((row): row is { label: string; amount: number } => row.amount != null);
 
   if (rows.length === 0) return null;
 

@@ -51,12 +51,18 @@ export type BerryWalletPriceBlock = {
 };
 
 export type BerryWalletCardmarketPrices = {
-  avg?: number;
-  low?: number;
-  trend?: number;
-  avg1?: number;
-  avg7?: number;
-  avg30?: number;
+  // Confirmed live: BerryWallet sends an explicit `null` (not omission) for
+  // any of these when Cardmarket has no data for that stat yet — same shape
+  // as direct_low_price above. Every consumer must normalize null to
+  // undefined before this reaches Card.cardmarket (lib/types.ts), which
+  // declares plain `number`, not `number | null` — see cards.ts's
+  // resolveCard/resolveOnePieceJapanese.
+  avg?: number | null;
+  low?: number | null;
+  trend?: number | null;
+  avg1?: number | null;
+  avg7?: number | null;
+  avg30?: number | null;
   updated_at?: string;
 };
 

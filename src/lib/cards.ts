@@ -153,7 +153,10 @@ function berryWalletPrice(card: BerryWalletCard): { price: number; currency: "US
     return { price: tcgplayer.market_price, currency: "USD", url: card.tcgplayer?.url, asOfDate: tcgplayer.updated_at };
   }
   const cardmarket = card.cardmarket?.prices;
-  if (cardmarket?.avg !== undefined) {
+  // `!= null` (not `!== undefined`) — BerryWallet sends explicit null, not
+  // omission, for a stat it has no data for yet (see
+  // BerryWalletCardmarketPrices's doc comment, lib/berrywallet.ts).
+  if (cardmarket?.avg != null) {
     return { price: cardmarket.avg, currency: "EUR", url: card.cardmarket?.product_url, asOfDate: cardmarket.updated_at };
   }
   return undefined;
@@ -285,9 +288,14 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
         // be present at once.
         cardmarket: berryWalletMatch.card.cardmarket
           ? {
-              avg: berryWalletMatch.card.cardmarket.prices?.avg,
-              low: berryWalletMatch.card.cardmarket.prices?.low,
-              trend: berryWalletMatch.card.cardmarket.prices?.trend,
+              // BerryWallet sends explicit null (not omission) for a stat
+              // Cardmarket has no data for yet — normalize to undefined here,
+              // the one place this crosses into Card.cardmarket's `number`
+              // (not `number | null`) fields. See BerryWalletCardmarketPrices's
+              // own doc comment (lib/berrywallet.ts).
+              avg: berryWalletMatch.card.cardmarket.prices?.avg ?? undefined,
+              low: berryWalletMatch.card.cardmarket.prices?.low ?? undefined,
+              trend: berryWalletMatch.card.cardmarket.prices?.trend ?? undefined,
               url: berryWalletMatch.card.cardmarket.product_url,
             }
           : undefined,
@@ -509,9 +517,11 @@ async function resolveOnePieceJapaneseText(card: Card, ref: CardRef): Promise<Lo
       // card.cardmarket here the way rarity falls back above.
       cardmarket: match.card.cardmarket
         ? {
-            avg: match.card.cardmarket.prices?.avg,
-            low: match.card.cardmarket.prices?.low,
-            trend: match.card.cardmarket.prices?.trend,
+            // See the English branch above (resolveCard) for why null needs
+            // normalizing to undefined here — same BerryWallet quirk.
+            avg: match.card.cardmarket.prices?.avg ?? undefined,
+            low: match.card.cardmarket.prices?.low ?? undefined,
+            trend: match.card.cardmarket.prices?.trend ?? undefined,
             url: match.card.cardmarket.product_url,
           }
         : undefined,
