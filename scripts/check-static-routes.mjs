@@ -81,10 +81,17 @@ function upstreamOutages() {
 const outages = upstreamOutages();
 const tcgdexDown = outages.has("api.tcgdex.net");
 // PokeWallet (Pokémon /ja) and BerryWallet (One Piece /ja) are two client
-// files but the same actual host and API key (see lib/berrywallet.ts's own
-// file header) — one outage or rate limit on that account takes out /ja's
-// data for both franchises at once, the same "genuinely nothing to build,
-// not a regression" situation the TCGdex/French case already handles.
+// files against the same actual host, api.pokewallet.io — now on their own
+// separate keys (POKEWALLET_API_KEY / BERRYWALLET_API_KEY, see
+// pokewallet.ts's and berrywallet.ts's own apiKey() comments) rather than
+// sharing one, but the outage marker below is still written per host, not
+// per key — see upstream.ts's noteFailure/markBuildOutage — so an outage on
+// either credential still marks this one host as down for this gate's
+// purposes. That's still correct here: this check only cares whether /ja
+// prerendered *zero* pages across both franchises, and a real outage on
+// either credential is a legitimate reason for that, the same
+// "genuinely nothing to build, not a regression" situation the TCGdex/French
+// case already handles.
 // Confirmed live: this account's own rate limit, exhausted during a session
 // of live verification testing, tripped during a real `next build` too and
 // hard-failed the whole deploy before this exemption existed.
@@ -184,7 +191,8 @@ if (tcgdexDown) {
 if (pokewalletDown && japaneseMarketEnabled()) {
   console.warn(`[check-static-routes] WARN: api.pokewallet.io was unreachable (or rate-limited) during this build.`);
   console.warn(`  /products/[slug]/ja has no other Japanese source for either franchise — PokeWallet backs`);
-  console.warn(`  Pokémon, BerryWallet backs One Piece, both the same host and API key — so it was not`);
+  console.warn(`  Pokémon, BerryWallet backs One Piece, both the same host (see this file's own comment above`);
+  console.warn(`  on why an outage on either credential still marks that shared host) — so it was not`);
   console.warn(`  required this time. It prerenders again on the next build that reaches pokewallet.io.`);
   console.warn(`  Every other card page still built: Japanese identity is only ever an enhancement on top`);
   console.warn(`  of the canonical English page, never a dependency of it.`);

@@ -1,7 +1,9 @@
 /**
  * BerryWallet — One Piece Card Game data from pokewallet.io's multi-game
- * card API (sibling product to their Pokémon "PokéWallet" API; one API key
- * works across both — see PokewalletGame below). Picked specifically
+ * card API (sibling product to their Pokémon "PokéWallet" API; same host,
+ * api.pokewallet.io, but its own separate API key — BERRYWALLET_API_KEY, see
+ * this file's own apiKey() comment — so One Piece traffic doesn't share
+ * PokéWallet's Pokémon quota. See PokewalletGame below). Picked specifically
  * because it's the only source found with genuinely separate English and
  * Japanese card catalogs (apitcg.ts's One Piece coverage is English/
  * TCGPlayer-only; TCGdex has zero One Piece coverage at all).
@@ -100,15 +102,35 @@ type SearchResponse = { success: boolean; data: BerryWalletCard[]; total: number
 type SetsResponse = { success: boolean; data: BerryWalletSet[] };
 type CardResponse = { success: boolean; id: string } & BerryWalletCard;
 
+/**
+ * BerryWallet's own credential — separate from PokéWallet's
+ * POKEWALLET_API_KEY (see that file's own apiKey() comment) even though both
+ * point at the same host, api.pokewallet.io. Falls back to
+ * POKEWALLET_API_KEY when BERRYWALLET_API_KEY isn't set, so this keeps
+ * working exactly as it did when one key covered both, until a dedicated
+ * BerryWallet-only key is actually added — at which point One Piece traffic
+ * stops sharing PokéWallet's Pokémon quota, see RATE_LIMIT_BUCKET below and
+ * resilientFetch's `rateLimitKey` doc comment (upstream.ts) for how that
+ * split is kept true all the way through the circuit breaker, not just at
+ * the credential level.
+ *
+ * Worth confirming with pokewallet.io directly before assuming this doubles
+ * real headroom: if their rate limit is enforced per *account* rather than
+ * per *key*, two keys on one account still share one bucket server-side —
+ * this only helps if a second key genuinely carries its own quota.
+ */
 function apiKey(): string {
-  const key = process.env.POKEWALLET_API_KEY;
+  const key = process.env.BERRYWALLET_API_KEY ?? process.env.POKEWALLET_API_KEY;
   if (!key) {
     throw new Error(
-      "POKEWALLET_API_KEY is not set. Add it in Vercel (Project Settings > Environment Variables) and locally in .env.local for dev. One key covers both PokéWallet and BerryWallet."
+      "Neither BERRYWALLET_API_KEY nor POKEWALLET_API_KEY is set. Add BERRYWALLET_API_KEY in Vercel (Project Settings > Environment Variables) and locally in .env.local for dev — a key dedicated to BerryWallet's One Piece traffic. POKEWALLET_API_KEY alone still works as a fallback if BERRYWALLET_API_KEY isn't set yet."
     );
   }
   return key;
 }
+
+/** Keeps this credential's circuit breaker independent from PokéWallet's own (see pokewallet.ts's RATE_LIMIT_BUCKET) despite sharing api.pokewallet.io as a literal host — see resilientFetch's `rateLimitKey` param (upstream.ts). */
+const RATE_LIMIT_BUCKET = "api.pokewallet.io#berrywallet";
 
 async function berryWalletFetch<T>(path: string, revalidateSeconds: number): Promise<T> {
   return memoizeFetch(path, revalidateSeconds * 1000, async () => {
@@ -119,7 +141,8 @@ async function berryWalletFetch<T>(path: string, revalidateSeconds: number): Pro
       // version, doubly so here: a GET carrying an X-API-Key header is
       // exactly the case the fetch reference calls out as needing it.
       { headers: { "X-API-Key": apiKey() }, cache: "force-cache", next: { revalidate: revalidateSeconds } },
-      FETCH_TIMEOUT_MS
+      FETCH_TIMEOUT_MS,
+      RATE_LIMIT_BUCKET
     );
     if (!res.ok) {
       throw new Error(`berrywallet request failed (${res.status}): ${path}`);
@@ -418,13 +441,17 @@ export async function getCard(id: string): Promise<BerryWalletCard | undefined> 
  * next.config.ts).
  */
 export async function fetchCardImage(id: string, size: "low" | "high" = "high"): Promise<{ body: ReadableStream<Uint8Array>; contentType: string } | undefined> {
-  const res = await fetch(`${API_BASE}/images/${encodeURIComponent(id)}?size=${size}`, {
-    headers: { "X-API-Key": apiKey() },
-    // force-cache — same reasoning as pokewallet.ts's fetchCardImage.
-    cache: "force-cache",
-    next: { revalidate: REVALIDATE_SECONDS },
-    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-  });
+  const res = await resilientFetch(
+    `${API_BASE}/images/${encodeURIComponent(id)}?size=${size}`,
+    {
+      headers: { "X-API-Key": apiKey() },
+      // force-cache — same reasoning as pokewallet.ts's fetchCardImage.
+      cache: "force-cache",
+      next: { revalidate: REVALIDATE_SECONDS },
+    },
+    FETCH_TIMEOUT_MS,
+    RATE_LIMIT_BUCKET
+  );
   if (!res.ok || !res.body) return undefined;
   return { body: res.body, contentType: res.headers.get("content-type") ?? "image/jpeg" };
 }

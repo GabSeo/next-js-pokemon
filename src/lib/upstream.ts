@@ -174,7 +174,15 @@ function markBuildOutage(host: string, reason: string): void {
   }
 }
 
-function noteFailure(host: string, reason: string, rateLimited = false): void {
+/**
+ * `host` and `bucket` are deliberately separate parameters, not always the
+ * same value — see resilientFetch's own `rateLimitKey` doc comment for why:
+ * two credentials against the same literal host (PokéWallet and BerryWallet
+ * both call api.pokewallet.io) need independent breakers, but the build
+ * outage marker below is keyed by the real hostname regardless, since
+ * scripts/check-static-routes.mjs looks it up by that literal string.
+ */
+function noteFailure(host: string, bucket: string, reason: string, rateLimited = false): void {
   // Marked on the *first* failure, not when the breaker finally opens: the
   // marker answers "was this host reachable during the build at all", and a
   // build resolving a handful of cards concurrently can finish having made
@@ -183,7 +191,7 @@ function noteFailure(host: string, reason: string, rateLimited = false): void {
   // marker for a route that prerendered nothing, and a recovered host means
   // that route has pages.
   markBuildOutage(host, reason);
-  const breaker = breakers.get(host) ?? { failures: 0, openUntil: 0, rateLimited: false };
+  const breaker = breakers.get(bucket) ?? { failures: 0, openUntil: 0, rateLimited: false };
   breaker.failures += 1;
   if (rateLimited) {
     // Trips on the *first* 429, unlike the BREAKER_THRESHOLD path below —
@@ -194,11 +202,11 @@ function noteFailure(host: string, reason: string, rateLimited = false): void {
   } else if (breaker.failures >= BREAKER_THRESHOLD) {
     breaker.openUntil = Date.now() + BREAKER_OPEN_MS;
   }
-  breakers.set(host, breaker);
+  breakers.set(bucket, breaker);
 }
 
-function noteSuccess(host: string): void {
-  breakers.delete(host);
+function noteSuccess(bucket: string): void {
+  breakers.delete(bucket);
 }
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -225,18 +233,31 @@ function isBlockedStatus(status: number): boolean {
 
 /**
  * `fetch` with a bounded timeout, one retry on a transient failure, and a
- * per-host circuit breaker. Returns the `Response` for any status the
- * caller should interpret itself (including 404); throws for a transient
- * failure that survived the retry, and for every call made while the
- * breaker is open.
+ * circuit breaker. Returns the `Response` for any status the caller should
+ * interpret itself (including 404); throws for a transient failure that
+ * survived the retry, and for every call made while the breaker is open.
  *
  * `init` is passed through untouched apart from `signal`, so callers keep
  * their own headers and their own Next.js `next: { revalidate }` caching.
+ *
+ * `rateLimitKey` overrides what the circuit breaker is keyed by — defaults
+ * to the URL's own host, which is right for almost every caller (one
+ * credential per host). It exists for the one exception: PokéWallet and
+ * BerryWallet are two separate credentials (POKEWALLET_API_KEY,
+ * BERRYWALLET_API_KEY) against the literal same host, api.pokewallet.io —
+ * without this, a 429 on one credential's traffic would trip the breaker for
+ * *both*, even though each credential has its own independent quota. Passing
+ * a distinct string per credential (see pokewallet.ts/berrywallet.ts's own
+ * calls) keeps their breakers, and therefore their backoff, fully separate.
+ * The build-outage marker (markBuildOutage) is unaffected by this — it's
+ * always keyed by the real host, since scripts/check-static-routes.mjs looks
+ * that up by literal hostname regardless of which credential made the call.
  */
-export async function resilientFetch(url: string, init: RequestInit, timeoutMs: number): Promise<Response> {
+export async function resilientFetch(url: string, init: RequestInit, timeoutMs: number, rateLimitKey?: string): Promise<Response> {
   const host = new URL(url).host;
+  const bucket = rateLimitKey ?? host;
 
-  const breaker = breakers.get(host);
+  const breaker = breakers.get(bucket);
   if (breaker && breaker.openUntil > Date.now()) {
     throw new UpstreamUnavailableError(
       host,
@@ -253,14 +274,14 @@ export async function resilientFetch(url: string, init: RequestInit, timeoutMs: 
       const res = await fetch(url, { ...init, signal: AbortSignal.timeout(timeoutMs) });
       status = res.status;
       if (isBlockedStatus(res.status)) {
-        noteFailure(host, `${host} responded ${res.status}`);
+        noteFailure(host, bucket, `${host} responded ${res.status}`);
         return res;
       }
       if (!isTransientStatus(res.status)) {
         // Any definitive per-request answer — 2xx, 404, 400 — means the host
         // is alive and talking to us, so the breaker's failure count starts
         // over even on a status the caller will end up throwing on.
-        noteSuccess(host);
+        noteSuccess(bucket);
         return res;
       }
       lastError = new Error(`${host} responded ${res.status}`);
@@ -268,7 +289,7 @@ export async function resilientFetch(url: string, init: RequestInit, timeoutMs: 
       lastError = err;
     }
 
-    noteFailure(host, describeUpstreamError(lastError), status === 429);
+    noteFailure(host, bucket, describeUpstreamError(lastError), status === 429);
     // A 429 skips the retry entirely — see RATE_LIMIT_BREAKER_OPEN_MS's
     // comment. Retrying moments later against a quota that's already
     // exhausted is essentially guaranteed to fail again and only spends

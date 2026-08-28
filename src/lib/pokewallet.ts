@@ -1,6 +1,12 @@
 /**
  * PokéWallet — Pokémon card data from pokewallet.io, BerryWallet's sibling
- * product (same host, same API key — see berrywallet.ts's file header).
+ * product (same host, api.pokewallet.io — see berrywallet.ts's file header).
+ * Each has its own separate API key (POKEWALLET_API_KEY here,
+ * BERRYWALLET_API_KEY there) so Pokémon and One Piece traffic no longer
+ * share one quota against pokewallet.io's own per-key rate limit — see
+ * RATE_LIMIT_BUCKET below and resilientFetch's `rateLimitKey` doc comment
+ * (upstream.ts) for how the two stay independent all the way through the
+ * circuit breaker, not just at the credential level.
  * Picked specifically because it's the only source found with a real,
  * separate Japanese Pokémon catalog: TCGdex (this site's existing Pokémon
  * identity/French source) has zero Japanese coverage at all, confirmed live
@@ -75,15 +81,27 @@ export type PokeWalletCard = {
 
 type CardResponse = PokeWalletCard;
 
+/**
+ * PokéWallet's own credential — separate from BerryWallet's
+ * BERRYWALLET_API_KEY (see that file's own apiKey() comment) even though
+ * both point at the same host, api.pokewallet.io. Two separate keys means
+ * two separate quotas rather than Pokémon and One Piece traffic sharing one
+ * — see RATE_LIMIT_BUCKET below and resilientFetch's own `rateLimitKey` doc
+ * comment (upstream.ts) for how that's kept true all the way through the
+ * circuit breaker, not just at the credential level.
+ */
 function apiKey(): string {
   const key = process.env.POKEWALLET_API_KEY;
   if (!key) {
     throw new Error(
-      "POKEWALLET_API_KEY is not set. Add it in Vercel (Project Settings > Environment Variables) and locally in .env.local for dev. One key covers both PokéWallet and BerryWallet."
+      "POKEWALLET_API_KEY is not set. Add it in Vercel (Project Settings > Environment Variables) and locally in .env.local for dev."
     );
   }
   return key;
 }
+
+/** Keeps this credential's circuit breaker independent from BerryWallet's own (see berrywallet.ts's RATE_LIMIT_BUCKET) despite sharing api.pokewallet.io as a literal host — see resilientFetch's `rateLimitKey` param (upstream.ts). */
+const RATE_LIMIT_BUCKET = "api.pokewallet.io#pokewallet";
 
 async function pokeWalletFetch<T>(path: string, revalidateSeconds: number): Promise<T> {
   return memoizeFetch(path, revalidateSeconds * 1000, async () => {
@@ -94,7 +112,8 @@ async function pokeWalletFetch<T>(path: string, revalidateSeconds: number): Prom
       // version, doubly so here: a GET carrying an X-API-Key header is
       // exactly the case the fetch reference calls out as needing it.
       { headers: { "X-API-Key": apiKey() }, cache: "force-cache", next: { revalidate: revalidateSeconds } },
-      FETCH_TIMEOUT_MS
+      FETCH_TIMEOUT_MS,
+      RATE_LIMIT_BUCKET
     );
     if (!res.ok) {
       throw new Error(`pokewallet request failed (${res.status}): ${path}`);
@@ -114,18 +133,22 @@ export async function getCard(id: string): Promise<PokeWalletCard | undefined> {
 
 /** Same auth constraint as berrywallet.ts's fetchCardImage — /images/:id needs the X-API-Key header a browser <img> can't send, so this has to be fetched server-side and proxied. See app/api/pokewallet-image/[id]/route.ts. */
 export async function fetchCardImage(id: string, size: "low" | "high" = "high"): Promise<{ body: ReadableStream<Uint8Array>; contentType: string } | undefined> {
-  const res = await fetch(`${API_BASE}/images/${encodeURIComponent(id)}?size=${size}`, {
-    headers: { "X-API-Key": apiKey() },
-    // force-cache — same reasoning as pokeWalletFetch above. This route
-    // (app/api/pokewallet-image/[id]/route.ts) already sends a year-long
-    // immutable Cache-Control to the browser/CDN, but that only helps once
-    // an edge has actually cached the response; force-cache is what keeps
-    // *this* server-side fetch from re-hitting pokewallet.io with the API
-    // key on every cold/uncached-region request in the meantime.
-    cache: "force-cache",
-    next: { revalidate: REVALIDATE_SECONDS },
-    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-  });
+  const res = await resilientFetch(
+    `${API_BASE}/images/${encodeURIComponent(id)}?size=${size}`,
+    {
+      headers: { "X-API-Key": apiKey() },
+      // force-cache — same reasoning as pokeWalletFetch above. This route
+      // (app/api/pokewallet-image/[id]/route.ts) already sends a year-long
+      // immutable Cache-Control to the browser/CDN, but that only helps
+      // once an edge has actually cached the response; force-cache is what
+      // keeps *this* server-side fetch from re-hitting pokewallet.io with
+      // the API key on every cold/uncached-region request in the meantime.
+      cache: "force-cache",
+      next: { revalidate: REVALIDATE_SECONDS },
+    },
+    FETCH_TIMEOUT_MS,
+    RATE_LIMIT_BUCKET
+  );
   if (!res.ok || !res.body) return undefined;
   return { body: res.body, contentType: res.headers.get("content-type") ?? "image/jpeg" };
 }
