@@ -4,6 +4,7 @@ import { illustrativeActiveListings, illustrativeSoldListings, illustrativeVinte
 import { DEFAULT_PSA_GRADING_COST_USD, gradingRoi, median } from "@/lib/roi";
 import { getVintedListingsForCard, relativeTimeLabel, TRES_BON_ETAT, vintedQueryForCard } from "@/lib/vinted-listings";
 import { getJapaneseCardText } from "@/lib/cards";
+import { buildCached } from "@/lib/build-cache";
 import { cardRefs } from "@/data/card-refs";
 import type { Card } from "@/lib/types";
 
@@ -405,11 +406,17 @@ async function buildVintedMarket(card: Card): Promise<VintedMarketData> {
  * rules, so none of those surfaces can drift out of sync with each other or
  * re-implement the eBay call.
  *
- * Cost note: this is 4 conditions x 2 languages = 8 real eBay searches per
- * card (down from 12 now that French no longer goes through eBay at all —
- * sold stays illustrative-only regardless of language, so it adds no API
- * cost), each cached for 1h. Fine at this site's scale; worth revisiting if
- * traffic grows enough to approach eBay's 5,000 calls/day default limit.
+ * Cost note: 4 conditions x 2 languages = 8 real eBay searches per card
+ * (down from 12 now that French no longer goes through eBay at all — sold
+ * stays illustrative-only regardless of language, so it adds no API cost).
+ * Those 4 consumers each independently calling this for the same card during
+ * static generation used to mean 4x that cost per card, per build, with
+ * nothing shared between them — confirmed live as a major contributor to the
+ * eBay 429s in the same incident that produced upstream.ts's
+ * RATE_LIMIT_BREAKER_OPEN_MS. `getGradedMarketData` below is the thin
+ * buildCached wrapper (see that module's own header comment) that collapses
+ * those 4 calls back down to one real resolution per card per build; this
+ * function is the actual implementation, called through that wrapper only.
  *
  * ONE_PIECE_MARKET_ENABLED above gates One Piece, not a permanent
  * Pokémon-only design — this function's PSA/eBay/Vinted shape covers both
@@ -429,7 +436,7 @@ async function buildVintedMarket(card: Card): Promise<VintedMarketData> {
  * was never that franchise's only source of real market data, just the only
  * source of this particular one.
  */
-export async function getGradedMarketData(card: Card): Promise<GradedMarketData | undefined> {
+async function resolveGradedMarketData(card: Card): Promise<GradedMarketData | undefined> {
   if (card.franchise !== "pokemon" && !ONE_PIECE_MARKET_ENABLED) return undefined;
 
   const conditionTiers = conditionsFor(card);
@@ -567,6 +574,16 @@ export async function getGradedMarketData(card: Card): Promise<GradedMarketData 
     },
     vinted,
   };
+}
+
+/**
+ * buildCached-wrapped (see that module's own header comment) — the public
+ * entry point every consumer actually calls. Keyed by `card.slug`, which is
+ * stable and unique per card regardless of which route resolved this
+ * particular `Card` object.
+ */
+export async function getGradedMarketData(card: Card): Promise<GradedMarketData | undefined> {
+  return buildCached(`graded-market:${card.slug}`, () => resolveGradedMarketData(card));
 }
 
 export type MarketplaceOfferJsonLd = {

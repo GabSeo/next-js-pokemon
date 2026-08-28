@@ -14,6 +14,7 @@ import {
   type BerryWalletSet,
 } from "@/lib/berrywallet";
 import { getCard as getPokeWalletCard, cardImageUrl as pokeWalletCardImageUrl } from "@/lib/pokewallet";
+import { buildCached } from "@/lib/build-cache";
 import { absoluteUrl } from "@/lib/site";
 import { describeUpstreamError, logUpstreamOnce } from "@/lib/upstream";
 import { findCardByNameAndSet, getCard, cardImageUrl, tcgplayerSnapshot, type TcgdexCard } from "@/lib/tcgdex";
@@ -474,6 +475,19 @@ export async function getFrenchCardText(card: Card): Promise<LocalizedCardText> 
  * for that ref, so repeat calls within one request/render pass (a page's
  * generateMetadata and its body, a route's generateStaticParams and its own
  * render) share one resolution instead of each re-running the search.
+ *
+ * Deliberately NOT also buildCached, unlike resolveCardSafe/
+ * getGradedMarketData: /products/[slug]/ja's own generateStaticParams (see
+ * that file) only emits a param when `ja.translated` is true, so a cached
+ * *fallback* result (from a build where BerryWallet happened to be
+ * rate-limited) would silently keep suppressing that card's real /ja page in
+ * every build for the rest of the cache window, even once BerryWallet
+ * recovers — a correctness problem the plain English-identity case above
+ * doesn't have (/products/[slug] always builds one page per card, real or
+ * placeholder, so caching either outcome is equally safe there). This
+ * resolver is also the cheaper of the two costs identified in the incident
+ * that added buildCached (1-2 calls, consumed by exactly 2 routes) — the
+ * English identity and eBay/Vinted costs below were the dominant ones.
  */
 export const getOnePieceJapaneseText = cache(resolveOnePieceJapaneseText);
 
@@ -543,8 +557,8 @@ async function resolveOnePieceJapaneseText(card: Card, ref: CardRef): Promise<Lo
  * matching isn't reliable for the specific chase cards this site tracks),
  * so this is a single `getCard(id)` call, not a search.
  *
- * cache()-wrapped for the same reason getOnePieceJapaneseText is — see its
- * own comment.
+ * cache()-wrapped, deliberately not also buildCached, for the same two
+ * reasons getOnePieceJapaneseText is — see its own comment.
  */
 export const getJapaneseCardText = cache(resolveJapaneseCardText);
 
@@ -639,19 +653,28 @@ function placeholderCard(ref: CardRef): Card {
  * keys on the `ref` object itself, which is safe here because every caller
  * gets it from the same module-level `cardRefs` array (same object
  * reference for the same slug every time), not a freshly constructed one.
+ *
+ * The whole outcome (a real card OR the placeholder fallback) is also
+ * wrapped in buildCached — see that module's own header comment for why:
+ * cache() above only shares one *request's* worth of calls, but this same
+ * ref gets independently re-resolved by roughly a dozen different routes
+ * during static generation, and buildCached is what collapses that back
+ * down to one real resolution per card per build.
  */
 const resolveCardSafe = cache(async (ref: CardRef): Promise<Card> => {
-  try {
-    const card = await resolveCard(ref);
-    if (card) return card;
-    logUpstreamOnce(
-      `unmatched:${ref.slug}`,
-      `[cards] no data source matched ${ref.slug} (${JSON.stringify(ref.lookup)}) — serving the offline placeholder`
-    );
-  } catch (err) {
-    logUpstreamOnce(`resolve:${ref.slug}`, `[cards] failed to resolve ${ref.slug} — ${describeUpstreamError(err)}`);
-  }
-  return placeholderCard(ref);
+  return buildCached(`card:${ref.slug}`, async () => {
+    try {
+      const card = await resolveCard(ref);
+      if (card) return card;
+      logUpstreamOnce(
+        `unmatched:${ref.slug}`,
+        `[cards] no data source matched ${ref.slug} (${JSON.stringify(ref.lookup)}) — serving the offline placeholder`
+      );
+    } catch (err) {
+      logUpstreamOnce(`resolve:${ref.slug}`, `[cards] failed to resolve ${ref.slug} — ${describeUpstreamError(err)}`);
+    }
+    return placeholderCard(ref);
+  });
 });
 
 export async function getAllCards(): Promise<Card[]> {
