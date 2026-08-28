@@ -51,6 +51,21 @@ const BREAKER_THRESHOLD = 4;
  */
 const BREAKER_OPEN_MS = 60_000;
 
+/**
+ * How long the breaker stays open after a 429 specifically — deliberately
+ * far longer than BREAKER_OPEN_MS above. A 429 means the *quota* is
+ * exhausted, not that the host is struggling: nothing short of waiting out
+ * the window fixes that, and retrying every BREAKER_OPEN_MS (60s) against an
+ * already-exhausted quota does nothing but keep adding failed calls on top
+ * of it — confirmed live against PokeWallet/BerryWallet's shared hourly cap
+ * (pokewallet.ts/berrywallet.ts's POKEWALLET_API_KEY), where a build that
+ * kept retrying past the first 429 pushed the account further over its
+ * 100/hour limit instead of backing off. An hour comfortably outlasts any
+ * hourly quota window without this needing to know a given host's actual
+ * reset time.
+ */
+const RATE_LIMIT_BREAKER_OPEN_MS = 60 * 60_000;
+
 /** Total attempts per call, so: one retry. See RETRY_BACKOFF_MS. */
 const RETRY_ATTEMPTS = 2;
 
@@ -68,7 +83,7 @@ const loggedAt = new Map<string, number>();
 /** How long the same failure key stays deduped. Long enough to collapse a whole build's worth of repeats, short enough that a long-lived serverless instance still reports a *new* outage later on. */
 const LOG_DEDUPE_MS = 10 * 60_000;
 
-type Breaker = { failures: number; openUntil: number };
+type Breaker = { failures: number; openUntil: number; rateLimited: boolean };
 
 const breakers = new Map<string, Breaker>();
 
@@ -159,7 +174,7 @@ function markBuildOutage(host: string, reason: string): void {
   }
 }
 
-function noteFailure(host: string, reason: string): void {
+function noteFailure(host: string, reason: string, rateLimited = false): void {
   // Marked on the *first* failure, not when the breaker finally opens: the
   // marker answers "was this host reachable during the build at all", and a
   // build resolving a handful of cards concurrently can finish having made
@@ -168,9 +183,15 @@ function noteFailure(host: string, reason: string): void {
   // marker for a route that prerendered nothing, and a recovered host means
   // that route has pages.
   markBuildOutage(host, reason);
-  const breaker = breakers.get(host) ?? { failures: 0, openUntil: 0 };
+  const breaker = breakers.get(host) ?? { failures: 0, openUntil: 0, rateLimited: false };
   breaker.failures += 1;
-  if (breaker.failures >= BREAKER_THRESHOLD) {
+  if (rateLimited) {
+    // Trips on the *first* 429, unlike the BREAKER_THRESHOLD path below —
+    // see RATE_LIMIT_BREAKER_OPEN_MS's own comment for why a rate limit
+    // gets no benefit-of-the-doubt retries the way a connectivity blip does.
+    breaker.openUntil = Date.now() + RATE_LIMIT_BREAKER_OPEN_MS;
+    breaker.rateLimited = true;
+  } else if (breaker.failures >= BREAKER_THRESHOLD) {
     breaker.openUntil = Date.now() + BREAKER_OPEN_MS;
   }
   breakers.set(host, breaker);
@@ -219,14 +240,18 @@ export async function resilientFetch(url: string, init: RequestInit, timeoutMs: 
   if (breaker && breaker.openUntil > Date.now()) {
     throw new UpstreamUnavailableError(
       host,
-      `${host} is not answering (${breaker.failures} consecutive failures); skipping this call until ${new Date(breaker.openUntil).toISOString()}`
+      breaker.rateLimited
+        ? `${host} is rate-limited; skipping calls until ${new Date(breaker.openUntil).toISOString()} rather than adding to the shortfall`
+        : `${host} is not answering (${breaker.failures} consecutive failures); skipping this call until ${new Date(breaker.openUntil).toISOString()}`
     );
   }
 
   let lastError: unknown;
   for (let attempt = 1; attempt <= RETRY_ATTEMPTS; attempt++) {
+    let status: number | undefined;
     try {
       const res = await fetch(url, { ...init, signal: AbortSignal.timeout(timeoutMs) });
+      status = res.status;
       if (isBlockedStatus(res.status)) {
         noteFailure(host, `${host} responded ${res.status}`);
         return res;
@@ -243,7 +268,12 @@ export async function resilientFetch(url: string, init: RequestInit, timeoutMs: 
       lastError = err;
     }
 
-    noteFailure(host, describeUpstreamError(lastError));
+    noteFailure(host, describeUpstreamError(lastError), status === 429);
+    // A 429 skips the retry entirely — see RATE_LIMIT_BREAKER_OPEN_MS's
+    // comment. Retrying moments later against a quota that's already
+    // exhausted is essentially guaranteed to fail again and only spends
+    // more of it for nothing.
+    if (status === 429) break;
     if (attempt < RETRY_ATTEMPTS) await delay(RETRY_BACKOFF_MS);
   }
 
