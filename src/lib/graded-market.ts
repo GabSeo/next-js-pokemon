@@ -201,29 +201,45 @@ export type GradedMarketData = {
 const JAPANESE_MARKET_COUNTRIES = ["JP"];
 
 /**
- * How far below a card's own real market price an ENGLISH listing may sit
- * before it is treated as a different print rather than a cheap copy.
+ * How far below the card's own TCGPlayer reference price an ENGLISH listing
+ * may sit before it is treated as a different print rather than a cheap copy.
+ * 0.40 means "40% or more below the reference is not this card".
  *
- * Anchored to card.currentPrice — a price from BerryWallet/apitcg that we
- * already trust and display — because the result set itself cannot be
- * trusted to supply the anchor. Measured on "Event Vol P-033" (Raw,
- * Language:{English}) on 2026-08-29: 7 of 12 results were the Japanese print
- * at $63-65 against a real market price of $423.50, so the result-set median
- * was $65 and any self-referential outlier rule would have discarded the
- * five genuine English listings at $275-609 instead.
+ * Why a reference price at all, rather than an outlier rule over the
+ * results: measured on "Event Vol P-033" (Raw, Language:{English}) on
+ * 2026-08-29, 7 of 12 results were the Japanese print. With the wrong print
+ * in the MAJORITY, the result-set median IS the wrong cluster, so anything
+ * self-referential discards the real listings instead. card.currentPrice is
+ * the TCGPlayer market price we already trust and display, and it is
+ * independent of whatever eBay happened to return.
  *
- * 0.35 sits far below the real English cluster (0.65x market at its lowest
- * there) and far above the Japanese one (0.15x), which is a wide gap rather
- * than a tuned threshold. It only ever removes LOW outliers: a graded tier
- * legitimately prices well ABOVE currentPrice and is untouched.
+ * Why this is the only place the check can live, which is the part that
+ * looks like a missing feature and is not: these Japanese listings are
+ * declared `Language: English` by their sellers. That is exactly why they
+ * appear here — and why the Japanese tab for the same query comes back
+ * EMPTY rather than containing them. Filtering the Japanese tab would find
+ * nothing to filter. The mislabelling has to be caught on the English side
+ * or not at all.
  *
- * The genuine cost, stated plainly: a real English listing that is heavily
- * damaged, mispriced, or part of a lot can fall below this and be dropped.
- * That is the accepted trade — one missing row is recoverable, a median
- * reporting the wrong print's price is not, because it silently
- * misrepresents the market on every surface that reads it.
+ * Worked example (the real shape, not a hypothetical): reference 400, eBay
+ * returns four listings at 240 and the rest at 400-550. The 240s are 40%
+ * below and are the Japanese print; everything from 400 up is English.
+ *
+ * The threshold is deliberately a wide band and not a tuned number, but it
+ * is tighter than it looks on a card whose real English listings run close
+ * to reference: P-033's cheapest genuine English listing is 274.99 against a
+ * 423.50 reference, which is 0.65 — surviving by about 5%. A reference price
+ * that drifts up could push a real listing under. That is the accepted cost,
+ * and the direction of the trade is deliberate: one missing row is
+ * recoverable, a median quoting the wrong print's price is not, because it
+ * misreports the market on every surface that reads it.
+ *
+ * Only ever removes LOW outliers. Graded tiers price well ABOVE the raw
+ * reference and are untouched — which is also this rule's blind spot: a
+ * Japanese PSA 10 can still sit above 60% of the RAW reference and pass. No
+ * evidence gathered for a graded-specific reference yet.
  */
-const ENGLISH_PRICE_FLOOR_RATIO = 0.35;
+const ENGLISH_PRICE_GAP_THRESHOLD = 0.4;
 
 /**
  * The extra constraints to apply to one tier's search, or undefined to leave
@@ -242,7 +258,7 @@ function marketGuardFor(card: Card, language: EbayLanguage): EbayMarketGuard | u
   if (language !== "English" || card.priceUnavailable) return undefined;
   return {
     excludeCountries: JAPANESE_MARKET_COUNTRIES,
-    minPrice: card.currentPrice * ENGLISH_PRICE_FLOOR_RATIO,
+    minPrice: card.currentPrice * (1 - ENGLISH_PRICE_GAP_THRESHOLD),
   };
 }
 
