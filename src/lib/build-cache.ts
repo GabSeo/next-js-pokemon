@@ -47,7 +47,33 @@ import path from "node:path";
  * to survive, an entry eventually expires into a fresh live resolution
  * rather than serving indefinitely stale card data.
  */
-const CACHE_DIR = path.join(process.cwd(), ".next", "cache", "resolved-cards");
+/**
+ * Bump this whenever you change HOW a cached value is computed — not when
+ * you change the upstream data, which the TTL already handles.
+ *
+ * This exists because the same failure happened three times on 2026-08-29,
+ * and the shape was identical each time: a code change ships, Vercel
+ * restores `.next/cache` from the previous deployment, the new build reuses
+ * a value computed by the OLD code, and production serves pre-change data
+ * for up to ENTRY_TTL_MS while every local check says the fix works. It cost
+ * an hour of "nothing changed" each time:
+ *
+ *   1. French stayed inert after api.eu1 fixed TCGdex reachability.
+ *   2. Card identity stayed on the apitcg fallback after the same fix.
+ *   3. The eBay market guard shipped, and product pages kept serving the
+ *      unguarded median ($221.50 against a corrected $474.99) while the
+ *      dynamic route returned the corrected one.
+ *
+ * Surviving deploys is the whole point of this cache (see the header
+ * comment) — it is what keeps a redeploy from re-spending quota. So the fix
+ * is not to shorten its reach but to make a deliberate computation change
+ * able to say so. Bumping this starts a fresh namespace; the previous one is
+ * simply never read again.
+ */
+const CACHE_VERSION = 2;
+
+/** Versioned so a computation change cannot silently reuse pre-change values across a deploy — see CACHE_VERSION. */
+const CACHE_DIR = path.join(process.cwd(), ".next", "cache", "resolved-cards", `v${CACHE_VERSION}`);
 
 /**
  * How long a cached entry is trusted across separate `next build`
