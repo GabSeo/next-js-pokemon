@@ -371,6 +371,40 @@ export type EbayMarketGuard = {
  * Free to raise: `limit` is one page of one call, so this costs no extra
  * API quota against eBay's daily cap.
  */
+/**
+ * Browse API sort values, confirmed live on 2026-08-29 (all HTTP 200 with
+ * real results): "newlyListed", "price" (ascending), "-price" (descending).
+ * `undefined` is Best Match, eBay's default.
+ *
+ * Note "price" sorts on price + shipping, so the `price.value` field this
+ * client reads is close to ordered but not strictly monotonic — observed
+ * 2300, 2300, 2400, 2600, 2599.99. Fine for picking the cheap end of a
+ * market; do not rely on the array being sorted.
+ */
+type EbaySort = "newlyListed" | "price" | undefined;
+
+/**
+ * Which sort each tier searches by, and why they differ.
+ *
+ * Raw stays newest-first. Raw inventory turns over quickly and a recent
+ * listing is the better read on what the card is changing hands for.
+ *
+ * Graded tiers sort cheapest-first instead. A PSA population is thin and
+ * priced over a wide spread, so "newest" is effectively an arbitrary draw
+ * from that spread — measured on Gengar VMAX PSA 10, newest-first gave
+ * 2600/2626/2600/2633 while cheapest-first gave 2300/2300/2400/2600. The
+ * cheap end is the reproducible, decision-relevant number: it is what the
+ * card actually has to be priced at to sell.
+ *
+ * This makes the graded median a FLOOR rather than a market rate, which is
+ * a real change in meaning and is deliberate — see gradingRoi's caller in
+ * graded-market.ts, where the ROI it feeds becomes correspondingly
+ * conservative.
+ */
+function sortForCondition(condition: EbayCondition): EbaySort {
+  return condition === "Raw" ? "newlyListed" : "price";
+}
+
 const FETCH_LIMIT = 20;
 /** Shown to the user (and used for the median) — the first this-many survivors of titleMatchesCard, still newest-first. */
 const DISPLAY_LIMIT = 4;
@@ -383,7 +417,7 @@ async function runSearch(
   card: Card,
   condition: EbayCondition,
   language: EbayLanguage | undefined,
-  sort: "newlyListed" | undefined,
+  sort: EbaySort,
   nameOverride?: string,
   numberOverride?: string,
   variantTags?: string[],
@@ -515,7 +549,7 @@ export async function searchActiveListings(
   variantTags?: string[],
   guard?: EbayMarketGuard
 ): Promise<EbaySearchResult> {
-  const primary = await runSearch(card, condition, language, "newlyListed", nameOverride, numberOverride, variantTags, guard);
+  const primary = await runSearch(card, condition, language, sortForCondition(condition), nameOverride, numberOverride, variantTags, guard);
   if (primary.listings.length > 0) return primary;
   return runSearch(card, condition, language, undefined, nameOverride, numberOverride, variantTags, guard);
 }
