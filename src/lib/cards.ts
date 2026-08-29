@@ -724,17 +724,31 @@ const resolveCardSafe = cache(async (ref: CardRef): Promise<Card> => {
     }
     return placeholderCard(ref);
   },
-  // The offline placeholder is a negative result, so it takes
-  // build-cache.ts's short TTL rather than the 24h one. This was
-  // deliberately left off at first, on the reasoning that a placeholder is
-  // "a real answer the page is designed to render" — which is true of the
-  // page and false of the cache. `priceUnavailable` means no source could be
-  // reached, which is a fact about the network, not about the card; pinning
-  // it for a full day would keep showing "temporarily unavailable" long
-  // after the upstream recovered, and re-asking costs nothing when the thing
-  // that refused was our own budget ceiling (lib/api-budget.ts) rather than
-  // the upstream.
-  (card) => card.priceUnavailable === true);
+  // Two shapes of degraded result, both taking build-cache.ts's short TTL
+  // rather than the 24h one.
+  //
+  // 1. The offline placeholder. `priceUnavailable` means no source could be
+  //    reached — a fact about the network, not the card. Pinning it for a
+  //    day would keep showing "temporarily unavailable" long after the
+  //    upstream recovered.
+  //
+  // 2. A Pokémon card with no `tcgdexId`. This one is subtler and was
+  //    missed the first time, with a confirmed consequence: a build during
+  //    a TCGdex outage resolves the card from apitcg instead, which yields
+  //    a REAL price and so looked like a success worth caching for 24h —
+  //    but with no tcgdexId, and getFrenchCardText short-circuits on
+  //    exactly that field. The result was French staying inert for a full
+  //    day after TCGdex came back, on a card that otherwise looked fine.
+  //    Degraded, not failed, is still not worth a day of trust.
+  //
+  // The cost of being wrong here is bounded and asymmetric, which is why
+  // this errs toward re-asking: TCGdex itself is free and unmetered. The
+  // one thing to know is that re-resolving replays the whole fan-out,
+  // including apitcg's 2 metered calls — so a Pokémon ref that TCGdex
+  // genuinely cannot match (none today; all three are confirmed matches)
+  // would re-resolve every NEGATIVE_TTL_MS during builds. If that ever
+  // happens, give that ref a real TCGdex id rather than loosening this.
+  (card) => card.priceUnavailable === true || (card.franchise === "pokemon" && !card.tcgdexId));
 });
 
 export async function getAllCards(): Promise<Card[]> {
