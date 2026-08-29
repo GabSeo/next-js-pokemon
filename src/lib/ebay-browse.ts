@@ -303,6 +303,17 @@ export type EbayActiveListing = {
    * against real credentials before relying on it always being present.
    */
   listedDate?: string;
+  /**
+   * ISO 3166-1 alpha-2 country the item ships from (`itemLocation.country`).
+   * Confirmed live that item_summary/search populates this — unlike
+   * `listedDate` above, which is documented but unverified.
+   *
+   * Load-bearing, not decoration: for a card_number that exists as both an
+   * English and a Japanese print, where the seller-declared `Language`
+   * aspect is unreliable, this is the one hard fact eBay gives us about a
+   * listing. See marketGuard below.
+   */
+  location?: string;
 };
 
 export type EbaySearchResult = { listings: EbayActiveListing[]; total: number };
@@ -315,7 +326,38 @@ type BrowseSearchResponse = {
     itemWebUrl: string;
     image?: { imageUrl: string };
     itemCreationDate?: string;
+    itemLocation?: { country?: string };
   }[];
+};
+
+/**
+ * Extra constraints applied to the raw candidates AFTER eBay's own filters,
+ * for the cases eBay cannot express. Both are opt-in per search — callers
+ * that pass nothing get exactly the old behaviour.
+ *
+ * Why this exists, measured against a real search ("Event Vol P-033", Raw,
+ * Language:{English}) on 2026-08-29: eBay returned 12 results, and 7 of them
+ * were the JAPANESE print at $63-65 while the 5 real English listings sat at
+ * $275-609. The card's own real market price is $423.50. So the majority of
+ * a supposedly-English result set was the wrong print, which drags the
+ * median to $65 and makes the English market look 6x cheaper than it is.
+ *
+ * Neither signal is sufficient alone, which is the whole reason there are
+ * two:
+ *
+ *  - `excludeCountries` caught only 1 of those 7. The other 6 were
+ *    US-located, with a title byte-identical to the Japanese one.
+ *  - `minPrice` catches all 7, but cannot be derived from the result set
+ *    itself: with 7 of 12 results wrong, the median IS the wrong cluster,
+ *    so any outlier rule keyed off these results would discard the five
+ *    real listings instead. It has to be anchored to a price we already
+ *    trust from another source.
+ */
+export type EbayMarketGuard = {
+  /** Drop listings shipping from these countries (ISO alpha-2). */
+  excludeCountries?: string[];
+  /** Drop listings priced below this. Anchor it to a price from a trusted source, never to the result set — see this type's own comment. */
+  minPrice?: number;
 };
 
 /**
@@ -344,7 +386,8 @@ async function runSearch(
   sort: "newlyListed" | undefined,
   nameOverride?: string,
   numberOverride?: string,
-  variantTags?: string[]
+  variantTags?: string[],
+  guard?: EbayMarketGuard
 ): Promise<EbaySearchResult> {
   const token = await getAccessToken();
   const query = conditionQuery(card, condition, nameOverride, numberOverride);
@@ -395,12 +438,34 @@ async function runSearch(
       url: item.itemWebUrl,
       imageUrl: item.image?.imageUrl,
       listedDate: item.itemCreationDate,
+      location: item.itemLocation?.country,
     }))
     // Defensive: never let a listing with no real price into the median —
     // a $0 entry would silently drag it down instead of erroring loudly.
     .filter((listing) => listing.price > 0)
     .filter((listing) => titleMatchesCard(listing.title, card, condition, numberOverride, variantTags))
+    // Applied after titleMatchesCard so the warning below still reports the
+    // title check honestly, and so a guard can never be blamed for a result
+    // set that was already empty.
+    .filter((listing) => !guard?.excludeCountries?.includes(listing.location ?? ""))
+    .filter((listing) => guard?.minPrice === undefined || listing.price >= guard.minPrice)
     .slice(0, DISPLAY_LIMIT);
+
+  // A guard dropping everything is a different failure from the title check
+  // dropping everything, and must not be reported as the latter: it means
+  // the anchor price or country list is wrong for this card, not that the
+  // tier filter is broken. Counted before the DISPLAY_LIMIT slice so the
+  // number is the real one.
+  const titleSurvivors = rawItems
+    .map((item) => Number(item.price?.value ?? 0))
+    .filter((price) => price > 0).length;
+  if (guard && titleSurvivors > 0 && listings.length === 0) {
+    console.warn(
+      `[ebay] every candidate for "${query}" [${condition}] was removed by the market guard ` +
+        `(excludeCountries=${JSON.stringify(guard.excludeCountries ?? [])}, minPrice=${guard.minPrice ?? "none"}). ` +
+        `Treating as no real match — check the anchor price for this card.`
+    );
+  }
 
   if (rawItems.length > 0 && listings.length === 0) {
     console.warn(
@@ -447,9 +512,10 @@ export async function searchActiveListings(
   language?: EbayLanguage,
   nameOverride?: string,
   numberOverride?: string,
-  variantTags?: string[]
+  variantTags?: string[],
+  guard?: EbayMarketGuard
 ): Promise<EbaySearchResult> {
-  const primary = await runSearch(card, condition, language, "newlyListed", nameOverride, numberOverride, variantTags);
+  const primary = await runSearch(card, condition, language, "newlyListed", nameOverride, numberOverride, variantTags, guard);
   if (primary.listings.length > 0) return primary;
-  return runSearch(card, condition, language, undefined, nameOverride, numberOverride, variantTags);
+  return runSearch(card, condition, language, undefined, nameOverride, numberOverride, variantTags, guard);
 }

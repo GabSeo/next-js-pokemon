@@ -1,5 +1,5 @@
 import { conditionSearchLink, tagFirstWord } from "@/lib/ebay-search";
-import { searchActiveListings, type EbayCondition, type EbayLanguage } from "@/lib/ebay-browse";
+import { searchActiveListings, type EbayCondition, type EbayLanguage, type EbayMarketGuard } from "@/lib/ebay-browse";
 import { illustrativeActiveListings, illustrativeSoldListings, illustrativeVintedFeed } from "@/lib/illustrative";
 import { DEFAULT_PSA_GRADING_COST_USD, gradingRoi, median } from "@/lib/roi";
 import { getVintedListingsForCard, relativeTimeLabel, TRES_BON_ETAT, vintedQueryForCard } from "@/lib/vinted-listings";
@@ -188,6 +188,64 @@ export type GradedMarketData = {
  * see titleMatchesCard's own comment (lib/ebay-browse.ts) for why it lives
  * here, in the per-listing title check, rather than in the query text.
  */
+/**
+ * Countries whose listings are treated as the Japanese print when the
+ * ENGLISH tab asks for a card that also exists in Japanese.
+ *
+ * Just Japan, and deliberately not a longer list of "Asian" countries: the
+ * claim being made is the narrow, checkable one — a card shipping from Japan
+ * under a query for a card_number with a separate Japanese print is
+ * overwhelmingly that Japanese print. Hong Kong or Singapore would be a
+ * guess, and a wrong one discards real English listings.
+ */
+const JAPANESE_MARKET_COUNTRIES = ["JP"];
+
+/**
+ * How far below a card's own real market price an ENGLISH listing may sit
+ * before it is treated as a different print rather than a cheap copy.
+ *
+ * Anchored to card.currentPrice — a price from BerryWallet/apitcg that we
+ * already trust and display — because the result set itself cannot be
+ * trusted to supply the anchor. Measured on "Event Vol P-033" (Raw,
+ * Language:{English}) on 2026-08-29: 7 of 12 results were the Japanese print
+ * at $63-65 against a real market price of $423.50, so the result-set median
+ * was $65 and any self-referential outlier rule would have discarded the
+ * five genuine English listings at $275-609 instead.
+ *
+ * 0.35 sits far below the real English cluster (0.65x market at its lowest
+ * there) and far above the Japanese one (0.15x), which is a wide gap rather
+ * than a tuned threshold. It only ever removes LOW outliers: a graded tier
+ * legitimately prices well ABOVE currentPrice and is untouched.
+ *
+ * The genuine cost, stated plainly: a real English listing that is heavily
+ * damaged, mispriced, or part of a lot can fall below this and be dropped.
+ * That is the accepted trade — one missing row is recoverable, a median
+ * reporting the wrong print's price is not, because it silently
+ * misrepresents the market on every surface that reads it.
+ */
+const ENGLISH_PRICE_FLOOR_RATIO = 0.35;
+
+/**
+ * The extra constraints to apply to one tier's search, or undefined to leave
+ * eBay's own filtering untouched.
+ *
+ * Only the English tab is guarded. The Japanese tab deliberately gets
+ * nothing: its confusable neighbour is the *pricier* English print, so the
+ * same price rule inverted would need a ceiling, and no evidence has been
+ * gathered for where that sits. Guessing symmetry here would be exactly the
+ * fabrication this codebase avoids elsewhere.
+ *
+ * Both constraints are skipped when the card has no readable price
+ * (placeholder cards), since the anchor would then be meaningless.
+ */
+function marketGuardFor(card: Card, language: EbayLanguage): EbayMarketGuard | undefined {
+  if (language !== "English" || card.priceUnavailable) return undefined;
+  return {
+    excludeCountries: JAPANESE_MARKET_COUNTRIES,
+    minPrice: card.currentPrice * ENGLISH_PRICE_FLOOR_RATIO,
+  };
+}
+
 async function fetchActiveTier(
   card: Card,
   condition: EbayCondition,
@@ -197,7 +255,15 @@ async function fetchActiveTier(
   variantTags?: string[]
 ): Promise<GradedMarketTypeData> {
   try {
-    const { listings, total } = await searchActiveListings(card, condition, language, nameOverride, numberOverride, variantTags);
+    const { listings, total } = await searchActiveListings(
+      card,
+      condition,
+      language,
+      nameOverride,
+      numberOverride,
+      variantTags,
+      marketGuardFor(card, language)
+    );
     if (listings.length === 0) {
       console.warn(
         `[ebay] 0 active listings for ${card.id} [${condition}/${language}] — search succeeded but returned nothing. ` +
