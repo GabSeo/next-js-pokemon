@@ -18,38 +18,42 @@
  * (not Japanese) concern. `set.id` (e.g. "swsh3") is the closest thing to a
  * short set code; there's no separate `code` field on the Set object.
  *
- * WHY vercel.json PINS THE FUNCTION REGION TO cdg1 (Paris)
+ * KNOWN: this host is unreliable from US regions. Diagnosed, not guessed.
  *
  * api.tcgdex.net is GeoDNS'd across OVH nodes, and on 2026-08-29 the North
- * American one was dead while the French one was healthy. Diagnosed by
- * resolving the host from two networks and then forcing a connection to
- * each answer:
+ * American one was dead while the French one was healthy. Confirmed by
+ * resolving the host from two networks and forcing a connection to each
+ * answer:
  *
  *   217.182.193.43 (OVH FR)  -> 200 in ~50ms
  *   198.27.75.82   (OVH CA)  -> connect ETIMEDOUT, from every network tried
  *
- * Vercel's default region is iad1 (US East), so it resolved to the dead
- * Canadian node and every lookup here failed — logged as `fetch failed
- * (AggregateError: connect ETIMEDOUT 198.27.75.82:443; connect ENETUNREACH
- * ...)`. The IPv6 half of that is a red herring: the container has no IPv6
- * route, so it fails instantly and falls through to the IPv4 attempt that
- * actually times out.
+ * Vercel's default region is iad1 (US East), so it draws the Canadian node
+ * and every lookup here fails: `fetch failed (AggregateError: connect
+ * ETIMEDOUT 198.27.75.82:443; connect ENETUNREACH ...)`. The IPv6 half is a
+ * red herring — the container has no IPv6 route, so it fails instantly and
+ * falls through to the IPv4 attempt that actually times out.
  *
- * Nothing in this file can fix that — it is a DNS answer, not a timeout or
- * a retry problem, and the circuit breaker in upstream.ts correctly gives up
- * on it. Choosing a European region is what makes the healthy node the one
- * we get. It also suits the traffic: the Vinted/French market work is this
- * site's most latency-sensitive path.
+ * Pinning Vercel functions to a European region (`regions: ["cdg1"]` in
+ * vercel.json) DOES fix it at runtime — verified live, a dynamic route in
+ * cdg1 reached TCGdex and returned real French. It was tried and then
+ * deliberately reverted, because it only half-solves the problem and adds a
+ * permanent constraint for a temporary outage: `regions` moves functions
+ * but not `next build`, so every deploy still prerendered apitcg-fallback
+ * identity and only recovered on the next regeneration. Paying for that
+ * with a pinned region — one region only, on Hobby — is a bad trade for a
+ * free upstream that is expected to come back.
  *
- * Two limits worth knowing before trusting this. `regions` governs FUNCTION
- * execution only, so it fixes ISR regeneration and the /api/warm cron but
- * NOT `next build` — a deploy can still ship with French unresolved and
- * recover on the first regeneration afterward. And it is one region on
- * Hobby plans, so this is a bet on Europe rather than a failover
- * (functionFailoverRegions is Enterprise-only).
+ * What this means in practice, and why nothing here needs fixing:
+ * resolveCard treats TCGdex as PREFERRED, not required. When it is
+ * unreachable, apitcg supplies identity and price, and the only real loss
+ * is the French toggle, since TCGdex is its sole source (One Piece never
+ * had French at all — see berrywallet.ts). The site degrades exactly as
+ * designed and recovers on its own if TCGdex fixes their NA node.
  *
- * If TCGdex fixes their NA node this pin stops mattering and can go; it
- * costs nothing to leave in place either way.
+ * Do not re-diagnose this from the error text alone. The failure looks like
+ * a timeout worth tuning and is neither — it is a DNS answer pointing at a
+ * dead host, and no retry, timeout or breaker change can touch it.
  */
 
 import { memoizeFetch } from "@/lib/memo-fetch";
