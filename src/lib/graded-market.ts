@@ -602,11 +602,17 @@ async function resolveGradedMarketData(card: Card): Promise<GradedMarketData | u
   // Whatever real tag a future card carries here — Manga, SP Gold, Treasure
   // Rare, a numbered Anniversary special, anything — flows straight through
   // to both places below with no per-tag handling needed.
+  //
+  // ref.ebayVariantTags, when set, overrides lookup.variantTags for this
+  // eBay-specific use only — see its own doc comment (data/card-refs.ts) for
+  // why BerryWallet's own catalog vocabulary and real eBay seller vocabulary
+  // aren't always the same words for the same real product.
   const oneVariantTags =
     card.franchise === "one-piece"
       ? (() => {
           const ref = cardRefs.find((r) => r.slug === card.slug);
-          return ref && ref.lookup.by === "code" ? ref.lookup.variantTags : undefined;
+          if (!ref) return undefined;
+          return ref.ebayVariantTags ?? (ref.lookup.by === "code" ? ref.lookup.variantTags : undefined);
         })()
       : undefined;
 

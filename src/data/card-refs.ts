@@ -106,6 +106,39 @@ export type CardRef = {
    * JP toggle inert rather than echoing English text under a Japanese flag.
    */
   pokeWalletCardId?: string;
+  /**
+   * One Piece only: overrides `lookup.variantTags` specifically for eBay's
+   * query text and title filter (graded-market.ts's `oneVariantTags`) —
+   * everything else (BerryWallet's own pickVariantByTag/
+   * findVariantAcrossProducts, apitcg's findProductByCode) keeps using
+   * `lookup.variantTags` unchanged.
+   *
+   * Exists because those are genuinely two different vocabularies for the
+   * same real product, not one. `lookup.variantTags` has to match words
+   * BerryWallet's own catalog `name` field actually contains (that's what
+   * disambiguates which of several same-code products a live BerryWallet
+   * lookup resolves to) — but real eBay sellers don't title their listings
+   * after BerryWallet's internal product name, they title them after
+   * whatever the card's real-world packaging says.
+   *
+   * Confirmed live for monkey-d-luffy-p-033: BerryWallet's own catalog
+   * disambiguates this product from its two P-033 siblings via "Event Pack"
+   * + "Vol. 2" (see `lookup.variantTags`'s own value below) — real,
+   * necessary for that lookup. But every real eBay listing for this exact
+   * card (PSA 10, Japanese) instead says "Weekly Shonen Jump" — the
+   * magazine this card actually shipped as a promo insert in — and never
+   * "Event"/"Vol." at all. Searching eBay for "Event Vol P-033 PSA 10"
+   * (what `lookup.variantTags` alone would produce) returns zero matches
+   * even on eBay's own website search; "Shonen Jump" finds them
+   * immediately. Without this override, both graded-market.ts's query text
+   * and titleMatchesCard's (lib/ebay-browse.ts) filter would keep rejecting
+   * every one of this card's real listings, forever.
+   *
+   * Omitted (the default) means `lookup.variantTags` is right for eBay too
+   * — true for every other tracked One Piece card so far, where BerryWallet's
+   * catalog naming and real seller vocabulary happen to agree.
+   */
+  ebayVariantTags?: string[];
 };
 
 /**
@@ -240,5 +273,8 @@ export const cardRefs: CardRef[] = [
     lookup: { by: "code", code: "P-033", variantTags: ["Event Pack", "Vol. 2"] },
     berryWalletSetCode: { en: "OP-PR" },
     berryWalletEnabled: true,
+    // See CardRef's own ebayVariantTags doc comment — real eBay listings
+    // for this exact print say "Weekly Shonen Jump", never "Event"/"Vol.".
+    ebayVariantTags: ["Shonen Jump"],
   },
 ];
