@@ -69,6 +69,14 @@ import path from "node:path";
  *      a restored `.next/cache` entry computed under the old query would
  *      have kept serving that card's stale illustrative-only Market Overview
  *      for up to 24h with no signal the fix had shipped at all.
+ *   5. titleMatchesCard's language check (ebay-browse.ts) — real listings
+ *      mentioning "Japanese"/"JP" were sneaking into the English tier under
+ *      an unreliable aspect_filter, and for monkey-d-luffy-op09-061 that
+ *      crowded three unambiguous $1218-1325 English listings out of the
+ *      displayed top 4 in favor of $728-994 ambiguous ones. Every card's
+ *      cached graded-market entry was computed under the old, unfiltered
+ *      logic, so this bump is what makes every one of them recompute rather
+ *      than keep serving that contamination for up to 24h.
  *
  * Surviving deploys is the whole point of this cache (see the header
  * comment) — it is what keeps a redeploy from re-spending quota. So the fix
@@ -76,7 +84,7 @@ import path from "node:path";
  * able to say so. Bumping this starts a fresh namespace; the previous one is
  * simply never read again.
  */
-const CACHE_VERSION = 3;
+const CACHE_VERSION = 4;
 
 /** Versioned so a computation change cannot silently reuse pre-change values across a deploy — see CACHE_VERSION. */
 const CACHE_DIR = path.join(process.cwd(), ".next", "cache", "resolved-cards", `v${CACHE_VERSION}`);

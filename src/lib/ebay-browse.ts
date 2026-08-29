@@ -286,7 +286,34 @@ function numberMatchesTitle(number: string, title: string): boolean {
  * than chased with a per-tag alias table, which is exactly the kind of
  * per-card exception this design is trying to avoid.
  */
-function titleMatchesCard(title: string, card: Card, condition: EbayCondition, numberOverride?: string, variantTags?: string[]): boolean {
+function titleMatchesCard(
+  title: string,
+  card: Card,
+  condition: EbayCondition,
+  numberOverride?: string,
+  variantTags?: string[],
+  language?: EbayLanguage
+): boolean {
+  // English-tier-only: reject a title that also says "Japanese", or carries
+  // a standalone "JP" language marker. precisionAspectFilter's own
+  // Language:{English} aspect_filter is the one already flagged elsewhere as
+  // unconfirmed against the real API, and this is the confirmed failure
+  // mode — for monkey-d-luffy-op09-061, the English-filtered search's own
+  // top newest-first results included "...English 2nd Anniversary Set
+  // Japanese Ver." and "2ND ANNIVERSARY SET JP MONKEY.D.LUFFY..."
+  // ($728-994), crowding out real, unambiguous English listings
+  // ($1218-1325) further back in the same result set. `\bJP\b` (not a bare
+  // substring match) so this doesn't fire on some unrelated alphanumeric
+  // token that happens to contain "jp" — confirmed live sellers write it as
+  // its own word ("...Set JP Monkey...", never "...SetJP..."). Deliberately
+  // NOT the mirror check on the Japanese tier: real Japanese listings for
+  // this same card routinely say "EN" too (e.g. "...EN 2nd
+  // Anniversary...Japanese PSA 10") — almost certainly short for OP09's own
+  // English set name, "Emperors in the New World", not a language claim —
+  // so rejecting "English" mentions there has no comparably clean signal
+  // behind it and risks throwing out genuine matches instead.
+  if (language === "English" && /\bjapanese\b|\bjp\b/i.test(title)) return false;
+
   const gradeOk =
     condition === "Raw"
       ? // Exclude anything that looks graded at all, rather than trying to
@@ -540,7 +567,7 @@ async function runSearch(
   // and BEFORE the guard is the only thing that can tell those two apart
   // when a result set ends up empty.
   const titlePassed = priced.filter((listing) =>
-    titleMatchesCard(listing.title, card, condition, numberOverride, variantTags)
+    titleMatchesCard(listing.title, card, condition, numberOverride, variantTags, language)
   );
 
   const listings = titlePassed
