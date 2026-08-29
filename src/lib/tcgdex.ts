@@ -18,48 +18,50 @@
  * (not Japanese) concern. `set.id` (e.g. "swsh3") is the closest thing to a
  * short set code; there's no separate `code` field on the Set object.
  *
- * KNOWN: this host is unreliable from US regions. Diagnosed, not guessed.
+ * WHY THIS USES api.eu1.tcgdex.net RATHER THAN api.tcgdex.net
  *
- * api.tcgdex.net is GeoDNS'd across OVH nodes, and on 2026-08-29 the North
- * American one was dead while the French one was healthy. Confirmed by
- * resolving the host from two networks and forcing a connection to each
- * answer:
+ * api.tcgdex.net is GeoDNS'd across OVH nodes. On 2026-08-29 the North
+ * American one was dead while the French one was healthy, so anything
+ * resolving from the US — Vercel's default iad1 region included — got a host
+ * that never answered:
  *
  *   217.182.193.43 (OVH FR)  -> 200 in ~50ms
  *   198.27.75.82   (OVH CA)  -> connect ETIMEDOUT, from every network tried
  *
- * Vercel's default region is iad1 (US East), so it draws the Canadian node
- * and every lookup here fails: `fetch failed (AggregateError: connect
- * ETIMEDOUT 198.27.75.82:443; connect ENETUNREACH ...)`. The IPv6 half is a
- * red herring — the container has no IPv6 route, so it fails instantly and
- * falls through to the IPv4 attempt that actually times out.
+ * `api.eu1.` is TCGdex's own per-region hostname (confirmed by a maintainer
+ * on their Discord during the incident, and it is what their status page at
+ * status.tcgdex.dev tracks). It resolves straight to the healthy French node
+ * from any network, GeoDNS uninvolved.
  *
- * Pinning Vercel functions to a European region (`regions: ["cdg1"]` in
- * vercel.json) DOES fix it at runtime — verified live, a dynamic route in
- * cdg1 reached TCGdex and returned real French. It was tried and then
- * deliberately reverted, because it only half-solves the problem and adds a
- * permanent constraint for a temporary outage: `regions` moves functions
- * but not `next build`, so every deploy still prerendered apitcg-fallback
- * identity and only recovered on the next regeneration. Paying for that
- * with a pinned region — one region only, on Hobby — is a bad trade for a
- * free upstream that is expected to come back.
+ * Pinning a region costs nothing here, which is the part worth understanding
+ * before "fixing" this back: every call in this file is made SERVER-SIDE,
+ * from Vercel, never from a visitor's browser. So there is no user-latency
+ * argument for geo-routing — the only question is which endpoint the server
+ * can actually reach, and a pinned one answers that deterministically
+ * instead of depending on which node the build or function region draws.
  *
- * What this means in practice, and why nothing here needs fixing:
- * resolveCard treats TCGdex as PREFERRED, not required. When it is
- * unreachable, apitcg supplies identity and price, and the only real loss
- * is the French toggle, since TCGdex is its sole source (One Piece never
- * had French at all — see berrywallet.ts). The site degrades exactly as
- * designed and recovers on its own if TCGdex fixes their NA node.
+ * Deliberately NOT applied to assets.tcgdex.net (cardImageUrl below,
+ * next.config.ts's remotePatterns): `assets.eu1.` resolves but serves a
+ * certificate that does not cover it (TLS failure, not a 404), and the
+ * plain asset host was verified reachable from iad1 during the same
+ * incident — 200 in 0.35s through Vercel's own image optimizer while the
+ * API was timing out. Only the API host is affected.
  *
- * Do not re-diagnose this from the error text alone. The failure looks like
- * a timeout worth tuning and is neither — it is a DNS answer pointing at a
- * dead host, and no retry, timeout or breaker change can touch it.
+ * Reverting to api.tcgdex.net once their NA node is healthy is optional and
+ * gains nothing. If eu1 itself ever fails, the region prefix is the one
+ * thing to change here.
+ *
+ * Two earlier attempts, recorded so they are not retried: raising the
+ * timeout (pointless — a dead host is not a slow one) and pinning Vercel's
+ * function region to cdg1 (worked at runtime, but `regions` does not move
+ * `next build`, so deploys still prerendered the fallback).
  */
 
 import { memoizeFetch } from "@/lib/memo-fetch";
 import { resilientFetch } from "@/lib/upstream";
 
-const API_BASE = "https://api.tcgdex.net/v2";
+/** Region-pinned on purpose — see this file's header comment. `api.` alone is GeoDNS'd and can resolve to a dead node from US regions. */
+const API_BASE = "https://api.eu1.tcgdex.net/v2";
 
 /**
  * Collapses redundant identical requests (including failed ones) across
