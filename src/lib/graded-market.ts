@@ -213,13 +213,15 @@ const JAPANESE_MARKET_COUNTRIES = ["JP"];
  * the TCGPlayer market price we already trust and display, and it is
  * independent of whatever eBay happened to return.
  *
- * Why this is the only place the check can live, which is the part that
- * looks like a missing feature and is not: these Japanese listings are
- * declared `Language: English` by their sellers. That is exactly why they
- * appear here — and why the Japanese tab for the same query comes back
- * EMPTY rather than containing them. Filtering the Japanese tab would find
- * nothing to filter. The mislabelling has to be caught on the English side
- * or not at all.
+ * Why the English side has to catch its own mislabelling: those Japanese
+ * listings are declared `Language: English` by their sellers, so they
+ * surface here and the Japanese tab never sees them. Correcting an earlier
+ * version of this comment, which over-generalised that into "the Japanese
+ * tab comes back EMPTY" — it does not. Measured: Lugia V's Japanese PSA 10
+ * tab returns 35 results and Gengar VMAX's returns 31. The empty tab was
+ * specific to a One Piece promo whose Japanese print no source carries at
+ * all (see docs/i18n-deferred.md), not a property of Japanese searches.
+ * The Japanese tab is guarded too — see marketGuardFor below.
  *
  * Worked example (the real shape, not a hypothetical): reference 400, eBay
  * returns four listings at 240 and the rest at 400-550. The 240s are 40%
@@ -254,12 +256,38 @@ const ENGLISH_PRICE_GAP_THRESHOLD = 0.4;
  * Both constraints are skipped when the card has no readable price
  * (placeholder cards), since the anchor would then be meaningless.
  */
-function marketGuardFor(card: Card, language: EbayLanguage): EbayMarketGuard | undefined {
-  if (language !== "English" || card.priceUnavailable) return undefined;
-  return {
-    excludeCountries: JAPANESE_MARKET_COUNTRIES,
-    minPrice: card.currentPrice * (1 - ENGLISH_PRICE_GAP_THRESHOLD),
-  };
+function marketGuardFor(card: Card, condition: EbayCondition, language: EbayLanguage): EbayMarketGuard | undefined {
+  if (card.priceUnavailable) return undefined;
+  const floor = card.currentPrice * (1 - ENGLISH_PRICE_GAP_THRESHOLD);
+
+  if (language === "English") {
+    return { excludeCountries: JAPANESE_MARKET_COUNTRIES, minPrice: floor };
+  }
+
+  // Japanese, graded tiers only. The floor here rests on market structure
+  // rather than on any claim about Japanese pricing: a professionally
+  // graded gem-mint card does not sell for less than 60% of the same card's
+  // RAW market price, in any language. That argument sidesteps the problem
+  // that stopped this being guarded at all before — we have no trustworthy
+  // Japanese reference price to anchor against, and card.currentPrice is
+  // the English raw one.
+  //
+  // Found by a real listing: Gengar VMAX's Japanese PSA 10 tab returned
+  // "[PSA 10] Pokemon Card Japanese Gengar VMAX 020/019 sGG High Class
+  // Deck" at $365 from KR, against three genuine listings at $2,749-$3,474
+  // and a raw reference of $1,037. Cheapest-first sorting put it at the top
+  // of the panel.
+  //
+  // NOT applied to Japanese Raw, deliberately: the Japanese raw market
+  // genuinely can trade below 60% of the English raw price, so the same
+  // floor there would discard real listings. Nothing about graded pricing
+  // makes that true, which is why the split is by condition and not by
+  // language.
+  //
+  // No excludeCountries either — a Japanese card shipping from Japan is
+  // exactly what this tab wants, unlike the English one.
+  if (condition === "Raw") return undefined;
+  return { minPrice: floor };
 }
 
 async function fetchActiveTier(
@@ -278,7 +306,7 @@ async function fetchActiveTier(
       nameOverride,
       numberOverride,
       variantTags,
-      marketGuardFor(card, language)
+      marketGuardFor(card, condition, language)
     );
     if (listings.length === 0) {
       console.warn(
