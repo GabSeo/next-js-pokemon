@@ -63,6 +63,12 @@ import path from "node:path";
  *   3. The eBay market guard shipped, and product pages kept serving the
  *      unguarded median ($221.50 against a corrected $474.99) while the
  *      dynamic route returned the corrected one.
+ *   4. monkey-d-luffy-p-033's ebayVariantTags fix (data/card-refs.ts) shipped
+ *      without bumping this — same class of change (how the eBay query for
+ *      that card is built), same risk. Caught before it reached production:
+ *      a restored `.next/cache` entry computed under the old query would
+ *      have kept serving that card's stale illustrative-only Market Overview
+ *      for up to 24h with no signal the fix had shipped at all.
  *
  * Surviving deploys is the whole point of this cache (see the header
  * comment) — it is what keeps a redeploy from re-spending quota. So the fix
@@ -70,7 +76,7 @@ import path from "node:path";
  * able to say so. Bumping this starts a fresh namespace; the previous one is
  * simply never read again.
  */
-const CACHE_VERSION = 2;
+const CACHE_VERSION = 3;
 
 /** Versioned so a computation change cannot silently reuse pre-change values across a deploy — see CACHE_VERSION. */
 const CACHE_DIR = path.join(process.cwd(), ".next", "cache", "resolved-cards", `v${CACHE_VERSION}`);
