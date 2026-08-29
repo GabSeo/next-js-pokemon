@@ -7,7 +7,7 @@ import { cardToMarkdown } from "@/lib/markdown";
 // every single fetch, including an AI agent's first, one-shot visit,
 // instead of being served instantly from Vercel's edge cache like the HTML
 // page already is. Same data either way, just slower/less reliable.
-export const revalidate = 129600;
+export const revalidate = 86400;
 
 export async function generateStaticParams() {
   const cards = await getAllCards();

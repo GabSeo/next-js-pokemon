@@ -11,9 +11,9 @@ import type { Franchise } from "@/lib/types";
 const FRANCHISES: Franchise[] = ["pokemon", "one-piece"];
 const FRANCHISE_ICON: Record<Franchise, string> = { pokemon: "⚡", "one-piece": "🏴‍☠️" };
 
-// 36 hours (must be a literal — Next.js statically parses this export).
+// 24 hours (must be a literal — Next.js statically parses this export).
 // Kept in sync with apitcg.ts's REVALIDATE_SECONDS.
-export const revalidate = 129600;
+export const revalidate = 86400;
 
 export function generateStaticParams() {
   return FRANCHISES.map((franchise) => ({ franchise }));

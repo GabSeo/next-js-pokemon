@@ -128,7 +128,13 @@ async function resolveProduct(ref: CardRef): Promise<ApitcgProduct | undefined> 
 async function resolveBerryWalletCard(ref: CardRef): Promise<{ card: BerryWalletCard; set: BerryWalletSet } | undefined> {
   if (ref.tcg !== "one-piece" || !ref.berryWalletEnabled || ref.lookup.by !== "code") return undefined;
   try {
-    return await findCardInLanguage(ref.lookup.code, "en", ref.lookup.variantTags);
+    // knownSetCode turns the set search into a single getSetCards call
+    // instead of a prefix guess that can miss and fall into a walk — see
+    // CardRef.berryWalletSetCode (data/card-refs.ts) for what a miss cost
+    // before this existed. Undefined is fine and stays the guess path.
+    return await findCardInLanguage(ref.lookup.code, "en", ref.lookup.variantTags, {
+      knownSetCode: ref.berryWalletSetCode?.en,
+    });
   } catch (err) {
     logUpstreamOnce(`berrywallet:${ref.slug}`, `[cards] BerryWallet lookup failed for ${ref.slug} — ${describeUpstreamError(err)}`);
     return undefined;
@@ -415,8 +421,28 @@ export type LocalizedCardText = {
  * card TCGdex couldn't match both fall through to `translated: false`,
  * echoing the English fields back rather than fabricating a translation —
  * same non-fatal resilience shape as resolveTcgdexCard above.
+ *
+ * cache()- and buildCached-wrapped, same pair and same reasoning as
+ * resolveCardSafe below — see the LOCALIZED_TEXT_CACHING note on
+ * getOnePieceJapaneseText further down for why caching the *fallback*
+ * outcome became safe once the per-language routes went away.
  */
-export async function getFrenchCardText(card: Card): Promise<LocalizedCardText> {
+/**
+ * `translated: false` means no real source answered — which, for these three
+ * resolvers, is far more often a network fact than a fact about the card
+ * (an upstream timeout, an exhausted budget, an open breaker). Marking it
+ * negative keeps it out of the 24h cache tier and re-asks on the next
+ * deploy. See NEGATIVE_TTL_MS in lib/build-cache.ts, which exists because
+ * this exact case was confirmed live: one TCGdex connect timeout otherwise
+ * pinned a card's FR toggle inert for a full day.
+ */
+const untranslated = (text: LocalizedCardText) => !text.translated;
+
+export const getFrenchCardText = cache((card: Card): Promise<LocalizedCardText> =>
+  buildCached(`fr:${card.slug}`, () => resolveFrenchCardText(card), untranslated)
+);
+
+async function resolveFrenchCardText(card: Card): Promise<LocalizedCardText> {
   const fallback: LocalizedCardText = {
     name: card.name,
     set: card.set,
@@ -469,27 +495,40 @@ export async function getFrenchCardText(card: Card): Promise<LocalizedCardText> 
  * rather than a bare `?? undefined` collapsing the distinction back out.
  */
 /**
+ * LOCALIZED_TEXT_CACHING — applies to this resolver, getJapaneseCardText
+ * below, and getFrenchCardText above.
+ *
  * cache()-wrapped for the same reason resolveCardSafe is (see its own
  * comment) — `ref` is always the same object reference (from the shared
  * cardRefs array) and `card` is always resolveCardSafe's own cached result
  * for that ref, so repeat calls within one request/render pass (a page's
- * generateMetadata and its body, a route's generateStaticParams and its own
- * render) share one resolution instead of each re-running the search.
+ * generateMetadata and its body) share one resolution instead of each
+ * re-running the search.
  *
- * Deliberately NOT also buildCached, unlike resolveCardSafe/
- * getGradedMarketData: /products/[slug]/ja's own generateStaticParams (see
- * that file) only emits a param when `ja.translated` is true, so a cached
- * *fallback* result (from a build where BerryWallet happened to be
- * rate-limited) would silently keep suppressing that card's real /ja page in
- * every build for the rest of the cache window, even once BerryWallet
- * recovers — a correctness problem the plain English-identity case above
- * doesn't have (/products/[slug] always builds one page per card, real or
- * placeholder, so caching either outcome is equally safe there). This
- * resolver is also the cheaper of the two costs identified in the incident
- * that added buildCached (1-2 calls, consumed by exactly 2 routes) — the
- * English identity and eBay/Vinted costs below were the dominant ones.
+ * ALSO buildCached now, which it deliberately was not before. The old
+ * objection was a real correctness problem: /products/[slug]/ja's
+ * generateStaticParams only emitted a param when `ja.translated` was true,
+ * so a cached *fallback* (from a build where BerryWallet happened to be
+ * rate-limited) would keep suppressing that card's real /ja page in every
+ * build for the rest of the cache window, even after BerryWallet recovered.
+ *
+ * That route no longer exists — Japanese identity is rendered into the
+ * canonical English page behind a client-side toggle (see
+ * components/product-locale.tsx). Nothing's *existence* depends on this
+ * answer any more, only whether one flag in a toggle is live or inert on a
+ * page that builds identically either way. So the worst case for a cached
+ * fallback dropped from "this card has no Japanese page until the cache
+ * expires" to "this card's JP toggle is inert for up to ENTRY_TTL_MS", and
+ * that is comfortably worth paying: PokéWallet and BerryWallet are the two
+ * tightest quotas this app has (100 calls/hour each), and without
+ * buildCached this lookup is paid once per static-generation worker rather
+ * than once per card, because memo-fetch.ts's memoization is per-process
+ * and Next's own fetch Data Cache does not reliably survive worker
+ * parallelism (see build-cache.ts's header comment).
  */
-export const getOnePieceJapaneseText = cache(resolveOnePieceJapaneseText);
+export const getOnePieceJapaneseText = cache((card: Card, ref: CardRef): Promise<LocalizedCardText> =>
+  buildCached(`ja-one-piece:${ref.slug}`, () => resolveOnePieceJapaneseText(card, ref), untranslated)
+);
 
 async function resolveOnePieceJapaneseText(card: Card, ref: CardRef): Promise<LocalizedCardText> {
   const fallback: LocalizedCardText = {
@@ -503,7 +542,15 @@ async function resolveOnePieceJapaneseText(card: Card, ref: CardRef): Promise<Lo
   try {
     const knownEnglishVariant =
       card.printVariantIndex === undefined ? undefined : { index: card.printVariantIndex === null ? undefined : card.printVariantIndex };
-    const match = await findCardInLanguage(ref.lookup.code, "jp", ref.lookup.variantTags, knownEnglishVariant);
+    const match = await findCardInLanguage(ref.lookup.code, "jp", ref.lookup.variantTags, {
+      knownEnglishVariant,
+      // Unset on every ref today — see berryWalletSetCode's own comment on
+      // why no Japanese code has been confirmed yet. The `-JP` prefix guess
+      // covers the ordinary numbered sets meanwhile, and the walk behind it
+      // is bounded now either way.
+      knownSetCode: ref.berryWalletSetCode?.jp,
+      knownEnglishSetCode: ref.berryWalletSetCode?.en,
+    });
     if (!match) return fallback;
     return {
       name: card.name, // The curated character name (see resolveBerryWalletCard's own comment) — the character's real name doesn't change across languages here anyway. printName below carries the real Japanese print string.
@@ -557,10 +604,12 @@ async function resolveOnePieceJapaneseText(card: Card, ref: CardRef): Promise<Lo
  * matching isn't reliable for the specific chase cards this site tracks),
  * so this is a single `getCard(id)` call, not a search.
  *
- * cache()-wrapped, deliberately not also buildCached, for the same two
- * reasons getOnePieceJapaneseText is — see its own comment.
+ * cache()- and buildCached-wrapped for the same reasons
+ * getOnePieceJapaneseText is — see LOCALIZED_TEXT_CACHING on that resolver.
  */
-export const getJapaneseCardText = cache(resolveJapaneseCardText);
+export const getJapaneseCardText = cache((card: Card, ref: CardRef): Promise<LocalizedCardText> =>
+  buildCached(`ja-pokemon:${ref.slug}`, () => resolveJapaneseCardText(card, ref), untranslated)
+);
 
 async function resolveJapaneseCardText(card: Card, ref: CardRef): Promise<LocalizedCardText> {
   const fallback: LocalizedCardText = {

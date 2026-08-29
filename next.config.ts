@@ -77,6 +77,35 @@ const nextConfig: NextConfig = {
       fallback: [],
     };
   },
+  async redirects() {
+    /**
+     * The former per-language product routes. `/products/:slug/fr`,
+     * `/products/:slug/ja` and both of their `index.md` mirrors were real,
+     * indexed, sitemap-listed URLs before the language toggle moved
+     * in-page — see components/product-locale.tsx's header comment for why
+     * they went away (each was an extra static-generation render scope
+     * paying for the same quota-limited PokéWallet/BerryWallet lookup) and
+     * docs/i18n-deferred.md for what would have to come back to reinstate
+     * them properly.
+     *
+     * Permanent (308), not temporary: the decision is architectural, not a
+     * maintenance window, and a 301/308 is what actually consolidates the
+     * old URLs' accumulated signals onto the canonical English page rather
+     * than leaving them indexed as soft-404s. The .md mirrors are listed
+     * ahead of the page routes because Next matches these in order and
+     * `/products/:slug/fr/index.md` would otherwise never be reached —
+     * `:slug` itself does not match a `/`, but the trailing segments are
+     * what distinguish these two sources, so order is what keeps the
+     * markdown mirror landing on the markdown mirror instead of the HTML
+     * page.
+     */
+    return [
+      { source: "/products/:slug/fr/index.md", destination: "/products/:slug/index.md", permanent: true },
+      { source: "/products/:slug/ja/index.md", destination: "/products/:slug/index.md", permanent: true },
+      { source: "/products/:slug/fr", destination: "/products/:slug", permanent: true },
+      { source: "/products/:slug/ja", destination: "/products/:slug", permanent: true },
+    ];
+  },
   async headers() {
     // rel="index" is the IANA-registered relation for "the index of this
     // resource's collection" — generic crawlers/link-followers that already

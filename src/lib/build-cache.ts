@@ -9,10 +9,13 @@ import path from "node:path";
  *
  * Why this exists: React's `cache()` (see cards.ts's resolveCardSafe) only
  * de-dupes calls within one render pass, but a single card is independently
- * rendered by roughly a dozen different routes during static generation —
- * /products/[slug], its /ja and /fr alternates and their index.md mirrors,
- * the JSON API keyed by BOTH slug and resolved id, the /okf mirror, and the
- * price-checker's prebuilt twin. Each of those is a separate render, so
+ * rendered by several different routes during static generation —
+ * /products/[slug] and its index.md mirror, the JSON API keyed by BOTH slug
+ * and resolved id, the /okf mirror, and the price-checker's prebuilt twin.
+ * (It used to be roughly a dozen: the /fr and /ja alternates and their own
+ * index.md mirrors accounted for four more, each with a generateStaticParams
+ * pass of its own, until the language toggle moved in-page — see
+ * components/product-locale.tsx.) Each of those is a separate render, so
  * cache() buys nothing across them. Worse, getCardByIdOrSlug's id-keyed
  * lookup path (used by the JSON API's id params) has to re-resolve an
  * ENTIRE franchise just to find one card by id (see that function's own
@@ -49,13 +52,38 @@ const CACHE_DIR = path.join(process.cwd(), ".next", "cache", "resolved-cards");
 /**
  * How long a cached entry is trusted across separate `next build`
  * invocations (this build, plus however many redeploys land inside the
- * window) before a fresh resolution is forced — well under
- * BerryWallet/PokéWallet's own 36h upstream revalidate window
- * (REVALIDATE_SECONDS in berrywallet.ts/pokewallet.ts), so this is never the
- * stalest link in the chain. Long enough to absorb a burst of redeploys
- * during active development/testing without spending quota on each one.
+ * window) before a fresh resolution is forced. Now EQUAL to, rather than
+ * under, the upstream revalidate window every card client uses
+ * (REVALIDATE_SECONDS in apitcg.ts/tcgdex.ts/berrywallet.ts/pokewallet.ts,
+ * all 24h since 2026-08-29) — the two layers simply expire on the same
+ * daily cadence.
+ *
+ * The honest consequence, since this used to claim it was never the stalest
+ * link: a deploy landing just before this entry expires ships data up to
+ * 24h old, and that page then starts its own 24h ISR window. Worst case,
+ * something on screen is ~48h old rather than ~24h. Shortening this to
+ * restore the old invariant is not free — it would allow two cold
+ * resolutions a day, and apitcg's ~2 calls x 9 cards would then be ~36/day
+ * against a 1,000/month cap (~1,080/month), i.e. over. Daily is the right
+ * cadence for both layers; the 48h tail is the price and it is small.
+ *
+ * Raised from 6h to 24h when the tracked-card count went past a handful,
+ * because at 6h this became the binding constraint on apitcg's *monthly*
+ * quota rather than a saving against it. The arithmetic, for 9 tracked
+ * cards: one cold resolution costs ~2 apitcg calls per card (a product
+ * lookup plus getHistoryPrices), so ~18 per cold window. A 6h TTL allows
+ * four cold windows a day — ~72 calls/day, ~2,160/month against a 1,000/month
+ * free tier, i.e. over cap by more than 2x before a single extra deploy.
+ * At 24h that is ~18/day and ~540/month, which fits with real headroom.
+ *
+ * Nothing about page freshness changes: pages still revalidate on their own
+ * 24h timer, and a *cold* window is only ever reached by a deploy, so in
+ * steady state this simply stops charging the quota for redeploys that
+ * would have resolved identical data. lib/api-budget.ts is the hard ceiling
+ * underneath this; this is the lever that keeps normal builds nowhere near
+ * it.
  */
-const ENTRY_TTL_MS = 6 * 60 * 60 * 1000;
+const ENTRY_TTL_MS = 24 * 60 * 60 * 1000;
 
 /**
  * `next build` reliably sets NEXT_PHASE on its own process — except inside a
@@ -74,6 +102,26 @@ function buildPhaseActive(): boolean {
 type Entry<T> = { value: T; expiresAt: number };
 
 /**
+ * How long a result the caller classes as *negative* is trusted — a
+ * translation that came back untranslated, a lookup that found nothing.
+ *
+ * Deliberately minutes, not hours, and the difference is not cosmetic.
+ * Confirmed live on the first run after this cache was extended to the
+ * translation resolvers: a TCGdex connect timeout (IPv6, ~10s) made
+ * getFrenchCardText return its `translated: false` fallback, and at the
+ * full ENTRY_TTL_MS that transient blip would have kept a card's FR toggle
+ * inert for a whole day — long after TCGdex recovered, and with no way to
+ * tell from the page that anything had gone wrong.
+ *
+ * A positive result is a fact about a card and stays cheap to trust for a
+ * day. A negative result is usually a fact about the *network*, and the
+ * only honest thing to do with it is re-ask soon. Long enough to still
+ * collapse one build's worth of repeats (the thing this module exists for),
+ * short enough that the next deploy re-tries.
+ */
+const NEGATIVE_TTL_MS = 15 * 60 * 1000;
+
+/**
  * Runs `compute()` at most once per `key` per ENTRY_TTL_MS window, sharing
  * that result across every static-generation worker in this build — and the
  * next few, within the TTL — via a JSON file. Falls straight through to
@@ -85,8 +133,19 @@ type Entry<T> = { value: T; expiresAt: number };
  * failure (a corrupt entry, a race with a concurrent writer, a read-only
  * disk) just means this key falls back to a live `compute()` — a cache miss
  * is never the reason a page fails to build.
+ *
+ * `isNegative` lets a caller say "this particular result means the lookup
+ * didn't work", which caches it for NEGATIVE_TTL_MS instead of
+ * ENTRY_TTL_MS. Callers whose failure mode is already a distinct value
+ * should pass it; callers where every outcome is equally a real answer
+ * (resolveCardSafe, which returns a genuine offline placeholder card that
+ * the page is designed to render) should not.
  */
-export async function buildCached<T>(key: string, compute: () => Promise<T>): Promise<T> {
+export async function buildCached<T>(
+  key: string,
+  compute: () => Promise<T>,
+  isNegative?: (value: T) => boolean
+): Promise<T> {
   if (!buildPhaseActive()) return compute();
 
   const file = path.join(CACHE_DIR, `${encodeURIComponent(key)}.json`);
@@ -103,7 +162,8 @@ export async function buildCached<T>(key: string, compute: () => Promise<T>): Pr
   const value = await compute();
   try {
     mkdirSync(CACHE_DIR, { recursive: true });
-    const entry: Entry<T> = { value, expiresAt: Date.now() + ENTRY_TTL_MS };
+    const ttl = isNegative?.(value) ? NEGATIVE_TTL_MS : ENTRY_TTL_MS;
+    const entry: Entry<T> = { value, expiresAt: Date.now() + ttl };
     writeFileSync(file, JSON.stringify(entry));
   } catch {
     // Best effort — see this function's own doc comment.

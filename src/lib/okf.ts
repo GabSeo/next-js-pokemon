@@ -68,7 +68,7 @@ export async function okfHomeConcept(): Promise<string> {
       resource: absoluteUrl("/"),
       tags: ["pokemon", "one-piece", "tcg", "price-tracking"],
       generated: { by: GENERATED_BY, at: now.toISOString() },
-      // Price-driven concept — days, not months, matching the 36h Data
+      // Price-driven concept — days, not months, matching the 24h Data
       // Cache reality rather than the evergreen cadence a blog post gets.
       stale_after: addDays(now, 7),
     },

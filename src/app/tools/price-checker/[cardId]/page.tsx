@@ -18,11 +18,11 @@ import { cardRefs } from "@/data/card-refs";
  * form. Without that, the same content would be indexable at two addresses
  * and the internal one could outrank the real one.
  *
- * Same 36h window as the product pages, and the same reason: this renders
+ * Same 24h window as the product pages, and the same reason: this renders
  * the identical GradedMarketPanel from the identical data.
  */
 
-export const revalidate = 129600;
+export const revalidate = 86400;
 
 /**
  * Straight from card-refs.ts — static data, no network.

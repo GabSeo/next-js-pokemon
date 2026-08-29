@@ -14,8 +14,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "/", types: { "text/markdown": "/index.md" } },
 };
 
-// 36 hours (must be a literal — Next.js statically parses this export).
-export const revalidate = 129600;
+// 24 hours (must be a literal — Next.js statically parses this export).
+export const revalidate = 86400;
 
 type ToolEntry = {
   href: string;
@@ -248,7 +248,7 @@ export default async function HomePage() {
             <div className="mt-1 text-xs font-bold tracking-[0.6px] text-muted-text uppercase">Cards Tracked</div>
           </div>
           <div>
-            <div className="text-[32px] font-black tracking-[-0.6px]">36h</div>
+            <div className="text-[32px] font-black tracking-[-0.6px]">24h</div>
             <div className="mt-1 text-xs font-bold tracking-[0.6px] text-muted-text uppercase">Price Refresh Window</div>
           </div>
           <div>

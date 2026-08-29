@@ -212,7 +212,7 @@ export function GradedMarketTabs({
   vinted: VintedSummary;
   /** Only meaningful for the eBay-graded English/Japanese markets (raw vs. PSA 10) — rendered inside the English/Japanese branch below and hidden on France, since Vinted has no PSA grading to compute a grading ROI against. */
   roi: GradedMarketRoi;
-  /** Lets a locale-specific product page (/products/[slug]/fr, /products/[slug]/ja) open straight to its own market instead of always defaulting to English. */
+  /** Lets a caller open this panel straight to a given market instead of defaulting to English. Unset on the product page: the language toggle above deliberately doesn't drive these tabs — which eBay market a visitor wants to read is an independent choice from which language they want the card named in. */
   defaultMarket?: MarketTab;
 }) {
   // Every condition entry carries the same set of languages (see

@@ -660,6 +660,6 @@ export async function diagnoseVintedRead(
         ? "Rows arrived but none parsed — compare sampleRowKeys against FIELD_ALIASES (url and price are required)."
         : perCard.every((c) => c.matched === 0)
           ? "Rows parsed but none matched a card — see requiredWords against sampleParsedTitles."
-          : "Read path is working. If a page still shows Preview it is serving cached HTML: product pages are ISR with revalidate=129600 (36h), so redeploy to regenerate.",
+          : "Read path is working. If a page still shows Preview it is serving cached HTML: product pages are ISR with revalidate=86400 (24h), so redeploy to regenerate.",
   };
 }

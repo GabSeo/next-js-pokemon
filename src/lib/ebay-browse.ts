@@ -38,7 +38,7 @@ const SEARCH_URL = "https://api.ebay.com/buy/browse/v1/item_summary/search";
 /** eBay's "CCG Individual Cards" category — where graded/raw Pokémon singles live. */
 const CCG_INDIVIDUAL_CARDS_CATEGORY = "183454";
 
-const REVALIDATE_SECONDS = 60 * 60; // active listings churn much faster than apitcg's 36h card-data window
+const REVALIDATE_SECONDS = 60 * 60; // active listings churn much faster than apitcg's 24h card-data window
 
 /** Same value every other upstream client in this codebase uses — see apitcg.ts's own FETCH_TIMEOUT_MS comment. */
 const FETCH_TIMEOUT_MS = 6000;

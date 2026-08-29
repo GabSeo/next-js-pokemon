@@ -32,6 +32,8 @@
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
+import { chargeApiBudget } from "@/lib/api-budget";
+
 /** Directory (relative to the project root) the build-time outage markers go in. See markBuildOutage. */
 export const OUTAGE_DIR = path.join(".next", "upstream-outage");
 
@@ -252,6 +254,15 @@ function isBlockedStatus(status: number): boolean {
  * The build-outage marker (markBuildOutage) is unaffected by this — it's
  * always keyed by the real host, since scripts/check-static-routes.mjs looks
  * that up by literal hostname regardless of which credential made the call.
+ *
+ * The same bucket is also what lib/api-budget.ts meters against, and this
+ * function is where that happens — every metered client in this codebase
+ * (apitcg, PokéWallet, BerryWallet, eBay Browse, Lobstr) already routes
+ * through here, so there is exactly one place a call can be counted and
+ * exactly one place it can be refused. That charge happens per *attempt*,
+ * inside the retry loop below, not once per call: a retry is a second real
+ * request against the quota, and counting it as free is precisely how a
+ * budget overspends while an upstream is unhealthy.
  */
 export async function resilientFetch(url: string, init: RequestInit, timeoutMs: number, rateLimitKey?: string): Promise<Response> {
   const host = new URL(url).host;
@@ -270,6 +281,11 @@ export async function resilientFetch(url: string, init: RequestInit, timeoutMs: 
   let lastError: unknown;
   for (let attempt = 1; attempt <= RETRY_ATTEMPTS; attempt++) {
     let status: number | undefined;
+    // Outside the try: an exhausted budget must propagate to the caller
+    // like an open breaker does (same class of "we decided not to make this
+    // call"), not be swallowed into `lastError` and then retried — retrying
+    // a refusal we issued ourselves can only refuse again.
+    chargeApiBudget(bucket);
     try {
       const res = await fetch(url, { ...init, signal: AbortSignal.timeout(timeoutMs) });
       status = res.status;

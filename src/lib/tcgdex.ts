@@ -44,19 +44,19 @@ const MEMO_TTL_MS = 60_000;
 const FETCH_TIMEOUT_MS = 6000;
 
 /**
- * Matches apitcg.ts's own 36h REVALIDATE_SECONDS — deliberately, even
+ * Matches apitcg.ts's own 24h REVALIDATE_SECONDS — deliberately, even
  * though the identity fields on this same response (name/set/rarity/
  * types/image) change far less often than that. TCGdex bundles identity
  * and live TCGplayer pricing in one combined /cards/{id} response (see
  * tcgplayerSnapshot's doc comment), so a single fetch() only gets one cache
  * window; price is what actually needs to stay fresh, so that's the window
- * that wins. This "wastes" a refetch of unchanged identity data every 36h,
+ * that wins. This "wastes" a refetch of unchanged identity data every 24h,
  * but TCGdex has no published rate limit, so that costs nothing real — a
- * true split (identity cached ~1 year, price cached 36h) would need a
+ * true split (identity cached ~1 year, price cached 24h) would need a
  * separate storage layer for identity data, not worth building for a
  * refetch that's free.
  */
-const REVALIDATE_SECONDS = 60 * 60 * 36;
+const REVALIDATE_SECONDS = 60 * 60 * 24;
 
 /** Languages TCGdex's card database actually supports — see file header. */
 export type TcgdexLang = "en" | "fr" | "es" | "de" | "it" | "pt";
@@ -139,7 +139,7 @@ export type TcgdexCard = {
 
 /**
  * TCGdex's own docs (tcgdex.dev/markets-prices) say TCGplayer pricing here
- * is refreshed hourly — a tighter loop than apitcg.ts's 36h fetch window —
+ * is refreshed hourly — a tighter loop than apitcg.ts's 24h fetch window —
  * so this is the preferred `currentPrice` source for a Pokémon card when a
  * TCGdex match exists. apitcg.ts stays wired for the one thing TCGdex has
  * no equivalent for: a real daily price-history time series (TCGdex only

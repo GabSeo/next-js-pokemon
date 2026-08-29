@@ -19,7 +19,7 @@ function logMcpTool(name: string, detail: string) {
  *
  * Every tool is a thin wrapper over the same cards.ts functions the REST
  * API and the HTML/Markdown pages already use — same cache()-deduped, same
- * 36h-cached resolvers, so MCP traffic costs exactly what a page view costs.
+ * 24h-cached resolvers, so MCP traffic costs exactly what a page view costs.
  * No tool re-implements a fetch to apitcg.com.
  */
 const handler = createMcpHandler((server) => {

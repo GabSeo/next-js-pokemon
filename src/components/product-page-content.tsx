@@ -1,10 +1,12 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { AddToCollectionButton } from "@/components/add-to-collection-button";
 import { AlertSubscribe } from "@/components/alert-subscribe";
 import { CardImage } from "@/components/card-image";
 import { OpenDataLinks } from "@/components/open-data-links";
 import { PriceChart } from "@/components/price-chart";
 import { PriceDataTabs } from "@/components/price-data-tabs";
+import { LocaleSlot, ProductLocaleProvider, ProductLocaleToggle, type LocaleCode } from "@/components/product-locale";
 import { StructuredData } from "@/components/structured-data";
 import { CardmarketPricesPanel } from "@/components/retro/cardmarket-prices-panel";
 import { ConditionFilterChips } from "@/components/retro/condition-filter-chips";
@@ -21,83 +23,68 @@ import { ONE_PIECE_MARKET_ENABLED } from "@/lib/graded-market";
 import type { Card } from "@/lib/types";
 
 /**
- * `code` is a real ISO 3166-1 alpha-2 country code (e.g. "US", "FR", "JP") —
- * used both as the visible label and, lowercased, to build the flag image
- * URL below. `href` is optional: omitted (with `disabled: true`) renders a
- * visible-but-inert toggle for a market whose real page doesn't exist yet —
- * shown so visitors know it's coming, never a dead link to a page that 404s
- * or, worse, a link to a page showing fabricated data under a real-looking
- * flag. `active` still means "this is the market currently being viewed";
- * a disabled entry is never active.
- */
-export type LocaleLink = { code: string; href?: string; active: boolean; disabled?: boolean };
-
-/**
- * The Japan toggle for a Pokémon product page, shown on every page — real
- * and clickable when `translated` is true (a confirmed PokéWallet match
- * exists for this specific card, see data/card-refs.ts's pokeWalletCardId
- * and cards.ts's getJapaneseCardText), an inert placeholder otherwise.
- * Deliberately keyed to per-card identity availability, not
- * JAPANESE_MARKET_ENABLED — that flag gates a separate, narrower concern
- * (whether the Graded Market panel defaults to the Japanese eBay tab, whose
- * real data is currently thin — see graded-market.ts's own comment), not
- * whether this page has real content to show.
- */
-export function japanLocaleLink(hrefWhenReal: string, active: boolean, translated: boolean): LocaleLink {
-  return translated ? { code: "JP", href: hrefWhenReal, active } : { code: "JP", active: false, disabled: true };
-}
-
-/**
- * Flag *emoji* are unreliable cross-platform — Windows in particular often
- * has no real flag glyph for the regional-indicator-letter pairs they're
- * built from, rendering as blank/tofu instead of a flag picture even though
- * the emoji itself is correct. flagcdn.com (the static-asset CDN for the
- * well-known open-source flag-icons project) serves real flags by ISO code,
- * no key needed — verified live to resolve for every code this site uses.
+ * One language's worth of a card's *display* identity, plus whether that
+ * language has a real source for this specific card.
  *
- * SVG specifically, not PNG/WebP/JPEG: at this toggle's small render size
- * (~16×12px) a raster tier would look soft on any 2×/3× display unless a
- * larger tier were fetched, where SVG stays crisp at any zoom/DPI for free.
- * It's also the smallest of the four formats for every flag this site
- * actually uses (verified live: US/FR/JP SVGs are 765/191/160 bytes vs.
- * 252/109/239 for the equivalent 40px-wide PNGs) — flat-color flags are
- * exactly what SVG compresses best and JPEG compresses worst (visible
- * ringing on the hard color edges a flag is made of).
+ * `card` is a name/set/rarity/number/image-overridden clone of the English
+ * card for FR and JP, and the English card itself for US. `available:
+ * false` means no real translation exists for this card (any One Piece card
+ * in French — BerryWallet has zero French sets; any card whose PokéWallet /
+ * BerryWallet Japanese counterpart was never confirmed), in which case
+ * `card` is just the English card and the toggle entry renders inert rather
+ * than switching to English text wearing a foreign flag.
+ *
+ * These replaced the former per-language routes. Building all three here
+ * costs nothing extra upstream: the root page already had to resolve French
+ * and Japanese identity to decide whether each flag was live or inert — see
+ * components/product-locale.tsx's header comment for the full cost
+ * rationale, and docs/i18n-deferred.md for what a real hreflang
+ * implementation would have to restore later.
  */
-function flagSvgUrl(isoCode: string): string {
-  return `https://flagcdn.com/${isoCode.toLowerCase()}.svg`;
-}
+export type LocaleVariant = { code: LocaleCode; card: Card; available: boolean };
 
 type ProductPageContentProps = {
   /** Source of truth for every number, search query, and history point — always the real English-identity Card, never a localized clone (see graded-market.ts's `card.tcgdexId`-based French search override). */
   card: Card;
-  /** Same object as `card` on the default and /ja pages; a name/set/rarity/imageUrl-overridden clone on /fr — used only for what's actually visible: title, breadcrumb, and card art. */
-  displayCard: Card;
+  /**
+   * Every language this card can be *displayed* in, in fixed US -> FR -> JP
+   * order. Used only for what's actually visible — title, breadcrumb, card
+   * art, and the Cardmarket panel — never for a number, a search query or a
+   * history point, which always come from `card` above (see
+   * graded-market.ts's `card.tcgdexId`-based French search override for why
+   * a localized clone must never leak into those).
+   */
+  localeVariants: LocaleVariant[];
   franchiseLabel: string;
   collectionHref: string;
   markdownHref: string;
   jsonHref: string;
   okfHref: string;
-  /** The visible "no orphan pages" cross-links between market variants (PLAN.md §4.3). Framed as *market* focus (US/FR/JP), not *language* — honest either way: /fr is real translated content, /ja isn't (see that route's own doc comment), but both are legitimately a different market's data for this card. */
-  localeLinks: LocaleLink[];
-  /** Which Market Overview tab opens by default — English unless a locale page overrides it. */
+  /** Which Market Overview tab opens by default. Left unset on the product page: the panel has its own tabs, and the language toggle above deliberately doesn't drive them — the eBay market a visitor wants to read is an independent choice from the language they want the card named in. */
   defaultMarketTab?: MarketTab;
-  /** Omitted on the /ja workflow page: its content is identical to the English original, so it's meant to canonicalize back there rather than assert itself as separately-indexable content via schema.org. */
   structuredData?: { product: Record<string, unknown>; breadcrumb: Record<string, unknown>; faq: Record<string, unknown> };
 };
 
 export function ProductPageContent({
   card,
-  displayCard,
+  localeVariants,
   franchiseLabel,
   collectionHref,
   markdownHref,
   jsonHref,
   okfHref,
-  localeLinks,
   defaultMarketTab,
   structuredData,
 }: ProductPageContentProps) {
+  /**
+   * Builds one LocaleSlot's worth of variants from a render function.
+   * Unavailable locales are skipped entirely rather than mapped to English
+   * text — LocaleSlot's own US fallback covers them if the toggle is ever
+   * driven somewhere it shouldn't be, and ProductLocaleToggle already
+   * refuses to switch to them.
+   */
+  const localized = (render: (localeCard: Card) => ReactNode): Partial<Record<LocaleCode, ReactNode>> =>
+    Object.fromEntries(localeVariants.filter((v) => v.available).map((v) => [v.code, render(v.card)]));
   // Every panel below this line is a function of card.currentPrice, which
   // the offline placeholder doesn't have (see placeholderCard in
   // lib/cards.ts). Rendering them anyway would publish a wall of confident
@@ -110,6 +97,7 @@ export function ProductPageContent({
   const bands = priceKnown ? computeAlertBands(card.currentPrice) : [];
 
   return (
+    <ProductLocaleProvider options={localeVariants.map(({ code, available }) => ({ code, available }))}>
     <div className="min-h-screen bg-muted-surface">
       {structuredData && (
         <>
@@ -130,80 +118,51 @@ export function ProductPageContent({
               {franchiseLabel}
             </Link>
             <span className="px-1.5">/</span>
-            <span className="text-foreground">{displayCard.name}</span>
+            <span className="text-foreground">
+              <LocaleSlot variants={localized((c) => c.name)} />
+            </span>
           </nav>
 
-          {localeLinks.length > 0 && (
-            <div className="flex items-center gap-2" role="group" aria-label="Market">
-              <span className="text-xs font-black tracking-[0.3px] text-muted-text uppercase">Market</span>
-              <div className="flex overflow-hidden rounded-md border-2 border-black">
-                {localeLinks.map((l, i) => {
-                  const content = (
-                    <>
-                      {/* eslint-disable-next-line @next/next/no-img-element -- external CDN image, domain not allowlisted for next/image */}
-                      <img src={flagSvgUrl(l.code)} alt="" className="h-3 w-4 rounded-[1px] object-cover" />
-                      {l.code}
-                    </>
-                  );
-                  const sharedClassName = `flex items-center gap-1.5 px-3 py-1.5 text-xs font-black tracking-[0.3px] uppercase transition-colors ${
-                    i > 0 ? "border-l-2 border-black" : ""
-                  }`;
-                  // A disabled entry (or one with no real page to link to)
-                  // is visible but never a <Link> — a market visitors can
-                  // see is coming, not a dead link or a fabricated page
-                  // dressed up behind a real-looking flag. See LocaleLink's
-                  // own doc comment.
-                  if (l.disabled || !l.href) {
-                    return (
-                      <span
-                        key={l.code}
-                        aria-disabled="true"
-                        title="Coming soon"
-                        className={`${sharedClassName} cursor-not-allowed bg-muted-surface text-muted-text opacity-60`}
-                      >
-                        {content}
-                      </span>
-                    );
-                  }
-                  return (
-                    <Link
-                      key={l.href}
-                      href={l.href}
-                      aria-current={l.active ? "page" : undefined}
-                      className={`${sharedClassName} ${l.active ? "bg-pokemon-red text-white" : "bg-white text-foreground hover:bg-muted-surface"}`}
-                    >
-                      {content}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          <ProductLocaleToggle />
         </div>
 
         <div className="mt-5 mb-8 flex flex-wrap items-center justify-between gap-3 rounded-lg border-2 border-black bg-card-surface p-6 shadow-hard-md">
           <div className="flex flex-wrap items-center gap-3">
-            {/* printName (One Piece only, real BerryWallet print string —
-                e.g. "Shanks (004) (Manga)") when there is one; every other
-                card falls back to the clean name, unchanged. */}
-            <h1 className="text-2xl font-black tracking-[-0.6px] uppercase">{displayCard.printName ?? displayCard.name}</h1>
-            {card.types?.map((englishType, i) => (
-              <TypeBadge key={englishType} colorKey={englishType} label={displayCard.types?.[i] ?? englishType} />
-            ))}
-            <span className="rounded-full border-2 border-black bg-pokemon-blue px-3.5 py-1 text-xs font-black tracking-[0.35px] text-white uppercase">
-              {displayCard.set}
-              {displayCard.setCode ? ` · ${displayCard.setCode}` : ""}
-            </span>
-            {displayCard.number && (
-              <span className="rounded-full border-2 border-black bg-white px-3.5 py-1 text-xs font-black tracking-[0.35px] uppercase">
-                #{displayCard.number}
-              </span>
-            )}
-            {displayCard.rarity && (
-              <span className="rounded-full border-2 border-black bg-pokemon-yellow px-3.5 py-1 text-xs font-black tracking-[0.35px] uppercase">
-                {displayCard.rarity}
-              </span>
-            )}
+            {/* One slot for the whole identity strip rather than four —
+                the h1, the type badges, the set and the number all have to
+                change together or the header reads as a half-translated
+                mix. printName (One Piece only, real BerryWallet print
+                string — e.g. "Shanks (004) (Manga)") when there is one;
+                every other card falls back to the clean name, unchanged.
+
+                TypeBadge's colorKey stays the ENGLISH type throughout
+                (`card.types`, never the localized clone) — TCGdex localizes
+                the type name but the palette in lib/pokemon-types.ts is
+                keyed by the English one. See TypeBadge's own doc comment. */}
+            <LocaleSlot
+              variants={localized((c) => (
+                <>
+                  <h1 className="text-2xl font-black tracking-[-0.6px] uppercase">{c.printName ?? c.name}</h1>
+                  {card.types?.map((englishType, i) => (
+                    <TypeBadge key={englishType} colorKey={englishType} label={c.types?.[i] ?? englishType} />
+                  ))}
+                  <span className="rounded-full border-2 border-black bg-pokemon-blue px-3.5 py-1 text-xs font-black tracking-[0.35px] text-white uppercase">
+                    {c.set}
+                    {c.setCode ? ` · ${c.setCode}` : ""}
+                  </span>
+                  {c.number && (
+                    <span className="rounded-full border-2 border-black bg-white px-3.5 py-1 text-xs font-black tracking-[0.35px] uppercase">
+                      #{c.number}
+                    </span>
+                  )}
+                  {c.rarity && (
+                    <span className="rounded-full border-2 border-black bg-pokemon-yellow px-3.5 py-1 text-xs font-black tracking-[0.35px] uppercase">
+                      {c.rarity}
+                    </span>
+                  )}
+                </>
+              ))}
+            />
           </div>
           <span className="rounded-md border-2 border-black bg-muted-surface px-3 py-1.5 text-sm font-black">
             Card ID: {card.id}
@@ -213,7 +172,11 @@ export function ProductPageContent({
         <div className="grid grid-cols-1 gap-9 lg:grid-cols-[320px_1fr] lg:items-start">
           <div className="lg:sticky lg:top-[88px]">
             <PsaTiltCard>
-              <CardImage card={displayCard} className="aspect-[300/420] w-full" priority sizes="(min-width: 1024px) 320px, 100vw" />
+              <LocaleSlot
+                variants={localized((c) => (
+                  <CardImage card={c} className="aspect-[300/420] w-full" priority sizes="(min-width: 1024px) 320px, 100vw" />
+                ))}
+              />
             </PsaTiltCard>
 
             {card.description && <p className="mt-4 text-sm leading-5 text-muted-text">{card.description}</p>}
@@ -288,23 +251,26 @@ export function ProductPageContent({
                     )}
                   </div>
 
-                  {/* Real Cardmarket EUR figures (displayCard.cardmarket)
-                      replace the illustrative currency-conversion panel
-                      wherever they exist — currently only a One Piece card
-                      with a real BerryWallet match; every other card keeps
-                      the estimate panel it always had. Reads displayCard,
-                      not card: on /ja this is the Japanese print's own
-                      cardmarket listing (see that page's own comment on
-                      why it's a genuinely different real listing, not the
-                      English one relabeled) — priceKnown itself still
-                      checks card, since price *availability* is a canonical
-                      fact the display override never changes. */}
-                  {priceKnown &&
-                    (displayCard.cardmarket ? (
-                      <CardmarketPricesPanel card={displayCard} />
-                    ) : (
-                      <InternationalPricesPanel card={displayCard} />
-                    ))}
+                  {/* Real Cardmarket EUR figures (the locale variant's own
+                      `cardmarket`) replace the illustrative
+                      currency-conversion panel wherever they exist —
+                      currently only a One Piece card with a real
+                      BerryWallet match; every other card keeps the estimate
+                      panel it always had. Per-locale, not per-card: the
+                      Japanese print carries its own real Cardmarket listing
+                      with genuinely different numbers and a different
+                      product_url from the English print's, not the English
+                      one relabeled (see cards.ts's
+                      getOnePieceJapaneseText). priceKnown itself still
+                      checks `card`, since price *availability* is a
+                      canonical fact no display override changes. */}
+                  {priceKnown && (
+                    <LocaleSlot
+                      variants={localized((c) =>
+                        c.cardmarket ? <CardmarketPricesPanel card={c} /> : <InternationalPricesPanel card={c} />
+                      )}
+                    />
+                  )}
                 </div>
 
                 {/* Gated the same way getGradedMarketData itself is (see its
@@ -366,5 +332,6 @@ export function ProductPageContent({
         </div>
       </div>
     </div>
+    </ProductLocaleProvider>
   );
 }

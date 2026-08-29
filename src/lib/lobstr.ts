@@ -743,7 +743,7 @@ async function fetchAllResults(query: Record<string, string | number | undefined
  * /products/gengar-vmax-271 and 1 listing on /products/gengar-vmax-271/fr,
  * with identical search text on both. selectVintedListings is pure, so the
  * only variable left was how many rows this function handed back. Each
- * wrong answer was then frozen by ISR for 36h.
+ * wrong answer was then frozen by ISR for 24h.
  *
  * fetchAllResults' own comment already had the rule right and the code
  * simply didn't follow it: "A partial market that looks complete is worse

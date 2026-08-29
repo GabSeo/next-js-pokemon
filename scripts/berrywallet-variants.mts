@@ -49,7 +49,9 @@ for (const language of ["en", "jp"] as const) {
   const set = sets.find((s) => s.set_code === guessedCode);
   console.log(`\n=== ${language} set ${guessedCode} -> ${set ? set.name : "NOT FOUND"} ===`);
   if (!set) continue;
-  const cards = await getSetCards(set.set_code);
+  // allPages: this is a hand-run diagnostic, so seeing the whole set matters
+  // more than the extra request (see getSetCards' own doc comment).
+  const cards = await getSetCards(set.set_code, { allPages: true });
   const matches = cards.filter((c) => c.card_number === cardNumber || c.name.includes(cardNumber));
   const ranked = [...matches].sort((a, b) => (rankPrice(a) ?? 0) - (rankPrice(b) ?? 0));
   console.log(`${matches.length} candidate(s), sorted by rank price ascending:`);

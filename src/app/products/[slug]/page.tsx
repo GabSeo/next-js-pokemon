@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ProductPageContent, type LocaleLink, japanLocaleLink } from "@/components/product-page-content";
+import { ProductPageContent, type LocaleVariant } from "@/components/product-page-content";
 import { getGradedMarketData, gradedMarketOffersJsonLd } from "@/lib/graded-market";
 import { franchiseLabel, getAllCards, getCardBySlug, getFrenchCardText, getJapaneseCardText, getOnePieceJapaneseText } from "@/lib/cards";
 import { absoluteUrl } from "@/lib/site";
 import { priceStatement } from "@/lib/price-display";
 import { cardRefs } from "@/data/card-refs";
+import type { Card } from "@/lib/types";
 
-// 36 hours (must be a literal — Next.js statically parses this export).
+// 24 hours (must be a literal — Next.js statically parses this export).
 // Kept in sync with apitcg.ts's REVALIDATE_SECONDS.
-export const revalidate = 129600;
+export const revalidate = 86400;
 
 export async function generateStaticParams() {
   const cards = await getAllCards();
@@ -18,34 +19,125 @@ export async function generateStaticParams() {
 
 type PageProps = { params: Promise<{ slug: string }> };
 
+/**
+ * The card's French and Japanese *display* identity, resolved once and
+ * shared by generateMetadata and the page body — both run in the same
+ * request scope, so the `cache()` wrappers inside cards.ts collapse this to
+ * a single real resolution per card per render, and buildCached collapses
+ * it further to one per card per build (see lib/build-cache.ts).
+ *
+ * This is the whole product page's translation cost, and it is the same
+ * cost the page already paid before the /fr and /ja routes were removed —
+ * it needed both answers then too, to decide whether each flag in the
+ * toggle was a live link or an inert placeholder. What went away with those
+ * routes is four *additional* static-generation render scopes per card
+ * (/fr, /fr/index.md, /ja, /ja/index.md — each with its own
+ * generateStaticParams as well as its own render), every one of which could
+ * pay for the same PokéWallet/BerryWallet lookup again on a different build
+ * worker. See components/product-locale.tsx's header comment for the full
+ * accounting and docs/i18n-deferred.md for what a real per-language-URL
+ * implementation has to restore.
+ */
+async function localeVariantsFor(card: Card): Promise<LocaleVariant[]> {
+  const ref = cardRefs.find((r) => r.slug === card.slug);
+
+  // French: TCGdex only, and TCGdex has zero One Piece coverage — confirmed
+  // live, BerryWallet has no French sets either, so a One Piece card has no
+  // French source anywhere and its FR toggle is permanently inert rather
+  // than a fabricated translation (see lib/berrywallet.ts's file header).
+  const fr = await getFrenchCardText(card);
+
+  // Japanese: PokéWallet for Pokémon (via the hand-confirmed
+  // pokeWalletCardId on the ref), BerryWallet for One Piece. Both are real,
+  // separately-catalogued Japanese prints with their own numbers, never a
+  // translation of the English row.
+  const ja = ref
+    ? card.franchise === "one-piece"
+      ? await getOnePieceJapaneseText(card, ref)
+      : await getJapaneseCardText(card, ref)
+    : undefined;
+
+  // Fixed US -> FR -> JP order regardless of franchise or which entries are
+  // real — a flag's position shifting depending on the page (confirmed
+  // live: One Piece was rendering JP before FR while Pokémon rendered it
+  // after) reads as a UI bug even when every individual state is correct.
+  return [
+    { code: "US", card, available: true },
+    {
+      code: "FR",
+      available: fr.translated,
+      card: fr.translated
+        ? {
+            ...card,
+            name: fr.name,
+            set: fr.set,
+            rarity: fr.rarity,
+            imageUrl: fr.imageUrl,
+            types: fr.types,
+            number: fr.number ?? card.number,
+            setCode: fr.setCode ?? card.setCode,
+          }
+        : card,
+    },
+    {
+      code: "JP",
+      available: !!ja?.translated,
+      card:
+        ja?.translated
+          ? {
+              ...card,
+              name: ja.name,
+              // One Piece only (undefined for Pokémon — getJapaneseCardText
+              // never sets it): the real Japanese print name, e.g. "Shanks
+              // (OP09-004) (V.4)". Falls back to the English card's own
+              // printName rather than ja.name so a Pokémon card's H1 is
+              // unaffected either way.
+              printName: ja.printName ?? card.printName,
+              set: ja.set,
+              rarity: ja.rarity,
+              imageUrl: ja.imageUrl,
+              // Genuinely different from the English number for Pokémon
+              // (Ethan's Typhlosion is 190/182 internationally and 070/063
+              // in its real Japanese set); identical for One Piece, which
+              // uses one universal card code across every region.
+              number: ja.number ?? card.number,
+              setCode: ja.setCode ?? card.setCode,
+              // One Piece only — the Japanese print's own real Cardmarket
+              // listing (different real numbers and a different real
+              // product_url from the English print's, not a relabeling —
+              // see getOnePieceJapaneseText's own comment). Falls back to
+              // the English card's cardmarket rather than undefined so a
+              // Japanese row with no cardmarket block of its own still
+              // shows something real instead of the panel disappearing.
+              cardmarket: ja.cardmarket ?? card.cardmarket,
+            }
+          : card,
+    },
+  ];
+}
+
+/**
+ * No `languages` / hreflang block, deliberately. There is exactly one
+ * indexable URL per card and it is this English one — the French and
+ * Japanese identities are rendered into this same page behind a client-side
+ * toggle rather than living at their own addresses. Declaring hreflang
+ * alternates that point at URLs which no longer exist would be strictly
+ * worse than declaring none, which is the same "only claim what's real"
+ * rule the old alternates block already followed when it gated each entry
+ * on a real translation. docs/i18n-deferred.md records what has to come
+ * back — real per-language URLs first, then hreflang on top of them — when
+ * that work is picked up.
+ */
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const card = await getCardBySlug(slug);
   if (!card) return {};
-
-  // Only claim an "fr"/"ja" alternate when a real translation exists — an
-  // hreflang pointing at a URL that doesn't get built (see the /fr and /ja
-  // routes' own dynamicParams = false) would be worse than not listing it.
-  const fr = await getFrenchCardText(card);
-  const languages: Record<string, string> = {
-    "x-default": absoluteUrl(`/products/${card.slug}`),
-    en: absoluteUrl(`/products/${card.slug}`),
-  };
-  if (fr.translated) languages.fr = absoluteUrl(`/products/${card.slug}/fr`);
-  const metaRef = cardRefs.find((r) => r.slug === card.slug);
-  const ja = metaRef
-    ? card.franchise === "one-piece"
-      ? await getOnePieceJapaneseText(card, metaRef)
-      : await getJapaneseCardText(card, metaRef)
-    : undefined;
-  if (ja?.translated) languages.ja = absoluteUrl(`/products/${card.slug}/ja`);
 
   return {
     title: `${card.name} (${card.number ?? ""}) price`,
     description: `${card.name} — ${card.set} ${card.number ?? ""}. ${priceStatement(card)}`,
     alternates: {
       canonical: `/products/${card.slug}`,
-      languages,
       types: { "text/markdown": `/products/${card.slug}/index.md` },
     },
   };
@@ -57,8 +149,8 @@ export default async function ProductPage({ params }: PageProps) {
   if (!card) notFound();
 
   const label = franchiseLabel(card.franchise);
-  const fr = await getFrenchCardText(card);
   const gradedMarket = await getGradedMarketData(card);
+  const localeVariants = await localeVariantsFor(card);
 
   // An Offer with the placeholder price would publish "this card costs 0
   // USD" as structured data — the one representation search engines and
@@ -132,49 +224,15 @@ export default async function ProductPage({ params }: PageProps) {
     ],
   };
 
-  // One Piece: the canonical page is always English (see data/card-refs.ts's
-  // berryWalletEnabled comment on why), and JP is a real link to /ja
-  // whenever BerryWallet actually has a Japanese match for this card — same
-  // "only link to what's real" rule /fr already follows for Pokémon. FR
-  // stays a permanent inert placeholder: confirmed live, BerryWallet has
-  // zero French sets, so there's no real source to link to at all (see
-  // lib/berrywallet.ts's file header).
-  const ref = cardRefs.find((r) => r.slug === card.slug);
-  const oneJapanese = card.franchise === "one-piece" && ref ? await getOnePieceJapaneseText(card, ref) : undefined;
-  const pokemonJapanese = card.franchise === "pokemon" && ref ? await getJapaneseCardText(card, ref) : undefined;
-
-  // Fixed US -> FR -> JP order everywhere, regardless of franchise or which
-  // one is active/real — a flag's position shifting depending on the page
-  // (confirmed live: One Piece was rendering JP before FR while Pokémon
-  // rendered it after) reads as a UI bug even when every individual state
-  // is correct.
-  const localeLinks: LocaleLink[] =
-    card.franchise === "one-piece"
-      ? [
-          { code: "US", href: `/products/${card.slug}`, active: true },
-          { code: "FR", active: false, disabled: true },
-          { code: "JP", href: oneJapanese?.translated ? `/products/${card.slug}/ja` : undefined, active: false, disabled: !oneJapanese?.translated },
-        ]
-      : [
-          { code: "US", href: `/products/${card.slug}`, active: true },
-          // Always rendered (even when no real match exists), same reason
-          // japanLocaleLink always renders JP — an omitted flag would also
-          // shift FR/JP's fixed positions for whichever Pokémon card (none
-          // currently) has no real French match.
-          { code: "FR", href: fr.translated ? `/products/${card.slug}/fr` : undefined, active: false, disabled: !fr.translated },
-          japanLocaleLink(`/products/${card.slug}/ja`, false, !!pokemonJapanese?.translated),
-        ];
-
   return (
     <ProductPageContent
       card={card}
-      displayCard={card}
+      localeVariants={localeVariants}
       franchiseLabel={label}
       collectionHref={`/collections/${card.franchise}`}
       markdownHref={`/products/${card.slug}/index.md`}
       jsonHref={`/api/${card.franchise}/${card.id}`}
       okfHref={`/okf/products/${card.slug}`}
-      localeLinks={localeLinks}
       structuredData={{ product: productJsonLd, breadcrumb: breadcrumbJsonLd, faq: faqJsonLd }}
     />
   );

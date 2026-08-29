@@ -3,7 +3,7 @@ import { getCardByIdOrSlug, getCardsByFranchise, toPublicCard } from "@/lib/card
 import { getGradedMarketData } from "@/lib/graded-market";
 
 // Same window as the HTML product page this data backs.
-export const revalidate = 129600;
+export const revalidate = 86400;
 
 export async function generateStaticParams() {
   const cards = await getCardsByFranchise("pokemon");

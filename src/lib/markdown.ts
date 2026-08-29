@@ -89,11 +89,17 @@ Search on Vinted (same ${data.vinted.conditionFilter} filter applied): ${data.vi
  * genuinely differs — see LocalizedCardText's own doc comment on why that's
  * Japanese-Pokémon-specific, not French or One Piece) — everything else
  * (price, history, description, graded-market data) always comes from
- * `card` itself. This is what backs the /products/[slug]/fr and /ja
- * index.md mirrors: gradedMarketMarkdown(card) below must keep receiving
- * the real English `card` (its French/Japanese search term comes from the
- * card's own stored id/ref, not from the display name — see
- * graded-market.ts and cards.ts's getJapaneseCardText), so a `display`
+ * `card` itself.
+ *
+ * No caller passes `display` today — it backed the /products/[slug]/fr and
+ * /ja index.md mirrors, which were removed with their pages (see
+ * components/product-locale.tsx). Kept rather than deleted because it is
+ * the correct shape for the localized markdown those routes would need if
+ * per-language URLs come back (docs/i18n-deferred.md), and because the rule
+ * it encodes is the load-bearing part: gradedMarketMarkdown(card) below
+ * must keep receiving the real English `card` (its French/Japanese search
+ * term comes from the card's own stored id/ref, not from the display name —
+ * see graded-market.ts and cards.ts's getJapaneseCardText), so a `display`
  * override is layered on top rather than baked into `card`.
  */
 export async function cardToMarkdown(

@@ -13,17 +13,31 @@
  * only difference is every path here is prefixed with the game slug.
  */
 
+import { memoizeFetch } from "@/lib/memo-fetch";
+import { resilientFetch } from "@/lib/upstream";
+
 const API_BASE = "https://cardmarket-api-tcg.p.rapidapi.com";
+
+/** Same reasoning as apitcg.ts/tcgdex.ts/berrywallet.ts: fail a hung request fast rather than eating fetch's platform default. */
+const FETCH_TIMEOUT_MS = 6000;
+
+/**
+ * This host is one credential, so the breaker's default host key is already
+ * right — named explicitly only so the string that api-budget.ts's BUDGETS
+ * is keyed by lives next to the client that spends it, the same way
+ * berrywallet.ts/pokewallet.ts name theirs.
+ */
+const RATE_LIMIT_BUCKET = "cardmarket-api-tcg.p.rapidapi.com";
 
 /** Matches CardRef["tcg"] in @/data/card-refs — same slug format TCGGO uses. */
 export type TcggoGame = "pokemon" | "one-piece";
 
 /**
- * Same 36h window as apitcg.ts's REVALIDATE_SECONDS, for the same reason:
+ * Same 24h window as apitcg.ts's REVALIDATE_SECONDS, for the same reason:
  * controls quota burn against the free tier's 100 req/day, not just
  * freshness. Revisit once real traffic patterns are known.
  */
-const REVALIDATE_SECONDS = 60 * 60 * 36;
+const REVALIDATE_SECONDS = 60 * 60 * 24;
 
 export type TcggoPaging = { current: number; total: number; per_page: number };
 
@@ -134,19 +148,54 @@ function apiKey(): string {
   return key;
 }
 
+/**
+ * Every TCGGO call goes through here, and it deliberately looks exactly
+ * like berrywallet.ts's and pokewallet.ts's equivalents rather than the
+ * plain `fetch` this file was scaffolded with. Three things that plain
+ * fetch was missing, each one already load-bearing elsewhere in this
+ * codebase:
+ *
+ * - `resilientFetch` (lib/upstream.ts) — bounded timeout, one retry, and
+ *   the per-host circuit breaker. Without it a TCGGO outage would be
+ *   retried once per route x card with no backoff, the exact failure that
+ *   module was written for.
+ * - `chargeApiBudget`, which resilientFetch applies for us. This matters
+ *   more here than anywhere else: TCGGO's free tier (100/day, 30/min) is
+ *   the tightest quota in the system, and a raw fetch bypasses metering
+ *   entirely — the calls would be invisible to
+ *   scripts/api-budget-report.mjs and unstoppable by the ceiling.
+ * - `cache: "force-cache"` — required, not implied by `next.revalidate`
+ *   alone on this Next version, and doubly so for a GET carrying an API-key
+ *   header. This is the same defect the API audit found in every other
+ *   client; the scaffold predates that fix and never received it.
+ *
+ * memoizeFetch keyed by the full path (not just the id) collapses the
+ * repeat identical lookups a build makes for one card across routes, and
+ * caches failures too — see that module's own header on why the failure
+ * half matters against a metered upstream.
+ */
 async function tcggoFetch<T>(
   game: TcggoGame,
   path: string,
   revalidateSeconds: number
 ): Promise<T> {
-  const res = await fetch(`${API_BASE}/${game}${path}`, {
-    headers: { "x-rapidapi-key": apiKey() },
-    next: { revalidate: revalidateSeconds },
+  const url = `${API_BASE}/${game}${path}`;
+  return memoizeFetch(url, revalidateSeconds * 1000, async () => {
+    const res = await resilientFetch(
+      url,
+      {
+        headers: { "x-rapidapi-key": apiKey() },
+        cache: "force-cache",
+        next: { revalidate: revalidateSeconds },
+      },
+      FETCH_TIMEOUT_MS,
+      RATE_LIMIT_BUCKET
+    );
+    if (!res.ok) {
+      throw new Error(`tcggo request failed (${res.status}): /${game}${path}`);
+    }
+    return res.json() as Promise<T>;
   });
-  if (!res.ok) {
-    throw new Error(`tcggo request failed (${res.status}): /${game}${path}`);
-  }
-  return res.json() as Promise<T>;
 }
 
 /**

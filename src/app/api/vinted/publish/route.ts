@@ -13,7 +13,7 @@ import { VINTED_CACHE_TAG } from "@/lib/lobstr";
  *
  *   1. The Data Cache holding the run list and each page of results —
  *      RUNS/RESULTS_REVALIDATE_SECONDS, six hours.
- *   2. The rendered HTML of every product page — ISR, `revalidate = 129600`,
+ *   2. The rendered HTML of every product page — ISR, `revalidate = 86400`,
  *      thirty-six hours.
  *
  * Worst case that is a day and a half before a fresh scrape reaches the
@@ -49,14 +49,11 @@ export const dynamic = "force-dynamic";
  *
  * The .md route handlers are here for the same reason the pages are: they
  * serve the same feed to agents, from the same cache, and a machine reader
- * being 36h behind the HTML is the sort of drift nobody notices.
+ * being 24h behind the HTML is the sort of drift nobody notices.
  */
 const VINTED_ROUTE_PATTERNS = [
   "/products/[slug]",
-  "/products/[slug]/fr",
-  "/products/[slug]/ja",
   "/products/[slug]/index.md",
-  "/products/[slug]/fr/index.md",
   "/collections/[franchise]",
   "/collections/[franchise]/index.md",
 ] as const;
@@ -75,7 +72,7 @@ function isAuthorized(request: Request): boolean {
 function publish() {
   // Order matters. Drop the upstream reads FIRST: a page regenerated before
   // its Lobstr fetches were invalidated would rebuild from the cache we are
-  // about to throw away, and then sit on that stale HTML for another 36h —
+  // about to throw away, and then sit on that stale HTML for another 24h —
   // turning a cache refresh into a cache refresh that changed nothing.
   //
   // `{ expire: 0 }` rather than the documented-as-recommended `"max"`, and

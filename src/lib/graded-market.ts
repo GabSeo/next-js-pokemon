@@ -22,8 +22,12 @@ export const GRADED_MARKET_CONDITIONS: EbayCondition[] = ["PSA 10", "PSA 9", "PS
  * re-enabling: real active listings come back for the tracked cards, not
  * an empty illustrative fallback.
  *
- * One flag: the market tab, the /products/[slug]/ja route, and the JP
- * locale links all read from here.
+ * One flag, one consumer now: the Market Overview tab list
+ * (GRADED_MARKET_LANGUAGES below). The JP entry in the product page's
+ * language toggle is keyed to per-card identity availability instead — a
+ * separate, narrower question (does PokéWallet/BerryWallet have a confirmed
+ * Japanese counterpart for THIS card) from whether eBay's Japanese market
+ * is worth showing at all.
  */
 export const JAPANESE_MARKET_ENABLED = true;
 
@@ -583,7 +587,27 @@ async function resolveGradedMarketData(card: Card): Promise<GradedMarketData | u
  * particular `Card` object.
  */
 export async function getGradedMarketData(card: Card): Promise<GradedMarketData | undefined> {
-  return buildCached(`graded-market:${card.slug}`, () => resolveGradedMarketData(card));
+  return buildCached(`graded-market:${card.slug}`, () => resolveGradedMarketData(card), allIllustrative);
+}
+
+/**
+ * True when every active tier fell back to illustrative preview data —
+ * which means eBay produced nothing real, not that this card genuinely has
+ * no listings. Marks the result negative so it takes build-cache.ts's short
+ * TTL instead of the 24h one.
+ *
+ * Confirmed live why this matters: an expired/invalid eBay OAuth credential
+ * 401s every search, the circuit breaker opens after the first few, and
+ * every tier lands on illustrative. Cached for a full day, that turns a
+ * fixable credential problem into a day of preview-labelled panels on every
+ * card with no signal that anything changed. `undefined` is NOT negative —
+ * that's the deliberate franchise gate (ONE_PIECE_MARKET_ENABLED), a real
+ * answer meaning "this section is switched off", and re-asking it costs
+ * calls to learn nothing.
+ */
+function allIllustrative(data: GradedMarketData | undefined): boolean {
+  if (!data) return false;
+  return data.conditions.every((c) => c.languages.every((l) => !l.active.isReal));
 }
 
 export type MarketplaceOfferJsonLd = {

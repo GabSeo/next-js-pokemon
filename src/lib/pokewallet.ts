@@ -40,8 +40,8 @@ const API_BASE = "https://api.pokewallet.io";
 /** Same reasoning as apitcg.ts/tcgdex.ts/berrywallet.ts: fail a hung request fast rather than eating fetch's platform default. */
 const FETCH_TIMEOUT_MS = 6000;
 
-/** Same 36h window as this codebase's other card-identity sources. */
-const REVALIDATE_SECONDS = 60 * 60 * 36;
+/** Same 24h window as this codebase's other card-identity sources. */
+const REVALIDATE_SECONDS = 60 * 60 * 24;
 
 import { memoizeFetch } from "@/lib/memo-fetch";
 import { resilientFetch } from "@/lib/upstream";

@@ -33,9 +33,11 @@ export type CardRef = {
    * When true, BOTH English and Japanese identity get resolved — English is
    * always the canonical `/products/[slug]` page (same "the page/UI is
    * English regardless of a card's real data language" rule the French page
-   * already follows), Japanese becomes the real `/products/[slug]/ja`
-   * alternate (see cards.ts's getOnePieceJapaneseText, the One Piece
-   * counterpart to getFrenchCardText). French gets neither: confirmed live,
+   * already follows), Japanese becomes the real JP entry in that page's own
+   * language toggle (see cards.ts's getOnePieceJapaneseText, the One Piece
+   * counterpart to getFrenchCardText — it used to be a separate
+   * `/products/[slug]/ja` route; see components/product-locale.tsx for why
+   * it isn't any more). French gets neither: confirmed live,
    * BerryWallet has zero French sets, so a One Piece card's FR toggle is
    * always the inert "no real source" placeholder, never a fabricated
    * translation — same honesty rule getFrenchCardText already follows.
@@ -44,9 +46,47 @@ export type CardRef = {
    */
   berryWalletEnabled?: boolean;
   /**
+   * One Piece only: BerryWallet's real `set_code` for this card, per
+   * language — the One Piece counterpart to `pokeWalletCardId` below, and
+   * the same "store the verified answer, don't re-derive a fragile one
+   * live" choice for the same reason.
+   *
+   * What it costs when this is missing: findCardInLanguage
+   * (lib/berrywallet.ts) has to find the containing set itself. Its guess is
+   * the card_number's own prefix (`OP09-004` -> `OP09`, `-JP` appended for
+   * Japanese), which is right for an ordinary numbered set and wrong for a
+   * promo — `P-033` guesses `P`, but the real set is `OP-PR` ("One Piece
+   * Promotion Cards"). A missed guess falls back to walking sets one
+   * `getSetCards` call at a time, and English has 77 of them. Confirmed
+   * live on 2026-08-29: four ordinary cards resolved in ~2 calls each, then
+   * P-033's walk alone consumed the rest of a 60-call ceiling before being
+   * cut off — one promo card is enough to exhaust an hourly quota that four
+   * normal cards barely touched.
+   *
+   * With a code stored here the lookup is one `getSetCards` call (the
+   * `getSets` call it also needs is shared across every card in the build,
+   * memoized by path — see lib/memo-fetch.ts), so this is the difference
+   * between ~1 call per card and up to ~77.
+   *
+   * Only fill in a value CONFIRMED from a real resolution — the `setCode`
+   * on an actually-resolved card, not a guess. Leaving a language out is
+   * always safe: the prefix guess still runs, and the fallback walk is
+   * bounded now (see BOUNDED_SET_WALK in lib/berrywallet.ts) so a wrong or
+   * missing code degrades to "not found", never to a drained quota.
+   *
+   * `jp` is deliberately unset on every ref below: BerryWallet's Japanese
+   * sets are separate entries with their own codes (`OP09` vs `OP09-JP`,
+   * per lib/berrywallet.ts's file header), and no Japanese resolution has
+   * been confirmed since this field was added — the `-JP` guess covers the
+   * ordinary numbered sets meanwhile. Fill each one in as it's confirmed,
+   * the same way each pokeWalletCardId was.
+   */
+  berryWalletSetCode?: { en?: string; jp?: string };
+  /**
    * Pokémon only: a confirmed PokéWallet card id (`pk_...`) for this card's
-   * real Japanese-print counterpart — powers the real `/products/[slug]/ja`
-   * alternate, the same role berryWalletEnabled plays for One Piece.
+   * real Japanese-print counterpart — powers the real Japanese view behind
+   * the product page's JP toggle, the same role berryWalletEnabled plays
+   * for One Piece.
    *
    * Deliberately a stored, hand-confirmed id, not a live search — confirmed
    * during this integration's own research that automated English->Japanese
@@ -62,8 +102,8 @@ export type CardRef = {
    * by character name, then cross-reference rarity tier and real price
    * against this card's own known price to confirm which of several
    * same-name candidates is actually the right one (see lib/pokewallet.ts's
-   * file header for the full worked examples). Omitted keeps the /ja route
-   * on its existing English-echo placeholder for that card.
+   * file header for the full worked examples). Omitted leaves that card's
+   * JP toggle inert rather than echoing English text under a Japanese flag.
    */
   pokeWalletCardId?: string;
 };
@@ -126,13 +166,14 @@ export const cardRefs: CardRef[] = [
     // comment; this pairing was the confirming half of that fix, alongside
     // Marshall D. Teach's OP09-093, whose requested English variant is NOT
     // the highest V-number). The canonical page shows English (see CardRef's
-    // own doc comment on why); Japanese lives at /products/shanks-op09-004/ja.
+    // own doc comment on why); Japanese is the JP toggle on that same page.
     franchise: "one-piece",
     tcg: "one-piece",
     slug: "shanks-op09-004",
     displayName: "Shanks",
     character: "Shanks",
     lookup: { by: "code", code: "OP09-004", variantTags: ["Manga"] },
+    berryWalletSetCode: { en: "OP09" },
     berryWalletEnabled: true,
   },
   {
@@ -142,6 +183,7 @@ export const cardRefs: CardRef[] = [
     displayName: 'Eustass "Captain" Kid',
     character: 'Eustass "Captain" Kid',
     lookup: { by: "code", code: "OP05-074", variantTags: ["Manga"] },
+    berryWalletSetCode: { en: "OP05" },
     berryWalletEnabled: true,
   },
   {
@@ -156,6 +198,7 @@ export const cardRefs: CardRef[] = [
     displayName: "Marshall D. Teach",
     character: "Marshall D. Teach",
     lookup: { by: "code", code: "OP09-093", variantTags: ["Wanted Poster"] },
+    berryWalletSetCode: { en: "OP09" },
     berryWalletEnabled: true,
   },
   {
@@ -165,9 +208,8 @@ export const cardRefs: CardRef[] = [
     // getSetCards on the guessed set alone, which never surfaces it (see
     // findVariantAcrossProducts's own comment, lib/berrywallet.ts, for why
     // and how this is found generally rather than hand-picked here). No
-    // Japanese counterpart found this way — the /ja route (and JP locale
-    // link) for this card stays on the inert placeholder rather than
-    // guessing one, same honesty rule pickVariantForJapanese's own comment
+    // Japanese counterpart found this way — this card's JP toggle stays
+    // inert rather than guessing one, same honesty rule pickVariantForJapanese's own comment
     // documents for exactly this case.
     franchise: "one-piece",
     tcg: "one-piece",
@@ -178,6 +220,7 @@ export const cardRefs: CardRef[] = [
     // confirmed via BerryWallet: different card_number, different card_type
     // (Leader vs Character), different color, different real price.
     lookup: { by: "code", code: "OP09-061", variantTags: ["2nd Anniversary Set"] },
+    berryWalletSetCode: { en: "OP09" },
     berryWalletEnabled: true,
   },
   {
@@ -195,6 +238,7 @@ export const cardRefs: CardRef[] = [
     displayName: "Monkey D. Luffy",
     character: "Monkey D. Luffy",
     lookup: { by: "code", code: "P-033", variantTags: ["Event Pack", "Vol. 2"] },
+    berryWalletSetCode: { en: "OP-PR" },
     berryWalletEnabled: true,
   },
 ];

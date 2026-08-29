@@ -18,8 +18,9 @@
  * separate sets with separate card lists, not a tag on a shared card row).
  * `findCardInSet` below exists specifically to search *within* one
  * language's set for a given card_number, which is the only reliable way to
- * get a specific language's printing — `searchCards` (`/op/search`) is a
- * flat, language-blind index across every set at once.
+ * get a specific language's printing — and, per searchCards' own corrected
+ * doc comment, the ONLY way: `/op/search` does not return Japanese rows at
+ * all.
  *
  * Confirmed live: no French sets exist at all (`/op/sets?language=fr`
  * returns `{data: [], total: 0}`) — this is English + Japanese only, not a
@@ -34,8 +35,8 @@ const API_BASE = "https://api.pokewallet.io";
 /** Same reasoning as apitcg.ts/tcgdex.ts: fail a hung request fast rather than eating fetch's platform default. */
 const FETCH_TIMEOUT_MS = 6000;
 
-/** Same 36h window as apitcg.ts/tcgdex.ts, for the same reason — controls quota burn (1,000/day free tier) as much as freshness. */
-const REVALIDATE_SECONDS = 60 * 60 * 36;
+/** Same 24h window as apitcg.ts/tcgdex.ts, for the same reason — controls quota burn (1,000/day free tier) as much as freshness. */
+const REVALIDATE_SECONDS = 60 * 60 * 24;
 
 import { memoizeFetch } from "@/lib/memo-fetch";
 import { resilientFetch } from "@/lib/upstream";
@@ -152,11 +153,30 @@ async function berryWalletFetch<T>(path: string, revalidateSeconds: number): Pro
 }
 
 /**
- * Flat, language-blind search across every set at once — confirmed live,
- * results from English and Japanese sets come back interleaved with no way
- * to tell them apart from the row alone. Use this to discover which sets a
- * card_number appears in, then `findCardInSet` to get a specific language's
- * printing. Matches on card name/number per BerryWallet's own docs.
+ * Flat search across sets. ENGLISH ONLY in practice — do not use it to
+ * reason about Japanese.
+ *
+ * This comment previously claimed the index was "language-blind", with
+ * English and Japanese rows "interleaved with no way to tell them apart".
+ * That was wrong, and it was load-bearing: it is the stated justification
+ * for findVariantAcrossProducts being English-only, and it invites the
+ * inference that a card_number absent from these results has no Japanese
+ * print. Disproved live on 2026-08-29 with a control: Shanks OP09-004 has a
+ * confirmed real Japanese printing (it resolves through
+ * getSets("jp")+getSetCards and renders on the product page), yet
+ * `searchCards("OP09-004")` returns 9 exact rows, every one of them
+ * English.
+ *
+ * So absence here is evidence of nothing about the Japanese catalogue. Only
+ * a set-scoped lookup against a set whose own `language` is "jp" can answer
+ * that — language lives on the SET, never on the row (BerryWallet's
+ * Japanese rows carry Latin names, so text inspection can't identify them
+ * either).
+ *
+ * Still the right tool for its actual job: discovering English promo
+ * products that a single set listing never surfaces (see
+ * findVariantAcrossProducts). Matches on card name/number per BerryWallet's
+ * own docs.
  */
 export async function searchCards(query: string, limit = 20): Promise<BerryWalletCard[]> {
   const qs = new URLSearchParams({ q: query, limit: String(limit) });
@@ -171,11 +191,60 @@ export async function getSets(language?: BerryWalletLanguage): Promise<BerryWall
   return data;
 }
 
-/** Every card in one set (accepts a set_code like "OP09-JP", confirmed live). */
-export async function getSetCards(setCode: string, limit = 200): Promise<BerryWalletCard[]> {
-  const qs = new URLSearchParams({ limit: String(limit) });
-  const { data } = await berryWalletFetch<SearchResponse>(`/op/sets/${encodeURIComponent(setCode)}?${qs}`, REVALIDATE_SECONDS);
-  return data;
+/**
+ * The API's hard page size. Confirmed live on 2026-08-29: `limit=1000`
+ * against a 300-card set still returned exactly 200 rows, so `limit` is
+ * capped server-side and cannot be raised past this.
+ */
+const PAGE_SIZE = 200;
+
+/**
+ * Safety stop for the pagination loop below. 1,000 cards is far larger than
+ * any real One Piece set (the biggest observed is 300), so reaching this
+ * means the `total` field is lying or the page cursor isn't advancing —
+ * either way, stopping beats looping against a metered API.
+ */
+const MAX_PAGES = 5;
+
+/**
+ * Every card in one set (accepts a set_code like "OP09-JP", confirmed live).
+ *
+ * `allPages` exists because this used to silently truncate. It passed
+ * `limit` and nothing else, and the server caps a page at PAGE_SIZE
+ * regardless of what `limit` asks for — so for any set larger than 200
+ * cards, every row past the 200th was invisible to findCardInLanguage, with
+ * no error and no warning. Confirmed live: `CM-UNNUMBERED-JP` reports
+ * `total: 300` and returned 200 rows; `page=2` returns the missing 100.
+ * `offset` and `skip` are both ignored by this API — `page` is the only
+ * parameter that actually advances the cursor.
+ *
+ * Off by default, and that default is a quota decision rather than a
+ * correctness one: a second page is a second real request against a
+ * 100/hour ceiling, and it is only worth spending on a set we have actual
+ * reason to think holds the card. findCardInLanguage turns it on for the
+ * sets it targets deliberately (a confirmed set_code, or the prefix guess)
+ * and leaves it off for the speculative walk behind them — see that
+ * function's own tier comments.
+ */
+export async function getSetCards(setCode: string, options?: { allPages?: boolean }): Promise<BerryWalletCard[]> {
+  const page = async (n: number): Promise<SearchResponse> => {
+    const qs = new URLSearchParams({ limit: String(PAGE_SIZE), page: String(n) });
+    return berryWalletFetch<SearchResponse>(`/op/sets/${encodeURIComponent(setCode)}?${qs}`, REVALIDATE_SECONDS);
+  };
+
+  const first = await page(1);
+  const cards = [...first.data];
+  if (!options?.allPages) return cards;
+
+  const total = first.total ?? cards.length;
+  for (let n = 2; cards.length < total && n <= MAX_PAGES; n++) {
+    const next = await page(n);
+    // An empty page means the set is exhausted regardless of what `total`
+    // claimed — stop rather than burning the rest of MAX_PAGES on it.
+    if (next.data.length === 0) break;
+    cards.push(...next.data);
+  }
+  return cards;
 }
 
 /**
@@ -193,6 +262,19 @@ export async function getSetCards(setCode: string, limit = 200): Promise<BerryWa
  * to resolve to whichever one the caller actually means, not a guess made
  * here.
  */
+/**
+ * How many *speculative* sets findCardInLanguage will try after both the
+ * confirmed code and the prefix guess have missed, before giving up.
+ *
+ * Small on purpose. Walking further has never once been what found a card
+ * in this codebase — the guess covers every ordinary numbered set and a
+ * stored code covers the promos — while the cost of walking is one request
+ * per set against a 100/hour ceiling. A handful is enough to catch a
+ * near-miss (a reprint sitting in an adjacent set) and nowhere near enough
+ * to matter to the quota if it misses anyway.
+ */
+const MAX_FALLBACK_SETS = 6;
+
 function pickVariantByTag(matches: BerryWalletCard[], variantTags?: string[]): BerryWalletCard | undefined {
   if (!variantTags || variantTags.length === 0) return undefined;
   return matches.find((c) => variantTags.every((tag) => c.name.toLowerCase().includes(tag.toLowerCase())));
@@ -248,6 +330,19 @@ function highestVariant(matches: BerryWalletCard[]): BerryWalletCard {
  * already-resolved English pick's `variantIndex` generalizes correctly to
  * any card sharing this pattern, without a per-card tag table.
  *
+ * NOTE, settled 2026-08-29: for the two promo cards this codebase tracks
+ * (OP09-061 "2nd Anniversary Set", P-033 "Event Pack Vol. 2") the undefined
+ * return below is not merely cautious, it is the only available answer. No
+ * source we have carries their Japanese print: BerryWallet's Japanese promo
+ * sets were searched exhaustively (CM-PREMIUM-BANDAI, CM-UNNUMBERED-JP incl.
+ * its hidden second page, CM-PRODUCTS, CM-PROMO-JP, CM-REPRINTS,
+ * CM-SPECIAL-PROMOS, CM-SPECIAL-PROMOS-JP — no match), and TCGGO, the
+ * Cardmarket-backed API in lib/tcggo.ts, has no Japanese data at all. The
+ * cards demonstrably exist (a real PSA-graded Japanese OP09-061 was the
+ * prompt for this investigation) and Cardmarket's own website lists them —
+ * they are simply not in any catalogue this app can read. Do not re-derive
+ * this; it costs real quota. See docs/i18n-deferred.md.
+ *
  * Returns undefined — no guess at all — when the English side is a
  * confirmed promo product (findVariantAcrossProducts' own case: a real
  * match, just outside the normal V.1-V.4 tiering, so it has no parseable
@@ -293,7 +388,7 @@ function pickVariantForJapanese(matches: BerryWalletCard[], targetIndex: number 
  * exact-card_number results from a single searchCards("OP09-061") call.
  *
  * Only ever called when the guessed set already found *something* for this
- * card_number but not the requested tag — a second cheap, 36h-memoized call
+ * card_number but not the requested tag — a second cheap, 24h-memoized call
  * (see berryWalletFetch), not the expensive full-set walk this file's own
  * header describes almost exhausting the free tier's rate limit.
  *
@@ -320,17 +415,30 @@ async function findVariantAcrossProducts(cardNumber: string, variantTags: string
  * Returns the containing set alongside the card, since BerryWalletCard
  * itself carries no set name/code — cards.ts needs it for Card.set/setCode.
  *
- * Tries the obvious guess first: a card_number's own prefix (`OP09-004` ->
- * `OP09`) is almost always its set's code, `-JP` appended for Japanese
- * (confirmed live: `OP09` (English) / `OP09-JP` (Japanese) is exactly this
- * pattern). One `getSets` call (always needed, to resolve the guessed code
- * to a real BerryWalletSet with a name) plus one `getSetCards` call on that
- * single guessed set covers the overwhelming majority of lookups. Only
- * falls back to walking every other set in the language — genuinely
- * expensive against the free tier's 100/hour limit, confirmed live: a full
- * walk of English's 77 sets exhausted it during this integration's own
- * testing — for the rarer case the guess misses (a starter-deck/promo code
- * that isn't its own set, or a reprint living in a different set).
+ * Set resolution goes in three tiers, cheapest first.
+ *
+ * 1. `options.knownSetCode` — a CONFIRMED code stored on the CardRef (see
+ *    data/card-refs.ts's berryWalletSetCode). One `getSetCards` call, and
+ *    the `getSets` call below is shared across every card in the build
+ *    (memoized by path, see lib/memo-fetch.ts), so the real marginal cost
+ *    of a card with a stored code is a single request.
+ * 2. The prefix guess — a card_number's own prefix (`OP09-004` -> `OP09`)
+ *    is almost always its set's code, `-JP` appended for Japanese
+ *    (confirmed live: `OP09` / `OP09-JP` is exactly this pattern). Right
+ *    for every ordinary numbered set, wrong for promos.
+ * 3. A BOUNDED walk of the remaining sets, for the case both miss.
+ *
+ * Tier 3 is bounded and did not used to be, which was a real quota bug
+ * rather than a slow path. English has 77 sets and the walk spent one
+ * `getSetCards` call on each: confirmed live on 2026-08-29, four ordinary
+ * cards resolved in ~2 calls apiece and then a single promo card (`P-033`,
+ * whose guess `P` misses its real set `OP-PR`) consumed the entire
+ * remainder of a 60-call ceiling on its own. One unlucky card_number could
+ * drain an hourly quota that the whole rest of the catalogue barely
+ * touched, and the only visible symptom was unrelated cards further down
+ * the build failing to resolve.
+ *
+ * See MAX_FALLBACK_SETS below for why giving up beats continuing.
  *
  * For Japanese with more than one candidate, this needs the English variant
  * index to align against (see pickVariantForJapanese's own comment for
@@ -355,14 +463,54 @@ export async function findCardInLanguage(
   cardNumber: string,
   language: BerryWalletLanguage,
   variantTags?: string[],
-  knownEnglishVariant?: { index: number | undefined }
+  options?: {
+    /** See this function's own doc comment — lets a caller that already resolved English skip a second live English resolution. */
+    knownEnglishVariant?: { index: number | undefined };
+    /** A confirmed `set_code` for this card in this language, from data/card-refs.ts's berryWalletSetCode. Tier 1 above. */
+    knownSetCode?: string;
+    /**
+     * The confirmed ENGLISH set_code, used only by the Japanese branch's
+     * fallback English re-resolution below — the path taken when a caller
+     * asks for Japanese without already knowing the English variant index.
+     * No caller in this codebase takes that path today (they all pass
+     * knownEnglishVariant), but if one ever does, this stops that nested
+     * lookup from being the unbounded walk this function just stopped being
+     * everywhere else.
+     */
+    knownEnglishSetCode?: string;
+  }
 ): Promise<{ card: BerryWalletCard; set: BerryWalletSet } | undefined> {
+  const knownEnglishVariant = options?.knownEnglishVariant;
   const sets = await getSets(language);
   const guessedCode = language === "jp" ? `${cardNumber.split("-")[0]}-JP` : cardNumber.split("-")[0];
-  const ordered = [...sets].sort((a, b) => (a.set_code === guessedCode ? -1 : b.set_code === guessedCode ? 1 : 0));
 
+  // Confirmed code first, prefix guess second, everything else after — and
+  // `ordered` is only ever *walked* as far as MAX_FALLBACK_SETS past those
+  // two, see the loop below.
+  const priority = (code: string): number => (code === options?.knownSetCode ? 0 : code === guessedCode ? 1 : 2);
+  const ordered = [...sets].sort((a, b) => priority(a.set_code) - priority(b.set_code));
+  const targeted = ordered.filter((set) => priority(set.set_code) < 2).length;
+
+  let walked = 0;
   for (const set of ordered) {
-    const cards = await getSetCards(set.set_code);
+    // Past the confirmed code and the prefix guess, this is speculative:
+    // every additional set is a real request spent on a hunch. Stopping
+    // returns "no match", which every caller already handles by falling
+    // back to the offline placeholder or an inert toggle — a strictly
+    // better outcome than draining the hourly quota and taking unrelated
+    // cards down with it. The fix for a card that lands here is to store
+    // its real code on the ref, which the warning below names explicitly.
+    if (priority(set.set_code) === 2 && ++walked > MAX_FALLBACK_SETS) {
+      console.warn(
+        `[berrywallet] gave up finding ${cardNumber} (${language}) after ${targeted + MAX_FALLBACK_SETS} sets. ` +
+          `Add a confirmed set_code for it to berryWalletSetCode in src/data/card-refs.ts — see that field's own comment.`
+      );
+      return undefined;
+    }
+    // Paginate only the sets we're targeting on purpose (tier 1 and 2) —
+    // a speculative set is already a guess, and paying a second request to
+    // guess more thoroughly is the wrong trade against an hourly quota.
+    const cards = await getSetCards(set.set_code, { allPages: priority(set.set_code) < 2 });
     const matches = cards.filter((c) => c.card_number === cardNumber || c.name.includes(cardNumber));
     if (matches.length === 0) continue;
 
@@ -390,7 +538,9 @@ export async function findCardInLanguage(
     } else {
       hasEnglishSignal = false;
       try {
-        const englishMatch = await findCardInLanguage(cardNumber, "en", variantTags);
+        const englishMatch = await findCardInLanguage(cardNumber, "en", variantTags, {
+          knownSetCode: options?.knownEnglishSetCode,
+        });
         if (englishMatch) {
           targetIndex = variantIndex(englishMatch.card);
           hasEnglishSignal = true;

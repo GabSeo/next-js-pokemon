@@ -41,16 +41,6 @@ try {
 
 const routeKeys = Object.keys(manifest.routes ?? {});
 
-/** Reads JAPANESE_MARKET_ENABLED out of graded-market.ts. Defaults to false if the file moves or its shape changes — a skipped check is better than a build that fails over a route deliberately switched off. */
-function japaneseMarketEnabled() {
-  try {
-    const src = readFileSync(new URL("../src/lib/graded-market.ts", import.meta.url), "utf8");
-    return /JAPANESE_MARKET_ENABLED\s*=\s*true/.test(src);
-  } catch {
-    return false;
-  }
-}
-
 /**
  * Hosts that failed in a connection-level way during this build, as recorded
  * by lib/upstream.ts's markBuildOutage. Read once and deleted, so a marker
@@ -80,22 +70,6 @@ function upstreamOutages() {
 
 const outages = upstreamOutages();
 const tcgdexDown = outages.has("api.tcgdex.net");
-// PokeWallet (Pokémon /ja) and BerryWallet (One Piece /ja) are two client
-// files against the same actual host, api.pokewallet.io — now on their own
-// separate keys (POKEWALLET_API_KEY / BERRYWALLET_API_KEY, see
-// pokewallet.ts's and berrywallet.ts's own apiKey() comments) rather than
-// sharing one, but the outage marker below is still written per host, not
-// per key — see upstream.ts's noteFailure/markBuildOutage — so an outage on
-// either credential still marks this one host as down for this gate's
-// purposes. That's still correct here: this check only cares whether /ja
-// prerendered *zero* pages across both franchises, and a real outage on
-// either credential is a legitimate reason for that, the same
-// "genuinely nothing to build, not a regression" situation the TCGdex/French
-// case already handles.
-// Confirmed live: this account's own rate limit, exhausted during a session
-// of live verification testing, tripped during a real `next build` too and
-// hard-failed the whole deploy before this exemption existed.
-const pokewalletDown = outages.has("api.pokewallet.io");
 
 // Every pattern here draws from getAllCards() or getCardsByFranchise("pokemon"),
 // which always return one entry per card in data/card-refs.ts — a card whose
@@ -105,25 +79,15 @@ const pokewalletDown = outages.has("api.pokewallet.io");
 // its render tree) is broken, not that an external dependency is
 // unavailable. Fails the build.
 //
-// The exception is the French route pair and /ja: both only exist when
-// their one real translation source returned something, so with that source
-// unreachable there is legitimately nothing to prerender and no offline
-// substitute that wouldn't be a fabricated translation. They drop to
-// warnings for that build only, on the evidence of the outage marker above —
-// never unconditionally.
+// There is no longer a per-language route to exempt. /products/[slug]/fr,
+// /products/[slug]/ja and their .md mirrors were removed when the language
+// toggle moved in-page (see components/product-locale.tsx's header comment),
+// so a French or Japanese source being unreachable no longer makes any route
+// prerender zero pages — it just leaves that card's FR or JP toggle inert on
+// a page that builds either way. api.tcgdex.net's outage marker is still read
+// below, but only to explain a Pokémon card that fell back to its offline
+// placeholder, never to soften a required route.
 const REQUIRED_PATTERNS = [
-  // /ja is required only while the Japanese market is switched on AND
-  // PokeWallet/BerryWallet were actually reachable this build — same
-  // exemption shape as the French pair below, just gated on a second
-  // condition too. It's gated on JAPANESE_MARKET_ENABLED in
-  // src/lib/graded-market.ts, and with Japan off the route prerenders zero
-  // pages BY DESIGN — demanding them would fail every build, and warning
-  // about them every build would be noise. Read from the source rather than
-  // duplicated here, so flipping that one flag re-arms this check
-  // automatically.
-  ...(japaneseMarketEnabled() && !pokewalletDown
-    ? [{ label: "/products/[slug]/ja", test: (r) => /^\/products\/[^/]+\/ja$/.test(r) }]
-    : []),
   { label: "/products/[slug]", test: (r) => /^\/products\/[^/]+$/.test(r) },
   // The prebuilt twin behind /tools/price-checker?cardId= (see the
   // beforeFiles rewrite in next.config.ts). Its whole purpose is to be
@@ -134,12 +98,6 @@ const REQUIRED_PATTERNS = [
   // zero pages can only mean a code regression, never an upstream outage.
   { label: "/tools/price-checker/[cardId]", test: (r) => /^\/tools\/price-checker\/[^/]+$/.test(r) },
   { label: "/products/[slug]/index.md", test: (r) => /^\/products\/[^/]+\/index\.md$/.test(r) },
-  ...(tcgdexDown
-    ? []
-    : [
-        { label: "/products/[slug]/fr", test: (r) => /^\/products\/[^/]+\/fr$/.test(r) },
-        { label: "/products/[slug]/fr/index.md", test: (r) => /^\/products\/[^/]+\/fr\/index\.md$/.test(r) },
-      ]),
   { label: "/api/pokemon/[id]", test: (r) => /^\/api\/pokemon\/[^/]+$/.test(r) },
   { label: "/okf/products/[slug]", test: (r) => /^\/okf\/products\/[^/]+$/.test(r) },
 ];
@@ -182,20 +140,11 @@ for (const { label, test } of SOFT_PATTERNS) {
 
 if (tcgdexDown) {
   console.warn(`[check-static-routes] WARN: api.tcgdex.net was unreachable during this build.`);
-  console.warn(`  The French routes (/products/[slug]/fr and its .md mirror) have no other translation source,`);
-  console.warn(`  so they were not required this time — they prerender again on the next build that reaches`);
-  console.warn(`  TCGdex. Pokemon cards themselves still built: they fall back to an offline placeholder with`);
-  console.warn(`  no price (see placeholderCard in src/lib/cards.ts), which refreshes on the next revalidation.`);
-}
-
-if (pokewalletDown && japaneseMarketEnabled()) {
-  console.warn(`[check-static-routes] WARN: api.pokewallet.io was unreachable (or rate-limited) during this build.`);
-  console.warn(`  /products/[slug]/ja has no other Japanese source for either franchise — PokeWallet backs`);
-  console.warn(`  Pokémon, BerryWallet backs One Piece, both the same host (see this file's own comment above`);
-  console.warn(`  on why an outage on either credential still marks that shared host) — so it was not`);
-  console.warn(`  required this time. It prerenders again on the next build that reaches pokewallet.io.`);
-  console.warn(`  Every other card page still built: Japanese identity is only ever an enhancement on top`);
-  console.warn(`  of the canonical English page, never a dependency of it.`);
+  console.warn(`  No route is exempted for this — since the /fr routes were removed, nothing prerenders`);
+  console.warn(`  zero pages because of it. What it does mean: Pokemon cards that could not resolve any`);
+  console.warn(`  price source fell back to an offline placeholder with no price (see placeholderCard in`);
+  console.warn(`  src/lib/cards.ts), and their FR toggle rendered inert. Both refresh on the next`);
+  console.warn(`  revalidation that reaches TCGdex.`);
 }
 
 if (failed) {

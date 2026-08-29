@@ -33,10 +33,16 @@ const FETCH_TIMEOUT_MS = 6000;
  * apitcg.com's free tier caps at 1000 calls/month; every request that lands
  * after this window elapses triggers a full-catalog refresh (2 calls per
  * card — product lookup + history), so this number directly controls quota
- * burn rate, not just data freshness. 36h keeps a full month of steady
- * traffic well under budget without needing per-route logic.
+ * burn rate, not just data freshness.
+ *
+ * 24h, lowered from 36h on 2026-08-29 so the site refreshes once a day.
+ * The arithmetic still holds comfortably: ~2 calls x 9 tracked cards = ~18
+ * a day, ~540 a month against the 1,000 cap. (At 36h it was ~12/day, ~360
+ * a month — the extra freshness costs roughly 180 calls a month.) The
+ * ceiling in lib/api-budget.ts is what enforces this rather than trusting
+ * the arithmetic; see its own BUDGETS entry for this host.
  */
-const REVALIDATE_SECONDS = 60 * 60 * 36;
+const REVALIDATE_SECONDS = 60 * 60 * 24;
 
 export type ApitcgImage = { small?: string; medium?: string; large?: string };
 
