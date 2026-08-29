@@ -3,6 +3,10 @@
     {
       "path": "/api/vinted/refresh",
       "schedule": "0 3 1,15 * *"
+    },
+    {
+      "path": "/api/warm",
+      "schedule": "0 4 * * *"
     }
   ]
 }

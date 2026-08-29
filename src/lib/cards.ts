@@ -723,7 +723,18 @@ const resolveCardSafe = cache(async (ref: CardRef): Promise<Card> => {
       logUpstreamOnce(`resolve:${ref.slug}`, `[cards] failed to resolve ${ref.slug} — ${describeUpstreamError(err)}`);
     }
     return placeholderCard(ref);
-  });
+  },
+  // The offline placeholder is a negative result, so it takes
+  // build-cache.ts's short TTL rather than the 24h one. This was
+  // deliberately left off at first, on the reasoning that a placeholder is
+  // "a real answer the page is designed to render" — which is true of the
+  // page and false of the cache. `priceUnavailable` means no source could be
+  // reached, which is a fact about the network, not about the card; pinning
+  // it for a full day would keep showing "temporarily unavailable" long
+  // after the upstream recovered, and re-asking costs nothing when the thing
+  // that refused was our own budget ceiling (lib/api-budget.ts) rather than
+  // the upstream.
+  (card) => card.priceUnavailable === true);
 });
 
 export async function getAllCards(): Promise<Card[]> {
