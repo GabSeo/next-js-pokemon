@@ -23,6 +23,8 @@ export type TypeSummary = {
   /** How many rows are actually shown — not always the same fixed number: a rare card can turn up fewer real listings after quality filtering (see lib/ebay-browse.ts's titleMatchesCard). */
   rowCount: number;
   isReal: boolean;
+  /** eBay answered and had nothing for this tier — distinct from `!isReal`, which means we could not ask. Suppresses the median figure and the see-all link, both meaningless at zero. */
+  noListings?: boolean;
   seeAllHref: string;
   rows: React.ReactNode;
 };
@@ -125,7 +127,13 @@ function GradeTierPreview({
   active: TypeSummary;
   sold: TypeSummary;
 }) {
-  const deltaPct = sold.medianPrice > 0 ? ((active.medianPrice - sold.medianPrice) / sold.medianPrice) * 100 : null;
+  // An empty tier has no median, so there is nothing to compare against
+  // sold. Left unguarded, medianPrice 0 produced a confident "▼100% · 100%
+  // below sold" — a real-looking market signal manufactured from an absence.
+  const deltaPct =
+    active.noListings || sold.medianPrice <= 0
+      ? null
+      : ((active.medianPrice - sold.medianPrice) / sold.medianPrice) * 100;
   const above = (deltaPct ?? 0) >= 0;
 
   return (
@@ -148,9 +156,11 @@ function GradeTierPreview({
       </div>
 
       <span className="text-[11px] font-bold text-muted-text">
-        {deltaPct === null
-          ? `Median ask · ${active.count} active`
-          : `Median ask, ${Math.abs(deltaPct).toFixed(0)}% ${above ? "above" : "below"} sold · ${active.count} active`}
+        {active.noListings
+          ? "No active listings today"
+          : deltaPct === null
+            ? `Median ask · ${active.count} active`
+            : `Median ask, ${Math.abs(deltaPct).toFixed(0)}% ${above ? "above" : "below"} sold · ${active.count} active`}
       </span>
 
       {(!active.isReal || !sold.isReal) && (
@@ -348,6 +358,7 @@ export function GradedMarketTabs({
           </div>
         </div>
 
+        {selected.count > 0 && (
         <div className="mt-4">
           <a
             href={selected.seeAllHref}
@@ -365,6 +376,7 @@ export function GradedMarketTabs({
             </span>
           </div>
         </div>
+        )}
 
         {!selected.isReal && (
           <div className="mt-3">

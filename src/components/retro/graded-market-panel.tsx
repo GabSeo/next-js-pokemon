@@ -26,12 +26,15 @@ function ListingRow({ date, description, price, currency, url }: { date: string;
 
 function toTypeSummary(data: GradedMarketTypeData): TypeSummary {
   return {
-    avgLabel: `${data.currency} ${data.medianPrice.toLocaleString()}`,
+    // An empty tier has no median, and "USD 0" reads as a real price of zero
+    // rather than an absence. See GradedMarketTypeData.noListings.
+    avgLabel: data.noListings ? "—" : `${data.currency} ${data.medianPrice.toLocaleString()}`,
     medianPrice: data.medianPrice,
     currency: data.currency,
     count: data.count,
     rowCount: data.rows.length,
     isReal: data.isReal,
+    noListings: data.noListings,
     seeAllHref: data.seeAllUrl,
     // `noListings` is a real answer, not a failure — eBay was reached and had
     // nothing for this tier today. Saying so beats an empty table, and beats

@@ -68,8 +68,25 @@ type TokenResponse = { access_token: string; expires_in: number };
 let cachedToken: { token: string; expiresAt: number } | null = null;
 let inFlightTokenRequest: Promise<string> | null = null;
 
-async function getAccessToken(): Promise<string> {
-  if (cachedToken && cachedToken.expiresAt > Date.now()) return cachedToken.token;
+/**
+ * `forceFresh` exists because this token request is, against the comment
+ * below's expectation, subject to Next's Data Cache — `next: { revalidate }`
+ * opts even a POST in. A token cached from an earlier session then gets
+ * served after eBay has already expired it, and every search using it comes
+ * back 401 "Invalid access token". Observed twice: a dev server that 401'd
+ * on all 8 searches while a standalone script with its own fresh token
+ * worked at the same moment.
+ *
+ * The cache entry cannot simply be disabled — `no-store` (and
+ * `revalidate: 0`) taints the calling route as dynamic and broke static
+ * generation in production, which is what the comment below documents. So
+ * the fix is a distinct cache key instead: a one-off header value eBay
+ * ignores but Next keys on, requested only after a 401 has already proven
+ * the held token is dead.
+ */
+async function getAccessToken(forceFresh = false): Promise<string> {
+  if (!forceFresh && cachedToken && cachedToken.expiresAt > Date.now()) return cachedToken.token;
+  if (forceFresh) cachedToken = null;
   if (inFlightTokenRequest) return inFlightTokenRequest;
 
   inFlightTokenRequest = (async () => {
@@ -82,6 +99,10 @@ async function getAccessToken(): Promise<string> {
         headers: {
           Authorization: `Basic ${basic}`,
           "Content-Type": "application/x-www-form-urlencoded",
+          // Part of Next's Data Cache key, ignored by eBay — see this
+          // function's own doc comment on why a distinct key is the only
+          // way to get past a stale cached token here.
+          ...(forceFresh ? { "X-Token-Refresh": String(Date.now()) } : {}),
         },
         body: new URLSearchParams({
           grant_type: "client_credentials",
@@ -442,7 +463,6 @@ async function runSearch(
   variantTags?: string[],
   guard?: EbayMarketGuard
 ): Promise<RunSearchResult> {
-  const token = await getAccessToken();
   const query = conditionQuery(card, condition, nameOverride, numberOverride);
   const qs = new URLSearchParams({
     q: query,
@@ -453,7 +473,20 @@ async function runSearch(
   });
   if (sort) qs.set("sort", sort);
 
-  const res = await resilientFetch(
+  /**
+   * One retry on 401, with a forced-fresh token. A 401 here means the token
+   * we hold is dead — expired, or served stale out of Next's Data Cache (see
+   * getAccessToken's own comment) — and nothing about repeating the request
+   * with the same token can fix it. Exactly one retry: if a genuinely fresh
+   * token is also rejected, the credentials are wrong and looping would only
+   * spend quota to keep learning that.
+   *
+   * Deliberately handled here rather than in resilientFetch, which treats
+   * 401 as a hard "blocked" status that counts toward the circuit breaker.
+   * That is right for a rejected API key and wrong for an expired bearer
+   * token, which is recoverable and self-inflicted.
+   */
+  const attempt = (token: string) => resilientFetch(
     `${SEARCH_URL}?${qs}`,
     {
       headers: {
@@ -478,6 +511,12 @@ async function runSearch(
     },
     FETCH_TIMEOUT_MS
   );
+
+  let res = await attempt(await getAccessToken());
+  if (res.status === 401) {
+    console.warn(`[ebay] 401 for "${query}" [${condition}] — held token is dead, retrying once with a forced-fresh token.`);
+    res = await attempt(await getAccessToken(true));
+  }
   if (!res.ok) {
     throw new Error(`ebay browse search failed (${res.status}) for "${query}" [${condition}, sort=${sort ?? "bestMatch"}]: ${await res.text()}`);
   }
