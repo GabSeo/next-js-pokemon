@@ -384,26 +384,45 @@ export type EbayMarketGuard = {
 type EbaySort = "newlyListed" | "price" | undefined;
 
 /**
- * Which sort each tier searches by, and why they differ.
+ * Cheapest-first for every tier, graded and raw alike.
  *
- * Raw stays newest-first. Raw inventory turns over quickly and a recent
- * listing is the better read on what the card is changing hands for.
+ * Graded populations are thin and priced over a wide spread, so "newest" is
+ * an arbitrary draw from that spread — measured on Gengar VMAX PSA 10,
+ * newest-first gave 2600/2626/2600/2633 while cheapest-first gave
+ * 2300/2300/2400/2600. Raw was left on newest-first at first and then moved
+ * here too, for consistency: a reader comparing tiers should not have one
+ * tab answering "what's recent" and the next answering "what's cheap".
  *
- * Graded tiers sort cheapest-first instead. A PSA population is thin and
- * priced over a wide spread, so "newest" is effectively an arbitrary draw
- * from that spread — measured on Gengar VMAX PSA 10, newest-first gave
- * 2600/2626/2600/2633 while cheapest-first gave 2300/2300/2400/2600. The
- * cheap end is the reproducible, decision-relevant number: it is what the
- * card actually has to be priced at to sell.
- *
- * This makes the graded median a FLOOR rather than a market rate, which is
- * a real change in meaning and is deliberate — see gradingRoi's caller in
- * graded-market.ts, where the ROI it feeds becomes correspondingly
- * conservative.
+ * This makes every median a FLOOR rather than a market rate. Deliberate, and
+ * the reason the price guards in graded-market.ts matter so much: with the
+ * cheap end of the market at the top of the panel, a junk or mispriced
+ * listing goes from invisible to first-in-view.
  */
-function sortForCondition(condition: EbayCondition): EbaySort {
-  return condition === "Raw" ? "newlyListed" : "price";
-}
+const PRIMARY_SORT: EbaySort = "price";
+
+/**
+ * Below this many survivors, the primary search is retried on Best Match and
+ * the two result sets are merged. Four rows is what the panel wants; two or
+ * fewer reads as a broken tab rather than a thin market, and Best Match
+ * genuinely surfaces different inventory — eBay's own community reports
+ * document Newly Listed and Best Match returning different result COUNTS for
+ * one query (429 vs 490 in one case), not just a reordering.
+ */
+const MERGE_THRESHOLD = 2;
+
+/**
+ * runSearch's own return, richer than the public EbaySearchResult: it
+ * carries the counts needed to attribute an empty result correctly.
+ * searchActiveListings is the only consumer and reports on them once, after
+ * its Best Match merge has had its chance — warning from inside runSearch
+ * meant a search the merge went on to rescue still logged a failure.
+ */
+type RunSearchResult = EbaySearchResult & {
+  /** Everything eBay returned, before any local filtering. */
+  rawCount: number;
+  /** How many survived titleMatchesCard — i.e. before the market guard ran. */
+  titlePassCount: number;
+};
 
 const FETCH_LIMIT = 20;
 /** Shown to the user (and used for the median) — the first this-many survivors of titleMatchesCard, still newest-first. */
@@ -422,7 +441,7 @@ async function runSearch(
   numberOverride?: string,
   variantTags?: string[],
   guard?: EbayMarketGuard
-): Promise<EbaySearchResult> {
+): Promise<RunSearchResult> {
   const token = await getAccessToken();
   const query = conditionQuery(card, condition, nameOverride, numberOverride);
   const qs = new URLSearchParams({
@@ -464,7 +483,7 @@ async function runSearch(
   }
   const data = (await res.json()) as BrowseSearchResponse;
   const rawItems = data.itemSummaries ?? [];
-  const listings = rawItems
+  const priced = rawItems
     .map((item) => ({
       title: item.title,
       price: Number(item.price?.value ?? 0),
@@ -476,8 +495,16 @@ async function runSearch(
     }))
     // Defensive: never let a listing with no real price into the median —
     // a $0 entry would silently drag it down instead of erroring loudly.
-    .filter((listing) => listing.price > 0)
-    .filter((listing) => titleMatchesCard(listing.title, card, condition, numberOverride, variantTags))
+    .filter((listing) => listing.price > 0);
+
+  // Split deliberately rather than chained: the count AFTER the title check
+  // and BEFORE the guard is the only thing that can tell those two apart
+  // when a result set ends up empty.
+  const titlePassed = priced.filter((listing) =>
+    titleMatchesCard(listing.title, card, condition, numberOverride, variantTags)
+  );
+
+  const listings = titlePassed
     // Applied after titleMatchesCard so the warning below still reports the
     // title check honestly, and so a guard can never be blamed for a result
     // set that was already empty.
@@ -485,30 +512,12 @@ async function runSearch(
     .filter((listing) => guard?.minPrice === undefined || listing.price >= guard.minPrice)
     .slice(0, DISPLAY_LIMIT);
 
-  // A guard dropping everything is a different failure from the title check
-  // dropping everything, and must not be reported as the latter: it means
-  // the anchor price or country list is wrong for this card, not that the
-  // tier filter is broken. Counted before the DISPLAY_LIMIT slice so the
-  // number is the real one.
-  const titleSurvivors = rawItems
-    .map((item) => Number(item.price?.value ?? 0))
-    .filter((price) => price > 0).length;
-  if (guard && titleSurvivors > 0 && listings.length === 0) {
-    console.warn(
-      `[ebay] every candidate for "${query}" [${condition}] was removed by the market guard ` +
-        `(excludeCountries=${JSON.stringify(guard.excludeCountries ?? [])}, minPrice=${guard.minPrice ?? "none"}). ` +
-        `Treating as no real match — check the anchor price for this card.`
-    );
-  }
-
-  if (rawItems.length > 0 && listings.length === 0) {
-    console.warn(
-      `[ebay] all ${rawItems.length} result(s) for "${query}" [${condition}, sort=${sort ?? "bestMatch"}] failed the title sanity check — ` +
-        `the filter likely isn't actually constraining to this tier. Treating as no real match.`
-    );
-  }
-
-  return { listings, total: data.total ?? listings.length };
+  return {
+    listings,
+    total: data.total ?? listings.length,
+    rawCount: rawItems.length,
+    titlePassCount: titlePassed.length,
+  };
 }
 
 /**
@@ -549,7 +558,64 @@ export async function searchActiveListings(
   variantTags?: string[],
   guard?: EbayMarketGuard
 ): Promise<EbaySearchResult> {
-  const primary = await runSearch(card, condition, language, sortForCondition(condition), nameOverride, numberOverride, variantTags, guard);
-  if (primary.listings.length > 0) return primary;
-  return runSearch(card, condition, language, undefined, nameOverride, numberOverride, variantTags, guard);
+  const primary = await runSearch(card, condition, language, PRIMARY_SORT, nameOverride, numberOverride, variantTags, guard);
+  if (primary.listings.length > MERGE_THRESHOLD) return primary;
+
+  // Best Match is not recency-biased the way the sorted searches are, so it
+  // can surface a real listing that has simply been sitting unsold — which
+  // matters most on exactly the thin markets that trip MERGE_THRESHOLD.
+  const fallback = await runSearch(card, condition, language, undefined, nameOverride, numberOverride, variantTags, guard);
+
+  // Merged rather than replaced: the point is to REACH four rows, and either
+  // search alone may be short. Deduped by item URL, since the same listing
+  // legitimately appears in both result sets.
+  const seen = new Set<string>();
+  const merged = [...primary.listings, ...fallback.listings]
+    .filter((listing) => (seen.has(listing.url) ? false : (seen.add(listing.url), true)))
+    // Re-sorted because the merge interleaves two orderings, and the panel's
+    // contract is cheapest-first (see PRIMARY_SORT).
+    .sort((a, b) => a.price - b.price)
+    .slice(0, DISPLAY_LIMIT);
+
+  if (merged.length === 0) reportEmpty(card, condition, language, guard, fallback);
+  return { listings: merged, total: Math.max(primary.total, fallback.total) };
+}
+
+/**
+ * Says WHY a tier came back empty, once, after every attempt has been made.
+ *
+ * The attribution is the point. "eBay had nothing", "everything eBay sent
+ * was the wrong card" and "our own guard removed it all" are three different
+ * problems with three different fixes, and they used to be reported as one
+ * — worse, the guard was blamed for the title check's work, because the
+ * count being tested was "items with a price" rather than "items that passed
+ * the title check". Both warnings fired on the same search, e.g. Lugia V
+ * PSA 8, which sent whoever read the log looking at the wrong thing.
+ */
+function reportEmpty(
+  card: Card,
+  condition: EbayCondition,
+  language: EbayLanguage | undefined,
+  guard: EbayMarketGuard | undefined,
+  last: RunSearchResult
+): void {
+  const where = `${card.id} [${condition}/${language ?? "any"}]`;
+  if (last.rawCount === 0) {
+    // Not a defect: a thin tier genuinely has no sellers today. The panel
+    // says so rather than showing preview rows (see graded-market.ts's
+    // noListings).
+    return;
+  }
+  if (last.titlePassCount === 0) {
+    console.warn(
+      `[ebay] all ${last.rawCount} result(s) for ${where} failed the title check — eBay returned listings, none of them this card. ` +
+        `Suspect the query text or the tier filter, not the market guard.`
+    );
+    return;
+  }
+  console.warn(
+    `[ebay] ${last.titlePassCount} of ${last.rawCount} result(s) for ${where} were the right card, then all were removed by the market guard ` +
+      `(excludeCountries=${JSON.stringify(guard?.excludeCountries ?? [])}, minPrice=${guard?.minPrice ?? "none"}). ` +
+      `Suspect the anchor price for this card, not the query.`
+  );
 }

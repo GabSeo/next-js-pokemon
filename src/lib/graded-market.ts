@@ -77,6 +77,17 @@ export type GradedMarketListingRow = {
 
 export type GradedMarketTypeData = {
   isReal: boolean;
+  /**
+   * True only when eBay answered and genuinely had nothing to show for this
+   * tier. Distinct from `isReal: false`, which means we could not ask at all
+   * (outage, quota, open breaker) and are showing preview figures instead.
+   *
+   * The difference is the whole point: "nobody is selling this today" is a
+   * real, useful answer and deserves to be stated, while inventing preview
+   * rows for it tells the reader something false. A failed lookup is not an
+   * empty market and must not be presented as one.
+   */
+  noListings?: boolean;
   medianPrice: number;
   currency: string;
   /** Real eBay total match count when isReal; an illustrative estimate otherwise. */
@@ -311,8 +322,21 @@ async function fetchActiveTier(
     if (listings.length === 0) {
       console.warn(
         `[ebay] 0 active listings for ${card.id} [${condition}/${language}] — search succeeded but returned nothing. ` +
-          `Likely conditionIds/aspect_filter/query mismatch for this card. Falling back to preview.`
+          `Reporting an empty market rather than preview figures.`
       );
+      // The search WORKED and found nothing. That is a real answer, so it is
+      // reported as one instead of falling through to the illustrative block
+      // below — which is reserved for the case where the request itself
+      // failed and we genuinely do not know what the market looks like.
+      return {
+        isReal: true,
+        noListings: true,
+        medianPrice: 0,
+        currency: card.currency,
+        count: 0,
+        seeAllUrl: conditionSearchLink(card, condition, language, nameOverride, numberOverride),
+        rows: [],
+      };
     }
     const med = listings.length > 0 ? median(listings.map((l) => l.price)) : null;
     if (med !== null) {
