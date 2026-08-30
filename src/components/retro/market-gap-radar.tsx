@@ -58,10 +58,18 @@ const MIN_AXES = 3;
  * row underneath names the empty market in words instead of printing a
  * percentage, and the header says a vertex at the centre means no listings.
  *
- * A tier with NO listings in either market is still dropped — there is
- * nothing to compare and both polygons would collapse to the same point. If
- * fewer than three tiers survive that, the chart still does not render: the
- * panel says nothing rather than drawing a degenerate shape.
+ * A tier with no listings in EITHER market is kept too, both polygons meeting
+ * at the centre. It carries no comparison, which was the argument for dropping
+ * it, but dropping it had the same fault as before one step further along:
+ * One Piece cards where PSA 9 is dead in both markets — eustass-captain-kid,
+ * marshall-d-teach — fell to two axes and lost the chart altogether, along
+ * with the raw and PSA 10 comparisons that were perfectly good. An axis
+ * pinched to the centre on both sides reads as what it is, a grade nobody is
+ * selling anywhere, and the row underneath says so in words.
+ *
+ * So no tier is filtered any more; MIN_AXES is now only a guard against some
+ * future franchise with fewer than three tiers, not something the current
+ * data trips.
  *
  * France is deliberately absent. Vinted has no grading tiers to compare
  * against and its feed is newest-first rather than cheapest-first, so it
@@ -81,10 +89,14 @@ export function MarketGapRadar({
   if (rows.length < MIN_AXES) return null;
 
   const metrics = rows.map((row) => ({ key: row.label, label: row.label }));
-  // Max is never 0: the caller drops tiers where both markets are empty, so
-  // every surviving axis has at least one market to index against. A market
-  // with no listings lands at 0 and its vertex sits on the centre.
-  const index = (value: number, other: number) => Math.round((value / Math.max(value, other)) * 100);
+  // Guarded because both markets can be empty on the same grade, and 0/0 is
+  // NaN, which visx renders as a hole in the polygon rather than a point. Both
+  // sides then sit at the centre, which is the honest picture of a grade
+  // nobody is selling.
+  const index = (value: number, other: number) => {
+    const pricier = Math.max(value, other);
+    return pricier > 0 ? Math.round((value / pricier) * 100) : 0;
+  };
 
   const data = [
     {
@@ -172,20 +184,23 @@ export function MarketGapRadar({
 
       <dl className="mt-4 grid grid-cols-1 gap-x-4 gap-y-2 border-t-2 border-border-subtle pt-3 sm:grid-cols-2">
         {rows.map((row) => {
-          // One side empty is an absence, not a discount, so it is never given
-          // a percentage — "EN 100% cheaper" against nothing would be the exact
-          // misreading the vertex at the centre risks on its own.
-          const missing = row.english <= 0 ? "English" : row.japanese <= 0 ? "Japanese" : null;
+          // An absence is not a discount, so it never gets a percentage —
+          // "EN 100% cheaper" against nothing would be the exact misreading the
+          // vertex at the centre risks on its own.
+          const bothEmpty = row.english <= 0 && row.japanese <= 0;
+          const missing = row.english <= 0 ? "EN" : row.japanese <= 0 ? "JP" : null;
           const cheaperIsJapanese = row.japanese < row.english;
           const gapPct = Math.round((1 - Math.min(row.english, row.japanese) / Math.max(row.english, row.japanese)) * 100);
           return (
             <div key={row.label} className="flex flex-wrap items-baseline gap-x-2">
               <dt className="text-[10px] font-black tracking-[0.5px] text-muted-text uppercase">{row.label}</dt>
               <dd className="text-xs font-black tabular-nums">
-                {missing ? (
+                {bothEmpty ? (
+                  <span className="text-[10px] font-bold text-muted-text">No listings in either market</span>
+                ) : missing ? (
                   <>
                     {currency} {(row.english || row.japanese).toLocaleString()}
-                    <span className="ml-1.5 text-[10px] font-bold text-muted-text">no {missing === "English" ? "EN" : "JP"} listings</span>
+                    <span className="ml-1.5 text-[10px] font-bold text-muted-text">no {missing} listings</span>
                   </>
                 ) : (
                   <>
