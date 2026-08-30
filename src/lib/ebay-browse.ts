@@ -449,8 +449,32 @@ type EbaySort = "newlyListed" | "price" | undefined;
 const PRIMARY_SORT: EbaySort = "price";
 
 /**
+ * MEASURED AND REJECTED, so it is not re-proposed: broadening the QUERY when
+ * a tier comes back thin. The obvious next step after this threshold is a
+ * cascade that drops the variant word and retries on number alone. It is a
+ * trap. Checked with scripts/ebay-query-lab.mts on 2026-08-30 against the
+ * tiers that actually come back empty:
+ *
+ *   OP09-093 PSA 9 EN   "Wanted OP09-093 PSA 9" -> 0
+ *                       "OP09-093 PSA 9"        -> 6, at $25-180
+ *   OP09-093 PSA 9 JA   0  ->  5, at $116-1770
+ *   OP05-074 PSA 9 JA   0  ->  1, at $35.50
+ *
+ * Against reference prices of $253 and $884, and Wanted Poster PSA 10s at
+ * $299-500, those broader results are the ORDINARY print of the same
+ * card_number, not the variant being tracked. The proof is structural rather
+ * than a judgement call: the narrow query already contains the variant word,
+ * so eBay returning 0 for it while returning 6 for the number alone means
+ * none of those 6 carry the word. They are a different card.
+ *
+ * So an empty tier here is the correct answer — that variant genuinely has
+ * no listing at that grade — and graded-market.ts reports it as such
+ * (noListings). Widening the net to fill the tab would publish the wrong
+ * card's price.
+ *
  * Below this many survivors, the primary search is retried on Best Match and
- * the two result sets are merged. Four rows is what the panel wants; two or
+ * the two result sets are merged. Note that this changes the SORT, never the
+ * query text — which is exactly why it is safe and a cascade is not. Four rows is what the panel wants; two or
  * fewer reads as a broken tab rather than a thin market, and Best Match
  * genuinely surfaces different inventory — eBay's own community reports
  * document Newly Listed and Best Match returning different result COUNTS for
