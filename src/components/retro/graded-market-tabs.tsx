@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useProductLocaleOptional, type LocaleCode } from "@/components/product-locale";
 import { FloatingPreviewChip } from "@/components/retro/floating-preview-chip";
 import { GradeLadderChart, type GradeLadderRow } from "@/components/retro/grade-ladder-chart";
+import { GradingMarginGauge } from "@/components/retro/grading-margin-gauge";
 import { IllustrativeTag } from "@/components/retro/illustrative-tag";
 import { MarketGapRadar, type MarketGapRow } from "@/components/retro/market-gap-radar";
 import { MarketDataBadge } from "@/components/retro/market-data-badge";
@@ -458,21 +459,36 @@ export function GradedMarketTabs({
         <MarketGapRadar currency={selected.currency} isReal={gapIsReal} rows={gapRows} />
 
         <div className="mt-6 overflow-hidden rounded-md border-2 border-black bg-pokemon-yellow shadow-hard-md">
-          <div className="p-5">
-            <div className="mb-1 flex flex-wrap items-center gap-2 text-xs font-black tracking-[0.3px] text-[#5a4600] uppercase">
-              Grading ROI — raw → PSA 10
-              {!roi.isReal && <IllustrativeTag label="Preview — eBay not connected yet" />}
+          {/* The gauge shares this callout rather than taking a card of its
+              own: it is the same raw / grading / PSA 10 arithmetic read over
+              the sale price instead of over the outlay, and splitting one
+              decision across two boxes would have said "grading" three times
+              in a row down the panel. Two columns on wide screens, stacked
+              below the figures on narrow ones. */}
+          <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-[1fr_auto] sm:items-center">
+            <div>
+              <div className="mb-1 flex flex-wrap items-center gap-2 text-xs font-black tracking-[0.3px] text-[#5a4600] uppercase">
+                Grading ROI — raw → PSA 10
+                {!roi.isReal && <IllustrativeTag label="Preview — eBay not connected yet" />}
+              </div>
+              <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                <span className="text-3xl font-black tracking-[-0.6px] text-foreground tabular-nums">
+                  {roi.percent >= 0 ? "+" : ""}
+                  {roi.percent.toFixed(0)}%
+                </span>
+                <span className="text-xs font-bold text-[#5a4600]">
+                  {roi.currency} {roi.rawMedian.toLocaleString()} raw + {roi.currency} {roi.gradingCostUsd} grading vs {roi.currency}{" "}
+                  {roi.psa10Median.toLocaleString()} PSA 10, {roi.isReal ? "today's active listings" : "preview numbers"}.
+                </span>
+              </div>
             </div>
-            <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-              <span className="text-3xl font-black tracking-[-0.6px] text-foreground tabular-nums">
-                {roi.percent >= 0 ? "+" : ""}
-                {roi.percent.toFixed(0)}%
-              </span>
-              <span className="text-xs font-bold text-[#5a4600]">
-                {roi.currency} {roi.rawMedian.toLocaleString()} raw + {roi.currency} {roi.gradingCostUsd} grading vs {roi.currency}{" "}
-                {roi.psa10Median.toLocaleString()} PSA 10, {roi.isReal ? "today's active listings" : "preview numbers"}.
-              </span>
-            </div>
+
+            <GradingMarginGauge
+              currency={roi.currency}
+              gradingCostUsd={roi.gradingCostUsd}
+              psa10Median={roi.psa10Median}
+              rawMedian={roi.rawMedian}
+            />
           </div>
         </div>
       </div>
