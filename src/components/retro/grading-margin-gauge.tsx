@@ -117,17 +117,22 @@ export function GradingMarginGauge({
         )}
       </div>
 
-      {/* `${currency} ${n}` rather than Intl currency formatting, which
+      {/* "of the sale price is profit", not "of the PSA 10 ask": the dial
+          has to explain its own denominator to someone who has never met the
+          word margin, and "ask" is one more piece of trade vocabulary in a
+          sentence that exists to remove them.
+
+          `${currency} ${n}` rather than Intl currency formatting, which
           rendered "1 669 $US" here — correct for the locale and wrong for this
           site, where every other price on the page reads "USD 1 669". */}
-      <span className="text-center text-[10px] font-bold text-[#5a4600]">
+      <span className="max-w-[22ch] text-center text-[10px] font-bold text-[#5a4600]">
         {margin >= 0 ? (
           <>
-            of the PSA 10 ask — {currency} {Math.round(margin).toLocaleString()}
+            of the sale price is profit — {currency} {Math.round(margin).toLocaleString()}
           </>
         ) : (
           <>
-            Grading loses {currency} {Math.abs(Math.round(margin)).toLocaleString()} at today&apos;s asks
+            Grading loses {currency} {Math.abs(Math.round(margin)).toLocaleString()} at today&apos;s prices
           </>
         )}
       </span>

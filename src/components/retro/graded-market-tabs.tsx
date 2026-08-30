@@ -465,30 +465,56 @@ export function GradedMarketTabs({
               decision across two boxes would have said "grading" three times
               in a row down the panel. Two columns on wide screens, stacked
               below the figures on narrow ones. */}
-          <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-[1fr_auto] sm:items-center">
-            <div>
-              <div className="mb-1 flex flex-wrap items-center gap-2 text-xs font-black tracking-[0.3px] text-[#5a4600] uppercase">
-                Grading ROI — raw → PSA 10
-                {!roi.isReal && <IllustrativeTag label="Preview — eBay not connected yet" />}
+          {/* Both figures spelled out in words, because "ROI" and "margin"
+              are trade terms and a visitor pricing their first card should
+              not have to already know them. Whole units, not the raw
+              medians: "USD 756,475" is 756 dollars and 47 cents under this
+              locale's decimal comma, and it reads as three-quarters of a
+              million to anyone who assumes otherwise. Cents are noise on a
+              median of four asks anyway. */}
+          <div className="p-5">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto] sm:items-center">
+              <div>
+                <div className="mb-1 flex flex-wrap items-center gap-2 text-xs font-black tracking-[0.3px] text-[#5a4600] uppercase">
+                  Grading ROI — raw → PSA 10
+                  {!roi.isReal && <IllustrativeTag label="Preview — eBay not connected yet" />}
+                </div>
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <span className="text-3xl font-black tracking-[-0.6px] text-foreground tabular-nums">
+                    {roi.percent >= 0 ? "+" : ""}
+                    {roi.percent.toFixed(0)}%
+                  </span>
+                  <span className="text-xs font-black tracking-[0.3px] text-[#5a4600] uppercase">Return on what you spend</span>
+                </div>
+                <p className="mt-1.5 max-w-[46ch] text-xs font-bold text-[#5a4600]">
+                  {roi.currency} {Math.round(roi.rawMedian).toLocaleString()} for the raw card + {roi.currency} {roi.gradingCostUsd} to
+                  grade it = {roi.currency} {Math.round(roi.rawMedian + roi.gradingCostUsd).toLocaleString()} spent. A PSA 10 is asking{" "}
+                  {roi.currency} {Math.round(roi.psa10Median).toLocaleString()}.
+                </p>
               </div>
-              <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-                <span className="text-3xl font-black tracking-[-0.6px] text-foreground tabular-nums">
-                  {roi.percent >= 0 ? "+" : ""}
-                  {roi.percent.toFixed(0)}%
-                </span>
-                <span className="text-xs font-bold text-[#5a4600]">
-                  {roi.currency} {roi.rawMedian.toLocaleString()} raw + {roi.currency} {roi.gradingCostUsd} grading vs {roi.currency}{" "}
-                  {roi.psa10Median.toLocaleString()} PSA 10, {roi.isReal ? "today's active listings" : "preview numbers"}.
-                </span>
-              </div>
+
+              <GradingMarginGauge
+                currency={roi.currency}
+                gradingCostUsd={roi.gradingCostUsd}
+                psa10Median={roi.psa10Median}
+                rawMedian={roi.rawMedian}
+              />
             </div>
 
-            <GradingMarginGauge
-              currency={roi.currency}
-              gradingCostUsd={roi.gradingCostUsd}
-              psa10Median={roi.psa10Median}
-              rawMedian={roi.rawMedian}
-            />
+            {/* The two figures are the same money measured against different
+                things, and saying so is the only way the pair reads as one
+                answer rather than two competing ones. They are not
+                independent readings either — one is a fixed rearrangement of
+                the other — so presenting them as a cross-check would be a
+                lie by implication. */}
+            <p className="mt-4 border-t-2 border-black/15 pt-3 text-[11px] font-bold text-[#5a4600]">
+              Both numbers describe the same {roi.currency}{" "}
+              {Math.round(roi.psa10Median - roi.rawMedian - roi.gradingCostUsd).toLocaleString()}: the return measures it against what
+              you spend, the margin against what you sell for.{" "}
+              {roi.isReal
+                ? "These are asking prices on eBay today, not completed sales, and the grading fee is an estimate."
+                : "These are preview numbers, not a real market reading."}
+            </p>
           </div>
         </div>
       </div>
