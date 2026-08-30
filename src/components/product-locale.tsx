@@ -60,6 +60,24 @@ export function useProductLocale(): LocaleContextValue {
 }
 
 /**
+ * The same context, for consumers that can still do something useful without
+ * it. GradedMarketPanel is rendered on the price checker as well as on the
+ * product page, and when the toggle became the panel's market control the
+ * throwing hook above turned "this surface has no locale provider" into a
+ * failed production build — caught only by `next build`, since the price
+ * checker route is prerendered and the dev server never rendered it.
+ *
+ * Degrading to the English market is the right answer for a surface that
+ * never had localized card identity to switch between anyway. The provider is
+ * still what any surface WANTS (see price-checker-view.tsx, which now has
+ * one); this only means forgetting it costs a missing control rather than a
+ * broken build.
+ */
+export function useProductLocaleOptional(): LocaleContextValue | null {
+  return useContext(LocaleContext);
+}
+
+/**
  * Wraps the whole product page. `children` is server-rendered content
  * passed straight through, so nothing below this becomes a client component
  * just by being inside it — only the toggle and the slots are interactive.
@@ -122,8 +140,9 @@ function flagSvgUrl(isoCode: LocaleCode): string {
  * either way; only the card's own name and art fall back.
  */
 export function ProductLocaleToggle() {
-  const { active, setActive, options } = useProductLocale();
-  if (options.length === 0) return null;
+  const ctx = useProductLocaleOptional();
+  if (!ctx || ctx.options.length === 0) return null;
+  const { active, setActive, options } = ctx;
 
   return (
     <div className="ml-auto flex overflow-hidden rounded-md border-2 border-black" role="group" aria-label="Market">

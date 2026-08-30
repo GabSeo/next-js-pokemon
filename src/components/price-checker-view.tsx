@@ -6,6 +6,7 @@ import { OpenDataLinks } from "@/components/open-data-links";
 import { PriceCheckerForm } from "@/components/price-checker-form";
 import { PriceChart } from "@/components/price-chart";
 import { PriceDataTabs } from "@/components/price-data-tabs";
+import { ProductLocaleProvider } from "@/components/product-locale";
 import { StructuredData } from "@/components/structured-data";
 import { ConditionFilterChips } from "@/components/retro/condition-filter-chips";
 import { GradedMarketPanel } from "@/components/retro/graded-market-panel";
@@ -138,9 +139,28 @@ export function PriceCheckerView({ cardId, card }: { cardId?: string; card?: Car
 
             <InternationalPricesPanel card={card} />
 
-            <Suspense fallback={<MarketPanelSkeleton franchise={card.franchise} />}>
-              <GradedMarketPanel card={card} />
-            </Suspense>
+            {/* The panel's market control is the US/JP/FR toggle it renders in
+                its own heading, and that toggle reads this provider — without
+                one the panel would silently collapse to the English market and
+                this page would lose the Japanese and French markets it used to
+                offer through its own pill row.
+
+                available: false on FR and JP is the literal truth here and not
+                a limitation: this route resolves one English Card and has no
+                LocaleSlots, so nothing on the page is translated whichever flag
+                is pressed. The flag still selects which marketplace's listings
+                the panel shows, which is all it ever did on this surface. */}
+            <ProductLocaleProvider
+              options={[
+                { code: "US", available: true },
+                { code: "JP", available: false },
+                { code: "FR", available: false },
+              ]}
+            >
+              <Suspense fallback={<MarketPanelSkeleton franchise={card.franchise} />}>
+                <GradedMarketPanel card={card} />
+              </Suspense>
+            </ProductLocaleProvider>
 
             <div>
               <h3 className="mb-3 flex items-center gap-2 text-lg font-black tracking-[-0.45px]">📈 Raw Card Price History</h3>

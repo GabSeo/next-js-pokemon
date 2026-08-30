@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useProductLocale, type LocaleCode } from "@/components/product-locale";
+import { useProductLocaleOptional, type LocaleCode } from "@/components/product-locale";
 import { FloatingPreviewChip } from "@/components/retro/floating-preview-chip";
 import { GradeLadderChart, type GradeLadderRow } from "@/components/retro/grade-ladder-chart";
 import { IllustrativeTag } from "@/components/retro/illustrative-tag";
@@ -252,8 +252,11 @@ export function GradedMarketTabs({
   // drops "Japanese" from the entries while the JP flag itself stays — the
   // card is still shown in Japanese, the listings just stay on the English
   // market rather than on a tab that no longer exists.
-  const { active } = useProductLocale();
-  const preferredMarket = MARKET_BY_LOCALE[active];
+  // No provider means no toggle rendered either, so there is nothing for a
+  // visitor to have selected — the first eBay market is the only honest
+  // default. See useProductLocaleOptional's comment.
+  const active = useProductLocaleOptional()?.active;
+  const preferredMarket = active ? MARKET_BY_LOCALE[active] : marketTabs[0];
   const market: MarketTab = marketTabs.includes(preferredMarket) ? preferredMarket : marketTabs[0];
 
   const [conditionId, setConditionId] = useState<EbayCondition>(entries[0].id);
