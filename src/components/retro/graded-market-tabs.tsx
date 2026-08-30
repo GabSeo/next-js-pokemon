@@ -12,6 +12,7 @@ import { VintedListingsSection } from "@/components/retro/vinted-listings-sectio
 import type { EbayCondition, EbayLanguage } from "@/lib/ebay-browse";
 import type { GradedMarketRoi } from "@/lib/graded-market";
 import { EBAY_LOGO_URL } from "@/lib/marketplace-logos";
+import { gradingRoi } from "@/lib/roi";
 
 export type TypeSummary = {
   avgLabel: string;
@@ -300,6 +301,44 @@ export function GradedMarketTabs({
   const gapRows: MarketGapRow[] = gapTiers.map((t) => ({ label: t.label, english: t.en!.medianPrice, japanese: t.ja!.medianPrice }));
   const gapIsReal = gapTiers.every((t) => t.en!.isReal && t.ja!.isReal);
 
+  // Grading economics for the market the visitor is actually looking at.
+  //
+  // lib/graded-market.ts computes `roi` from English only, deliberately: it is
+  // the one market guaranteed to resolve for every card, and the ROI there
+  // never mixes a real median with an illustrative one. That was invisible
+  // while the panel had its own market pills, and became misleading once the
+  // flag toggle started driving everything else on the card — switch to JP and
+  // every block re-read except this one, which kept quoting English without
+  // saying so.
+  //
+  // So it is recomputed here for the selected market whenever that market has
+  // BOTH tiers real and priced, using the same gradingRoi() the server used.
+  // When it does not — a Japanese raw or PSA 10 tier with no listings — the
+  // English figures stand rather than a half-Japanese hybrid, and the footnote
+  // below says which market the reader is being shown. Falling back silently
+  // is the exact failure this block is fixing.
+  const activeTier = (condition: EbayCondition, language: MarketTab) =>
+    entries.find((e) => e.id === condition)?.languages.find((l) => l.language === language)?.active;
+  const roiPsa10 = activeTier("PSA 10", market);
+  const roiRaw = activeTier("Raw", market);
+  const roiFollowsMarket =
+    market !== "France" &&
+    !!roiPsa10?.isReal &&
+    !!roiRaw?.isReal &&
+    roiPsa10.medianPrice > 0 &&
+    roiRaw.medianPrice > 0;
+  const shownRoi = roiFollowsMarket
+    ? {
+        isReal: true,
+        percent: gradingRoi(roiPsa10!.medianPrice, roiRaw!.medianPrice, roi.gradingCostUsd) * 100,
+        psa10Median: roiPsa10!.medianPrice,
+        rawMedian: roiRaw!.medianPrice,
+        gradingCostUsd: roi.gradingCostUsd,
+        currency: roiPsa10!.currency,
+      }
+    : roi;
+  const roiMarket: MarketTab = roiFollowsMarket ? market : "English";
+
   return (
     <div>
       <div hidden={market === "France"}>
@@ -475,29 +514,33 @@ export function GradedMarketTabs({
           <div className="p-5">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto] sm:items-center">
               <div>
+                {/* The market is named here, not left implied. Every other
+                    block on this panel is titled with the market it reads, and
+                    this one is the only place the two can disagree. */}
                 <div className="mb-1 flex flex-wrap items-center gap-2 text-xs font-black tracking-[0.3px] text-[#5a4600] uppercase">
-                  Grading ROI — raw → PSA 10
-                  {!roi.isReal && <IllustrativeTag label="Preview — eBay not connected yet" />}
+                  Grading ROI · {roiMarket} — raw → PSA 10
+                  {!shownRoi.isReal && <IllustrativeTag label="Preview — eBay not connected yet" />}
                 </div>
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                   <span className="text-3xl font-black tracking-[-0.6px] text-foreground tabular-nums">
-                    {roi.percent >= 0 ? "+" : ""}
-                    {roi.percent.toFixed(0)}%
+                    {shownRoi.percent >= 0 ? "+" : ""}
+                    {shownRoi.percent.toFixed(0)}%
                   </span>
                   <span className="text-xs font-black tracking-[0.3px] text-[#5a4600] uppercase">Return on what you spend</span>
                 </div>
                 <p className="mt-1.5 max-w-[46ch] text-xs font-bold text-[#5a4600]">
-                  {roi.currency} {Math.round(roi.rawMedian).toLocaleString()} for the raw card + {roi.currency} {roi.gradingCostUsd} to
-                  grade it = {roi.currency} {Math.round(roi.rawMedian + roi.gradingCostUsd).toLocaleString()} spent. A PSA 10 is asking{" "}
-                  {roi.currency} {Math.round(roi.psa10Median).toLocaleString()}.
+                  {shownRoi.currency} {Math.round(shownRoi.rawMedian).toLocaleString()} for the raw card + {shownRoi.currency}{" "}
+                  {shownRoi.gradingCostUsd} to grade it = {shownRoi.currency}{" "}
+                  {Math.round(shownRoi.rawMedian + shownRoi.gradingCostUsd).toLocaleString()} spent. A PSA 10 is asking{" "}
+                  {shownRoi.currency} {Math.round(shownRoi.psa10Median).toLocaleString()}.
                 </p>
               </div>
 
               <GradingMarginGauge
-                currency={roi.currency}
-                gradingCostUsd={roi.gradingCostUsd}
-                psa10Median={roi.psa10Median}
-                rawMedian={roi.rawMedian}
+                currency={shownRoi.currency}
+                gradingCostUsd={shownRoi.gradingCostUsd}
+                psa10Median={shownRoi.psa10Median}
+                rawMedian={shownRoi.rawMedian}
               />
             </div>
 
@@ -508,12 +551,15 @@ export function GradedMarketTabs({
                 the other — so presenting them as a cross-check would be a
                 lie by implication. */}
             <p className="mt-4 border-t-2 border-black/15 pt-3 text-[11px] font-bold text-[#5a4600]">
-              Both numbers describe the same {roi.currency}{" "}
-              {Math.round(roi.psa10Median - roi.rawMedian - roi.gradingCostUsd).toLocaleString()}: the return measures it against what
-              you spend, the margin against what you sell for.{" "}
-              {roi.isReal
-                ? "These are asking prices on eBay today, not completed sales, and the grading fee is an estimate."
-                : "These are preview numbers, not a real market reading."}
+              Both numbers describe the same {shownRoi.currency}{" "}
+              {Math.round(shownRoi.psa10Median - shownRoi.rawMedian - shownRoi.gradingCostUsd).toLocaleString()}: the return measures it
+              against what you spend, the margin against what you sell for.{" "}
+              {shownRoi.isReal
+                ? `These are ${roiMarket} asking prices on eBay today, not completed sales, and the grading fee is an estimate.`
+                : "These are preview numbers, not a real market reading."}{" "}
+              {market !== "France" && !roiFollowsMarket && shownRoi.isReal
+                ? `The ${market} market has no priced raw and PSA 10 pair today, so English figures are shown instead.`
+                : ""}
             </p>
           </div>
         </div>
