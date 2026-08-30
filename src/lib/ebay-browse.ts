@@ -600,6 +600,15 @@ async function runSearch(
     // set that was already empty.
     .filter((listing) => !guard?.excludeCountries?.includes(listing.location ?? ""))
     .filter((listing) => guard?.minPrice === undefined || listing.price >= guard.minPrice)
+    // Re-sorted locally before the slice, because eBay's `sort=price` orders
+    // by price PLUS SHIPPING while the field we read and display is the item
+    // price alone. The two disagree often enough to matter: P-033's English
+    // PSA 10 tier came back 1131.91, 1220, 1350, 4499.99, 1353.73, 2000,
+    // 2000, 2500 — so taking eBay's first four showed the $4,499.99 outlier
+    // and trimmed three $2,000-2,500 listings that were genuinely cheaper.
+    // Without this the panel's "cheapest first" claim is not true, and which
+    // four rows appear depends on sellers' shipping settings.
+    .sort((a, b) => a.price - b.price)
     .slice(0, DISPLAY_LIMIT);
 
   return {
