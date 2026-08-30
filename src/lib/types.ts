@@ -34,9 +34,40 @@ export type PriceRange = {
   to: string;
 };
 
+/**
+ * An id this card carries in somebody else's catalog, labelled with whose.
+ * Deliberately not a bare string: an unlabelled "44233" is unreadable to an
+ * agent and unjoinable to anything, while `{ scheme: "apitcg", value }` says
+ * which catalog to resolve it against.
+ */
+export type CardIdentifier = {
+  scheme: "apitcg" | "tcgdex" | "berrywallet";
+  value: string;
+};
+
 export type Card = {
-  id: string; // apitcg.com numeric product id, as a string
+  /**
+   * Canonical identity — always the slug, on every resolution path.
+   *
+   * It used to hold whichever upstream happened to answer first, so the same
+   * card was apitcg's "44233" on one build and TCGdex's "swsh12-186" on the
+   * next. That is an unusable identity for anything that persists a reference:
+   * JSON-LD `sku`, the saved-collection store, an agent citing a card between
+   * sessions. Upstream ids moved to `identifiers`, where they're honest
+   * cross-references rather than identity claims.
+   *
+   * Kept as its own field rather than deleted in favour of `slug` because
+   * every consumer already reads `id`; the fix is making them all read the
+   * same value every build, not renaming the field.
+   */
+  id: string;
   slug: string; // URL slug, e.g. "gengar-vmax-271"
+  /**
+   * Every upstream catalog that resolved this card, not just the one that won
+   * the identity race. `/api/{franchise}/{id}` still accepts these values as
+   * lookup aliases, so URLs minted before identity was stabilised keep working.
+   */
+  identifiers?: CardIdentifier[];
   franchise: Franchise;
   name: string;
   set: string;

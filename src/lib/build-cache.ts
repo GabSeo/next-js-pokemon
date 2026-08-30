@@ -77,6 +77,12 @@ import path from "node:path";
  *      cached graded-market entry was computed under the old, unfiltered
  *      logic, so this bump is what makes every one of them recompute rather
  *      than keep serving that contamination for up to 24h.
+ *   6. Card identity became the slug (cards.ts), with upstream ids moved
+ *      to Card.identifiers. Every cached entry was serialized with the
+ *      old identity — whichever upstream won that build's race — and
+ *      with no identifiers array at all, so without this bump the JSON
+ *      API, JSON-LD sku and prebuilt alias routes would keep emitting
+ *      the unstable id the change exists to remove.
  *
  * Surviving deploys is the whole point of this cache (see the header
  * comment) — it is what keeps a redeploy from re-spending quota. So the fix
@@ -84,7 +90,7 @@ import path from "node:path";
  * able to say so. Bumping this starts a fresh namespace; the previous one is
  * simply never read again.
  */
-const CACHE_VERSION = 4;
+const CACHE_VERSION = 5;
 
 /** Versioned so a computation change cannot silently reuse pre-change values across a deploy — see CACHE_VERSION. */
 const CACHE_DIR = path.join(process.cwd(), ".next", "cache", "resolved-cards", `v${CACHE_VERSION}`);

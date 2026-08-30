@@ -8,9 +8,15 @@ export const revalidate = 86400;
 export async function generateStaticParams() {
   const cards = await getCardsByFranchise("one-piece");
   // See the /api/pokemon/[id] route's own comment on this same pattern —
-  // pre-build by both slug and the resolved apitcg id so an id-based request
-  // isn't a guaranteed on-demand cache-miss on its first-ever hit.
-  return cards.flatMap((card) => (card.id === card.slug ? [{ id: card.slug }] : [{ id: card.slug }, { id: card.id }]));
+  // pre-build the canonical slug plus every upstream id the card carries, so
+  // an alias request isn't a guaranteed on-demand cache-miss on its first hit.
+  return cards.flatMap((card) => [
+    { id: card.slug },
+    ...(card.identifiers ?? [])
+      .map((i) => i.value)
+      .filter((value) => value !== card.slug)
+      .map((value) => ({ id: value })),
+  ]);
 }
 
 export async function GET(

@@ -362,8 +362,17 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
   if (!identity) return undefined;
 
   return {
-    id: berryWalletMatch ? berryWalletMatch.card.id : product ? String(product._id) : tcgdexCard!.id,
+    // Identity is the slug here for the same reason placeholderCard already
+    // gives it below: it's the only identifier that survives a card resolving
+    // through a different upstream next build. Which of the three answered is
+    // recorded in `identifiers` instead of quietly becoming the card's name.
+    id: ref.slug,
     slug: ref.slug,
+    identifiers: [
+      ...(berryWalletMatch ? [{ scheme: "berrywallet" as const, value: berryWalletMatch.card.id }] : []),
+      ...(product ? [{ scheme: "apitcg" as const, value: String(product._id) }] : []),
+      ...(tcgdexCard ? [{ scheme: "tcgdex" as const, value: tcgdexCard.id }] : []),
+    ],
     franchise: ref.franchise,
     character: ref.character,
     ...identity,
@@ -775,6 +784,21 @@ export async function getCardBySlug(slug: string): Promise<Card | undefined> {
  * this keeps the common case cheap instead of always paying for the whole
  * franchise like a plain `getCardsByFranchise(...).find(...)` would.
  */
+/**
+ * True when `query` names this card — by its canonical id (the slug) or by any
+ * upstream id it carries. The identifier arm is what keeps `/api/pokemon/44233`
+ * and `/api/pokemon/swsh12-186` alive now that neither is the card's identity:
+ * an id that was ever handed out has to keep resolving, it just stops being the
+ * answer we give back.
+ */
+function matchesIdentity(card: Card, query: string): boolean {
+  return (
+    card.id === query ||
+    card.slug === query ||
+    (card.identifiers?.some((i) => i.value === query) ?? false)
+  );
+}
+
 export async function getCardByIdOrSlug(
   franchise: Franchise,
   idOrSlug: string
@@ -783,12 +807,12 @@ export async function getCardByIdOrSlug(
   if (bySlug) return resolveCardSafe(bySlug);
 
   const cards = await getCardsByFranchise(franchise);
-  return cards.find((c) => c.id === idOrSlug);
+  return cards.find((c) => matchesIdentity(c, idOrSlug));
 }
 
 export async function getCardById(id: string): Promise<Card | undefined> {
   const cards = await getAllCards();
-  return cards.find((c) => c.id === id);
+  return cards.find((c) => matchesIdentity(c, id));
 }
 
 export async function findCard(query: string): Promise<Card | undefined> {
@@ -831,6 +855,10 @@ export function toPublicCard(card: Card) {
   return {
     id: card.id,
     slug: card.slug,
+    // Published so a consumer can join this card to apitcg/TCGdex/BerryWallet
+    // without guessing which catalog an id came from — and so it's visible
+    // that `id` is ours and these are theirs.
+    ...(card.identifiers?.length ? { identifiers: card.identifiers } : {}),
     franchise: card.franchise,
     name: card.name,
     set: card.set,
