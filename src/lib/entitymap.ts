@@ -1,4 +1,5 @@
 import { cardRefs } from "@/data/card-refs";
+import { getGradedMarketData } from "@/lib/graded-market";
 import { getCardBySlug } from "@/lib/cards";
 import { SITE_DESCRIPTION, SITE_NAME, absoluteUrl } from "@/lib/site";
 import type { Franchise } from "@/lib/types";
@@ -105,6 +106,18 @@ const CHARACTER_ENTITIES: Record<string, { entityId: string; description: string
   },
 };
 
+/**
+ * Currency to at most two decimals, without forcing them on a round number.
+ *
+ * A median over an even number of listings lands on a half-cent — PSA 10
+ * figures came out as "USD 2449.995" and "USD 384.995" — and quoting that in
+ * evidence prose implies a precision the underlying market does not have.
+ * Rounds rather than truncates, so the figure stays the nearest true cent.
+ */
+function money(value: number): string {
+  return String(Number(value.toFixed(2)));
+}
+
 function isoDate(dateOnly: string): string {
   return `${dateOnly}T00:00:00Z`;
 }
@@ -188,13 +201,45 @@ export async function entityMapDocument() {
     for (const ref of refs) {
       const card = await getCardBySlug(ref.slug);
       if (!card) continue; // matches the site-wide pattern: a resolution failure omits data rather than crashing
+      // Full print name, not the character name. Both of Monkey D. Luffy's
+      // cards rendered as the link text "Monkey D. Luffy price", so the two
+      // pieces of evidence on his entity were indistinguishable — the same
+      // one-name-for-two-things problem the entity ids exist to prevent.
+      // printName is BerryWallet's real print string ("Monkey.D.Luffy (Event
+      // Pack Vol. 2)"); Pokémon has none and falls back to the card name,
+      // which is already print-specific there ("Lugia V").
+      const label = `${card.printName ?? card.name}${card.number ? ` — ${card.number}` : ""}`;
+
+      // Which tier the quoted price belongs to, stated rather than implied.
+      // card.currentPrice is the UNGRADED reference from TCGdex/BerryWallet;
+      // a reader comparing it to a graded listing without that label is
+      // comparing two different markets. The PSA 10 figure comes from the
+      // same getGradedMarketData every product page uses — buildCached, so
+      // sharing it here costs no additional upstream calls.
+      const graded = await getGradedMarketData(card);
+      const psa10 = graded?.conditions
+        .find((c) => c.condition === "PSA 10")
+        ?.languages.find((l) => l.language === "English")?.active;
+
+      // Only a real observation is quoted. `noListings` is a genuine answer
+      // and says so; an illustrative tier is omitted entirely rather than
+      // presented as evidence — see lib/illustrative.ts on why preview
+      // figures never leave the surfaces that label them.
+      const psa10Text = !psa10
+        ? ""
+        : psa10.noListings
+          ? " No PSA 10 listings are currently active."
+          : psa10.isReal
+            ? ` PSA 10: ${psa10.currency} ${money(psa10.medianPrice)} median across ${psa10.count} active eBay listings.`
+            : "";
+
       chunks.push({
         chunkId: `c_${ref.slug}`,
         text: card.priceUnavailable
-          ? `${card.name} (${card.set}, ${card.number ?? ""}) — market price temporarily unavailable, no price source could be reached.`
-          : `The current market price for ${card.name} (${card.set}, ${card.number ?? ""}) is ${card.currency} ${card.currentPrice} as of ${card.asOfDate}.`,
+          ? `${label} (${card.set}). Raw market price temporarily unavailable — no price source could be reached.`
+          : `${label} (${card.set}). Raw market price ${card.currency} ${money(card.currentPrice)} as of ${card.asOfDate}.${psa10Text}`,
         sourceUrl: absoluteUrl(`/products/${ref.slug}`),
-        pageTitle: `${card.name} price`,
+        pageTitle: label,
         publisher: SITE_NAME,
         retrieved: isoDate(card.asOfDate),
         relevanceScore: 0.95,
