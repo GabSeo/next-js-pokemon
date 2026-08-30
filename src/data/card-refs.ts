@@ -134,11 +134,28 @@ export type CardRef = {
    * and titleMatchesCard's (lib/ebay-browse.ts) filter would keep rejecting
    * every one of this card's real listings, forever.
    *
+   * KEYED BY LANGUAGE, because the two tiers can need opposite vocabulary —
+   * proven on P-033 below, where each language's winning tag returns exactly
+   * zero for the other. A single value cannot express that.
+   *
+   * USED VERBATIM, unlike `lookup.variantTags`, which graded-market.ts puts
+   * through `tagFirstWord` first. That transform exists to turn BerryWallet's
+   * catalog naming into what sellers actually write ("Wanted Poster" ->
+   * "Wanted", measured: 6 results vs 0 for the full phrase). A value here is
+   * already written in seller vocabulary by a human who checked, so applying
+   * the transform to it only corrupts multi-word product names — it is what
+   * turned "Shonen Jump" into "Shonen" and "Event Pack Vol. 2" into
+   * "Event Vol".
+   *
+   * Use scripts/ebay-query-lab.mts to pick a value rather than guessing; it
+   * compares candidate query shapes against the live API and scores them on
+   * grade and number only, never on the tags themselves.
+   *
    * Omitted (the default) means `lookup.variantTags` is right for eBay too
    * — true for every other tracked One Piece card so far, where BerryWallet's
    * catalog naming and real seller vocabulary happen to agree.
    */
-  ebayVariantTags?: string[];
+  ebayVariantTags?: { en?: string[]; jp?: string[] };
 };
 
 /**
@@ -273,8 +290,19 @@ export const cardRefs: CardRef[] = [
     lookup: { by: "code", code: "P-033", variantTags: ["Event Pack", "Vol. 2"] },
     berryWalletSetCode: { en: "OP-PR" },
     berryWalletEnabled: true,
+    // Per language, because this card's two tiers need OPPOSITE vocabulary
+    // and a single value can only ever serve one of them. Measured with
+    // scripts/ebay-query-lab.mts on 2026-08-30, PSA 10, both tiers:
+    //   English  "Event Pack Vol. 2" -> 8 raw / 7 real; "Shonen Jump" -> 0
+    //   Japanese "Shonen Jump"       -> 20 raw / 20 real; "Event Pack..." -> 0
+    // The card shipped as a Weekly Shonen Jump insert in Japan and as an
+    // event-pack promo in English, so sellers in each market title it after
+    // a different real-world product. Before this was per-language the
+    // single "Shonen Jump" value served Japanese and left the English tier
+    // with zero listings.
+    //
     // See CardRef's own ebayVariantTags doc comment — real eBay listings
     // for this exact print say "Weekly Shonen Jump", never "Event"/"Vol.".
-    ebayVariantTags: ["Shonen Jump"],
+    ebayVariantTags: { en: ["Event Pack Vol. 2"], jp: ["Shonen Jump"] },
   },
 ];
