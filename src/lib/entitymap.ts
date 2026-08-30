@@ -83,6 +83,11 @@ const CHARACTER_ENTITIES: Record<string, { entityId: string; description: string
     description: "A Fire-type Pokémon species, the final evolution of Cyndaquil.",
     sameAs: "https://www.wikidata.org/wiki/Q2295649",
   },
+  "Monkey D. Luffy": {
+    entityId: "e_monkey-d-luffy",
+    description: "A fictional character from the One Piece manga and anime, captain of the Straw Hat Pirates.",
+    sameAs: "https://www.wikidata.org/wiki/Q477948",
+  },
   Shanks: {
     entityId: "e_shanks",
     description: "A fictional character from the One Piece manga and anime, captain of the Red Haired Pirates and one of the Four Emperors.",
@@ -165,7 +170,17 @@ export async function entityMapDocument() {
 
   for (const characterName of characterNames) {
     const meta = CHARACTER_ENTITIES[characterName];
-    if (!meta) continue; // no unmapped character should exist, but fail open rather than crash the document
+    if (!meta) {
+      // Fail open rather than crash the document — but say so. Monkey D.
+      // Luffy was missing from CHARACTER_ENTITIES for as long as this was
+      // silent, which dropped him and both of his cards' evidence chunks
+      // while the document still validated and still looked complete.
+      console.warn(
+        `[entitymap] no CHARACTER_ENTITIES entry for "${characterName}" — this character and its cards are ` +
+          `absent from the entity map. Add it (with a verified Wikidata QID) in src/lib/entitymap.ts.`
+      );
+      continue;
+    }
     const refs = cardRefs.filter((ref) => ref.character === characterName);
     const franchise = refs[0].franchise;
 
