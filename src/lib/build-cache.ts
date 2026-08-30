@@ -83,6 +83,14 @@ import path from "node:path";
  *      with no identifiers array at all, so without this bump the JSON
  *      API, JSON-LD sku and prebuilt alias routes would keep emitting
  *      the unstable id the change exists to remove.
+ *   7. The apitcg budget went 30/day -> 90/day + 900/month (api-budget.ts)
+ *      to stop card resolution starving price history. Every cached
+ *      entry had been computed while that budget was exhausted, so it
+ *      carried priceHistory: [] and recentSnapshots: [] — and a raised
+ *      ceiling does not refill an entry that already exists. Without
+ *      this bump the fix would have been invisible for 24h on exactly
+ *      the cards it was made for, which is how it was caught: gengar
+ *      -vmax-271 served history: 0 while carrying a valid apitcg id.
  *
  * Surviving deploys is the whole point of this cache (see the header
  * comment) — it is what keeps a redeploy from re-spending quota. So the fix
@@ -90,7 +98,7 @@ import path from "node:path";
  * able to say so. Bumping this starts a fresh namespace; the previous one is
  * simply never read again.
  */
-const CACHE_VERSION = 5;
+const CACHE_VERSION = 6;
 
 /** Versioned so a computation change cannot silently reuse pre-change values across a deploy — see CACHE_VERSION. */
 const CACHE_DIR = path.join(process.cwd(), ".next", "cache", "resolved-cards", `v${CACHE_VERSION}`);
