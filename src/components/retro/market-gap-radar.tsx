@@ -44,11 +44,24 @@ const MIN_AXES = 3;
  * percent and currency are in the row underneath, which is also what an agent
  * parsing raw HTML gets, since bklit draws SVG paths rather than text.
  *
- * Tiers where either market has no listings are dropped rather than plotted
- * at zero — a ratio against nothing is not a cheaper market, it is an absent
- * one, and a spike to the centre would read as a 100% discount. If that
- * leaves fewer than three tiers the whole chart is dropped; the panel says
- * nothing rather than drawing a degenerate shape.
+ * A tier where ONE market has no listings is kept, and that market is drawn
+ * at zero. This started out dropped, on the reasoning that a ratio against
+ * nothing is not a cheaper market and a spike to the centre could read as a
+ * 100% discount. Dropping cost more than it saved: One Piece cards carry only
+ * three tiers, so a single empty one took the whole chart below the three
+ * axes a polygon needs and the card vanished entirely — hiding the two tiers
+ * that did have a real comparison in them.
+ *
+ * It is also the more useful reading. "Nobody is selling this grade in this
+ * market" is the widest gap between two markets there is, and this chart is
+ * about gaps. What it must not do is let that be mistaken for a price, so the
+ * row underneath names the empty market in words instead of printing a
+ * percentage, and the header says a vertex at the centre means no listings.
+ *
+ * A tier with NO listings in either market is still dropped — there is
+ * nothing to compare and both polygons would collapse to the same point. If
+ * fewer than three tiers survive that, the chart still does not render: the
+ * panel says nothing rather than drawing a degenerate shape.
  *
  * France is deliberately absent. Vinted has no grading tiers to compare
  * against and its feed is newest-first rather than cheapest-first, so it
@@ -68,6 +81,9 @@ export function MarketGapRadar({
   if (rows.length < MIN_AXES) return null;
 
   const metrics = rows.map((row) => ({ key: row.label, label: row.label }));
+  // Max is never 0: the caller drops tiers where both markets are empty, so
+  // every surviving axis has at least one market to index against. A market
+  // with no listings lands at 0 and its vertex sits on the centre.
   const index = (value: number, other: number) => Math.round((value / Math.max(value, other)) * 100);
 
   const data = [
@@ -102,11 +118,16 @@ export function MarketGapRadar({
 
   return (
     <div className="mt-6 rounded-md border-2 border-black bg-white p-5 shadow-hard-sm">
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
-        <div>
+      {/* No flex-wrap, and the text column shrinks instead: with wrapping on,
+          a subtitle this long pushed the badge onto its own line and it stopped
+          reading as the card's status. It wraps inside its own column now and
+          the badge holds the top-right corner. */}
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
           <span className="text-[10px] font-black tracking-[0.5px] text-muted-text uppercase">Market gap · English vs Japanese</span>
           <p className="mt-1 text-[10px] font-bold text-muted-text">
-            Each grade indexed to the pricier market of the two — the radius is a ratio, not a price
+            Each grade indexed to the pricier market — the radius is a ratio, not a price. A point at the centre means no
+            listings there.
           </p>
         </div>
         <MarketDataBadge isReal={isReal} />
@@ -151,21 +172,34 @@ export function MarketGapRadar({
 
       <dl className="mt-4 grid grid-cols-1 gap-x-4 gap-y-2 border-t-2 border-border-subtle pt-3 sm:grid-cols-2">
         {rows.map((row) => {
+          // One side empty is an absence, not a discount, so it is never given
+          // a percentage — "EN 100% cheaper" against nothing would be the exact
+          // misreading the vertex at the centre risks on its own.
+          const missing = row.english <= 0 ? "English" : row.japanese <= 0 ? "Japanese" : null;
           const cheaperIsJapanese = row.japanese < row.english;
           const gapPct = Math.round((1 - Math.min(row.english, row.japanese) / Math.max(row.english, row.japanese)) * 100);
           return (
             <div key={row.label} className="flex flex-wrap items-baseline gap-x-2">
               <dt className="text-[10px] font-black tracking-[0.5px] text-muted-text uppercase">{row.label}</dt>
               <dd className="text-xs font-black tabular-nums">
-                {currency} {row.english.toLocaleString()}
-                <span className="mx-1 font-bold text-muted-text">vs</span>
-                {currency} {row.japanese.toLocaleString()}
-                {/* No colour on the gap: neither market is the "good" one — which
-                    is cheaper depends on what the reader is trying to do, so this
-                    states the fact and stops. */}
-                <span className="ml-1.5 text-[10px] font-bold text-muted-text">
-                  {gapPct === 0 ? "level" : `${cheaperIsJapanese ? "JP" : "EN"} ${gapPct}% cheaper`}
-                </span>
+                {missing ? (
+                  <>
+                    {currency} {(row.english || row.japanese).toLocaleString()}
+                    <span className="ml-1.5 text-[10px] font-bold text-muted-text">no {missing === "English" ? "EN" : "JP"} listings</span>
+                  </>
+                ) : (
+                  <>
+                    {currency} {row.english.toLocaleString()}
+                    <span className="mx-1 font-bold text-muted-text">vs</span>
+                    {currency} {row.japanese.toLocaleString()}
+                    {/* No colour on the gap: neither market is the "good" one — which
+                        is cheaper depends on what the reader is trying to do, so this
+                        states the fact and stops. */}
+                    <span className="ml-1.5 text-[10px] font-bold text-muted-text">
+                      {gapPct === 0 ? "level" : `${cheaperIsJapanese ? "JP" : "EN"} ${gapPct}% cheaper`}
+                    </span>
+                  </>
+                )}
               </dd>
             </div>
           );

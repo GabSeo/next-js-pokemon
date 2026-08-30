@@ -280,9 +280,12 @@ export function GradedMarketTabs({
 
   // Same tiers, both eBay markets side by side. Unlike the ladder this does
   // NOT follow the toggle — it is the comparison between the two markets, so
-  // it would be the same picture whichever flag is selected. A tier missing
-  // either market is dropped here rather than plotted at zero; see
-  // MarketGapRadar's own comment for why a ratio against nothing lies.
+  // it would be the same picture whichever flag is selected.
+  //
+  // A tier survives if EITHER market has listings: an empty market is drawn at
+  // the centre and named in words below the chart, because "nobody is selling
+  // this grade here" is itself a market gap. Only tiers empty on both sides
+  // are dropped, having nothing to compare. See MarketGapRadar's comment.
   const gapTiers = [...entries]
     .reverse()
     .map((entry) => ({
@@ -290,7 +293,7 @@ export function GradedMarketTabs({
       en: entry.languages.find((l) => l.language === "English")?.active,
       ja: entry.languages.find((l) => l.language === "Japanese")?.active,
     }))
-    .filter((t) => t.en && t.ja && t.en.medianPrice > 0 && t.ja.medianPrice > 0);
+    .filter((t) => t.en && t.ja && (t.en.medianPrice > 0 || t.ja.medianPrice > 0));
   const gapRows: MarketGapRow[] = gapTiers.map((t) => ({ label: t.label, english: t.en!.medianPrice, japanese: t.ja!.medianPrice }));
   const gapIsReal = gapTiers.every((t) => t.en!.isReal && t.ja!.isReal);
 
