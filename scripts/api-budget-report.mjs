@@ -53,7 +53,18 @@ function budgets() {
       const limit = body.match(/limit:\s*(\d+)/);
       if (!limit) continue;
       const burst = body.match(/burst:\s*\{[^}]*limit:\s*(\d+)/);
-      found.set(bucket, { limit: Number(limit[1]), burst: burst ? Number(burst[1]) : undefined });
+      // The burst WINDOW too, not just its limit: the label used to be
+      // hardcoded "per minute", which was true only while TCGGO's 60s
+      // ceiling was the sole burst user. api.apitcg.com's burst is a day,
+      // and a report that calls a daily ceiling a per-minute one is worse
+      // than no report — it invites reading 0/90 as idle when it is a
+      // full day's headroom.
+      const burstWindow = body.match(/burst:\s*\{[^}]*windowMs:\s*([A-Za-z0-9_]+)/);
+      found.set(bucket, {
+        limit: Number(limit[1]),
+        burst: burst ? Number(burst[1]) : undefined,
+        burstWindow: burstWindow ? burstWindow[1] : undefined,
+      });
     }
     return found;
   } catch {
@@ -84,12 +95,33 @@ for (const file of readdirSync(budgetDir).filter((f) => f.endsWith(".json"))) {
       limit: budget?.limit,
       burstLimit: budget?.burst,
       burstCount: raw.burst?.count,
+      burstWindow: budget?.burstWindow,
     });
   } catch {
     // A counter caught mid-write by a build worker. Skipping it costs
     // nothing here — this is a report, and api-budget.ts already treats an
     // unreadable counter as a fresh window rather than a failure.
   }
+}
+
+/**
+ * Renders a burst window as human text, resolving the named constants used in
+ * api-budget.ts (DAY_MS, ...) as well as bare millisecond literals like
+ * `60_000`. Returns "" rather than guessing when the value is unrecognised —
+ * an unlabelled count is honest, a wrongly labelled one is not.
+ */
+function windowLabel(raw) {
+  if (raw === undefined) return "";
+  const named = { HOUR_MS: 3_600_000, DAY_MS: 86_400_000, MONTH_MS: 2_592_000_000 };
+  const ms = named[raw] ?? Number(String(raw).replace(/_/g, ""));
+  if (!Number.isFinite(ms) || ms <= 0) return "";
+  for (const [size, name] of [[2_592_000_000, "month"], [86_400_000, "day"], [3_600_000, "hour"], [60_000, "minute"], [1_000, "second"]]) {
+    if (ms >= size) {
+      const n = ms / size;
+      return n === 1 ? `per ${name}` : `per ${n} ${name}s`;
+    }
+  }
+  return "";
 }
 
 if (rows.length === 0) {
@@ -100,7 +132,7 @@ if (rows.length === 0) {
 rows.sort((a, b) => b.count / (b.limit ?? Infinity) - a.count / (a.limit ?? Infinity));
 
 console.log("[api-budget] Upstream calls in the current quota window:");
-for (const { bucket, count, limit, windowStart, burstLimit, burstCount } of rows) {
+for (const { bucket, count, limit, windowStart, burstLimit, burstCount, burstWindow } of rows) {
   const pct = limit ? Math.round((count / limit) * 100) : null;
   const headroom = limit ? `${count}/${limit} (${pct}%)` : `${count} (unbudgeted)`;
   const since = new Date(windowStart).toISOString();
@@ -110,6 +142,6 @@ for (const { bucket, count, limit, windowStart, burstLimit, burstCount } of rows
     // Reported separately because it is a different failure: the daily
     // figure can look healthy while a concurrent build is breaching the
     // per-minute ceiling. See `burst` in src/lib/api-budget.ts.
-    console.log(`  ${"".padEnd(38)} burst ${burstCount ?? 0}/${burstLimit} per minute`);
+    console.log(`  ${"".padEnd(38)} burst ${burstCount ?? 0}/${burstLimit} ${windowLabel(burstWindow)}`.trimEnd());
   }
 }
