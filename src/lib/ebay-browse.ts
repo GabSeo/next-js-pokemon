@@ -314,6 +314,27 @@ function titleMatchesCard(
   // behind it and risks throwing out genuine matches instead.
   if (language === "English" && /\bjapanese\b|\bjp\b/i.test(title)) return false;
 
+  // Chinese prints, rejected on EVERY tier because this site does not track
+  // them. eBay's `Language` aspect is seller-declared and lets them through:
+  // for OP09-061 Raw, an aspect_filter of Language:{Japanese} returns "One
+  // Piece Chinese EN 2nd Anniversary Special OP09-061 L Monkey.D.Luffy HOLO
+  // NM" at $204.99 among 16 results, and dropping the aspect entirely
+  // surfaces at least four more Chinese listings of the same card_number.
+  // eBay's own website does NOT return that listing for the equivalent
+  // Language=Japanese search, so its facet applies something stricter than
+  // the API's aspect_filter — confirmed by opening both.
+  //
+  // Matters more than an ordinary mis-tag because Chinese prints of the same
+  // card_number trade far below the Japanese ones ($196-205 against $475+
+  // here), so one leaking in lands at the top of a cheapest-first tab and
+  // drags the median down with it.
+  //
+  // Applied to both tiers, unlike the JP check above, because there is no
+  // Chinese tier for it to belong to. If Chinese is ever tracked (Pokémon
+  // first, per current intent), this becomes a tier check rather than a
+  // blanket exclusion.
+  if (/\bchinese\b/i.test(title)) return false;
+
   const gradeOk =
     condition === "Raw"
       ? // Exclude anything that looks graded at all, rather than trying to
