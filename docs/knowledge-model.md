@@ -29,16 +29,23 @@ md + json per card: **20.7 KB** and **17.3 KB**. Target is 10 KB.
 
 ### Five structural defects
 
-**1. Identity is vendor-owned and unstable.**
+**1. Identity is vendor-owned and unstable. — FIXED (`a94479d`).**
 
 | | Pokémon | One Piece |
 |---|---|---|
-| `id` | `swsh12-186` (TCGdex) | `op_8121dd7dfaed…` — **103 bytes**, BerryWallet hash |
-| Fails when | TCGdex is down → flips to apitcg's numeric id | BerryWallet re-indexes |
+| `id` was | `swsh12-186` (TCGdex) | `op_8121dd7dfaed…` — **103 bytes**, BerryWallet hash |
+| Flipped when | TCGdex is down → apitcg's numeric id | BerryWallet re-indexes |
 
 Two franchises, two unrelated vendor schemes, both used as the JSON route key
-and both printed on the page as "Card ID". `slug` is stable in both and is
-treated as secondary.
+and both printed on the page as "Card ID", while `slug` — stable in both —
+was treated as secondary.
+
+`Card.id` is now `ref.slug` on every resolution path; upstream ids moved to
+`Card.identifiers` as scheme-tagged cross-references (§3), and id-form URLs
+still resolve as aliases. The defect reproduced while being fixed: apitcg was
+rate-limited that day, so P-033 resolved to BerryWallet's hash where an
+unthrottled build yields apitcg's numeric id — one card, two identities,
+decided by which upstream happened to be reachable.
 
 **2. Everything that is not the organization shares one type.**
 `entitymap.json` holds 10 entities — 1 `Organization` and 9 `Concept` — with
@@ -125,6 +132,14 @@ sameAs:
 
 `/api/{franchise}/{id}` keeps routing by both slug and upstream id — that is
 a **lookup alias**, not an identity claim.
+
+**Shipped shape.** `Card.identifiers` (lib/types.ts) carries
+`{ scheme: "apitcg" | "tcgdex" | "berrywallet"; value: string }[]` and records
+**every** upstream that answered, not only the one that would have won the old
+identity race. The closed union is what TypeScript enforces; the compiler maps
+`scheme` onto the `[[wiki-link]]` form above. Lookup matches the canonical id
+or any identifier value, so every id ever handed out keeps resolving — it just
+stops being the answer given back.
 
 ---
 
@@ -338,7 +353,7 @@ projection decision, not an accident.
 
 ## 9. Decided / open
 
-**Decided.** Slug-derived IRIs. `Listing` survives at 2 rows per tier.
+**Decided.** Slug-derived IRIs — **shipped** in `a94479d`; see §3 and defect 1. `Listing` survives at 2 rows per tier.
 Illustrative `sold` dropped from the JSON. Files for Card, Character and
 CardSet; vocabulary-only for GradeTier, Market and Source. Markdown carries
 observations, JSON carries evidence.
