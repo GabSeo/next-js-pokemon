@@ -5,6 +5,7 @@ import { useProductLocale, type LocaleCode } from "@/components/product-locale";
 import { FloatingPreviewChip } from "@/components/retro/floating-preview-chip";
 import { GradeLadderChart, type GradeLadderRow } from "@/components/retro/grade-ladder-chart";
 import { IllustrativeTag } from "@/components/retro/illustrative-tag";
+import { MarketGapRadar, type MarketGapRow } from "@/components/retro/market-gap-radar";
 import { MarketDataBadge } from "@/components/retro/market-data-badge";
 import { VintedListingsSection } from "@/components/retro/vinted-listings-section";
 import type { EbayCondition, EbayLanguage } from "@/lib/ebay-browse";
@@ -274,6 +275,22 @@ export function GradedMarketTabs({
   });
   const ladderIsReal = ladder.length > 0 && [...entries].every((entry) => (entry.languages.find((l) => l.language === market) ?? entry.languages[0]).active.isReal);
 
+  // Same tiers, both eBay markets side by side. Unlike the ladder this does
+  // NOT follow the toggle — it is the comparison between the two markets, so
+  // it would be the same picture whichever flag is selected. A tier missing
+  // either market is dropped here rather than plotted at zero; see
+  // MarketGapRadar's own comment for why a ratio against nothing lies.
+  const gapTiers = [...entries]
+    .reverse()
+    .map((entry) => ({
+      label: entry.label,
+      en: entry.languages.find((l) => l.language === "English")?.active,
+      ja: entry.languages.find((l) => l.language === "Japanese")?.active,
+    }))
+    .filter((t) => t.en && t.ja && t.en.medianPrice > 0 && t.ja.medianPrice > 0);
+  const gapRows: MarketGapRow[] = gapTiers.map((t) => ({ label: t.label, english: t.en!.medianPrice, japanese: t.ja!.medianPrice }));
+  const gapIsReal = gapTiers.every((t) => t.en!.isReal && t.ja!.isReal);
+
   return (
     <div>
       <div hidden={market === "France"}>
@@ -429,6 +446,8 @@ export function GradedMarketTabs({
             summary cards, listings box) keep their shared offsets — see
             vinted-listings-section.tsx's header comment. */}
         <GradeLadderChart currency={selected.currency} isReal={ladderIsReal} market={market} rows={ladder} />
+
+        <MarketGapRadar currency={selected.currency} isReal={gapIsReal} rows={gapRows} />
 
         <div className="mt-6 overflow-hidden rounded-md border-2 border-black bg-pokemon-yellow shadow-hard-md">
           <div className="p-5">
