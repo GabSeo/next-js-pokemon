@@ -53,6 +53,32 @@
   --color-card-foreground: var(--foreground);
   --color-popover: var(--card-surface);
   --color-popover-foreground: var(--foreground);
+  --color-chart-scale-pattern-color: var(--chart-scale-pattern-color);
+  --color-chart-scale-05: var(--chart-scale-05);
+  --color-chart-scale-04: var(--chart-scale-04);
+  --color-chart-scale-03: var(--chart-scale-03);
+  --color-chart-scale-02: var(--chart-scale-02);
+  --color-chart-scale-01: var(--chart-scale-01);
+  --color-chart-label: var(--chart-label);
+  --color-chart-marker-foreground: var(--chart-marker-foreground);
+  --color-chart-marker-border: var(--chart-marker-border);
+  --color-chart-marker-background: var(--chart-marker-background);
+  --color-chart-tooltip-muted: var(--chart-tooltip-muted);
+  --color-chart-tooltip-foreground: var(--chart-tooltip-foreground);
+  --color-chart-tooltip-background: var(--chart-tooltip-background);
+  --chart-brush-border: var(--chart-brush-border);
+  --color-chart-grid: var(--chart-grid);
+  --color-chart-crosshair: var(--chart-crosshair);
+  --chart-line-secondary: var(--chart-line-secondary);
+  --chart-line-primary: var(--chart-line-primary);
+  --color-chart-foreground-muted: var(--chart-foreground-muted);
+  --color-chart-foreground: var(--chart-foreground);
+  --color-chart-background: var(--chart-background);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
 }
 
 :root {
@@ -85,6 +111,49 @@
   --shadow-xl: 8px 8px 0px 0px #000;
 
   --radius: 0.375rem;
+
+  /* Bklit's chart tokens (components/charts/*, installed from the @bklit
+     shadcn registry) pointed at this site's own palette instead of the
+     greyscale oklch ramp the CLI ships. The charts are inside the same hard
+     bordered cards as everything else, so a chart that arrived with its own
+     neutral scale would have been the only thing on the page not speaking
+     the brand's colors.
+
+     Red/blue for primary/secondary is not arbitrary: the Market Overview's
+     Active and Sold cards are already red and blue respectively, so a chart
+     series inherits the meaning the buttons above it established. */
+  --chart-1: var(--pokemon-red);
+  --chart-2: var(--pokemon-blue);
+  --chart-3: var(--pokemon-yellow);
+  --chart-4: var(--success-green);
+  --chart-5: var(--muted-text);
+  --chart-background: var(--card-surface);
+  --chart-foreground: var(--foreground);
+  --chart-foreground-muted: var(--muted-text);
+  --chart-line-primary: var(--chart-1);
+  --chart-line-secondary: var(--chart-2);
+  --chart-crosshair: var(--foreground);
+  --chart-grid: var(--border-subtle);
+  --chart-brush-border: var(--chart-grid);
+
+  /* Tooltip: the site's near-black on white, hard-edged, no translucency —
+     matching the nav bar rather than the frosted panel bklit defaults to. */
+  --chart-tooltip-background: var(--foreground);
+  --chart-tooltip-foreground: #ffffff;
+  --chart-tooltip-muted: #b9b9b9;
+  --chart-marker-background: var(--card-surface);
+  --chart-marker-border: var(--foreground);
+  --chart-marker-foreground: var(--foreground);
+  --chart-label: var(--muted-text);
+
+  /* Sequential ramp for density/heat encodings, built from the brand red so
+     it reads as one family with the bars rather than a second palette. */
+  --chart-scale-01: #fdecec;
+  --chart-scale-02: #f9c4c4;
+  --chart-scale-03: #f58e8e;
+  --chart-scale-04: #f15757;
+  --chart-scale-05: var(--pokemon-red);
+  --chart-scale-pattern-color: #fdecec;
 }
 
 /* No dark-mode block: the mockup this ports from is a single, deliberately
@@ -116,4 +185,16 @@
 }
 .psa-card-wrap:hover .psa-spotlight {
   opacity: 1;
+}
+
+/* Brutalist bars for the Market Overview's grade ladder
+   (components/retro/grade-ladder-chart.tsx). Bklit's bars ship as flat fills
+   with no outline, which reads as a different design system from the hard
+   2px-bordered cards they sit inside. Targeted at the bar group's direct
+   rect children specifically: the chart also emits a transparent bounds rect
+   and a grid fade-mask rect, and outlining those drew stray boxes round the
+   plot. */
+.grade-ladder-chart g[class^="bar-series-"] > rect {
+  stroke: var(--foreground);
+  stroke-width: 2px;
 }

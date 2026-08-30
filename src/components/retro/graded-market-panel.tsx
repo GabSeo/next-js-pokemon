@@ -1,4 +1,5 @@
-import { GradedMarketTabs, type ConditionEntry, type MarketTab, type TypeSummary, type VintedSummary } from "@/components/retro/graded-market-tabs";
+import { ProductLocaleToggle } from "@/components/product-locale";
+import { GradedMarketTabs, type ConditionEntry, type TypeSummary, type VintedSummary } from "@/components/retro/graded-market-tabs";
 import { franchiseLabel } from "@/lib/cards";
 import { getGradedMarketData, type GradedMarketTypeData } from "@/lib/graded-market";
 import { relativeTimeLabel } from "@/lib/vinted-listings";
@@ -57,7 +58,8 @@ function toTypeSummary(data: GradedMarketTypeData): TypeSummary {
 }
 
 /**
- * One shared window: condition tabs (PSA 10/9/8/Raw) plus an active/sold
+ * One shared window: the US/JP/FR market toggle sitting opposite this
+ * panel's heading, condition tabs (PSA 10/9/8/Raw) plus an active/sold
  * type toggle underneath — only one row-list is visible at a time, but all
  * 4 conditions × 2 types (8 row-sets) are server-rendered in the DOM
  * regardless, same pattern as components/price-data-tabs.tsx, so an AI
@@ -69,7 +71,7 @@ function toTypeSummary(data: GradedMarketTypeData): TypeSummary {
  * component is purely presentational (JSX shaping), not a second place
  * fetch logic or the real/illustrative rules could live.
  */
-export async function GradedMarketPanel({ card, defaultMarket }: { card: Card; defaultMarket?: MarketTab }) {
+export async function GradedMarketPanel({ card }: { card: Card }) {
   const data = await getGradedMarketData(card);
   // Defensive only — the real gate is the franchise check at this
   // component's own call site (components/product-page-content.tsx), which
@@ -98,7 +100,6 @@ export async function GradedMarketPanel({ card, defaultMarket }: { card: Card; d
     avgLabel: `${data.vinted.currency} ${data.vinted.avgPrice.toLocaleString()}`,
     belowAverageCount: data.vinted.belowAverageCount,
     totalCount: data.vinted.rows.length,
-    conditionFilter: data.vinted.conditionFilter,
     collectedLabel: data.vinted.collectedAtMs ? relativeTimeLabel(data.vinted.collectedAtMs) : undefined,
     rows: data.vinted.rows.map((row) => ({
       timeAgo: row.timeAgo,
@@ -115,12 +116,20 @@ export async function GradedMarketPanel({ card, defaultMarket }: { card: Card; d
 
   return (
     <div className="rounded-lg border-2 border-black bg-card-surface p-7 shadow-hard-md">
-      <div className="mb-5 flex flex-wrap items-center gap-2">
+      {/* The toggle rides this heading rather than sitting in its own row
+          above the condition tabs: it selects what the entire panel below is
+          about, so pairing it with the panel's title says that, and it stops
+          reading as another filter alongside PSA 10/9/8/Raw. The rule shrinks
+          to nothing before the toggle wraps, so on a narrow card the flags
+          drop to their own line and stay right-aligned (ProductLocaleToggle's
+          own ml-auto), never colliding with the title. */}
+      <div className="mb-5 flex flex-wrap items-center gap-x-3 gap-y-2">
         <span className="text-xs font-black tracking-[0.6px] text-pokemon-blue uppercase">📊 {franchiseLabel(card.franchise)} Market Overview</span>
-        <span className="h-px flex-1 bg-border-subtle" />
+        <span className="h-px min-w-4 flex-1 bg-border-subtle" />
+        <ProductLocaleToggle />
       </div>
 
-      <GradedMarketTabs entries={entries} vinted={vinted} roi={data.roi} defaultMarket={defaultMarket} />
+      <GradedMarketTabs entries={entries} vinted={vinted} roi={data.roi} />
     </div>
   );
 }

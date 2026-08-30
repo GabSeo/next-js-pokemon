@@ -57,28 +57,14 @@ async function localeVariantsFor(card: Card): Promise<LocaleVariant[]> {
       : await getJapaneseCardText(card, ref)
     : undefined;
 
-  // Fixed US -> FR -> JP order regardless of franchise or which entries are
+  // Fixed US -> JP -> FR order regardless of franchise or which entries are
   // real — a flag's position shifting depending on the page (confirmed
   // live: One Piece was rendering JP before FR while Pokémon rendered it
   // after) reads as a UI bug even when every individual state is correct.
+  // This is also the order the market toggle reads left to right, so it
+  // doubles as the Market Overview panel's tab order.
   return [
     { code: "US", card, available: true },
-    {
-      code: "FR",
-      available: fr.translated,
-      card: fr.translated
-        ? {
-            ...card,
-            name: fr.name,
-            set: fr.set,
-            rarity: fr.rarity,
-            imageUrl: fr.imageUrl,
-            types: fr.types,
-            number: fr.number ?? card.number,
-            setCode: fr.setCode ?? card.setCode,
-          }
-        : card,
-    },
     {
       code: "JP",
       available: !!ja?.translated,
@@ -112,6 +98,22 @@ async function localeVariantsFor(card: Card): Promise<LocaleVariant[]> {
               cardmarket: ja.cardmarket ?? card.cardmarket,
             }
           : card,
+    },
+    {
+      code: "FR",
+      available: fr.translated,
+      card: fr.translated
+        ? {
+            ...card,
+            name: fr.name,
+            set: fr.set,
+            rarity: fr.rarity,
+            imageUrl: fr.imageUrl,
+            types: fr.types,
+            number: fr.number ?? card.number,
+            setCode: fr.setCode ?? card.setCode,
+          }
+        : card,
     },
   ];
 }

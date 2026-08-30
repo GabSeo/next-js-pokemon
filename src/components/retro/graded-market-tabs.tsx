@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useProductLocale, type LocaleCode } from "@/components/product-locale";
 import { FloatingPreviewChip } from "@/components/retro/floating-preview-chip";
+import { GradeLadderChart, type GradeLadderRow } from "@/components/retro/grade-ladder-chart";
 import { IllustrativeTag } from "@/components/retro/illustrative-tag";
+import { MarketDataBadge } from "@/components/retro/market-data-badge";
 import { VintedListingsSection } from "@/components/retro/vinted-listings-section";
 import type { EbayCondition, EbayLanguage } from "@/lib/ebay-browse";
 import type { GradedMarketRoi } from "@/lib/graded-market";
@@ -71,8 +74,6 @@ export type VintedSummary = {
   belowAverageCount: number;
   totalCount: number;
   rows: VintedFeedRowSummary[];
-  /** The one condition every row is filtered to — see lib/vinted-listings.ts. Stated on screen, not just applied, so the feed's sparseness reads as deliberate. */
-  conditionFilter: string;
   /** How long ago the scrape ran, e.g. "3 h" — describes the whole feed, not any one listing. Absent on the preview, which was never collected. */
   collectedLabel?: string;
 };
@@ -175,12 +176,32 @@ function GradeTierPreview({
 /** A top-level market tab — the two real eBay-backed languages, plus France, which isn't eBay at all (see graded-market-tabs.tsx's file doc comment). */
 export type MarketTab = EbayLanguage | "France";
 
+/**
+ * Which marketplace each flag of the product page's language toggle reads,
+ * in the order the flags appear. US and JP are eBay's English and Japanese
+ * markets; FR is Vinted, because
+ * eBay.fr isn't where the French market trades (see this file's doc comment
+ * below). This mapping is the whole reason the toggle could absorb the old
+ * pill row: the two controls were always offering the same three markets
+ * under different labels.
+ */
+const MARKET_BY_LOCALE: Record<LocaleCode, MarketTab> = {
+  US: "English",
+  JP: "Japanese",
+  FR: "France",
+};
+
 const TYPES = ["active", "sold"] as const;
 type ListingType = (typeof TYPES)[number];
 
 /**
- * Top-level Market tabs (English / Japanese / France) select which
- * marketplace's data is shown. English and Japanese keep the original
+ * Which marketplace's data is shown is selected by the product page's US/JP/FR
+ * language toggle, rendered opposite this panel's heading (see
+ * components/retro/graded-market-panel.tsx) where a separate row of
+ * English/Japanese/France pills used to sit. The two controls were offering
+ * the same three markets, so one flag click now does both jobs: it picks the
+ * marketplace *and* names the card in that language (see
+ * components/product-locale.tsx). English and Japanese keep the original
  * structure underneath — Condition tabs (PSA 10/9/8/Raw), an active/sold
  * toggle, real eBay data — completely unchanged. France is a different
  * marketplace with a different shape: eBay.fr isn't where the French
@@ -215,20 +236,24 @@ export function GradedMarketTabs({
   entries,
   vinted,
   roi,
-  defaultMarket,
 }: {
   /** English/Japanese only — see lib/graded-market.ts's GRADED_MARKET_LANGUAGES. */
   entries: ConditionEntry[];
   vinted: VintedSummary;
   /** Only meaningful for the eBay-graded English/Japanese markets (raw vs. PSA 10) — rendered inside the English/Japanese branch below and hidden on France, since Vinted has no PSA grading to compute a grading ROI against. */
   roi: GradedMarketRoi;
-  /** Lets a caller open this panel straight to a given market instead of defaulting to English. Unset on the product page: the language toggle above deliberately doesn't drive these tabs — which eBay market a visitor wants to read is an independent choice from which language they want the card named in. */
-  defaultMarket?: MarketTab;
 }) {
   // Every condition entry carries the same set of languages (see
   // lib/graded-market.ts), so entries[0]'s is representative of all of them.
   const marketTabs: MarketTab[] = [...entries[0].languages.map((l) => l.language), "France"];
-  const [market, setMarket] = useState<MarketTab>(defaultMarket && marketTabs.includes(defaultMarket) ? defaultMarket : marketTabs[0]);
+  // Derived, not held: the toggle owns the selection. The fallback covers
+  // JAPANESE_MARKET_ENABLED being flipped off (lib/graded-market.ts), which
+  // drops "Japanese" from the entries while the JP flag itself stays — the
+  // card is still shown in Japanese, the listings just stay on the English
+  // market rather than on a tab that no longer exists.
+  const { active } = useProductLocale();
+  const preferredMarket = MARKET_BY_LOCALE[active];
+  const market: MarketTab = marketTabs.includes(preferredMarket) ? preferredMarket : marketTabs[0];
 
   const [conditionId, setConditionId] = useState<EbayCondition>(entries[0].id);
   const [type, setType] = useState<ListingType>("active");
@@ -237,79 +262,54 @@ export function GradedMarketTabs({
   const currentLanguage =
     currentCondition.languages.find((l) => l.language === market) ?? currentCondition.languages[0];
   const selected = currentLanguage[type];
+  const showsCheapest = type === "active" && selected.isReal && !selected.noListings && selected.rowCount > 0;
+
+  // Ladder order, raw first — `entries` arrives graded-first (PSA 10 down to
+  // Raw) because that is the order the tabs read in, but a grading ladder
+  // only tells its story from what you start with to what you could get.
+  // Active asks only, and always the currently selected market's own numbers.
+  const ladder: GradeLadderRow[] = [...entries].reverse().map((entry) => {
+    const tier = (entry.languages.find((l) => l.language === market) ?? entry.languages[0]).active;
+    return { label: entry.label, median: tier.medianPrice, count: tier.count, noListings: tier.noListings };
+  });
+  const ladderIsReal = ladder.length > 0 && [...entries].every((entry) => (entry.languages.find((l) => l.language === market) ?? entry.languages[0]).active.isReal);
 
   return (
     <div>
-      <div role="tablist" aria-label="Market" className="flex flex-wrap gap-2.5">
-        {entries[0].languages.map((l) => {
-          const isSelected = market === l.language;
-          return (
-            <button
-              key={l.language}
-              type="button"
-              role="tab"
-              aria-selected={isSelected}
-              onClick={() => setMarket(l.language)}
-              className={`rounded-full border-2 border-black px-4 py-1.5 text-xs font-black tracking-[0.3px] uppercase transition-all duration-150 ${pressable(
-                isSelected
-              )} ${isSelected ? "bg-pokemon-blue text-white" : "bg-white text-foreground"}`}
-            >
-              {l.language}
-            </button>
-          );
-        })}
-        {(() => {
-          const isSelected = market === "France";
-          return (
-            <button
-              type="button"
-              role="tab"
-              aria-selected={isSelected}
-              onClick={() => setMarket("France")}
-              className={`rounded-full border-2 border-black px-4 py-1.5 text-xs font-black tracking-[0.3px] uppercase transition-all duration-150 ${pressable(
-                isSelected
-              )} ${isSelected ? "bg-pokemon-blue text-white" : "bg-white text-foreground"}`}
-            >
-              France <span className="opacity-70">(Vinted)</span>
-            </button>
-          );
-        })()}
-      </div>
-
       <div hidden={market === "France"}>
-        <div role="tablist" aria-label="Condition" className="mt-5 flex flex-wrap gap-7 border-b-2 border-border-subtle">
-          {entries.map((entry) => {
-            // The tier's numbers for whichever market is currently selected.
-            // France has no eBay language entry (and hides this tablist
-            // entirely), so fall back rather than reaching into undefined.
-            const tier = entry.languages.find((l) => l.language === market) ?? entry.languages[0];
-            return (
-              <FloatingPreviewChip
-                key={entry.id}
-                preview={<GradeTierPreview label={entry.label} market={tier.language} active={tier.active} sold={tier.sold} />}
-              >
-                {(trigger) => (
-                  <button
-                    {...trigger}
-                    type="button"
-                    role="tab"
-                    aria-selected={conditionId === entry.id}
-                    onClick={() => setConditionId(entry.id)}
-                    className={`-mb-0.5 border-b-[3px] pb-2.5 text-sm font-black tracking-[0.3px] uppercase transition-colors ${
-                      conditionId === entry.id
-                        ? "border-pokemon-red text-foreground"
-                        : "border-transparent text-[#9a9a9a] hover:text-foreground"
-                    }`}
-                  >
-                    {entry.label}
-                  </button>
-                )}
-              </FloatingPreviewChip>
+        <div role="tablist" aria-label="Condition" className="mt-7 flex flex-wrap gap-7 border-b-2 border-border-subtle">
+            {entries.map((entry) => {
+              // The tier's numbers for whichever market is currently selected.
+              // France has no eBay language entry (and hides this tablist
+              // entirely), so fall back rather than reaching into undefined.
+              const tier = entry.languages.find((l) => l.language === market) ?? entry.languages[0];
+              return (
+                <FloatingPreviewChip
+                  key={entry.id}
+                  preview={<GradeTierPreview label={entry.label} market={tier.language} active={tier.active} sold={tier.sold} />}
+                >
+                  {(trigger) => (
+                    <button
+                      {...trigger}
+                      type="button"
+                      role="tab"
+                      aria-selected={conditionId === entry.id}
+                      onClick={() => setConditionId(entry.id)}
+                      className={`-mb-0.5 border-b-[3px] pb-3.5 text-sm font-black tracking-[0.3px] uppercase transition-colors ${
+                        conditionId === entry.id
+                          ? "border-pokemon-red text-foreground"
+                          : "border-transparent text-[#9a9a9a] hover:text-foreground"
+                      }`}
+                    >
+                      {entry.label}
+                    </button>
+                  )}
+                </FloatingPreviewChip>
             );
           })}
         </div>
 
-        <div className="my-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="mt-7 mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
           {TYPES.map((t) => {
             const summary = currentLanguage[t];
             const isSelected = type === t;
@@ -339,10 +339,42 @@ export function GradedMarketTabs({
         </div>
 
         <div className="rounded-md bg-white p-5">
-          <div className="mb-3">
-            <span className="text-[10px] font-black tracking-[0.5px] text-muted-text uppercase">
-              {type === "active" ? "Active listings" : "Sold listings"} · {market}
-            </span>
+          {/* The badge belongs to this box's own header, opposite its label:
+              it answers for the rows directly beneath it and nothing else,
+              which is why it moves with the Active/Sold choice rather than
+              sitting somewhere more global. The France branch heads its
+              listings box the same way (vinted-listings-section.tsx). */}
+          <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <span className="text-[10px] font-black tracking-[0.5px] text-muted-text uppercase">
+                {type === "active" ? "Active listings" : "Sold listings"} · {market}
+              </span>
+              {/* What these rows are and how fresh they are, said on the rows
+                  themselves. eBay's Browse API is asked for one page, sorted
+                  ascending locally and cut to a display slice (see
+                  lib/ebay-browse.ts) — so these are the cheapest matching
+                  asks, not a sample of the tier, and the median on the Active
+                  card above is the median OF THEM. That makes the figure a
+                  floor-of-the-market read rather than a market average, which
+                  a reader has no way to infer from four rows and would
+                  otherwise assume the other way round.
+
+                  24h is this page's own ISR window (revalidate = 86400 in
+                  app/products/[slug]/page.tsx) and the upstream fetch window
+                  both. Worst case the two windows stagger and something on
+                  screen is nearer 48h old than 24h — see build-cache.ts's
+                  header — so this states the cadence, not a guarantee about
+                  any single row.
+
+                  Active and real only: sold rows are illustrative everywhere
+                  on this site (eBay's sold API is closed), so there is no
+                  cheapest-first ordering there to claim, and an empty tier
+                  has nothing to describe. France is untouched — Vinted's feed
+                  is newest-first, not price-sorted, and carries its own
+                  "collected N ago" stamp. */}
+              {showsCheapest && <p className="mt-1 text-[10px] font-bold text-muted-text">Cheapest ask refreshed every 24h</p>}
+            </div>
+            <MarketDataBadge isReal={selected.isReal} />
           </div>
 
           <div className="min-h-[140px]">
@@ -366,7 +398,12 @@ export function GradedMarketTabs({
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 rounded-md border-2 border-black bg-pokemon-red px-3.5 py-2 text-xs font-black tracking-[0.3px] text-white uppercase shadow-hard-sm transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-md"
           >
-            See all {selected.count} {type} listings ↗
+            {/* "new", not "active": this link lands on eBay's own
+                Time-newly-listed view (_sop=10 — see lib/ebay-search.ts),
+                so the word describes the order the reader arrives in. The
+                count is the search's total match count, which is what "all"
+                refers to. */}
+            Show all {selected.count} {type === "active" ? "new" : "sold"} listings ↗
           </a>
           <div className="mt-2 flex justify-end">
             <span className="flex items-end gap-1.5 text-[10px] font-bold text-muted-text uppercase">
@@ -383,6 +420,15 @@ export function GradedMarketTabs({
             <IllustrativeTag label={type === "active" ? "Preview — eBay not connected yet" : "Illustrative — not connected"} />
           </div>
         )}
+
+        {/* Directly above the Grading ROI callout on purpose: the ladder shows
+            every tier's asking level and the callout does the raw -> PSA 10
+            arithmetic on two of those bars, so the two read as one grading
+            section. Placed here rather than at the top of the panel so the
+            three blocks the France branch is aligned against (filter row,
+            summary cards, listings box) keep their shared offsets — see
+            vinted-listings-section.tsx's header comment. */}
+        <GradeLadderChart currency={selected.currency} isReal={ladderIsReal} market={market} rows={ladder} />
 
         <div className="mt-6 overflow-hidden rounded-md border-2 border-black bg-pokemon-yellow shadow-hard-md">
           <div className="p-5">

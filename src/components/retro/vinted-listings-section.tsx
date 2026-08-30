@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { IllustrativeTag } from "@/components/retro/illustrative-tag";
+import { MarketDataBadge } from "@/components/retro/market-data-badge";
 import { MasterballIcon } from "@/components/retro/masterball-icon";
 import type { VintedFeedRowSummary, VintedSummary } from "@/components/retro/graded-market-tabs";
+import { CHIP_COLORS } from "@/lib/chip-colors";
 import { VINTED_LOGO_URL } from "@/lib/marketplace-logos";
 
 /**
@@ -20,20 +22,6 @@ import { VINTED_LOGO_URL } from "@/lib/marketplace-logos";
  * reach `vinted.rows`. What's new here is presentation only — how the real
  * rows past a free cap get revealed — not what counts as a real row.
  */
-
-// One small, deliberately restrained color language, reused for both chip
-// systems in this feed (deal quality and condition) rather than inventing a
-// second competing palette — good/Très bon état share the green read, high/
-// Satisfaisant share the amber "pay attention" read. Kept as resolved hex
-// rather than theme utility classes because these are chip *tints*, one
-// step lighter than any --color-* token in the theme, and the paired text
-// shade is chosen for contrast at 10-11px, not just borrowed from the
-// nearest brand color.
-const CHIP_COLORS = {
-  green: { bg: "#e9f8ee", text: "#1f9d55" },
-  amber: { bg: "#fbf1e3", text: "#a15c0c" },
-  grey: { bg: "#f4f5f8", text: "#6b7280" },
-} as const;
 
 const DEAL_TIER_COLORS: Record<VintedFeedRowSummary["dealTier"], (typeof CHIP_COLORS)[keyof typeof CHIP_COLORS]> = {
   good: CHIP_COLORS.green,
@@ -536,55 +524,78 @@ export function VintedListingsSection({ vinted }: { vinted: VintedSummary }) {
 
   return (
     <div>
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
-        {/* Not "Just listed": Lobstr reads Vinted's search-results cards,
-            which carry no listing date, so nothing here knows how old a
-            listing is. Claiming recency we can't measure is the same class
-            of error as showing an illustrative price as real. */}
-        <span className="text-base font-black tracking-[-0.3px]">Vinted listings — {vinted.title}</span>
-        {/* The badge tracks the data, not the layout. Scraped listings get
-            the confident solid pill real connected data gets elsewhere on
-            this page; the fallback feed gets a dashed "Preview" pill, since
-            a "Live" badge over invented numbers would contradict every
-            other real/illustrative signal on this site. */}
-        {vinted.isReal ? (
-          <span className="flex items-center gap-1.5 rounded-full border-2 border-black bg-success-green px-2.5 py-1 text-[11px] font-black tracking-[0.3px] text-white uppercase">
-            <motion.span
-              className="h-1.5 w-1.5 rounded-full bg-white"
-              animate={{ opacity: [1, 0.2, 1] }}
-              transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-            />
-            Live
-          </span>
-        ) : (
-          <span className="flex items-center gap-1.5 rounded-full border border-dashed border-[#9a9a9a] bg-white px-2.5 py-1 text-[11px] font-black tracking-[0.3px] text-muted-text uppercase">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#9a9a9a]" />
-            Preview
-          </span>
-        )}
+      {/* This section is the France branch of the same panel the English and
+          Japanese markets render into, and a visitor flips between them with
+          one toggle click — so the blocks are pinned to the same vertical
+          rhythm as the eBay branch in graded-market-tabs.tsx rather than
+          spaced to their own taste: mt-7 to the panel heading, this row
+          wearing that branch's condition-tablist styling (so it is exactly
+          as tall), then mt-7 again. This heading therefore starts on the
+          same line as PSA 10 and the summary card below starts on the same
+          line as the Active/Sold pair, so toggling markets doesn't shuffle
+          the page under the reader's eye. The listing rows further down are
+          content-height and can't align — nor should they.
+
+          The heading is styled as the selected tab of that row, not as a
+          heading, because that is what it is: France has exactly one feed,
+          so there is nothing to switch between and no button here. It reads
+          as the single filter this market offers rather than as a dead tab
+          bar — hence a plain span with the selected look, never a
+          role="tab"/aria-selected an assistive reader could take for a
+          control that does something. */}
+      <div className="mt-7 flex flex-wrap items-center justify-between gap-2 border-b-2 border-border-subtle">
+        {/* Card first, marketplace second, because the card is what the
+            reader came for and the marketplace is the qualifier — the same
+            order as the eBay branch's "Active listings · English", where
+            the market is also the trailing half. Deliberately not "Just
+            listed" or anything else implying recency: Lobstr reads Vinted's
+            search-results cards, which carry no listing date, so nothing
+            here knows how old a listing is, and claiming recency we can't
+            measure is the same class of error as showing an illustrative
+            price as real.
+
+            "on Vinted" drops out of the upper-case the card name is set in
+            so the two halves read as subject and qualifier rather than as
+            one long shouted string — normal-case has to be explicit because
+            the tab styling this row borrows is uppercase. The capital V is
+            not the sentence case slipping: Vinted is the company's own
+            spelling of its name, and lower-casing a brand in body text is a
+            typo everywhere else on this page too. */}
+        <span className="-mb-0.5 border-b-[3px] border-pokemon-red pb-3.5 text-sm font-black tracking-[0.3px] uppercase">
+          {vinted.title}
+          <span className="font-bold text-muted-text normal-case"> · on Vinted</span>
+        </span>
       </div>
 
-      {/* Plain text, not a tooltip or an icon — the filter is the single
-          most important thing to understand about this feed, and it has to
-          be as visible to an AI agent reading raw HTML as to a human. */}
-      <p className="mt-2 text-xs font-bold text-muted-text">
-        <span className="text-foreground">{vinted.conditionFilter} only.</span> Vinted&apos;s other condition tiers are excluded from both this feed
-        and the search link below, so it&apos;s deliberately narrower than an unfiltered search.
-      </p>
-
-      <div className="mt-4 flex flex-wrap items-end justify-between gap-3 rounded-md border-2 border-black bg-pokemon-blue p-5 shadow-hard-md">
+      <div className="mt-7 flex flex-wrap items-end justify-between gap-3 rounded-md border-2 border-black bg-pokemon-blue p-5 shadow-hard-md">
         <div>
           <div className="mb-1.5 text-[11px] font-black tracking-[0.5px] text-white/70 uppercase">Avg ask · {vinted.totalCount} listings</div>
-          <div className="text-3xl font-black tracking-[-0.6px] text-white tabular-nums">{vinted.avgLabel}</div>
+          {/* text-2xl, not text-3xl — same size as the Active/Sold figures this card sits in place of, which is also what keeps the two cards the same height. */}
+          <div className="text-2xl font-black tracking-[-0.6px] text-white tabular-nums">{vinted.avgLabel}</div>
         </div>
         <div className="text-right text-[11px] font-bold text-white/70 uppercase">
           {vinted.isReal ? `asking prices${vinted.collectedLabel ? ` · collected ${vinted.collectedLabel} ago` : ""}` : "estimate, not real-time"}
         </div>
       </div>
 
-      <div className="mt-5 rounded-md bg-white p-5">
-        <div className="mb-3">
-          <span className="text-[10px] font-black tracking-[0.5px] text-muted-text uppercase">{vinted.conditionFilter} listings</span>
+      <div className="mt-6 rounded-md bg-white p-5">
+        {/* Badge opposite the label, exactly as the English and Japanese
+            markets head their own listings box (graded-market-tabs.tsx) —
+            it answers for these rows, so it sits on them. */}
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          {/* Worded exactly like the eBay markets' own listings header
+              ("Active listings · English") rather than naming the condition
+              tier here — same box, same position, same sentence shape, so
+              the three markets read as one panel. Every row still carries
+              its own "Très bon état" chip, and the markdown/MCP exports
+              still state the filter in full (lib/markdown.ts), so nothing
+              about how narrow this feed is has become invisible.
+
+              "Active" is literal, not borrowed: these are listings currently
+              for sale. Vinted has no public sold feed, which is why this
+              market has no Active/Sold split to mirror. */}
+          <span className="text-[10px] font-black tracking-[0.5px] text-muted-text uppercase">Active listings · France</span>
+          <MarketDataBadge isReal={vinted.isReal} />
         </div>
 
         <div>
@@ -619,15 +630,11 @@ export function VintedListingsSection({ vinted }: { vinted: VintedSummary }) {
             Powered by
             {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, not an optimizable remote domain */}
             <img src={VINTED_LOGO_URL} alt="Vinted" className="h-5 w-auto" />
-            {/* Named, not hidden: these rows are scraped by a third party
-                rather than served by Vinted, and a reader deserves to know
-                which link in the chain produced the number. */}
-            {vinted.isReal && <span>via Lobstr.io</span>}
           </span>
         </div>
       </div>
 
-      <div className="mt-5 rounded-md border-2 border-black p-5" style={{ backgroundColor: CHIP_COLORS.green.bg }}>
+      <div className="mt-6 rounded-md border-2 border-black p-5" style={{ backgroundColor: CHIP_COLORS.green.bg }}>
         <div className="mb-2 text-[11px] font-black tracking-[0.5px] uppercase" style={{ color: CHIP_COLORS.green.text }}>
           Deal density · {vinted.totalCount} listings
         </div>

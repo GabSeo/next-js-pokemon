@@ -21,7 +21,7 @@ import { createContext, useContext, useState, type ReactNode } from "react";
  *
  * Collapsing to one route per card removes those scopes outright. The root
  * page already resolved French and Japanese identity anyway — it needed
- * both to decide whether to render a live or an inert flag toggle — so
+ * both to know which languages this card genuinely has — so
  * showing the translated content here costs zero additional upstream calls
  * versus what the page was already spending.
  *
@@ -45,13 +45,13 @@ export type LocaleCode = "US" | "FR" | "JP";
 type LocaleContextValue = {
   active: LocaleCode;
   setActive: (code: LocaleCode) => void;
-  /** Every locale the toggle shows, in fixed US -> FR -> JP order. */
+  /** Every locale the toggle shows, in fixed US -> JP -> FR order. */
   options: { code: LocaleCode; available: boolean }[];
 };
 
 const LocaleContext = createContext<LocaleContextValue | null>(null);
 
-function useProductLocale(): LocaleContextValue {
+export function useProductLocale(): LocaleContextValue {
   const ctx = useContext(LocaleContext);
   if (!ctx) {
     throw new Error("useProductLocale must be used inside <ProductLocaleProvider>");
@@ -90,8 +90,8 @@ export function ProductLocaleProvider({
  * (~16x12px) a raster tier would look soft on any 2x/3x display unless a
  * larger tier were fetched, where SVG stays crisp at any zoom/DPI for free.
  * It's also the smallest of the four formats for every flag this site
- * actually uses (verified live: US/FR/JP SVGs are 765/191/160 bytes vs.
- * 252/109/239 for the equivalent 40px-wide PNGs) — flat-color flags are
+ * actually uses (verified live: US/JP/FR SVGs are 765/160/191 bytes vs.
+ * 252/239/109 for the equivalent 40px-wide PNGs) — flat-color flags are
  * exactly what SVG compresses best and JPEG compresses worst (visible
  * ringing on the hard color edges a flag is made of).
  */
@@ -100,61 +100,51 @@ function flagSvgUrl(isoCode: LocaleCode): string {
 }
 
 /**
- * The US/FR/JP toggle. An unavailable locale stays visible but inert —
- * a market the visitor can see is coming, never a switch that would reveal
- * English text wearing a French or Japanese label. Same honesty rule the
- * former per-language routes enforced by simply not existing for a card
- * with no real translation (see cards.ts's getFrenchCardText).
+ * The US/JP/FR toggle — now the product page's single market control, sitting
+ * on the right of the Market Overview panel's own heading, where that panel's
+ * English/Japanese/France pills used to be (see
+ * components/retro/graded-market-panel.tsx). One click both selects the
+ * marketplace whose listings are shown and names the card in that language.
+ *
+ * No visible "Market" label and no caption: the heading it sits opposite
+ * already says Market Overview, and the flags need no word to be read as
+ * languages. The accessible name stays on the group for anyone who can't see
+ * that pairing.
+ *
+ * Why no locale is inert any more: this used to grey out a language with no
+ * real translation, so a visitor could never see English text wearing a
+ * foreign flag. LocaleSlot still falls back to the US nodes there, so nothing
+ * is ever a fabricated translation — but the flag also picks a market now,
+ * and eBay's Japanese market and the French Vinted feed exist for every card
+ * whether or not PokéWallet/BerryWallet catalogue a foreign print of it.
+ * Making those flags inert would have quietly cut off real market data, so
+ * all three stay clickable. The listings under them are the selected market's
+ * either way; only the card's own name and art fall back.
  */
 export function ProductLocaleToggle() {
   const { active, setActive, options } = useProductLocale();
   if (options.length === 0) return null;
 
   return (
-    <div className="flex items-center gap-2" role="group" aria-label="Market">
-      <span className="text-xs font-black tracking-[0.3px] text-muted-text uppercase">Market</span>
-      <div className="flex overflow-hidden rounded-md border-2 border-black">
-        {options.map((option, i) => {
-          const content = (
-            <>
-              {/* eslint-disable-next-line @next/next/no-img-element -- external CDN image, domain not allowlisted for next/image */}
-              <img src={flagSvgUrl(option.code)} alt="" className="h-3 w-4 rounded-[1px] object-cover" />
-              {option.code}
-            </>
-          );
-          const sharedClassName = `flex items-center gap-1.5 px-3 py-1.5 text-xs font-black tracking-[0.3px] uppercase transition-colors ${
-            i > 0 ? "border-l-2 border-black" : ""
-          }`;
-
-          if (!option.available) {
-            return (
-              <span
-                key={option.code}
-                aria-disabled="true"
-                title="Coming soon"
-                className={`${sharedClassName} cursor-not-allowed bg-muted-surface text-muted-text opacity-60`}
-              >
-                {content}
-              </span>
-            );
-          }
-
-          const isActive = option.code === active;
-          return (
-            <button
-              key={option.code}
-              type="button"
-              onClick={() => setActive(option.code)}
-              aria-pressed={isActive}
-              className={`${sharedClassName} ${
-                isActive ? "bg-pokemon-red text-white" : "bg-white text-foreground hover:bg-muted-surface"
-              }`}
-            >
-              {content}
-            </button>
-          );
-        })}
-      </div>
+    <div className="ml-auto flex overflow-hidden rounded-md border-2 border-black" role="group" aria-label="Market">
+      {options.map((option, i) => {
+        const isActive = option.code === active;
+        return (
+          <button
+            key={option.code}
+            type="button"
+            onClick={() => setActive(option.code)}
+            aria-pressed={isActive}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-black tracking-[0.3px] uppercase transition-colors ${
+              i > 0 ? "border-l-2 border-black" : ""
+            } ${isActive ? "bg-pokemon-red text-white" : "bg-white text-foreground hover:bg-muted-surface"}`}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- external CDN image, domain not allowlisted for next/image */}
+            <img src={flagSvgUrl(option.code)} alt="" className="h-3 w-4 rounded-[1px] object-cover" />
+            {option.code}
+          </button>
+        );
+      })}
     </div>
   );
 }

@@ -6,12 +6,11 @@ import { CardImage } from "@/components/card-image";
 import { OpenDataLinks } from "@/components/open-data-links";
 import { PriceChart } from "@/components/price-chart";
 import { PriceDataTabs } from "@/components/price-data-tabs";
-import { LocaleSlot, ProductLocaleProvider, ProductLocaleToggle, type LocaleCode } from "@/components/product-locale";
+import { LocaleSlot, ProductLocaleProvider, type LocaleCode } from "@/components/product-locale";
 import { StructuredData } from "@/components/structured-data";
 import { CardmarketPricesPanel } from "@/components/retro/cardmarket-prices-panel";
 import { ConditionFilterChips } from "@/components/retro/condition-filter-chips";
 import { GradedMarketPanel } from "@/components/retro/graded-market-panel";
-import type { MarketTab } from "@/components/retro/graded-market-tabs";
 import { IllustrativeTag } from "@/components/retro/illustrative-tag";
 import { InternationalPricesPanel } from "@/components/retro/international-prices-panel";
 import { PopulationPanel } from "@/components/retro/population-panel";
@@ -31,8 +30,10 @@ import type { Card } from "@/lib/types";
  * false` means no real translation exists for this card (any One Piece card
  * in French — BerryWallet has zero French sets; any card whose PokéWallet /
  * BerryWallet Japanese counterpart was never confirmed), in which case
- * `card` is just the English card and the toggle entry renders inert rather
- * than switching to English text wearing a foreign flag.
+ * `card` is just the English card: the flag still switches the Market
+ * Overview panel to that marketplace, but the card's own identity stays
+ * English rather than wearing a foreign flag over a fabricated translation,
+ * and the toggle says so on screen.
  *
  * These replaced the former per-language routes. Building all three here
  * costs nothing extra upstream: the root page already had to resolve French
@@ -47,8 +48,8 @@ type ProductPageContentProps = {
   /** Source of truth for every number, search query, and history point — always the real English-identity Card, never a localized clone (see graded-market.ts's `card.tcgdexId`-based French search override). */
   card: Card;
   /**
-   * Every language this card can be *displayed* in, in fixed US -> FR -> JP
-   * order. Used only for what's actually visible — title, breadcrumb, card
+   * Every language this card can be *displayed* in, in fixed US -> JP -> FR
+   * order — also the left-to-right order of the Market Overview toggle. Used only for what's actually visible — title, breadcrumb, card
    * art, and the Cardmarket panel — never for a number, a search query or a
    * history point, which always come from `card` above (see
    * graded-market.ts's `card.tcgdexId`-based French search override for why
@@ -60,8 +61,6 @@ type ProductPageContentProps = {
   markdownHref: string;
   jsonHref: string;
   okfHref: string;
-  /** Which Market Overview tab opens by default. Left unset on the product page: the panel has its own tabs, and the language toggle above deliberately doesn't drive them — the eBay market a visitor wants to read is an independent choice from the language they want the card named in. */
-  defaultMarketTab?: MarketTab;
   structuredData?: { product: Record<string, unknown>; breadcrumb: Record<string, unknown>; faq: Record<string, unknown> };
 };
 
@@ -73,15 +72,17 @@ export function ProductPageContent({
   markdownHref,
   jsonHref,
   okfHref,
-  defaultMarketTab,
   structuredData,
 }: ProductPageContentProps) {
   /**
    * Builds one LocaleSlot's worth of variants from a render function.
    * Unavailable locales are skipped entirely rather than mapped to English
-   * text — LocaleSlot's own US fallback covers them if the toggle is ever
-   * driven somewhere it shouldn't be, and ProductLocaleToggle already
-   * refuses to switch to them.
+   * text: LocaleSlot then falls back to the US nodes, which is what keeps a
+   * card with no real French/Japanese print from showing English text
+   * wearing a foreign flag. The toggle no longer refuses those locales — it
+   * also selects the eBay/Vinted market now, and that market exists for all
+   * three regardless — so it states the gap in words instead (see
+   * ProductLocaleToggle).
    */
   const localized = (render: (localeCard: Card) => ReactNode): Partial<Record<LocaleCode, ReactNode>> =>
     Object.fromEntries(localeVariants.filter((v) => v.available).map((v) => [v.code, render(v.card)]));
@@ -108,23 +109,19 @@ export function ProductPageContent({
       )}
 
       <div className="mx-auto max-w-[1180px] px-6 py-16">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <nav aria-label="Breadcrumb" className="text-sm font-bold text-muted-text">
-            <Link href="/" className="hover:text-foreground hover:underline">
-              Home
-            </Link>
-            <span className="px-1.5">/</span>
-            <Link href={collectionHref} className="hover:text-foreground hover:underline">
-              {franchiseLabel}
-            </Link>
-            <span className="px-1.5">/</span>
-            <span className="text-foreground">
-              <LocaleSlot variants={localized((c) => c.name)} />
-            </span>
-          </nav>
-
-          <ProductLocaleToggle />
-        </div>
+        <nav aria-label="Breadcrumb" className="text-sm font-bold text-muted-text">
+          <Link href="/" className="hover:text-foreground hover:underline">
+            Home
+          </Link>
+          <span className="px-1.5">/</span>
+          <Link href={collectionHref} className="hover:text-foreground hover:underline">
+            {franchiseLabel}
+          </Link>
+          <span className="px-1.5">/</span>
+          <span className="text-foreground">
+            <LocaleSlot variants={localized((c) => c.name)} />
+          </span>
+        </nav>
 
         <div className="mt-5 mb-8 flex flex-wrap items-center justify-between gap-3 rounded-lg border-2 border-black bg-card-surface p-6 shadow-hard-md">
           <div className="flex flex-wrap items-center gap-3">
@@ -280,7 +277,7 @@ export function ProductPageContent({
                     franchise check. A One Piece card's own real price still
                     shows above regardless, via BerryWallet. */}
                 {(card.franchise === "pokemon" || ONE_PIECE_MARKET_ENABLED) && (
-                  <GradedMarketPanel card={card} defaultMarket={defaultMarketTab} />
+                  <GradedMarketPanel card={card} />
                 )}
 
                 <div>
