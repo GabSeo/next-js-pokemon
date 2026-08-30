@@ -15,7 +15,7 @@ import {
 } from "@/lib/berrywallet";
 import { getCard as getPokeWalletCard, cardImageUrl as pokeWalletCardImageUrl } from "@/lib/pokewallet";
 import { buildCached } from "@/lib/build-cache";
-import { absoluteUrl } from "@/lib/site";
+import { absoluteUrl, freshness } from "@/lib/site";
 import { describeUpstreamError, logUpstreamOnce } from "@/lib/upstream";
 import { findCardByNameAndSet, getCard, cardImageUrl, tcgplayerSnapshot, type TcgdexCard } from "@/lib/tcgdex";
 import type {
@@ -863,5 +863,9 @@ export function toPublicCard(card: Card) {
     priceRange: card.priceRange,
     imageUrl: card.imageUrl,
     sourceUrl: card.sourceUrl,
+    // When this copy was built and when to come back. asOfDate above is the
+    // upstream's pricing date and answers a different question — see
+    // freshness() in lib/site.ts.
+    ...freshness(),
   };
 }

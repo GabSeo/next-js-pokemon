@@ -1,7 +1,7 @@
 import { computeAlertBands, downsamplePriceHistory, getAllCards, getCardsByFranchise, franchiseLabel } from "@/lib/cards";
 import { cardRefs } from "@/data/card-refs";
 import { getGradedMarketData, GRADED_MARKET_LANGUAGES } from "@/lib/graded-market";
-import { absoluteUrl, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
+import { absoluteUrl, freshness, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 import { priceLabel } from "@/lib/price-display";
 import type { Card, Franchise } from "@/lib/types";
 
@@ -131,6 +131,7 @@ export async function cardToMarkdown(
   const gradedMarket = await gradedMarketMarkdown(card);
   const number = display.number ?? card.number;
   const setCode = display.setCode ?? card.setCode;
+  const fresh = freshness();
 
   return `# ${display.name} — ${display.set} (${number ?? ""})
 
@@ -140,7 +141,9 @@ Set: ${display.set}${setCode ? ` (${setCode})` : ""}
 Rarity: ${display.rarity ?? "Unknown"}
 Canonical page: ${absoluteUrl(pagePath)}
 Markdown: ${absoluteUrl(`${pagePath}/index.md`)}
-Last updated: ${card.asOfDate}
+Price as of: ${card.asOfDate} (upstream pricing date, not this page's build time)
+Generated: ${fresh.generated}
+Refresh by: ${fresh.refreshBy}
 
 ## Summary
 

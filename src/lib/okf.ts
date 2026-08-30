@@ -36,10 +36,39 @@ type OkfFrontmatter = {
 // exists to catch.
 const GENERATED_BY = "system:cardtrace-build";
 
-function addDays(date: Date, days: number): string {
-  const d = new Date(date);
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
+/**
+ * How long a concept carrying market data stays valid, in seconds.
+ *
+ * MUST match `export const revalidate` on the routes that serve this content
+ * (`products/[slug]/page.tsx`, `products/[slug]/index.md/route.ts`,
+ * `collections/[franchise]/page.tsx` — all 86400). Next requires a literal
+ * for that export and statically parses it, so it cannot be imported from
+ * here; this is a deliberate mirror, and drifting from it is exactly the bug
+ * this constant was introduced to fix.
+ *
+ * That bug: every price-bearing concept promised `stale_after = now + 7 days`
+ * against a 24-hour window, overstating freshness by 7x. It was the only
+ * machine-readable freshness claim the site made, so an agent honouring it
+ * would cache a day-old price for a week.
+ */
+const CONTENT_REVALIDATE_SECONDS = 86_400;
+
+/**
+ * For concepts whose text is hand-written and does not carry market data —
+ * the about page, the price-checker's cardless form. These genuinely change
+ * on the order of months, and claiming a day would send agents back for
+ * nothing.
+ */
+const STATIC_CONCEPT_SECONDS = 180 * 24 * 60 * 60;
+
+/**
+ * Full ISO timestamp, not a date. A date-only `stale_after` is useless at a
+ * 24-hour window: "2026-08-31" is anywhere from 0 to 24 hours away depending
+ * on when it is read, so an agent cannot tell whether the copy it holds is
+ * still valid.
+ */
+function staleAfter(from: Date, seconds: number): string {
+  return new Date(from.getTime() + seconds * 1000).toISOString();
 }
 
 function withFrontmatter(fm: OkfFrontmatter, body: string): string {
@@ -70,7 +99,7 @@ export async function okfHomeConcept(): Promise<string> {
       generated: { by: GENERATED_BY, at: now.toISOString() },
       // Price-driven concept — days, not months, matching the 24h Data
       // Cache reality rather than the evergreen cadence a blog post gets.
-      stale_after: addDays(now, 7),
+      stale_after: staleAfter(now, CONTENT_REVALIDATE_SECONDS),
     },
     body
   );
@@ -96,7 +125,7 @@ This is a demo built with generic product data. It is not a real business, and p
       generated: { by: GENERATED_BY, at: now.toISOString() },
       // Genuinely evergreen prose, not price data — a longer window here is
       // honest, not lazy, the mirror image of the 7-day window above.
-      stale_after: addDays(now, 180),
+      stale_after: staleAfter(now, STATIC_CONCEPT_SECONDS),
     },
     body
   );
@@ -115,7 +144,7 @@ export async function okfCollectionConcept(franchise: Franchise): Promise<string
       resource: absoluteUrl(`/collections/${franchise}`),
       tags: [franchise, "tcg", "collection"],
       generated: { by: GENERATED_BY, at: now.toISOString() },
-      stale_after: addDays(now, 7),
+      stale_after: staleAfter(now, CONTENT_REVALIDATE_SECONDS),
     },
     body
   );
@@ -134,7 +163,7 @@ export async function okfProductConcept(slug: string): Promise<string | undefine
       resource: absoluteUrl(`/products/${card.slug}`),
       tags: [card.franchise, "tcg", card.rarity ?? ""].filter(Boolean),
       generated: { by: GENERATED_BY, at: now.toISOString() },
-      stale_after: addDays(now, 7),
+      stale_after: staleAfter(now, CONTENT_REVALIDATE_SECONDS),
     },
     body
   );
@@ -159,7 +188,7 @@ export async function okfPriceCheckerConcept(cardId?: string): Promise<string> {
       generated: { by: GENERATED_BY, at: now.toISOString() },
       // Only price-driven once a card is resolved — the bare tool index (no
       // cardId) is just a list of IDs, as evergreen as the About page.
-      stale_after: addDays(now, card ? 7 : 180),
+      stale_after: staleAfter(now, card ? CONTENT_REVALIDATE_SECONDS : STATIC_CONCEPT_SECONDS),
     },
     body
   );
