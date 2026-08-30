@@ -392,6 +392,33 @@ Stable IRIs, per-fact provenance, typed vocabulary and one compiler are what
 make the data trustworthy and joinable. Turtle can come later, or never, at
 no cost.
 
-**Separate bug, diagnose before modelling around it.** `priceHistory` and
-`recentSnapshots` are `[]` in production because apitcg was unreachable at
-build.
+**Separate bug — FIXED 2026-08-30 (`9e2afab`, `cbe922e`).** `priceHistory`
+and `recentSnapshots` were `[]` in production. This document previously
+blamed apitcg being unreachable at build. That was wrong, and the wrong
+diagnosis is the more useful half of the record.
+
+The cause was our own ceiling. `api-budget.ts` capped apitcg at 30 calls/day;
+a cold 8-card build spends ~24 resolving cards, and `getHistoryPrices` runs
+*after* resolution per card (`cards.ts`), so history always arrived at an
+exhausted window. It failed silently behind a `.catch(() => [])`, which is
+why it presented as an outage for weeks.
+
+Three measurements, each killing a plausible theory:
+
+| Observation | Kills |
+|---|---|
+| apitcg present in `identifiers` on 5 of 8 cards while every card had `hist=0` | "apitcg is unreachable" |
+| `getHistoryPrices` threw `ApiBudgetExceededError`, not a network error | "apitcg has no history for these cards" |
+| all three probed cards returned **100 rows, 100 with tcgplayer prices** | "the rows are there but `marketPrice` filters them out" |
+
+Fixed by 90/day + 900/month (a daily ceiling alone cannot protect a monthly
+cap — one cold build a day is ~960/month at 8 cards) plus a `CACHE_VERSION`
+bump, without which entries computed under the old ceiling would have served
+`[]` for another 24h.
+
+**The one durable lesson**, because it will recur: which card loses is
+**arbitrary**. Static generation renders cards across parallel workers racing
+on a shared budget file, so exhaustion does not follow `cardRefs` order —
+`gengar-vmax-271` (first) came back empty while `ethans-typhlosion-190`
+(third) succeeded in the same build. Do not reason about budget starvation
+from list position.

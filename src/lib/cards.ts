@@ -230,7 +230,21 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
   // When apitcg is unavailable, price history/trend/range/recentSnapshots
   // simply come back empty rather than blocking the card — the page already
   // renders "No historical data available yet" for that case.
-  const history = product ? await getHistoryPrices(product._id, HISTORY_LOOKBACK_LIMIT).catch(() => []) : [];
+  const history = product
+    ? await getHistoryPrices(product._id, HISTORY_LOOKBACK_LIMIT).catch((err) => {
+        // Logged rather than swallowed. Falling back to [] is still correct —
+        // a card renders fine without a chart, and history is the least
+        // important thing on the page — but doing it silently is what made an
+        // exhausted api-budget ceiling look like an apitcg outage for weeks:
+        // the thrown error was ApiBudgetExceededError, and nothing said so.
+        // See docs/knowledge-model.md, "Separate bug".
+        logUpstreamOnce(
+          `apitcg-history:${ref.slug}`,
+          `[cards] apitcg price history failed for ${ref.slug} (chart omitted) — ${describeUpstreamError(err)}`
+        );
+        return [];
+      })
+    : [];
 
   const sortedAsc = [...history].sort((a, b) => a.date.localeCompare(b.date));
   const priceHistory: PriceHistoryPoint[] = sortedAsc
