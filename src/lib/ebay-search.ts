@@ -100,6 +100,40 @@ export function cardSearchTerms(card: Card, nameOverride?: string, numberOverrid
 }
 
 /**
+ * The print descriptor from a One Piece card's BerryWallet print name — the
+ * variant words an eBay query should use, derived rather than hand-written.
+ *
+ *   "Shanks (004) (Manga)"                              -> "Manga"
+ *   "Marshall.D.Teach (093) (Wanted Poster)"            -> "Wanted Poster"
+ *   "Monkey.D.Luffy (English Version 2nd Anniversary Set)" -> "2nd Anniversary Set"
+ *
+ * The LAST parenthetical, because BerryWallet puts the card number in the
+ * first one where it uses two ("(004) (Manga)") and the variant last. A
+ * leading language qualifier is stripped: "English Version 2nd Anniversary
+ * Set" is one product sold in several languages, and the qualifier belongs
+ * to the catalog row rather than to what sellers write in a title.
+ *
+ * This exists to remove a hand-maintenance step, not to add cleverness.
+ * Verified against all five tracked One Piece cards on 2026-08-30: the
+ * derived descriptor is character-for-character identical to the
+ * `lookup.variantTags` a human had written for each of them, so the tags
+ * were pure duplication of data BerryWallet already returns. `variantTags`
+ * still exists and still matters — it is what disambiguates WHICH product a
+ * BerryWallet lookup resolves to, which is a different job from telling eBay
+ * what to search for.
+ *
+ * Returns "" when there is no parenthetical (every Pokémon card, and any One
+ * Piece card whose print carries no variant), which callers read as "no
+ * variant words to add".
+ */
+export function printDescriptor(printName: string | undefined): string {
+  if (!printName) return "";
+  const inner = [...printName.matchAll(/\(([^)]+)\)/g)].map((m) => m[1]);
+  if (inner.length === 0) return "";
+  return inner[inner.length - 1].replace(/^(english|japanese|french|chinese)\s+version\s+/i, "").trim();
+}
+
+/**
  * The first word of a (possibly multi-word) variant tag — e.g. "Wanted"
  * from "Wanted Poster". Shared between the One Piece query text
  * (graded-market.ts) and titleMatchesCard's own variantTags check

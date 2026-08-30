@@ -1,4 +1,4 @@
-import { conditionSearchLink, tagFirstWord } from "@/lib/ebay-search";
+import { conditionSearchLink, printDescriptor, tagFirstWord } from "@/lib/ebay-search";
 import { searchActiveListings, type EbayCondition, type EbayLanguage, type EbayMarketGuard } from "@/lib/ebay-browse";
 import { illustrativeActiveListings, illustrativeSoldListings, illustrativeVintedFeed } from "@/lib/illustrative";
 import { DEFAULT_PSA_GRADING_COST_USD, gradingRoi, median } from "@/lib/roi";
@@ -289,11 +289,16 @@ function marketGuardFor(card: Card, condition: EbayCondition, language: EbayLang
   // and a raw reference of $1,037. Cheapest-first sorting put it at the top
   // of the panel.
   //
-  // NOT applied to Japanese Raw, deliberately: the Japanese raw market
-  // genuinely can trade below 60% of the English raw price, so the same
-  // floor there would discard real listings. Nothing about graded pricing
-  // makes that true, which is why the split is by condition and not by
-  // language.
+  // NOT applied to Japanese Raw. The evidence for that is narrower than an
+  // earlier version of this comment implied, so state it exactly: Ethan's
+  // Typhlosion's Japanese Raw tier returns real listings at $15.96 and
+  // $16.00 against a $26.83 reference, which a 0.60 floor would discard.
+  // That is one card showing the floor CAN cut real listings here — not a
+  // general rule that the Japanese raw market is cheaper, which is not
+  // reliably true and must not be built on. The graded floor rests on
+  // something stronger and card-independent (a graded gem-mint card does not
+  // sell below 60% of the same card's raw price), which is why the split is
+  // by condition rather than by language.
   //
   // No excludeCountries either — a Japanese card shipping from Japan is
   // exactly what this tab wants, unlike the English one.
@@ -629,10 +634,27 @@ async function resolveGradedMarketData(card: Card): Promise<GradedMarketData | u
     if (override && override.length > 0) {
       return { tags: override, nameOverride: override.join(" ") };
     }
-    const fallback = ref && ref.lookup.by === "code" ? ref.lookup.variantTags : undefined;
+    // Derived from BerryWallet's own print name rather than read from
+    // ref.lookup.variantTags, so adding a One Piece card needs no eBay
+    // tuning at all. Verified identical to the hand-written tags for all
+    // five tracked cards — those were duplicating data BerryWallet already
+    // returns. lookup.variantTags still exists and still matters: it is what
+    // disambiguates WHICH product a BerryWallet lookup resolves to, a
+    // different job from telling eBay what to search for.
+    //
+    // Treated as ONE tag, not split into words, so tagFirstWord reduces it
+    // the same way a hand-written tag was reduced: "Wanted Poster" ->
+    // "Wanted" (measured: 6 real listings vs 0 for the full phrase).
+    //
+    // Falls back to the hand-written tags when there is no printName —
+    // BerryWallet's Japanese rows carry far less than the English side (see
+    // cards.ts's getOnePieceJapaneseText), so a print name must never be
+    // assumed present.
+    const derived = printDescriptor(card.printName);
+    const tags = derived ? [derived] : ref && ref.lookup.by === "code" ? ref.lookup.variantTags : undefined;
     // "" (not undefined) so cardSearchTerms reads it as "no name" rather
     // than "use the card's own name" — see its doc comment.
-    return { tags: fallback, nameOverride: fallback?.map(tagFirstWord).join(" ") ?? "" };
+    return { tags, nameOverride: tags?.map(tagFirstWord).join(" ") ?? "" };
   };
 
   const activeResults = await Promise.all(
