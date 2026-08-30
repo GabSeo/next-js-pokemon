@@ -1,42 +1,10 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
 import { Gauge } from "@/components/charts/gauge";
+import { useIsBrowser } from "@/components/retro/use-is-browser";
 
 const GAUGE_WIDTH = 190;
 const GAUGE_HEIGHT = 112;
-
-const subscribe = () => () => {};
-
-/**
- * True only after the component is running in the browser, without the
- * setState-in-an-effect that this project's react-hooks config rejects.
- *
- * The gauge cannot be server-rendered. Bklit computes each notch's path from
- * trigonometry and emits full-precision floats, and the last unit in the last
- * place does not always agree between V8 on Node and V8 in Chrome — the
- * server sends `53.81143880104836` and the client renders
- * `53.81143880104837`, which React reports as a hydration mismatch and
- * repairs by throwing away and re-rendering the whole tree. Confirmed live
- * against the dev overlay, on the notch paths specifically.
- *
- * The other two charts on this panel do not hit it because both animate in
- * from a collapsed origin, so their first painted geometry is literally
- * `M 0,0` on either side. This one draws its real arc immediately.
- *
- * Nothing is lost by skipping SSR here: everything the dial encodes is
- * already text in the callout beside it — the ROI percentage, the raw and
- * PSA 10 medians, the grading fee, and the margin line below the gauge — so
- * an agent parsing raw HTML still reads the whole story. The rule this site
- * holds to is that data must be in the markup, not that every decoration must.
- */
-function useIsBrowser(): boolean {
-  return useSyncExternalStore(
-    subscribe,
-    () => true,
-    () => false
-  );
-}
 
 /**
  * How much of a PSA 10 sale is margin, once the raw card and the grading are

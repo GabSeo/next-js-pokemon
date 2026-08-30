@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useProductLocaleOptional, type LocaleCode } from "@/components/product-locale";
 import { FloatingPreviewChip } from "@/components/retro/floating-preview-chip";
 import { GradeLadderChart, type GradeLadderRow } from "@/components/retro/grade-ladder-chart";
+import { GradePayoffGauges, type GradePayoffRow } from "@/components/retro/grade-payoff-gauges";
 import { GradingMarginGauge } from "@/components/retro/grading-margin-gauge";
 import { IllustrativeTag } from "@/components/retro/illustrative-tag";
 import { MarketGapRadar, type MarketGapRow } from "@/components/retro/market-gap-radar";
@@ -339,6 +340,18 @@ export function GradedMarketTabs({
     : roi;
   const roiMarket: MarketTab = roiFollowsMarket ? market : "English";
 
+  // The same bet, priced for every grade it could come back as. Raw is not an
+  // outcome of grading — it is the input — so it is the one tier excluded.
+  // Read from roiMarket rather than `market` so the payoff rows and the ROI
+  // callout above can never quote different markets at each other.
+  const payoffRows: GradePayoffRow[] = entries
+    .filter((entry) => entry.id !== "Raw")
+    .map((entry) => ({
+      label: entry.label,
+      sale: entry.languages.find((l) => l.language === roiMarket)?.active.medianPrice ?? 0,
+    }));
+  const payoffCost = shownRoi.rawMedian + shownRoi.gradingCostUsd;
+
   return (
     <div>
       <div hidden={market === "France"}>
@@ -563,6 +576,18 @@ export function GradedMarketTabs({
             </p>
           </div>
         </div>
+        {/* After the ROI callout, not before: that block is the headline
+            answer for the grade everyone hopes for, and this is the rest of
+            the distribution behind it. */}
+        {shownRoi.isReal && payoffCost > 0 && (
+          <GradePayoffGauges
+            cost={payoffCost}
+            currency={shownRoi.currency}
+            isReal={shownRoi.isReal}
+            market={roiMarket}
+            rows={payoffRows}
+          />
+        )}
       </div>
 
       <div hidden={market !== "France"}>
