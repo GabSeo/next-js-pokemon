@@ -42,6 +42,7 @@ const BUDGET_DIR = path.join(process.cwd(), ".next", "cache", "api-budget");
 
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
+const MONTH_MS = 30 * DAY_MS;
 
 type Window = { limit: number; windowMs: number };
 
@@ -96,12 +97,32 @@ const BUDGETS: Record<string, Budget> = {
   // cap; with those two fixes in place a full 9-card catalogue resolves
   // well inside it.
   "api.pokewallet.io#berrywallet": { limit: 90, windowMs: HOUR_MS },
-  // 1,000/month real — roughly 33/day if spent evenly. A daily window
-  // rather than a monthly one on purpose: a monthly counter lets a single
-  // bad week consume the whole allowance and then starve the rest of the
-  // month, where a daily ceiling degrades the same total spend into
-  // something survivable every day.
-  "api.apitcg.com": { limit: 30, windowMs: DAY_MS },
+  // 1,000/month real. Both windows are load-bearing and neither works alone.
+  //
+  // A flat 30/day was measured starving price history on 2026-08-30: card
+  // resolution runs first and history second (cards.ts's getHistoryPrices),
+  // so a cold build spent the whole day window on resolution and every
+  // history call then failed. It failed *silently* — that call sits behind a
+  // `.catch(() => [])` — so for weeks this looked like an apitcg outage
+  // rather than our own ceiling. A cold 8-card build costs ~24 calls to
+  // resolve plus 8 for history; 30 cannot fit both, which is the entire bug.
+  //
+  // 90/day is what makes a cold build fit, with room for two or three in a
+  // day. But a daily ceiling alone cannot protect the month: one cold build
+  // a day is ~960/month at 8 cards and ~1,080 at 9 — over the real cap
+  // without ever touching the daily limit. So the month is the outer guard
+  // and the day is the burst limiter.
+  //
+  // 900 rather than 1,000 for the same reason every budget here sits under
+  // its real cap: workers race on these files and a lost write means a call
+  // goes uncounted (see this file's header). The 100 is that slack.
+  //
+  // The starvation this file previously warned about — a bad week eating the
+  // month, then starving the rest of it — is real and NOT solved here, only
+  // bounded. It is strictly better than the alternative: without a monthly
+  // guard the same spend hits apitcg's own 1,000 and returns hard 429s, which
+  // degrades identically but uncontrolled, and across every surface at once.
+  "api.apitcg.com": { limit: 900, windowMs: MONTH_MS, burst: { limit: 90, windowMs: DAY_MS } },
   // 5,000/day real. Comfortably the loosest of the four, but still bounded:
   // graded-market.ts spends 6-8 of these per card per resolution, so this
   // is the one budget that scales hardest with the tracked-card count.
