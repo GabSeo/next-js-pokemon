@@ -1,7 +1,7 @@
 "use client";
 
 import { Gauge } from "@/components/charts/gauge";
-import { MarketDataBadge } from "@/components/retro/market-data-badge";
+import { EyebrowTitle } from "@/components/retro/eyebrow-title";
 import { useIsBrowser } from "@/components/retro/use-is-browser";
 
 /** One grade PSA could come back with, and what that grade is asking today. */
@@ -46,16 +46,12 @@ export function GradePayoffGauges({
   rows,
   cost,
   currency,
-  market,
-  isReal,
 }: {
-  /** Best grade first. */
+  /** Best grade first, and never the grade the card's headline already prices. */
   rows: GradePayoffRow[];
   /** Raw median + grading fee — identical for every row, which is the point. */
   cost: number;
   currency: string;
-  market: string;
-  isReal: boolean;
 }) {
   const isBrowser = useIsBrowser();
 
@@ -64,30 +60,13 @@ export function GradePayoffGauges({
   const money = (n: number) => `${currency} ${Math.round(n).toLocaleString()}`;
 
   return (
-    <div className="h-full rounded-lg border-2 border-black bg-white p-5 shadow-hard-sm">
-      <div className="mb-4 flex items-start justify-between gap-3">
-        {/* Eyebrow, then the question, then the terms. The title used to be a
-            10px muted micro-label doing the same job as the eyebrow above the
-            other cards, which left this card with no line a reader could land
-            on — the question IS the point of the block, so it gets heading
-            weight and the market qualifier steps up out of its way. */}
-        <div className="min-w-0 flex-1">
-          <span className="text-[10px] font-black tracking-[0.6px] text-muted-text uppercase">Grade outcomes · {market}</span>
-          <h3 className="mt-1 text-lg leading-6 font-black tracking-[-0.45px] text-balance">
-            What if it doesn&apos;t come back a 10?
-          </h3>
-          <p className="mt-1.5 text-[11px] font-bold text-muted-text">
-            You pay {money(cost)} either way — bars show the profit share of each sale
-          </p>
-        </div>
-        {/* Only when this block specifically is not real. The panel head
-            carries one LIVE badge for the section, and four more saying the
-            same thing would be noise — but a block that is preview while the
-            rest is live still has to say so. */}
-        {!isReal && <MarketDataBadge isReal={isReal} />}
-      </div>
+    <div className="mt-6 border-t-2 border-border-subtle pt-5">
+      <EyebrowTitle tone="ink">Other outcomes</EyebrowTitle>
+      <h3 className="mt-1.5 text-lg leading-6 font-black tracking-[-0.45px] text-balance">
+        What if it doesn&apos;t come back a 10?
+      </h3>
 
-      <div className="flex flex-col gap-4">
+      <div className="mt-4 flex flex-col gap-4">
         {rows.map((row) => {
           const margin = row.sale - cost;
           const share = row.sale > 0 ? Math.max(0, Math.min(100, (margin / row.sale) * 100)) : 0;

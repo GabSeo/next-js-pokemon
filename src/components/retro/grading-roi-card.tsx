@@ -1,3 +1,5 @@
+import { EyebrowTitle } from "@/components/retro/eyebrow-title";
+import { GradePayoffGauges, type GradePayoffRow } from "@/components/retro/grade-payoff-gauges";
 import { IllustrativeTag } from "@/components/retro/illustrative-tag";
 
 /**
@@ -40,6 +42,7 @@ export function GradingRoiCard({
   market,
   isReal,
   fallbackNote,
+  outcomes,
 }: {
   percent: number;
   rawMedian: number;
@@ -50,6 +53,8 @@ export function GradingRoiCard({
   isReal: boolean;
   /** Set only when the selected market could not price the trade and English figures stand in. */
   fallbackNote?: string;
+  /** The grades this card's headline does NOT price — PSA 9, PSA 8. */
+  outcomes: GradePayoffRow[];
 }) {
   const cost = rawMedian + gradingCost;
   const margin = psa10Median - cost;
@@ -69,10 +74,9 @@ export function GradingRoiCard({
 
       <div className="p-5 sm:p-6">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="h-2.5 w-2.5 border-2 border-black bg-pokemon-yellow" />
-          <span className="text-[10px] font-black tracking-[0.6px] text-muted-text uppercase">
+          <EyebrowTitle tone="yellow">
             Grading ROI · {market} · raw → PSA 10
-          </span>
+          </EyebrowTitle>
           {!isReal && <IllustrativeTag label="Preview — eBay not connected yet" />}
         </div>
 
@@ -116,7 +120,15 @@ export function GradingRoiCard({
           </div>
         </div>
 
-        <p className="mt-4 border-t-2 border-border-subtle pt-3 text-[11px] font-bold text-muted-text">
+        {/* Same card, because it is one question. The bar above prices the
+            grade everyone hopes for; these price the ones you might actually
+            get, off the identical outlay. PSA 10 is deliberately absent from
+            the rows — the headline IS the PSA 10 case, and repeating it under
+            a heading that says "if it doesn't come back a 10" printed the same
+            profit and the same share twice on one card. */}
+        {outcomes.length > 0 && <GradePayoffGauges cost={cost} currency={currency} rows={outcomes} />}
+
+        <p className="mt-6 border-t-2 border-border-subtle pt-3 text-[11px] font-bold text-muted-text">
           {isReal ? `${market} asking prices, not completed sales.` : "Preview numbers, not a real market reading."}
           {fallbackNote ? ` ${fallbackNote}` : ""}
         </p>

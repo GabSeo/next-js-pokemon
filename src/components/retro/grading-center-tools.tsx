@@ -1,7 +1,7 @@
 "use client";
 
 import { GradeLadderChart, type GradeLadderRow } from "@/components/retro/grade-ladder-chart";
-import { GradePayoffGauges, type GradePayoffRow } from "@/components/retro/grade-payoff-gauges";
+import type { GradePayoffRow } from "@/components/retro/grade-payoff-gauges";
 import { GradingRoiCard } from "@/components/retro/grading-roi-card";
 import { MarketGapRadar, type MarketGapRow } from "@/components/retro/market-gap-radar";
 import { useSelectedMarket, type MarketTab } from "@/components/retro/market-tab";
@@ -123,8 +123,11 @@ export function GradingCenterTools({
   // outcome of grading — it is the input — so it is the one tier excluded.
   // Read from roiMarket rather than `market` so the payoff rows and the ROI
   // callout above can never quote different markets at each other.
+  // Raw is the input, not an outcome; PSA 10 is what the card's headline
+  // already prices, and listing it under "if it doesn't come back a 10" put
+  // the same profit and the same share on the card twice.
   const payoffRows: GradePayoffRow[] = conditions
-    .filter((entry) => entry.condition !== "Raw")
+    .filter((entry) => entry.condition !== "Raw" && entry.condition !== "PSA 10")
     .map((entry) => ({
       label: entry.condition,
       sale: entry.languages.find((l) => l.language === roiMarket)?.active.medianPrice ?? 0,
@@ -163,20 +166,11 @@ export function GradingCenterTools({
           gradingCost={shownRoi.gradingCostUsd}
           isReal={shownRoi.isReal}
           market={roiMarket}
+          outcomes={shownRoi.isReal && payoffCost > 0 ? payoffRows : []}
           percent={shownRoi.percent}
           psa10Median={shownRoi.psa10Median}
           rawMedian={shownRoi.rawMedian}
         />
-
-        {shownRoi.isReal && payoffCost > 0 && (
-          <GradePayoffGauges
-            cost={payoffCost}
-            currency={shownRoi.currency}
-            isReal={shownRoi.isReal}
-            market={roiMarket}
-            rows={payoffRows}
-          />
-        )}
       </div>
     </>
   );

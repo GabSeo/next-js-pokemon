@@ -5,6 +5,7 @@ import { Bar } from "@/components/charts/bar";
 import { BarYAxis } from "@/components/charts/bar-y-axis";
 import { Grid } from "@/components/charts/grid";
 import { ChartTooltip } from "@/components/charts/tooltip";
+import { EyebrowTitle } from "@/components/retro/eyebrow-title";
 import { MarketDataBadge } from "@/components/retro/market-data-badge";
 
 /** One grading tier's current asking level in the selected market. */
@@ -73,7 +74,7 @@ export function GradeLadderChart({
     <div className="h-full rounded-lg border-2 border-black bg-white p-5 shadow-hard-sm">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
         <div>
-          <span className="text-[10px] font-black tracking-[0.5px] text-muted-text uppercase">Grade ladder · {market}</span>
+          <EyebrowTitle tone="red">Grade ladder · {market}</EyebrowTitle>
           <p className="mt-1 text-[10px] font-bold text-muted-text">Median asking price per grade, today</p>
         </div>
         {/* Only when this block specifically is not real. The panel head

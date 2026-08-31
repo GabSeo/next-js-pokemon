@@ -4,6 +4,7 @@ import { RadarChart } from "@/components/charts/radar-chart";
 import { RadarArea } from "@/components/charts/radar-area";
 import { RadarAxis } from "@/components/charts/radar-axis";
 import { RadarLabels } from "@/components/charts/radar-labels";
+import { EyebrowTitle } from "@/components/retro/eyebrow-title";
 import { MarketDataBadge } from "@/components/retro/market-data-badge";
 
 /** One grading tier priced in both eBay markets on the same day. */
@@ -136,7 +137,7 @@ export function MarketGapRadar({
           the badge holds the top-right corner. */}
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <span className="text-[10px] font-black tracking-[0.5px] text-muted-text uppercase">Market gap · English vs Japanese</span>
+          <EyebrowTitle tone="blue">Market gap · English vs Japanese</EyebrowTitle>
           <p className="mt-1 text-[10px] font-bold text-muted-text">Indexed to the pricier market — radius is a ratio, not a price</p>
         </div>
         {/* Only when this block specifically is not real. The panel head
