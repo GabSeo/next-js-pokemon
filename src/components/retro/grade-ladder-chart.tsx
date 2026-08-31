@@ -5,6 +5,7 @@ import { Bar } from "@/components/charts/bar";
 import { BarYAxis } from "@/components/charts/bar-y-axis";
 import { Grid } from "@/components/charts/grid";
 import { ChartTooltip } from "@/components/charts/tooltip";
+import { flagSvgUrl } from "@/components/product-locale";
 import { EyebrowTitle } from "@/components/retro/eyebrow-title";
 import { ENGLISH_COLOR, JAPANESE_COLOR, type GradeTableRow } from "@/components/retro/grade-rows";
 import { MarketDataBadge } from "@/components/retro/market-data-badge";
@@ -60,28 +61,39 @@ export function GradeLadderChart({ rows, currency, isReal }: { rows: GradeTableR
 
   return (
     <div>
-      <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+      {/* Legend at the top right of the chart block rather than floating over
+          the plot itself. The top band is Raw, whose bars are usually the
+          shortest, so that corner is usually empty — but "usually" is not
+          always (a thin PSA 8 tier can outprice a PSA 9 one on this very
+          site), and a legend sitting on top of a bar would be worse than one
+          sitting beside the heading. */}
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-x-5 gap-y-2">
         <div>
           <EyebrowTitle tone="blue">Grade ladder · English vs Japanese</EyebrowTitle>
           <p className="mt-1.5 text-[11px] font-bold text-muted-text">Median asking price per grade, today</p>
         </div>
-        {!isReal && <MarketDataBadge isReal={isReal} />}
-      </div>
 
-      {/* The legend the radar used to carry. It belongs to the bars now. */}
-      <div className="mb-2 flex flex-wrap items-center gap-4">
-        {[
-          { label: "English", color: ENGLISH_COLOR },
-          { label: "Japanese", color: JAPANESE_COLOR },
-        ].map((series) => (
-          <span
-            key={series.label}
-            className="flex items-center gap-1.5 text-[10px] font-black tracking-[0.5px] text-muted-text uppercase"
-          >
-            <span className="h-2.5 w-2.5 rounded-[2px] border-2 border-black" style={{ backgroundColor: series.color }} />
-            {series.label}
-          </span>
-        ))}
+        {/* The legend the radar used to carry. It belongs to the bars now.
+            Flags are the same CDN SVGs the market toggle uses, not emoji —
+            emoji flags render as two letters on Windows, which would have put
+            "US" and "JP" next to the words they already say. */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          {[
+            { label: "English", code: "US" as const, color: ENGLISH_COLOR },
+            { label: "Japanese", code: "JP" as const, color: JAPANESE_COLOR },
+          ].map((series) => (
+            <span
+              key={series.label}
+              className="flex items-center gap-1.5 text-[10px] font-black tracking-[0.5px] text-muted-text uppercase"
+            >
+              <span className="h-3.5 w-3.5 rounded-[2px] border-2 border-black" style={{ backgroundColor: series.color }} />
+              {series.label}
+              {/* eslint-disable-next-line @next/next/no-img-element -- external CDN image, domain not allowlisted for next/image */}
+              <img alt="" className="h-3 w-[18px] rounded-[1px] border border-black/25 object-cover" src={flagSvgUrl(series.code)} />
+            </span>
+          ))}
+          {!isReal && <MarketDataBadge isReal={isReal} />}
+        </div>
       </div>
 
       {/* Two <Bar> children with stacking left off is what makes bklit group

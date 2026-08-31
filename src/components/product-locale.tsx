@@ -113,7 +113,7 @@ export function ProductLocaleProvider({
  * exactly what SVG compresses best and JPEG compresses worst (visible
  * ringing on the hard color edges a flag is made of).
  */
-function flagSvgUrl(isoCode: LocaleCode): string {
+export function flagSvgUrl(isoCode: LocaleCode): string {
   return `https://flagcdn.com/${isoCode.toLowerCase()}.svg`;
 }
 
