@@ -503,12 +503,39 @@ const ChartCore = memo(function ChartCore({
         });
       }
 
-      // Tooltip position: for horizontal, position at max bar end; for vertical, center of band
+      // Tooltip position: for horizontal, the end of the bar the pointer is
+      // actually over; for vertical, center of band.
       let tooltipX: number;
       if (isHorizontal) {
-        // Position tooltip at the end of the longest bar
         const maxX = Math.max(...Object.values(xPositions), 0);
-        tooltipX = maxX;
+
+        // LOCAL PATCH (not upstream bklit) — see the note in
+        // components/retro/grade-ladder-chart.tsx. Upstream anchors the
+        // crosshair at the longest bar in the band no matter which series is
+        // hovered, which reads as a wrong answer on a grouped chart: point at
+        // the shorter bar and the line stays out at the longer one's value.
+        // Pick the series whose bar centre is nearest the pointer instead.
+        // Zero-length bars are skipped so a market with no listings cannot
+        // drag the line back to the axis. Falls back to the old behaviour
+        // when nothing qualifies, and stacked bars are left alone: there the
+        // longest end IS the total.
+        let anchorX: number | null = null;
+        if (!stacked) {
+          let nearest = Number.POSITIVE_INFINITY;
+          for (const [key, barCentreY] of Object.entries(yPositions)) {
+            const barEndX = xPositions[key];
+            if (barEndX === undefined || barEndX <= 0) {
+              continue;
+            }
+            const distance = Math.abs(barCentreY - pos);
+            if (distance < nearest) {
+              nearest = distance;
+              anchorX = barEndX;
+            }
+          }
+        }
+
+        tooltipX = anchorX ?? maxX;
       } else {
         tooltipX = barPos + bandWidth / 2;
       }

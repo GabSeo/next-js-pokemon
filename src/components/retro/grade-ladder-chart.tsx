@@ -29,6 +29,15 @@ import { formatPrice } from "@/lib/format-price";
  * The figures live in the table under the card, not here — bklit draws SVG, so
  * these bars are geometry rather than text, and the table is where an agent
  * parsing raw HTML reads them.
+ *
+ * CARRIES A LOCAL PATCH TO VENDORED CODE. bklit anchors the hover crosshair at
+ * the longest bar in a band regardless of which series the pointer is over,
+ * which is fine for one series and wrong for two: hover the Japanese bar and
+ * the line stays out at the English value, reading as the answer to a question
+ * nobody asked. components/charts/bar-chart.tsx now anchors it at the nearest
+ * bar instead, marked LOCAL PATCH at the site. `shadcn add @bklit/bar-chart`
+ * will overwrite that file and the crosshair will go back to being wrong —
+ * check this behaviour after any reinstall.
  */
 export function GradeLadderChart({ rows, currency, isReal }: { rows: GradeTableRow[]; currency: string; isReal: boolean }) {
   // Nothing to compare when every grade came back empty in both markets: four
