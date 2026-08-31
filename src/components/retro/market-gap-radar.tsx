@@ -137,10 +137,7 @@ export function MarketGapRadar({
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <span className="text-[10px] font-black tracking-[0.5px] text-muted-text uppercase">Market gap · English vs Japanese</span>
-          <p className="mt-1 text-[10px] font-bold text-muted-text">
-            Each grade indexed to the pricier market — the radius is a ratio, not a price. A point at the centre means no
-            listings there.
-          </p>
+          <p className="mt-1 text-[10px] font-bold text-muted-text">Indexed to the pricier market — radius is a ratio, not a price</p>
         </div>
         {/* Only when this block specifically is not real. The panel head
             carries one LIVE badge for the section, and four more saying the

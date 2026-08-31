@@ -13,17 +13,7 @@
  * component shared across the server/client line has to sit somewhere that
  * imports neither.
  */
-export function StepHeading({
-  step,
-  title,
-  note,
-  tone,
-}: {
-  step: string;
-  title: string;
-  note: string;
-  tone: "red" | "yellow";
-}) {
+export function StepHeading({ step, title, tone }: { step: string; title: string; tone: "red" | "yellow" }) {
   return (
     <div className="flex flex-wrap items-center gap-2.5">
       <span
@@ -35,7 +25,6 @@ export function StepHeading({
       </span>
       <span className="text-[13px] font-black tracking-[0.6px] whitespace-nowrap uppercase">{title}</span>
       <span className="h-px min-w-4 flex-1 bg-border-subtle" />
-      <span className="text-[11px] font-bold text-muted-text">{note}</span>
     </div>
   );
 }

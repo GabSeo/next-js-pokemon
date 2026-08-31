@@ -71,8 +71,7 @@ export function GradePayoffGauges({
             If it doesn&apos;t come back a 10 · {market}
           </span>
           <p className="mt-1 text-[10px] font-bold text-muted-text">
-            You pay {money(cost)} either way — the grade decides what you get back. Bars show the share of each sale that is
-            profit.
+            You pay {money(cost)} either way — bars show the profit share of each sale
           </p>
         </div>
         {/* Only when this block specifically is not real. The panel head
@@ -119,16 +118,15 @@ export function GradePayoffGauges({
                 )}
               </div>
 
+              {/* One short line, not a sentence: the row above already shows
+                  the profit and the track already shows the share, so this
+                  only has to name the sale it came out of. */}
               <p className="mt-1 text-[10px] font-bold text-muted-text">
                 {noListings ? (
-                  <>Nobody is asking for this grade right now, so there is no price to compare against.</>
-                ) : margin >= 0 ? (
-                  <>
-                    Sells for {money(row.sale)} — {share.toFixed(0)}% of it profit
-                  </>
+                  <>Nobody is selling this grade today</>
                 ) : (
                   <>
-                    Sells for {money(row.sale)} — {money(Math.abs(margin))} less than you spent
+                    {money(row.sale)} sale · {share.toFixed(0)}% profit
                   </>
                 )}
               </p>

@@ -134,41 +134,34 @@ export function GradingCenterTools({
 
   return (
     <>
-      {/* 01 — the three readings, in the mockup's two-column-then-full-width
-          arrangement. The ladder is the wide one because a bar chart with
-          four labelled rows needs the horizontal room; the radar is square by
-          nature and takes the narrower column beside it; the payoff rows are
-          full width because each is a track that reads left to right. */}
-      <div className="flex flex-col gap-3">
-        <StepHeading note="Two-column read" step="01" title="Grade analysis" tone="red" />
+      {/* One column. The two-column arrangement asked each block to be read
+          against the one beside it, which is not how these are used — they
+          are three separate readings taken in order, and side by side the
+          narrower one just got squeezed. Full width each, stacked. */}
+      <div className="flex flex-col gap-4">
+        <StepHeading step="01" title="Grade analysis" tone="red" />
 
-        <div className="flex flex-wrap items-start gap-4">
-          <div className="min-w-[280px] flex-[1_1_56%]">
-            <GradeLadderChart currency={currency} isReal={ladderIsReal} market={gradedMarket} rows={ladder} />
-          </div>
-          <div className="min-w-[280px] flex-[1_1_36%]">
-            <MarketGapRadar currency={currency} isReal={gapIsReal} rows={gapRows} />
-          </div>
-          <div className="min-w-[280px] flex-[1_1_100%]">
-            {shownRoi.isReal && payoffCost > 0 && (
-              <GradePayoffGauges
-                cost={payoffCost}
-                currency={shownRoi.currency}
-                isReal={shownRoi.isReal}
-                market={roiMarket}
-                rows={payoffRows}
-              />
-            )}
-          </div>
-        </div>
+        <GradeLadderChart currency={currency} isReal={ladderIsReal} market={gradedMarket} rows={ladder} />
+
+        <MarketGapRadar currency={currency} isReal={gapIsReal} rows={gapRows} />
+
+        {shownRoi.isReal && payoffCost > 0 && (
+          <GradePayoffGauges
+            cost={payoffCost}
+            currency={shownRoi.currency}
+            isReal={shownRoi.isReal}
+            market={roiMarket}
+            rows={payoffRows}
+          />
+        )}
       </div>
 
       {/* 02 — the verdict. Its own step because everything above is a reading
           and this is the answer they add up to. */}
-      <div className="flex flex-col gap-3">
-        <StepHeading note="Raw → PSA 10 · what you keep after fees" step="02" title="The verdict" tone="yellow" />
+      <div className="flex flex-col gap-4">
+        <StepHeading step="02" title="The verdict" tone="yellow" />
 
-      <div className="overflow-hidden rounded-lg border-2 border-black bg-pokemon-yellow shadow-hard-md">
+        <div className="overflow-hidden rounded-lg border-2 border-black bg-pokemon-yellow shadow-hard-md">
         {/* The gauge shares this callout rather than taking a card of its
             own: it is the same raw / grading / PSA 10 arithmetic read over
             the sale price instead of over the outlay, and splitting one
@@ -200,10 +193,9 @@ export function GradingCenterTools({
                 <span className="text-xs font-black tracking-[0.3px] text-[#5a4600] uppercase">Return on what you spend</span>
               </div>
               <p className="mt-1.5 max-w-[46ch] text-xs font-bold text-[#5a4600]">
-                {shownRoi.currency} {Math.round(shownRoi.rawMedian).toLocaleString()} for the raw card + {shownRoi.currency}{" "}
-                {shownRoi.gradingCostUsd} to grade it = {shownRoi.currency}{" "}
-                {Math.round(shownRoi.rawMedian + shownRoi.gradingCostUsd).toLocaleString()} spent. A PSA 10 is asking{" "}
-                {shownRoi.currency} {Math.round(shownRoi.psa10Median).toLocaleString()}.
+                {shownRoi.currency} {Math.round(shownRoi.rawMedian + shownRoi.gradingCostUsd).toLocaleString()} in (card +{" "}
+                {shownRoi.currency} {shownRoi.gradingCostUsd} grading) · a PSA 10 asks {shownRoi.currency}{" "}
+                {Math.round(shownRoi.psa10Median).toLocaleString()}
               </p>
             </div>
 
@@ -221,15 +213,17 @@ export function GradingCenterTools({
               independent readings either — one is a fixed rearrangement of
               the other — so presenting them as a cross-check would be a
               lie by implication. */}
+          {/* Kept to the one thing neither figure says on its own — that they
+              are the same money over different denominators. The grading-fee
+              caveat lives in the panel's context row now instead of being
+              repeated here. */}
           <p className="mt-4 border-t-2 border-black/15 pt-3 text-[11px] font-bold text-[#5a4600]">
-            Both numbers describe the same {shownRoi.currency}{" "}
-            {Math.round(shownRoi.psa10Median - shownRoi.rawMedian - shownRoi.gradingCostUsd).toLocaleString()}: the return measures it
-            against what you spend, the margin against what you sell for.{" "}
-            {shownRoi.isReal
-              ? `These are ${roiMarket} asking prices on eBay today, not completed sales, and the grading fee is an estimate.`
-              : "These are preview numbers, not a real market reading."}{" "}
+            Same {shownRoi.currency}{" "}
+            {Math.round(shownRoi.psa10Median - shownRoi.rawMedian - shownRoi.gradingCostUsd).toLocaleString()} either way —
+            measured against what you spend, then against what you sell for.{" "}
+            {shownRoi.isReal ? `${roiMarket} asking prices, not completed sales.` : "Preview numbers, not a real market reading."}{" "}
             {market !== "France" && !roiFollowsMarket && shownRoi.isReal
-              ? `The ${market} market has no priced raw and PSA 10 pair today, so English figures are shown instead.`
+              ? `No priced ${market} raw and PSA 10 pair today, so English figures are shown.`
               : ""}
           </p>
         </div>
