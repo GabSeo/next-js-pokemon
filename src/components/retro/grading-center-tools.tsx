@@ -133,30 +133,23 @@ export function GradingCenterTools({
 
   return (
     <>
-      {/* One column. The two-column arrangement asked each block to be read
-          against the one beside it, which is not how these are used — they
-          are three separate readings taken in order, and side by side the
-          narrower one just got squeezed. Full width each, stacked. */}
+      {/* 01 reads the market: what the grades are worth, and whether the
+          other market pays better for them. One column, full width each —
+          side by side the narrower block only got squeezed. */}
       <div className="flex flex-col gap-4">
         <StepHeading step="01" title="Grade analysis" tone="red" />
 
         <GradeLadderChart currency={currency} isReal={ladderIsReal} market={gradedMarket} rows={ladder} />
 
         <MarketGapRadar currency={currency} isReal={gapIsReal} rows={gapRows} />
-
-        {shownRoi.isReal && payoffCost > 0 && (
-          <GradePayoffGauges
-            cost={payoffCost}
-            currency={shownRoi.currency}
-            isReal={shownRoi.isReal}
-            market={roiMarket}
-            rows={payoffRows}
-          />
-        )}
       </div>
 
-      {/* 02 — the verdict. Its own step because everything above is a reading
-          and this is the answer they add up to. */}
+      {/* 02 answers the question, and it takes both cards to answer it. The
+          ROI card prices the outcome everyone hopes for; the payoff rows
+          price the ones you might actually get. Split across two steps, the
+          verdict read as though PSA 10 were the whole answer and the other
+          grades were background reading — which is backwards, since the
+          grade is the part you do not choose. */}
       <div className="flex flex-col gap-4">
         <StepHeading step="02" title="The verdict" tone="yellow" />
 
@@ -174,6 +167,16 @@ export function GradingCenterTools({
           psa10Median={shownRoi.psa10Median}
           rawMedian={shownRoi.rawMedian}
         />
+
+        {shownRoi.isReal && payoffCost > 0 && (
+          <GradePayoffGauges
+            cost={payoffCost}
+            currency={shownRoi.currency}
+            isReal={shownRoi.isReal}
+            market={roiMarket}
+            rows={payoffRows}
+          />
+        )}
       </div>
     </>
   );

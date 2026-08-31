@@ -66,11 +66,17 @@ export function GradePayoffGauges({
   return (
     <div className="h-full rounded-lg border-2 border-black bg-white p-5 shadow-hard-sm">
       <div className="mb-4 flex items-start justify-between gap-3">
+        {/* Eyebrow, then the question, then the terms. The title used to be a
+            10px muted micro-label doing the same job as the eyebrow above the
+            other cards, which left this card with no line a reader could land
+            on — the question IS the point of the block, so it gets heading
+            weight and the market qualifier steps up out of its way. */}
         <div className="min-w-0 flex-1">
-          <span className="text-[10px] font-black tracking-[0.5px] text-muted-text uppercase">
-            If it doesn&apos;t come back a 10 · {market}
-          </span>
-          <p className="mt-1 text-[10px] font-bold text-muted-text">
+          <span className="text-[10px] font-black tracking-[0.6px] text-muted-text uppercase">Grade outcomes · {market}</span>
+          <h3 className="mt-1 text-lg leading-6 font-black tracking-[-0.45px] text-balance">
+            What if it doesn&apos;t come back a 10?
+          </h3>
+          <p className="mt-1.5 text-[11px] font-bold text-muted-text">
             You pay {money(cost)} either way — bars show the profit share of each sale
           </p>
         </div>
@@ -120,13 +126,23 @@ export function GradePayoffGauges({
 
               {/* One short line, not a sentence: the row above already shows
                   the profit and the track already shows the share, so this
-                  only has to name the sale it came out of. */}
+                  only has to name the sale it came out of.
+
+                  A losing grade never says "0% profit". The share is clamped
+                  at zero so the track cannot draw backwards, but printing
+                  that clamp reads as break-even — and it sat directly under a
+                  red "−USD 1", contradicting it. The shortfall gets said
+                  instead. */}
               <p className="mt-1 text-[10px] font-bold text-muted-text">
                 {noListings ? (
                   <>Nobody is selling this grade today</>
-                ) : (
+                ) : margin >= 0 ? (
                   <>
                     {money(row.sale)} sale · {share.toFixed(0)}% profit
+                  </>
+                ) : (
+                  <>
+                    {money(row.sale)} sale · {money(Math.abs(margin))} short of your {money(cost)}
                   </>
                 )}
               </p>
