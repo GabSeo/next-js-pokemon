@@ -129,7 +129,13 @@ export function GradingRoiCard({
         {outcomes.length > 0 && <GradePayoffGauges cost={cost} currency={currency} rows={outcomes} />}
 
         <p className="mt-6 border-t-2 border-border-subtle pt-3 text-[11px] font-bold text-muted-text">
-          {isReal ? `${market} asking prices, not completed sales.` : "Preview numbers, not a real market reading."}
+          {/* The grading fee had been called an estimate in the section's
+              context row. That row said little else and repeated the section
+              title above it, so it is gone and the caveat comes back here,
+              attached to the figure it qualifies. */}
+          {isReal
+            ? `${market} asking prices, not completed sales, and the grading fee is an estimate.`
+            : "Preview numbers, not a real market reading."}
           {fallbackNote ? ` ${fallbackNote}` : ""}
         </p>
       </div>

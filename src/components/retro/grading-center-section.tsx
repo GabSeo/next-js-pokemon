@@ -1,9 +1,5 @@
-import { ProductLocaleToggle } from "@/components/product-locale";
 import { GradingCenterTools } from "@/components/retro/grading-center-tools";
-import { MarketDataBadge } from "@/components/retro/market-data-badge";
-import { franchiseLabel } from "@/lib/cards";
 import type { GradedMarketData } from "@/lib/graded-market";
-import type { Card } from "@/lib/types";
 
 /** Ash's cap, self-hosted under /public — the section's mascot in the mockup. */
 const CAP_SRC = "/pokemon-cap-grading-center.png";
@@ -47,9 +43,7 @@ function FutureBadge({ tone }: { tone: "red" | "blue" }) {
  * a vision model, PSA population data, a rules layer, user cost inputs.
  * Nothing on this site has population data — see tcggo-integration-plan.md.
  */
-export function GradingCenterSection({ card, data }: { card: Card; data: GradedMarketData }) {
-  const franchise = franchiseLabel(card.franchise);
-
+export function GradingCenterSection({ data }: { data: GradedMarketData }) {
   return (
     <div className="flex flex-col gap-5">
       {/* Section break — the page changes subject here, from what the card is
@@ -107,29 +101,6 @@ export function GradingCenterSection({ card, data }: { card: Card; data: GradedM
           charts inside could have used. The heading, the rule and the toggle
           are enough to say where the section starts. */}
       <section className="flex flex-col gap-5">
-        <div className="flex flex-wrap items-center gap-4">
-          <span className="inline-flex items-center gap-2 text-[15px] font-black tracking-[0.8px] whitespace-nowrap text-pokemon-blue uppercase">
-            {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, not an optimizable remote domain */}
-            <img alt="" className="w-7 saturate-[1.15]" src={CAP_SRC} />
-            {franchise} Grading Center
-          </span>
-          <span className="h-px min-w-6 flex-1 bg-border-subtle" />
-          <ProductLocaleToggle />
-        </div>
-
-        {/* Context row — states the trade being priced once, at the top, so
-            none of the blocks below has to repeat it. */}
-        <div className="flex flex-wrap items-center gap-3 border-b-2 border-border-subtle pb-4">
-          <span className="text-[11px] font-bold text-muted-text">
-            Raw → PSA 10, priced in the market selected above · grading fee estimated
-          </span>
-          {/* One status for the whole section, which is why the blocks below
-              only show a badge when they are individually NOT live. */}
-          <span className="ml-auto">
-            <MarketDataBadge isReal={data.roi.isReal} />
-          </span>
-        </div>
-
         <GradingCenterTools conditions={data.conditions} roi={data.roi} />
 
         {/* ---- roadmap: drawn, not built ---- */}

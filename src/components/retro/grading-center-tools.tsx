@@ -5,6 +5,8 @@ import type { GradeLadderRow } from "@/components/retro/grade-ladder-chart";
 import type { GradePayoffRow } from "@/components/retro/grade-payoff-gauges";
 import { GradingRoiCard } from "@/components/retro/grading-roi-card";
 import type { MarketGapRow } from "@/components/retro/market-gap-radar";
+import { ProductLocaleToggle } from "@/components/product-locale";
+import { MarketDataBadge } from "@/components/retro/market-data-badge";
 import { useSelectedMarket, type MarketTab } from "@/components/retro/market-tab";
 import { StepHeading } from "@/components/retro/step-heading";
 import type { EbayCondition } from "@/lib/ebay-browse";
@@ -152,7 +154,21 @@ export function GradingCenterTools({
           other market pays better for them. One column, full width each —
           side by side the narrower block only got squeezed. */}
       <div className="flex flex-col gap-4">
-        <StepHeading step="01" title="Grade analysis" tone="red" />
+        {/* The market control lives here now, on the row for the step it
+            actually governs, rather than in a panel header that repeated the
+            section's own title back at it. The status badge comes along
+            because it describes the same data the toggle selects. */}
+        <StepHeading
+          action={
+            <span className="flex items-center gap-3">
+              <MarketDataBadge isReal={shownRoi.isReal} />
+              <ProductLocaleToggle />
+            </span>
+          }
+          step="01"
+          title="Grade analysis"
+          tone="red"
+        />
 
         <GradeAnalysisCard
           currency={currency}

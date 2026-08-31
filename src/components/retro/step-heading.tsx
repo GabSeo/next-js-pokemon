@@ -13,7 +13,18 @@
  * component shared across the server/client line has to sit somewhere that
  * imports neither.
  */
-export function StepHeading({ step, title, tone }: { step: string; title: string; tone: "red" | "yellow" }) {
+export function StepHeading({
+  step,
+  title,
+  tone,
+  action,
+}: {
+  step: string;
+  title: string;
+  tone: "red" | "yellow";
+  /** Controls that belong to the section, sat at the right end of the rule. */
+  action?: React.ReactNode;
+}) {
   return (
     <div className="flex flex-wrap items-center gap-2.5">
       <span
@@ -25,6 +36,7 @@ export function StepHeading({ step, title, tone }: { step: string; title: string
       </span>
       <span className="text-[13px] font-black tracking-[0.6px] whitespace-nowrap uppercase">{title}</span>
       <span className="h-px min-w-4 flex-1 bg-border-subtle" />
+      {action}
     </div>
   );
 }

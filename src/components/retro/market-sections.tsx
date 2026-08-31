@@ -25,7 +25,7 @@ export async function MarketSections({ card }: { card: Card }) {
     <div className="space-y-6">
       <GradedMarketPanel card={card} data={data} />
 
-      <GradingCenterSection card={card} data={data} />
+      <GradingCenterSection data={data} />
     </div>
   );
 }
