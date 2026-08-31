@@ -10,7 +10,7 @@ import { LocaleSlot, ProductLocaleProvider, type LocaleCode } from "@/components
 import { StructuredData } from "@/components/structured-data";
 import { CardmarketPricesPanel } from "@/components/retro/cardmarket-prices-panel";
 import { ConditionFilterChips } from "@/components/retro/condition-filter-chips";
-import { GradedMarketPanel } from "@/components/retro/graded-market-panel";
+import { MarketSections } from "@/components/retro/market-sections";
 import { IllustrativeTag } from "@/components/retro/illustrative-tag";
 import { InternationalPricesPanel } from "@/components/retro/international-prices-panel";
 import { PopulationPanel } from "@/components/retro/population-panel";
@@ -277,7 +277,7 @@ export function ProductPageContent({
                     franchise check. A One Piece card's own real price still
                     shows above regardless, via BerryWallet. */}
                 {(card.franchise === "pokemon" || ONE_PIECE_MARKET_ENABLED) && (
-                  <GradedMarketPanel card={card} />
+                  <MarketSections card={card} />
                 )}
 
                 <div>

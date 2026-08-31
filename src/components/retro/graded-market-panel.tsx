@@ -2,7 +2,7 @@ import { ProductLocaleToggle } from "@/components/product-locale";
 import { MarketVitals } from "@/components/retro/market-vitals";
 import { GradedMarketTabs, type ConditionEntry, type TypeSummary, type VintedSummary } from "@/components/retro/graded-market-tabs";
 import { franchiseLabel } from "@/lib/cards";
-import { getGradedMarketData, type GradedMarketTypeData } from "@/lib/graded-market";
+import type { GradedMarketData, GradedMarketTypeData } from "@/lib/graded-market";
 import { relativeTimeLabel } from "@/lib/vinted-listings";
 import type { Card } from "@/lib/types";
 
@@ -72,8 +72,7 @@ function toTypeSummary(data: GradedMarketTypeData): TypeSummary {
  * component is purely presentational (JSX shaping), not a second place
  * fetch logic or the real/illustrative rules could live.
  */
-export async function GradedMarketPanel({ card }: { card: Card }) {
-  const data = await getGradedMarketData(card);
+export function GradedMarketPanel({ card, data }: { card: Card; data: GradedMarketData | undefined }) {
   // Defensive only — the real gate is the franchise check at this
   // component's own call site (components/product-page-content.tsx), which
   // is what actually skips the 8 eBay searches getGradedMarketData would
@@ -130,13 +129,13 @@ export async function GradedMarketPanel({ card }: { card: Card }) {
         <ProductLocaleToggle />
       </div>
 
-      {/* Above the market toggle's own content, because these four answers do
-          not change with the flag: three read the raw card's own price series
-          and the fourth counts listings across every market at once. A strip
-          that sat inside the tabs would imply it re-reads per market. */}
+      {/* Above the tabs, because these four answers do not change with the
+          flag: three read the raw card's own price series and the fourth
+          counts listings across every market at once. A strip that sat inside
+          the tabs would imply it re-reads per market. */}
       <MarketVitals card={card} data={data} />
 
-      <GradedMarketTabs entries={entries} vinted={vinted} roi={data.roi} />
+      <GradedMarketTabs entries={entries} vinted={vinted} />
     </div>
   );
 }

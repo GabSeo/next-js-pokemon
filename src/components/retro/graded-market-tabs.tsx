@@ -1,19 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useProductLocaleOptional, type LocaleCode } from "@/components/product-locale";
 import { FloatingPreviewChip } from "@/components/retro/floating-preview-chip";
-import { GradeLadderChart, type GradeLadderRow } from "@/components/retro/grade-ladder-chart";
-import { GradePayoffGauges, type GradePayoffRow } from "@/components/retro/grade-payoff-gauges";
-import { GradingMarginGauge } from "@/components/retro/grading-margin-gauge";
+import { useSelectedMarket, type MarketTab } from "@/components/retro/market-tab";
 import { IllustrativeTag } from "@/components/retro/illustrative-tag";
-import { MarketGapRadar, type MarketGapRow } from "@/components/retro/market-gap-radar";
 import { MarketDataBadge } from "@/components/retro/market-data-badge";
 import { VintedListingsSection } from "@/components/retro/vinted-listings-section";
 import type { EbayCondition, EbayLanguage } from "@/lib/ebay-browse";
-import type { GradedMarketRoi } from "@/lib/graded-market";
 import { EBAY_LOGO_URL } from "@/lib/marketplace-logos";
-import { gradingRoi } from "@/lib/roi";
 
 export type TypeSummary = {
   avgLabel: string;
@@ -177,24 +171,6 @@ function GradeTierPreview({
   );
 }
 
-/** A top-level market tab — the two real eBay-backed languages, plus France, which isn't eBay at all (see graded-market-tabs.tsx's file doc comment). */
-export type MarketTab = EbayLanguage | "France";
-
-/**
- * Which marketplace each flag of the product page's language toggle reads,
- * in the order the flags appear. US and JP are eBay's English and Japanese
- * markets; FR is Vinted, because
- * eBay.fr isn't where the French market trades (see this file's doc comment
- * below). This mapping is the whole reason the toggle could absorb the old
- * pill row: the two controls were always offering the same three markets
- * under different labels.
- */
-const MARKET_BY_LOCALE: Record<LocaleCode, MarketTab> = {
-  US: "English",
-  JP: "Japanese",
-  FR: "France",
-};
-
 const TYPES = ["active", "sold"] as const;
 type ListingType = (typeof TYPES)[number];
 
@@ -239,28 +215,18 @@ type ListingType = (typeof TYPES)[number];
 export function GradedMarketTabs({
   entries,
   vinted,
-  roi,
 }: {
   /** English/Japanese only — see lib/graded-market.ts's GRADED_MARKET_LANGUAGES. */
   entries: ConditionEntry[];
   vinted: VintedSummary;
-  /** Only meaningful for the eBay-graded English/Japanese markets (raw vs. PSA 10) — rendered inside the English/Japanese branch below and hidden on France, since Vinted has no PSA grading to compute a grading ROI against. */
-  roi: GradedMarketRoi;
 }) {
   // Every condition entry carries the same set of languages (see
   // lib/graded-market.ts), so entries[0]'s is representative of all of them.
   const marketTabs: MarketTab[] = [...entries[0].languages.map((l) => l.language), "France"];
-  // Derived, not held: the toggle owns the selection. The fallback covers
-  // JAPANESE_MARKET_ENABLED being flipped off (lib/graded-market.ts), which
-  // drops "Japanese" from the entries while the JP flag itself stays — the
-  // card is still shown in Japanese, the listings just stay on the English
-  // market rather than on a tab that no longer exists.
-  // No provider means no toggle rendered either, so there is nothing for a
-  // visitor to have selected — the first eBay market is the only honest
-  // default. See useProductLocaleOptional's comment.
-  const active = useProductLocaleOptional()?.active;
-  const preferredMarket = active ? MARKET_BY_LOCALE[active] : marketTabs[0];
-  const market: MarketTab = marketTabs.includes(preferredMarket) ? preferredMarket : marketTabs[0];
+  // Derived, not held: the toggle owns the selection, and the Grading Center
+  // resolves it through the same hook so the two panels can never disagree
+  // about which market the reader picked.
+  const market = useSelectedMarket(marketTabs);
 
   const [conditionId, setConditionId] = useState<EbayCondition>(entries[0].id);
   const [type, setType] = useState<ListingType>("active");
@@ -270,87 +236,6 @@ export function GradedMarketTabs({
     currentCondition.languages.find((l) => l.language === market) ?? currentCondition.languages[0];
   const selected = currentLanguage[type];
   const showsCheapest = type === "active" && selected.isReal && !selected.noListings && selected.rowCount > 0;
-
-  // Ladder order, raw first — `entries` arrives graded-first (PSA 10 down to
-  // Raw) because that is the order the tabs read in, but a grading ladder
-  // only tells its story from what you start with to what you could get.
-  // Active asks only, and always the currently selected market's own numbers.
-  const ladder: GradeLadderRow[] = [...entries].reverse().map((entry) => {
-    const tier = (entry.languages.find((l) => l.language === market) ?? entry.languages[0]).active;
-    return { label: entry.label, median: tier.medianPrice, count: tier.count, noListings: tier.noListings };
-  });
-  const ladderIsReal = ladder.length > 0 && [...entries].every((entry) => (entry.languages.find((l) => l.language === market) ?? entry.languages[0]).active.isReal);
-
-  // Same tiers, both eBay markets side by side. Unlike the ladder this does
-  // NOT follow the toggle — it is the comparison between the two markets, so
-  // it would be the same picture whichever flag is selected.
-  //
-  // Every tier goes in, including ones with no listings on one or both sides:
-  // an empty market is drawn at the centre and named in words below the chart,
-  // because "nobody is selling this grade here" is itself a market gap.
-  // Filtering those out kept collapsing three-tier One Piece cards below the
-  // three axes a polygon needs, taking the whole chart with them. See
-  // MarketGapRadar's comment.
-  const gapTiers = [...entries]
-    .reverse()
-    .map((entry) => ({
-      label: entry.label,
-      en: entry.languages.find((l) => l.language === "English")?.active,
-      ja: entry.languages.find((l) => l.language === "Japanese")?.active,
-    }))
-    .filter((t) => t.en && t.ja);
-  const gapRows: MarketGapRow[] = gapTiers.map((t) => ({ label: t.label, english: t.en!.medianPrice, japanese: t.ja!.medianPrice }));
-  const gapIsReal = gapTiers.every((t) => t.en!.isReal && t.ja!.isReal);
-
-  // Grading economics for the market the visitor is actually looking at.
-  //
-  // lib/graded-market.ts computes `roi` from English only, deliberately: it is
-  // the one market guaranteed to resolve for every card, and the ROI there
-  // never mixes a real median with an illustrative one. That was invisible
-  // while the panel had its own market pills, and became misleading once the
-  // flag toggle started driving everything else on the card — switch to JP and
-  // every block re-read except this one, which kept quoting English without
-  // saying so.
-  //
-  // So it is recomputed here for the selected market whenever that market has
-  // BOTH tiers real and priced, using the same gradingRoi() the server used.
-  // When it does not — a Japanese raw or PSA 10 tier with no listings — the
-  // English figures stand rather than a half-Japanese hybrid, and the footnote
-  // below says which market the reader is being shown. Falling back silently
-  // is the exact failure this block is fixing.
-  const activeTier = (condition: EbayCondition, language: MarketTab) =>
-    entries.find((e) => e.id === condition)?.languages.find((l) => l.language === language)?.active;
-  const roiPsa10 = activeTier("PSA 10", market);
-  const roiRaw = activeTier("Raw", market);
-  const roiFollowsMarket =
-    market !== "France" &&
-    !!roiPsa10?.isReal &&
-    !!roiRaw?.isReal &&
-    roiPsa10.medianPrice > 0 &&
-    roiRaw.medianPrice > 0;
-  const shownRoi = roiFollowsMarket
-    ? {
-        isReal: true,
-        percent: gradingRoi(roiPsa10!.medianPrice, roiRaw!.medianPrice, roi.gradingCostUsd) * 100,
-        psa10Median: roiPsa10!.medianPrice,
-        rawMedian: roiRaw!.medianPrice,
-        gradingCostUsd: roi.gradingCostUsd,
-        currency: roiPsa10!.currency,
-      }
-    : roi;
-  const roiMarket: MarketTab = roiFollowsMarket ? market : "English";
-
-  // The same bet, priced for every grade it could come back as. Raw is not an
-  // outcome of grading — it is the input — so it is the one tier excluded.
-  // Read from roiMarket rather than `market` so the payoff rows and the ROI
-  // callout above can never quote different markets at each other.
-  const payoffRows: GradePayoffRow[] = entries
-    .filter((entry) => entry.id !== "Raw")
-    .map((entry) => ({
-      label: entry.label,
-      sale: entry.languages.find((l) => l.language === roiMarket)?.active.medianPrice ?? 0,
-    }));
-  const payoffCost = shownRoi.rawMedian + shownRoi.gradingCostUsd;
 
   return (
     <div>
@@ -499,95 +384,6 @@ export function GradedMarketTabs({
           </div>
         )}
 
-        {/* Directly above the Grading ROI callout on purpose: the ladder shows
-            every tier's asking level and the callout does the raw -> PSA 10
-            arithmetic on two of those bars, so the two read as one grading
-            section. Placed here rather than at the top of the panel so the
-            three blocks the France branch is aligned against (filter row,
-            summary cards, listings box) keep their shared offsets — see
-            vinted-listings-section.tsx's header comment. */}
-        <GradeLadderChart currency={selected.currency} isReal={ladderIsReal} market={market} rows={ladder} />
-
-        <MarketGapRadar currency={selected.currency} isReal={gapIsReal} rows={gapRows} />
-
-        <div className="mt-6 overflow-hidden rounded-md border-2 border-black bg-pokemon-yellow shadow-hard-md">
-          {/* The gauge shares this callout rather than taking a card of its
-              own: it is the same raw / grading / PSA 10 arithmetic read over
-              the sale price instead of over the outlay, and splitting one
-              decision across two boxes would have said "grading" three times
-              in a row down the panel. Two columns on wide screens, stacked
-              below the figures on narrow ones. */}
-          {/* Both figures spelled out in words, because "ROI" and "margin"
-              are trade terms and a visitor pricing their first card should
-              not have to already know them. Whole units, not the raw
-              medians: "USD 756,475" is 756 dollars and 47 cents under this
-              locale's decimal comma, and it reads as three-quarters of a
-              million to anyone who assumes otherwise. Cents are noise on a
-              median of four asks anyway. */}
-          <div className="p-5">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto] sm:items-center">
-              <div>
-                {/* The market is named here, not left implied. Every other
-                    block on this panel is titled with the market it reads, and
-                    this one is the only place the two can disagree. */}
-                <div className="mb-1 flex flex-wrap items-center gap-2 text-xs font-black tracking-[0.3px] text-[#5a4600] uppercase">
-                  Grading ROI · {roiMarket} — raw → PSA 10
-                  {!shownRoi.isReal && <IllustrativeTag label="Preview — eBay not connected yet" />}
-                </div>
-                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <span className="text-3xl font-black tracking-[-0.6px] text-foreground tabular-nums">
-                    {shownRoi.percent >= 0 ? "+" : ""}
-                    {shownRoi.percent.toFixed(0)}%
-                  </span>
-                  <span className="text-xs font-black tracking-[0.3px] text-[#5a4600] uppercase">Return on what you spend</span>
-                </div>
-                <p className="mt-1.5 max-w-[46ch] text-xs font-bold text-[#5a4600]">
-                  {shownRoi.currency} {Math.round(shownRoi.rawMedian).toLocaleString()} for the raw card + {shownRoi.currency}{" "}
-                  {shownRoi.gradingCostUsd} to grade it = {shownRoi.currency}{" "}
-                  {Math.round(shownRoi.rawMedian + shownRoi.gradingCostUsd).toLocaleString()} spent. A PSA 10 is asking{" "}
-                  {shownRoi.currency} {Math.round(shownRoi.psa10Median).toLocaleString()}.
-                </p>
-              </div>
-
-              <GradingMarginGauge
-                currency={shownRoi.currency}
-                gradingCostUsd={shownRoi.gradingCostUsd}
-                psa10Median={shownRoi.psa10Median}
-                rawMedian={shownRoi.rawMedian}
-              />
-            </div>
-
-            {/* The two figures are the same money measured against different
-                things, and saying so is the only way the pair reads as one
-                answer rather than two competing ones. They are not
-                independent readings either — one is a fixed rearrangement of
-                the other — so presenting them as a cross-check would be a
-                lie by implication. */}
-            <p className="mt-4 border-t-2 border-black/15 pt-3 text-[11px] font-bold text-[#5a4600]">
-              Both numbers describe the same {shownRoi.currency}{" "}
-              {Math.round(shownRoi.psa10Median - shownRoi.rawMedian - shownRoi.gradingCostUsd).toLocaleString()}: the return measures it
-              against what you spend, the margin against what you sell for.{" "}
-              {shownRoi.isReal
-                ? `These are ${roiMarket} asking prices on eBay today, not completed sales, and the grading fee is an estimate.`
-                : "These are preview numbers, not a real market reading."}{" "}
-              {market !== "France" && !roiFollowsMarket && shownRoi.isReal
-                ? `The ${market} market has no priced raw and PSA 10 pair today, so English figures are shown instead.`
-                : ""}
-            </p>
-          </div>
-        </div>
-        {/* After the ROI callout, not before: that block is the headline
-            answer for the grade everyone hopes for, and this is the rest of
-            the distribution behind it. */}
-        {shownRoi.isReal && payoffCost > 0 && (
-          <GradePayoffGauges
-            cost={payoffCost}
-            currency={shownRoi.currency}
-            isReal={shownRoi.isReal}
-            market={roiMarket}
-            rows={payoffRows}
-          />
-        )}
       </div>
 
       <div hidden={market !== "France"}>
