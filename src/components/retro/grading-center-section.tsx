@@ -100,7 +100,13 @@ export function GradingCenterSection({ card, data }: { card: Card; data: GradedM
         </div>
       </header>
 
-      <section className="flex flex-col gap-5 rounded-lg border-2 border-black bg-card-surface p-7 shadow-hard-lg">
+      {/* No card around this. Every block inside it already has its own hard
+          border and shadow — the Grading economics panel, the verdict, each
+          roadmap sketch — so wrapping them in one more produced a frame around
+          a set of frames, and cost 28px of padding on either side that the
+          charts inside could have used. The heading, the rule and the toggle
+          are enough to say where the section starts. */}
+      <section className="flex flex-col gap-5">
         <div className="flex flex-wrap items-center gap-4">
           <span className="inline-flex items-center gap-2 text-[15px] font-black tracking-[0.8px] whitespace-nowrap text-pokemon-blue uppercase">
             {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, not an optimizable remote domain */}
