@@ -1,4 +1,5 @@
 import { ProductLocaleToggle } from "@/components/product-locale";
+import { MarketVitals } from "@/components/retro/market-vitals";
 import { GradedMarketTabs, type ConditionEntry, type TypeSummary, type VintedSummary } from "@/components/retro/graded-market-tabs";
 import { franchiseLabel } from "@/lib/cards";
 import { getGradedMarketData, type GradedMarketTypeData } from "@/lib/graded-market";
@@ -128,6 +129,12 @@ export async function GradedMarketPanel({ card }: { card: Card }) {
         <span className="h-px min-w-4 flex-1 bg-border-subtle" />
         <ProductLocaleToggle />
       </div>
+
+      {/* Above the market toggle's own content, because these four answers do
+          not change with the flag: three read the raw card's own price series
+          and the fourth counts listings across every market at once. A strip
+          that sat inside the tabs would imply it re-reads per market. */}
+      <MarketVitals card={card} data={data} />
 
       <GradedMarketTabs entries={entries} vinted={vinted} roi={data.roi} />
     </div>

@@ -2,6 +2,7 @@
 
 import { Minus, TrendingDown, TrendingUp } from "lucide-react";
 import { useRef, useState } from "react";
+import { trendSignal } from "@/lib/price-signal";
 import type { PriceHistoryPoint, PriceTrend } from "@/lib/types";
 
 type PriceChartProps = {
@@ -152,18 +153,13 @@ export function PriceChart({ history, currency, trend, className }: PriceChartPr
   };
 
   // trend signal — a real derived fact (current vs its own 90-day average),
-  // not a forecast. Requires at least one comparable data point.
-  const trendDay90 = trend?.day90 ?? null;
-  const trendPct =
-    trendDay90 && trendDay90 > 0 ? ((last.price - trendDay90) / trendDay90) * 100 : null;
-
-  // Within +/-5% of the 3mo avg reads as noise, not a real move — labeled
-  // "Stable" instead of Bullish/Bearish so a +0.3% blip doesn't look like a
-  // directional signal.
-  const STABLE_THRESHOLD_PCT = 5;
-  const isBullish = trendPct !== null && trendPct > STABLE_THRESHOLD_PCT;
-  const isBearish = trendPct !== null && trendPct < -STABLE_THRESHOLD_PCT;
-  const isStable = trendPct !== null && !isBullish && !isBearish;
+  // not a forecast. The rule itself lives in lib/price-signal.ts because the
+  // Market Overview's vitals strip reads the same verdict, and two copies of
+  // the threshold would be two chances to disagree about one card.
+  const { pct: trendPct, label: trendLabel } = trendSignal(last.price, trend?.day90);
+  const isBullish = trendLabel === "Bullish";
+  const isBearish = trendLabel === "Bearish";
+  const isStable = trendLabel === "Stable";
   const badgeColor = isBullish
     ? COLOR_GOOD
     : isBearish
