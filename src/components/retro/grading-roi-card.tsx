@@ -1,5 +1,5 @@
 import { EyebrowTitle } from "@/components/retro/eyebrow-title";
-import { GradePayoffGauges, type GradePayoffRow } from "@/components/retro/grade-payoff-gauges";
+import { ProfitLadder, type ProfitLadderGrade } from "@/components/retro/profit-ladder";
 import { IllustrativeTag } from "@/components/retro/illustrative-tag";
 
 /**
@@ -53,8 +53,8 @@ export function GradingRoiCard({
   isReal: boolean;
   /** Set only when the selected market could not price the trade and English figures stand in. */
   fallbackNote?: string;
-  /** The grades this card's headline does NOT price — PSA 9, PSA 8. */
-  outcomes: GradePayoffRow[];
+  /** Every grade PSA could return, best first — the target one included and marked. */
+  outcomes: ProfitLadderGrade[];
 }) {
   const cost = rawMedian + gradingCost;
   const margin = psa10Median - cost;
@@ -121,12 +121,11 @@ export function GradingRoiCard({
         </div>
 
         {/* Same card, because it is one question. The bar above prices the
-            grade everyone hopes for; these price the ones you might actually
-            get, off the identical outlay. PSA 10 is deliberately absent from
-            the rows — the headline IS the PSA 10 case, and repeating it under
-            a heading that says "if it doesn't come back a 10" printed the same
-            profit and the same share twice on one card. */}
-        {outcomes.length > 0 && <GradePayoffGauges cost={cost} currency={currency} rows={outcomes} />}
+            grade everyone hopes for; the ladder prices every grade you might
+            actually get, off the identical outlay, on one shared scale. */}
+        {outcomes.length > 0 && (
+          <ProfitLadder currency={currency} fee={gradingCost} grades={outcomes} rawPrice={rawMedian} />
+        )}
 
         <p className="mt-6 border-t-2 border-border-subtle pt-3 text-[11px] font-bold text-muted-text">
           {/* The grading fee had been called an estimate in the section's
@@ -134,7 +133,7 @@ export function GradingRoiCard({
               title above it, so it is gone and the caveat comes back here,
               attached to the figure it qualifies. */}
           {isReal
-            ? `${market} asking prices, not completed sales, and the grading fee is an estimate.`
+            ? `${market} asking prices, not completed sales, and the grading fee is an estimate. Every ladder row is drawn on the same scale, so a shortfall stops visibly short of the break-even line.`
             : "Preview numbers, not a real market reading."}
           {fallbackNote ? ` ${fallbackNote}` : ""}
         </p>

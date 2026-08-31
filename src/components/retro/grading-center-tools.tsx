@@ -2,7 +2,7 @@
 
 import { GradeAnalysisCard } from "@/components/retro/grade-analysis-card";
 import type { GradeTableRow } from "@/components/retro/grade-rows";
-import type { GradePayoffRow } from "@/components/retro/grade-payoff-gauges";
+import type { ProfitLadderGrade } from "@/components/retro/profit-ladder";
 import { GradingRoiCard } from "@/components/retro/grading-roi-card";
 import { MarketDataBadge } from "@/components/retro/market-data-badge";
 import { useSelectedMarket, type MarketTab } from "@/components/retro/market-tab";
@@ -104,15 +104,17 @@ export function GradingCenterTools({
   // outcome of grading — it is the input — so it is the one tier excluded.
   // Read from roiMarket rather than `market` so the payoff rows and the ROI
   // callout above can never quote different markets at each other.
-  // Raw is the input, not an outcome; PSA 10 is what the card's headline
-  // already prices, and listing it under "if it doesn't come back a 10" put
-  // the same profit and the same share on the card twice.
-  const payoffRows: GradePayoffRow[] = conditions
-    .filter((entry) => entry.condition !== "Raw" && entry.condition !== "PSA 10")
-    .map((entry) => ({
-      label: entry.condition,
-      sale: entry.languages.find((l) => l.language === roiMarket)?.active.medianPrice ?? 0,
-    }));
+  // Raw is the input rather than an outcome, so it is the one tier the ladder
+  // does not list as a grade — it gets its own "sell raw now" row instead. The
+  // target grade IS listed: on a shared scale it is what the weaker rows are
+  // read against. A tier with nothing listed comes through as null, which the
+  // ladder draws as an empty bar rather than a zero-price one.
+  const payoffRows: ProfitLadderGrade[] = conditions
+    .filter((entry) => entry.condition !== "Raw")
+    .map((entry) => {
+      const median = entry.languages.find((l) => l.language === roiMarket)?.active.medianPrice ?? 0;
+      return { label: entry.condition, sale: median > 0 ? median : null, target: entry.condition === "PSA 10" };
+    });
   const payoffCost = shownRoi.rawMedian + shownRoi.gradingCostUsd;
 
   // The chart plots both markets, so it is only "real" when both of the tiers
