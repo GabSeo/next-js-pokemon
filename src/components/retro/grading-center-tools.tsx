@@ -1,9 +1,10 @@
 "use client";
 
-import { GradeLadderChart, type GradeLadderRow } from "@/components/retro/grade-ladder-chart";
+import { GradeAnalysisCard } from "@/components/retro/grade-analysis-card";
+import type { GradeLadderRow } from "@/components/retro/grade-ladder-chart";
 import type { GradePayoffRow } from "@/components/retro/grade-payoff-gauges";
 import { GradingRoiCard } from "@/components/retro/grading-roi-card";
-import { MarketGapRadar, type MarketGapRow } from "@/components/retro/market-gap-radar";
+import type { MarketGapRow } from "@/components/retro/market-gap-radar";
 import { useSelectedMarket, type MarketTab } from "@/components/retro/market-tab";
 import { StepHeading } from "@/components/retro/step-heading";
 import type { EbayCondition } from "@/lib/ebay-browse";
@@ -142,9 +143,14 @@ export function GradingCenterTools({
       <div className="flex flex-col gap-4">
         <StepHeading step="01" title="Grade analysis" tone="red" />
 
-        <GradeLadderChart currency={currency} isReal={ladderIsReal} market={gradedMarket} rows={ladder} />
-
-        <MarketGapRadar currency={currency} isReal={gapIsReal} rows={gapRows} />
+        <GradeAnalysisCard
+          currency={currency}
+          gapIsReal={gapIsReal}
+          gapRows={gapRows}
+          ladder={ladder}
+          ladderIsReal={ladderIsReal}
+          market={gradedMarket}
+        />
       </div>
 
       {/* 02 answers the question, and it takes both cards to answer it. The

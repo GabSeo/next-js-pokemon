@@ -6,6 +6,7 @@ import { BarYAxis } from "@/components/charts/bar-y-axis";
 import { Grid } from "@/components/charts/grid";
 import { ChartTooltip } from "@/components/charts/tooltip";
 import { EyebrowTitle } from "@/components/retro/eyebrow-title";
+import { StatCell, StatRow } from "@/components/retro/stat-row";
 import { MarketDataBadge } from "@/components/retro/market-data-badge";
 
 /** One grading tier's current asking level in the selected market. */
@@ -71,11 +72,13 @@ export function GradeLadderChart({
   const data = rows.map((r) => ({ tier: r.label, median: r.median }));
 
   return (
-    <div className="h-full rounded-lg border-2 border-black bg-white p-5 shadow-hard-sm">
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
+    // Chrome comes from the card this now sits inside; the section only owns
+    // its own heading, chart and figures.
+    <div>
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
         <div>
           <EyebrowTitle tone="red">Grade ladder · {market}</EyebrowTitle>
-          <p className="mt-1 text-[10px] font-bold text-muted-text">Median asking price per grade, today</p>
+          <p className="mt-1.5 text-[11px] font-bold text-muted-text">Median asking price per grade, today</p>
         </div>
         {/* Only when this block specifically is not real. The panel head
             carries one LIVE badge for the section, and four more saying the
@@ -113,23 +116,20 @@ export function GradeLadderChart({
         <ChartTooltip />
       </BarChart>
 
-      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 border-t-2 border-border-subtle pt-3 sm:grid-cols-4">
+      <StatRow columns={4}>
         {rows.map((row) => (
-          <div key={row.label}>
-            <dt className="text-[10px] font-black tracking-[0.5px] text-muted-text uppercase">{row.label}</dt>
-            <dd className="text-sm font-black tracking-[-0.2px] tabular-nums">
-              {row.noListings || row.median <= 0 ? (
-                <span className="text-muted-text">No listings</span>
-              ) : (
-                <>
-                  {currency} {row.median.toLocaleString()}
-                  <span className="ml-1.5 text-[10px] font-bold text-muted-text">({row.count})</span>
-                </>
-              )}
-            </dd>
-          </div>
+          <StatCell key={row.label} label={row.label}>
+            {row.noListings || row.median <= 0 ? (
+              <span className="text-muted-text">No listings</span>
+            ) : (
+              <>
+                {currency} {row.median.toLocaleString()}
+                <span className="ml-1.5 text-[10px] font-bold text-muted-text">({row.count})</span>
+              </>
+            )}
+          </StatCell>
         ))}
-      </dl>
+      </StatRow>
     </div>
   );
 }
