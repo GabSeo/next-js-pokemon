@@ -1,15 +1,8 @@
 "use client";
 
-import { GradeLadderChart, type GradeLadderRow } from "@/components/retro/grade-ladder-chart";
-import { MarketGapRadar, type MarketGapRow } from "@/components/retro/market-gap-radar";
+import { GradeLadderChart } from "@/components/retro/grade-ladder-chart";
+import { ENGLISH_COLOR, JAPANESE_COLOR, type GradeTableRow } from "@/components/retro/grade-rows";
 import { formatPrice } from "@/lib/format-price";
-
-/** One grade, priced in both eBay markets, with the depth behind each price. */
-export type GradeTableRow = {
-  label: string;
-  english: { median: number; count: number } | null;
-  japanese: { median: number; count: number } | null;
-};
 
 /** Below this a market gap is not worth calling out — it is inside the noise of four asks. */
 const NOTABLE_GAP_PCT = 10;
@@ -52,9 +45,12 @@ function gradingInsight(rows: GradeTableRow[], market: string, currency: string)
   const clauses: string[] = [];
   if (top && rawPrice > 0 && topPrice > 0) {
     const multiple = topPrice / rawPrice;
-    clauses.push(`${top.label} asks ${multiple >= 10 ? multiple.toFixed(0) : multiple.toFixed(1)}× a raw copy`);
+    // Named market, now that the chart under it plots both. Unqualified,
+    // "PSA 10 asks 3.2x a raw copy" read as a fact about the card when it is
+    // a fact about one of the two series drawn below.
+    clauses.push(`${market} ${top.label} asks ${multiple >= 10 ? multiple.toFixed(0) : multiple.toFixed(1)}× a raw copy`);
   } else if (top && topPrice > 0) {
-    clauses.push(`${top.label} asks ${formatPrice(topPrice, currency)}`);
+    clauses.push(`${market} ${top.label} asks ${formatPrice(topPrice, currency)}`);
   }
 
   const widest = rows
@@ -63,7 +59,7 @@ function gradingInsight(rows: GradeTableRow[], market: string, currency: string)
     .sort((a, b) => b.pct - a.pct)[0];
 
   if (widest && widest.pct >= NOTABLE_GAP_PCT) {
-    clauses.push(`the ${widest.jpCheaper ? "Japanese" : "English"} ${widest.label} runs ${widest.pct}% cheaper`);
+    clauses.push(`${widest.jpCheaper ? "Japanese" : "English"} runs ${widest.pct}% cheaper at ${widest.label}`);
   }
 
   return clauses.length > 0 ? `${clauses.join(" — and ")}.` : null;
@@ -109,20 +105,15 @@ function PriceCell({ value, currency }: { value: { median: number; count: number
  * and the table only.
  */
 export function GradeAnalysisCard({
-  ladder,
   ladderIsReal,
-  gapRows,
-  gapIsReal,
   tableRows,
   currency,
   market,
 }: {
-  ladder: GradeLadderRow[];
   ladderIsReal: boolean;
-  gapRows: MarketGapRow[];
-  gapIsReal: boolean;
   tableRows: GradeTableRow[];
   currency: string;
+  /** The market the headline's multiple is read in — named in the sentence, since the chart now shows both. */
   market: string;
 }) {
   const insight = gradingInsight(tableRows, market, currency);
@@ -144,12 +135,7 @@ export function GradeAnalysisCard({
       </div>
 
       <div className="pt-5">
-        <GradeLadderChart isReal={ladderIsReal} market={market} rows={ladder} />
-      </div>
-
-      {/* One rule, not a gap — the sections are one argument in two parts. */}
-      <div className="mt-5 border-t border-border-subtle pt-5">
-        <MarketGapRadar isReal={gapIsReal} rows={gapRows} />
+        <GradeLadderChart isReal={ladderIsReal} rows={tableRows} />
       </div>
 
       {/* Scrolls inside its own container rather than wrapping. A four-column
@@ -160,8 +146,20 @@ export function GradeAnalysisCard({
           <thead>
             <tr className="text-[10px] font-black tracking-[0.5px] text-muted-text uppercase">
               <th className="pb-2 pr-3 font-black">Grade</th>
-              <th className="pb-2 pr-3 font-black">English</th>
-              <th className="pb-2 pr-3 font-black">Japanese</th>
+              {/* Same square, same colour, as the bars above — the column and
+                  its series have to be identifiable as one thing. */}
+              <th className="pb-2 pr-3 font-black">
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-[2px] border border-black" style={{ backgroundColor: ENGLISH_COLOR }} />
+                  English
+                </span>
+              </th>
+              <th className="pb-2 pr-3 font-black">
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-[2px] border border-black" style={{ backgroundColor: JAPANESE_COLOR }} />
+                  Japanese
+                </span>
+              </th>
               <th className="pb-2 font-black">Gap</th>
             </tr>
           </thead>

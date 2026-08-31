@@ -1,11 +1,9 @@
 "use client";
 
-import { GradeAnalysisCard, type GradeTableRow } from "@/components/retro/grade-analysis-card";
-import type { GradeLadderRow } from "@/components/retro/grade-ladder-chart";
+import { GradeAnalysisCard } from "@/components/retro/grade-analysis-card";
+import type { GradeTableRow } from "@/components/retro/grade-rows";
 import type { GradePayoffRow } from "@/components/retro/grade-payoff-gauges";
 import { GradingRoiCard } from "@/components/retro/grading-roi-card";
-import type { MarketGapRow } from "@/components/retro/market-gap-radar";
-import { ProductLocaleToggle } from "@/components/product-locale";
 import { MarketDataBadge } from "@/components/retro/market-data-badge";
 import { useSelectedMarket, type MarketTab } from "@/components/retro/market-tab";
 import { StepHeading } from "@/components/retro/step-heading";
@@ -53,37 +51,6 @@ export function GradingCenterTools({
   // condition and it is not a PSA grade.
   const gradedMarket: MarketTab = market === "France" ? marketTabs[0] : market;
   const currency = conditions[0].languages[0].active.currency;
-
-  // Ladder order, raw first — `entries` arrives graded-first (PSA 10 down to
-  // Raw) because that is the order the tabs read in, but a grading ladder
-  // only tells its story from what you start with to what you could get.
-  // Active asks only, and always the currently selected market's own numbers.
-  const ladder: GradeLadderRow[] = [...conditions].reverse().map((entry) => {
-    const tier = (entry.languages.find((l) => l.language === gradedMarket) ?? entry.languages[0]).active;
-    return { label: entry.condition, median: tier.medianPrice, count: tier.count, noListings: tier.noListings };
-  });
-  const ladderIsReal = ladder.length > 0 && [...conditions].every((entry) => (entry.languages.find((l) => l.language === gradedMarket) ?? entry.languages[0]).active.isReal);
-
-  // Same tiers, both eBay markets side by side. Unlike the ladder this does
-  // NOT follow the toggle — it is the comparison between the two markets, so
-  // it would be the same picture whichever flag is selected.
-  //
-  // Every tier goes in, including ones with no listings on one or both sides:
-  // an empty market is drawn at the centre and named in words below the chart,
-  // because "nobody is selling this grade here" is itself a market gap.
-  // Filtering those out kept collapsing three-tier One Piece cards below the
-  // three axes a polygon needs, taking the whole chart with them. See
-  // MarketGapRadar's comment.
-  const gapTiers = [...conditions]
-    .reverse()
-    .map((entry) => ({
-      label: entry.condition,
-      en: entry.languages.find((l) => l.language === "English")?.active,
-      ja: entry.languages.find((l) => l.language === "Japanese")?.active,
-    }))
-    .filter((t) => t.en && t.ja);
-  const gapRows: MarketGapRow[] = gapTiers.map((t) => ({ label: t.label, english: t.en!.medianPrice, japanese: t.ja!.medianPrice }));
-  const gapIsReal = gapTiers.every((t) => t.en!.isReal && t.ja!.isReal);
 
   // Every grade, both markets, with the depth behind each price — the one
   // table under the charts. Ladder order (raw first) so the rows read the way
@@ -148,33 +115,27 @@ export function GradingCenterTools({
     }));
   const payoffCost = shownRoi.rawMedian + shownRoi.gradingCostUsd;
 
+  // The chart plots both markets, so it is only "real" when both of the tiers
+  // it draws are — a preview badge on one side would otherwise sit silently
+  // under live bars from the other.
+  const ladderIsReal = conditions.every((entry) =>
+    entry.languages.every((l) => l.active.isReal)
+  );
+
   return (
     <>
       {/* 01 reads the market: what the grades are worth, and whether the
           other market pays better for them. One column, full width each —
           side by side the narrower block only got squeezed. */}
       <div className="flex flex-col gap-4">
-        {/* The market control lives here now, on the row for the step it
-            actually governs, rather than in a panel header that repeated the
-            section's own title back at it. The status badge comes along
-            because it describes the same data the toggle selects. */}
-        <StepHeading
-          action={
-            <span className="flex items-center gap-3">
-              <MarketDataBadge isReal={shownRoi.isReal} />
-              <ProductLocaleToggle />
-            </span>
-          }
-          step="01"
-          title="Grade analysis"
-          tone="red"
-        />
+        {/* No market toggle here any more. The bar chart draws English and
+            Japanese together, so there is nothing left for this step to
+            switch — the Market Overview panel still carries the one toggle on
+            the page, and the verdict below names whichever market it read. */}
+        <StepHeading action={<MarketDataBadge isReal={shownRoi.isReal} />} step="01" title="Grade analysis" tone="red" />
 
         <GradeAnalysisCard
           currency={currency}
-          gapIsReal={gapIsReal}
-          gapRows={gapRows}
-          ladder={ladder}
           ladderIsReal={ladderIsReal}
           market={gradedMarket}
           tableRows={tableRows}

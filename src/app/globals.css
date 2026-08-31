@@ -198,3 +198,12 @@
   stroke: var(--foreground);
   stroke-width: 2px;
 }
+
+/* A market with no listings for a grade reaches the chart as 0, and visx
+   draws a zero-width rect for it. Geometry-wise that is invisible, but the
+   2px stroke above is not: it paints a black tick against the axis that
+   reads as a broken bar rather than an absent market. The grade's missing
+   side is named in words under the chart instead. */
+.grade-ladder-chart g[class^="bar-series-"] > rect[width="0"] {
+  display: none;
+}
