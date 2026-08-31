@@ -4,7 +4,7 @@ import { formatPrice } from "@/lib/format-price";
 export type ProfitLadderGrade = {
   label: string;
   sale: number | null;
-  /** The grade the card's headline prices — marked, not hidden. */
+  /** The grade the card's headline already prices. Sets the scale; never gets a row. */
   target?: boolean;
 };
 
@@ -68,10 +68,13 @@ function pipsFor(sale: number, cost: number, scale: number, tone: string): Pip[]
  * fact the whole block exists to show, and one shared reference states it
  * better than three separate percentages did.
  *
- * The target grade is included and labelled rather than dropped. It was
- * removed once, when this sat under a headline that already priced it, but on
- * a shared scale it is the reference every other row is read against — the
- * comparison stops working without it.
+ * The target grade sets the scale but gets no row. Its price is already the
+ * headline and the bar directly above this block, and a row would have printed
+ * the same figure twice on one card — under a heading that asks what happens
+ * when the card does NOT come back a 10, which is the one outcome it is not
+ * about. Keeping it as the scale is what the rows are measured against: the
+ * grey past each bar is the best case you did not get, and the footnote names
+ * the grade so that grey is not a mystery.
  *
  * No chart library here. The pips are flex children, so this renders on the
  * server like the rest of the card, with no client-only mount and none of the
@@ -94,17 +97,20 @@ export function ProfitLadder({
   const cost = rawPrice + fee;
   const money = (n: number) => formatPrice(n, currency);
 
-  // Every row, including the raw one, measured against the biggest number on
-  // the card. Cost is in the running so the break-even line stays on the chart
-  // even when no grade clears it.
+  // Scale spans EVERY grade, target included, even though the target is not
+  // drawn. Dropping it from the scale too would stretch the weaker rows to
+  // fill the width and push break-even against the right edge, which is the
+  // opposite of the reading this block exists for. Cost is in the running so
+  // the line stays on the chart even when no grade clears it.
   const scale = Math.max(rawPrice, cost, ...grades.map((g) => g.sale ?? 0));
+  const shown = grades.filter((grade) => !grade.target);
   const breakEvenPct = Math.min(100, (cost / scale) * 100);
 
-  const rows = grades.map((grade) => {
+  const rows = shown.map((grade) => {
     if (grade.sale === null) {
       return {
         key: grade.label,
-        label: grade.label + (grade.target ? " · target" : ""),
+        label: grade.label,
         delta: "No listings",
         deltaColor: "var(--muted-text)",
         note: "Nothing listed at this grade — treat as unpriceable downside",
@@ -115,7 +121,7 @@ export function ProfitLadder({
     const gained = delta > 0;
     return {
       key: grade.label,
-      label: grade.label + (grade.target ? " · target" : ""),
+      label: grade.label,
       delta: `${gained ? "+" : "−"}${money(Math.abs(delta))}`,
       deltaColor: gained ? GAIN_TEXT : LOSS_FILL,
       note: gained

@@ -133,7 +133,7 @@ export function GradingRoiCard({
               title above it, so it is gone and the caveat comes back here,
               attached to the figure it qualifies. */}
           {isReal
-            ? `${market} asking prices, not completed sales, and the grading fee is an estimate. Every ladder row is drawn on the same scale, so a shortfall stops visibly short of the break-even line.`
+            ? `${market} asking prices, not completed sales, and the grading fee is an estimate. Every ladder row is drawn on the PSA 10 scale, so a shortfall stops visibly short of the break-even line.`
             : "Preview numbers, not a real market reading."}
           {fallbackNote ? ` ${fallbackNote}` : ""}
         </p>
