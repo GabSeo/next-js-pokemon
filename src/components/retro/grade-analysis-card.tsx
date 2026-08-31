@@ -141,7 +141,7 @@ export function GradeAnalysisCard({
       </div>
 
       <div className="pt-5">
-        <GradeLadderChart isReal={ladderIsReal} rows={tableRows} />
+        <GradeLadderChart currency={currency} isReal={ladderIsReal} rows={tableRows} />
       </div>
 
       {/* Scrolls inside its own container rather than wrapping. A four-column

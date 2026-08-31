@@ -8,6 +8,7 @@ import { ChartTooltip } from "@/components/charts/tooltip";
 import { EyebrowTitle } from "@/components/retro/eyebrow-title";
 import { ENGLISH_COLOR, JAPANESE_COLOR, type GradeTableRow } from "@/components/retro/grade-rows";
 import { MarketDataBadge } from "@/components/retro/market-data-badge";
+import { formatPrice } from "@/lib/format-price";
 
 /**
  * Median asking price per grade, English against Japanese, as paired bars.
@@ -29,7 +30,7 @@ import { MarketDataBadge } from "@/components/retro/market-data-badge";
  * these bars are geometry rather than text, and the table is where an agent
  * parsing raw HTML reads them.
  */
-export function GradeLadderChart({ rows, isReal }: { rows: GradeTableRow[]; isReal: boolean }) {
+export function GradeLadderChart({ rows, currency, isReal }: { rows: GradeTableRow[]; currency: string; isReal: boolean }) {
   // Nothing to compare when every grade came back empty in both markets: four
   // absent bars and a shrug, worse than the table's own empty state.
   const priced = rows.filter((r) => (r.english?.median ?? 0) > 0 || (r.japanese?.median ?? 0) > 0);
@@ -90,7 +91,25 @@ export function GradeLadderChart({ rows, isReal }: { rows: GradeTableRow[]; isRe
         <Bar dataKey="english" fill={ENGLISH_COLOR} lineCap={0} />
         <Bar dataKey="japanese" fill={JAPANESE_COLOR} lineCap={0} />
         <BarYAxis />
-        <ChartTooltip />
+        {/* Without this the tooltip prints the raw dataKeys and the raw
+            numbers — "english 783.2", "japanese 634.67" — which is neither the
+            market's name nor the way a price is written anywhere else on the
+            page. Same labels as the legend, same formatter as the table, and
+            a market with nothing listed says so instead of showing USD 0. */}
+        <ChartTooltip
+          rows={(point) => [
+            {
+              color: ENGLISH_COLOR,
+              label: "English",
+              value: Number(point.english) > 0 ? formatPrice(Number(point.english), currency) : "No listings",
+            },
+            {
+              color: JAPANESE_COLOR,
+              label: "Japanese",
+              value: Number(point.japanese) > 0 ? formatPrice(Number(point.japanese), currency) : "No listings",
+            },
+          ]}
+        />
       </BarChart>
 
       {absent.length > 0 && <p className="mt-2 text-[10px] font-bold text-muted-text">{absent.join(" · ")}</p>}
