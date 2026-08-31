@@ -119,7 +119,13 @@ export function GradeAnalysisCard({
   const insight = gradingInsight(tableRows, market, currency);
 
   return (
-    <div className="overflow-hidden rounded-lg border-2 border-black bg-card-surface p-5 shadow-hard-sm sm:p-6">
+    // No overflow-hidden. The chart's tooltip is an absolutely positioned
+    // element inside the chart container, and for the lower bars it sits near
+    // the bottom of the plot and extends past it — clipped by this card, so
+    // hovering PSA 9 or PSA 10 registered (the other bars faded) but produced
+    // no visible tooltip. Nothing here bleeds to the edge and needs clipping;
+    // rounded-lg shapes the corners on its own.
+    <div className="rounded-lg border-2 border-black bg-card-surface p-5 shadow-hard-sm sm:p-6">
       <div className="border-b-2 border-border-subtle pb-4">
         <h3 className="text-lg leading-6 font-black tracking-[-0.45px]">Grading economics</h3>
         {insight ? (
