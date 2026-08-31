@@ -2,31 +2,118 @@
 
 import { GradeLadderChart, type GradeLadderRow } from "@/components/retro/grade-ladder-chart";
 import { MarketGapRadar, type MarketGapRow } from "@/components/retro/market-gap-radar";
+import { formatPrice } from "@/lib/format-price";
+
+/** One grade, priced in both eBay markets, with the depth behind each price. */
+export type GradeTableRow = {
+  label: string;
+  english: { median: number; count: number } | null;
+  japanese: { median: number; count: number } | null;
+};
+
+/** Below this a market gap is not worth calling out — it is inside the noise of four asks. */
+const NOTABLE_GAP_PCT = 10;
+
+function gapPct(a: number, b: number): number {
+  return Math.round((1 - Math.min(a, b) / Math.max(a, b)) * 100);
+}
 
 /**
- * The two market readings in one panel: what each grade is worth, and which
- * market pays more for it.
+ * The one line a reader should leave with, computed from the same medians the
+ * charts draw.
  *
- * They were two bordered cards stacked with a gap between them, which framed
- * them as unrelated widgets that happened to be adjacent. They are not — the
- * second one only means anything in terms of the first. The ladder says a PSA
- * 10 asks four times what a raw copy does; the radar says which side of the
- * Pacific that multiple is bigger on. One card, one heading, a thin rule
- * between the sections instead of a gap, and the narrative holds.
+ * Two facts, in the order they matter: how far grading moves the price, then
+ * whether the other market prices that grade differently enough to care. Both
+ * clauses are dropped rather than padded when the data cannot support them —
+ * no raw price means no multiple, no gap over the threshold means no second
+ * clause, and neither means no headline at all rather than a sentence that
+ * says nothing.
  *
- * Neither chart is touched. Both still render exactly what the charting
- * library produces; this only supplies the frame, the headings, the rhythm
- * and the divider they sit in.
+ * Says "asks" and never "sells". These are the cheapest live asking prices,
+ * which is the caveat the whole panel is built on.
+ */
+function gradingInsight(rows: GradeTableRow[], market: string, currency: string): string | null {
+  const priced = rows.filter((r) => (r.english?.median ?? 0) > 0 || (r.japanese?.median ?? 0) > 0);
+  if (priced.length === 0) return null;
+
+  const inMarket = (r: GradeTableRow) => (market === "Japanese" ? r.japanese : r.english);
+  const raw = rows.find((r) => r.label === "Raw");
+  const rawPrice = raw ? (inMarket(raw)?.median ?? 0) : 0;
+
+  // The highest grade this card actually has a price for — LAST in the list,
+  // not first: these rows are in ladder order, raw first, so `graded[0]` is
+  // the lowest grade and the headline would have reported PSA 8 as the target
+  // of grading. Not an assumed PSA 10 either, since One Piece cards top out
+  // at whatever tier lib/graded-market.ts queried for that franchise.
+  const graded = rows.filter((r) => r.label !== "Raw" && (inMarket(r)?.median ?? 0) > 0);
+  const top = graded.at(-1);
+  const topPrice = top ? (inMarket(top)?.median ?? 0) : 0;
+
+  const clauses: string[] = [];
+  if (top && rawPrice > 0 && topPrice > 0) {
+    const multiple = topPrice / rawPrice;
+    clauses.push(`${top.label} asks ${multiple >= 10 ? multiple.toFixed(0) : multiple.toFixed(1)}× a raw copy`);
+  } else if (top && topPrice > 0) {
+    clauses.push(`${top.label} asks ${formatPrice(topPrice, currency)}`);
+  }
+
+  const widest = rows
+    .filter((r) => (r.english?.median ?? 0) > 0 && (r.japanese?.median ?? 0) > 0)
+    .map((r) => ({ label: r.label, pct: gapPct(r.english!.median, r.japanese!.median), jpCheaper: r.japanese!.median < r.english!.median }))
+    .sort((a, b) => b.pct - a.pct)[0];
+
+  if (widest && widest.pct >= NOTABLE_GAP_PCT) {
+    clauses.push(`the ${widest.jpCheaper ? "Japanese" : "English"} ${widest.label} runs ${widest.pct}% cheaper`);
+  }
+
+  return clauses.length > 0 ? `${clauses.join(" — and ")}.` : null;
+}
+
+/** A price with the number of listings behind it, demoted to a footnote-sized figure. */
+function PriceCell({ value, currency }: { value: { median: number; count: number } | null; currency: string }) {
+  if (!value || value.median <= 0) {
+    return <span className="text-[11px] font-bold whitespace-nowrap text-muted-text">No listings</span>;
+  }
+  return (
+    <span className="whitespace-nowrap">
+      <span className="text-[13px] font-black tracking-[-0.2px] tabular-nums">{formatPrice(value.median, currency)}</span>{" "}
+      {/* Kept in the markup rather than hidden behind a hover: sample size is
+          a trust signal, and this site's rule is that anything on screen is as
+          readable to an agent parsing raw HTML as to a human. Demoted to 9px
+          muted so it stops competing with the price, with the full wording on
+          the title attribute for anyone who needs it spelled out. */}
+      <span className="text-[9px] font-bold text-muted-text tabular-nums" title={`${value.count} live listings`}>
+        ·{value.count}
+      </span>
+    </span>
+  );
+}
+
+/**
+ * The two market readings and the numbers behind them, as one panel.
  *
- * Stacked, not side by side. The radar needs its width — squeezed into a
- * column beside the ladder it lost the labels around its rim, and on a phone
- * the two would have wrapped into the same stack anyway.
+ * Three tiers, in this order. The headline is a sentence synthesised from the
+ * medians — the takeaway the reader was previously left to assemble by
+ * eye from a bar chart, a radar and two differently-shaped stat rows. The
+ * charts are the evidence for it. The table is the detail, at the bottom, at
+ * the smallest weight.
+ *
+ * The two stat rows are gone, replaced by one table. They described the same
+ * four grades in two different shapes — a flat four-column row of single
+ * prices, then a two-column list of comparisons — which is why they never
+ * read as one system however their type was matched. A grade is a row; the
+ * markets are columns; the gap is the column that compares them. One shape,
+ * and both charts' figures live in it.
+ *
+ * Neither chart is touched. This supplies the frame, the heading, the rhythm
+ * and the table only.
  */
 export function GradeAnalysisCard({
   ladder,
   ladderIsReal,
   gapRows,
   gapIsReal,
+  tableRows,
   currency,
   market,
 }: {
@@ -34,28 +121,87 @@ export function GradeAnalysisCard({
   ladderIsReal: boolean;
   gapRows: MarketGapRow[];
   gapIsReal: boolean;
+  tableRows: GradeTableRow[];
   currency: string;
   market: string;
 }) {
+  const insight = gradingInsight(tableRows, market, currency);
+
   return (
     <div className="overflow-hidden rounded-lg border-2 border-black bg-card-surface p-5 shadow-hard-sm sm:p-6">
-      {/* The one heading that says these belong together. Without it the
-          sections read as two reports filed in the same folder. */}
       <div className="border-b-2 border-border-subtle pb-4">
         <h3 className="text-lg leading-6 font-black tracking-[-0.45px]">Grading economics</h3>
-        <p className="mt-1 text-[11px] font-bold text-muted-text">
-          What each grade is worth, and which market pays more for it
+        {insight ? (
+          <p className="mt-1.5 text-[15px] leading-[22px] font-bold text-pretty">{insight}</p>
+        ) : (
+          <p className="mt-1.5 text-[11px] font-bold text-muted-text">
+            Not enough priced grades on this card to compare yet
+          </p>
+        )}
+        <p className="mt-1.5 text-[11px] font-bold text-muted-text">
+          Cheapest live asking prices, per grade and market
         </p>
       </div>
 
       <div className="pt-5">
-        <GradeLadderChart currency={currency} isReal={ladderIsReal} market={market} rows={ladder} />
+        <GradeLadderChart isReal={ladderIsReal} market={market} rows={ladder} />
       </div>
 
-      {/* A rule, not a gap. The sections are one argument in two parts. */}
-      <div className="mt-6 border-t-2 border-border-subtle pt-5">
-        <MarketGapRadar currency={currency} isReal={gapIsReal} rows={gapRows} />
+      {/* One rule, not a gap — the sections are one argument in two parts. */}
+      <div className="mt-5 border-t border-border-subtle pt-5">
+        <MarketGapRadar isReal={gapIsReal} rows={gapRows} />
       </div>
+
+      {/* Scrolls inside its own container rather than wrapping. A four-column
+          table cannot fit a phone, and the requirement that no figure ever
+          breaks across two lines outranks seeing every column at once. */}
+      <div className="mt-5 overflow-x-auto border-t-2 border-border-subtle pt-4">
+        <table className="w-full min-w-[500px] border-collapse text-left">
+          <thead>
+            <tr className="text-[10px] font-black tracking-[0.5px] text-muted-text uppercase">
+              <th className="pb-2 pr-3 font-black">Grade</th>
+              <th className="pb-2 pr-3 font-black">English</th>
+              <th className="pb-2 pr-3 font-black">Japanese</th>
+              <th className="pb-2 font-black">Gap</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tableRows.map((row) => {
+              const en = row.english && row.english.median > 0 ? row.english : null;
+              const ja = row.japanese && row.japanese.median > 0 ? row.japanese : null;
+              const pct = en && ja ? gapPct(en.median, ja.median) : null;
+              return (
+                <tr key={row.label} className="border-t border-border-subtle">
+                  <td className="py-2.5 pr-3 text-[11px] font-black tracking-[0.4px] whitespace-nowrap uppercase">
+                    {row.label}
+                  </td>
+                  <td className="py-2.5 pr-3">
+                    <PriceCell currency={currency} value={en} />
+                  </td>
+                  <td className="py-2.5 pr-3">
+                    <PriceCell currency={currency} value={ja} />
+                  </td>
+                  <td className="py-2.5 text-[11px] font-bold whitespace-nowrap text-muted-text">
+                    {pct === null ? (
+                      "—"
+                    ) : pct === 0 ? (
+                      "Level"
+                    ) : (
+                      <>
+                        {ja!.median < en!.median ? "JP" : "EN"} {pct}% cheaper
+                      </>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <p className="mt-2 text-[10px] font-bold text-muted-text">
+        Small figures after each price are how many listings it was taken from.
+      </p>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { GradeAnalysisCard } from "@/components/retro/grade-analysis-card";
+import { GradeAnalysisCard, type GradeTableRow } from "@/components/retro/grade-analysis-card";
 import type { GradeLadderRow } from "@/components/retro/grade-ladder-chart";
 import type { GradePayoffRow } from "@/components/retro/grade-payoff-gauges";
 import { GradingRoiCard } from "@/components/retro/grading-roi-card";
@@ -83,6 +83,17 @@ export function GradingCenterTools({
   const gapRows: MarketGapRow[] = gapTiers.map((t) => ({ label: t.label, english: t.en!.medianPrice, japanese: t.ja!.medianPrice }));
   const gapIsReal = gapTiers.every((t) => t.en!.isReal && t.ja!.isReal);
 
+  // Every grade, both markets, with the depth behind each price — the one
+  // table under the charts. Ladder order (raw first) so the rows read the way
+  // the bars do.
+  const tableRows: GradeTableRow[] = [...conditions].reverse().map((entry) => {
+    const cell = (language: string) => {
+      const tier = entry.languages.find((l) => l.language === language)?.active;
+      return tier ? { median: tier.medianPrice, count: tier.count } : null;
+    };
+    return { label: entry.condition, english: cell("English"), japanese: cell("Japanese") };
+  });
+
   // Grading economics for the market the visitor is actually looking at.
   //
   // lib/graded-market.ts computes `roi` from English only, deliberately: it is
@@ -150,6 +161,7 @@ export function GradingCenterTools({
           ladder={ladder}
           ladderIsReal={ladderIsReal}
           market={gradedMarket}
+          tableRows={tableRows}
         />
       </div>
 

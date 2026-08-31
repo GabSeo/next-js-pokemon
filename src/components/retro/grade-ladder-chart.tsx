@@ -6,7 +6,6 @@ import { BarYAxis } from "@/components/charts/bar-y-axis";
 import { Grid } from "@/components/charts/grid";
 import { ChartTooltip } from "@/components/charts/tooltip";
 import { EyebrowTitle } from "@/components/retro/eyebrow-title";
-import { StatCell, StatRow } from "@/components/retro/stat-row";
 import { MarketDataBadge } from "@/components/retro/market-data-badge";
 
 /** One grading tier's current asking level in the selected market. */
@@ -53,13 +52,11 @@ export type GradeLadderRow = {
  */
 export function GradeLadderChart({
   rows,
-  currency,
   market,
   isReal,
 }: {
   /** Cheapest-first order is meaningless here — pass tiers in ladder order, raw first. */
   rows: GradeLadderRow[];
-  currency: string;
   market: string;
   /** False when eBay could not be reached and these are preview figures. */
   isReal: boolean;
@@ -116,20 +113,6 @@ export function GradeLadderChart({
         <ChartTooltip />
       </BarChart>
 
-      <StatRow columns={4}>
-        {rows.map((row) => (
-          <StatCell key={row.label} label={row.label}>
-            {row.noListings || row.median <= 0 ? (
-              <span className="text-muted-text">No listings</span>
-            ) : (
-              <>
-                {currency} {row.median.toLocaleString()}
-                <span className="ml-1.5 text-[10px] font-bold text-muted-text">({row.count})</span>
-              </>
-            )}
-          </StatCell>
-        ))}
-      </StatRow>
     </div>
   );
 }

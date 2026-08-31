@@ -5,7 +5,6 @@ import { RadarArea } from "@/components/charts/radar-area";
 import { RadarAxis } from "@/components/charts/radar-axis";
 import { RadarLabels } from "@/components/charts/radar-labels";
 import { EyebrowTitle } from "@/components/retro/eyebrow-title";
-import { StatCell, StatRow } from "@/components/retro/stat-row";
 import { MarketDataBadge } from "@/components/retro/market-data-badge";
 
 /** One grading tier priced in both eBay markets on the same day. */
@@ -79,12 +78,10 @@ const MIN_AXES = 3;
  */
 export function MarketGapRadar({
   rows,
-  currency,
   isReal,
 }: {
   /** Ladder order, raw first. Tiers missing either market must already be filtered out. */
   rows: MarketGapRow[];
-  currency: string;
   /** False when eBay could not be reached and these are preview figures. */
   isReal: boolean;
 }) {
@@ -187,41 +184,6 @@ export function MarketGapRadar({
         </RadarChart>
       </div>
 
-      <StatRow columns={2}>
-        {rows.map((row) => {
-          // An absence is not a discount, so it never gets a percentage —
-          // "EN 100% cheaper" against nothing would be the exact misreading
-          // the vertex at the centre risks on its own.
-          const bothEmpty = row.english <= 0 && row.japanese <= 0;
-          const missing = row.english <= 0 ? "EN" : row.japanese <= 0 ? "JP" : null;
-          const cheaperIsJapanese = row.japanese < row.english;
-          const gapPct = Math.round((1 - Math.min(row.english, row.japanese) / Math.max(row.english, row.japanese)) * 100);
-          return (
-            <StatCell key={row.label} label={row.label}>
-              {bothEmpty ? (
-                <span className="text-[11px] font-bold text-muted-text">No listings in either market</span>
-              ) : missing ? (
-                <>
-                  {currency} {(row.english || row.japanese).toLocaleString()}
-                  <span className="ml-1.5 text-[10px] font-bold text-muted-text">no {missing} listings</span>
-                </>
-              ) : (
-                <>
-                  {currency} {row.english.toLocaleString()}
-                  <span className="mx-1 font-bold text-muted-text">vs</span>
-                  {currency} {row.japanese.toLocaleString()}
-                  {/* No colour on the gap: neither market is the "good" one —
-                      which is cheaper depends on what the reader is trying to
-                      do, so this states the fact and stops. */}
-                  <span className="ml-1.5 text-[10px] font-bold text-muted-text">
-                    {gapPct === 0 ? "level" : `${cheaperIsJapanese ? "JP" : "EN"} ${gapPct}% cheaper`}
-                  </span>
-                </>
-              )}
-            </StatCell>
-          );
-        })}
-      </StatRow>
     </div>
   );
 }
