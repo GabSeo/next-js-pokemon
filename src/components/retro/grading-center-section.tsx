@@ -66,22 +66,34 @@ export function GradingCenterSection({ card, data }: { card: Card; data: GradedM
 
       {/* Header card. The cap bleeds off the bottom-right corner rather than
           sitting inside a box — the one place on this page where an image is
-          allowed to break the grid. */}
+          allowed to break the grid.
+
+          The text column reserves the cap's width as padding rather than
+          relying on a fixed max-width. The mockup's 640px column cleared a
+          300px cap at 1080px wide; this section renders at ~716px inside the
+          product page's right-hand column, where that same column ran the
+          description straight under the brim and made the last line
+          unreadable. Padding scales with the breakpoint, so the gap holds
+          whatever width the section ends up at — and the cap is dropped
+          entirely below `sm`, where reserving 200px would leave the
+          paragraph too narrow to read. */}
       <header className="relative overflow-hidden rounded-lg border-2 border-black bg-card-surface p-8 shadow-hard-lg">
         {/* eslint-disable-next-line @next/next/no-img-element -- self-hosted under /public, not an optimizable remote domain */}
         <img
           alt=""
           aria-hidden="true"
-          className="pointer-events-none absolute -right-[30px] -bottom-10 w-[300px] saturate-110"
+          className="pointer-events-none absolute -right-[30px] -bottom-10 hidden w-[230px] saturate-110 sm:block lg:w-[300px]"
           src={CAP_SRC}
         />
-        <div className="relative flex max-w-[640px] flex-col gap-3">
+        <div className="relative flex flex-col gap-3 sm:pr-[210px] lg:pr-[280px]">
           <span className="inline-flex items-center gap-2 text-[11px] font-black tracking-[1px] text-muted-text uppercase">
             <span className="h-2.5 w-2.5 border-2 border-black bg-pokemon-red" />
             MintDex Tools · Grading
           </span>
-          <h2 className="text-5xl font-black tracking-[-1.2px]">Grading Center</h2>
-          <p className="text-base leading-6 text-pretty text-muted-text">
+          {/* 48px is the mockup's size at full width; on a phone column that
+              is two heavy lines, so it steps down rather than dominating. */}
+          <h2 className="text-4xl font-black tracking-[-1.2px] sm:text-5xl">Grading Center</h2>
+          <p className="max-w-[60ch] text-base leading-6 text-pretty text-muted-text">
             Decide whether paying to grade this card pays you back — what each grade is actually selling for, how English
             and Japanese markets differ, and what you keep after fees.
           </p>
