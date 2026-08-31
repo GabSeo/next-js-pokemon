@@ -2,8 +2,7 @@
 
 import { GradeLadderChart, type GradeLadderRow } from "@/components/retro/grade-ladder-chart";
 import { GradePayoffGauges, type GradePayoffRow } from "@/components/retro/grade-payoff-gauges";
-import { GradingMarginGauge } from "@/components/retro/grading-margin-gauge";
-import { IllustrativeTag } from "@/components/retro/illustrative-tag";
+import { GradingRoiCard } from "@/components/retro/grading-roi-card";
 import { MarketGapRadar, type MarketGapRow } from "@/components/retro/market-gap-radar";
 import { useSelectedMarket, type MarketTab } from "@/components/retro/market-tab";
 import { StepHeading } from "@/components/retro/step-heading";
@@ -161,73 +160,20 @@ export function GradingCenterTools({
       <div className="flex flex-col gap-4">
         <StepHeading step="02" title="The verdict" tone="yellow" />
 
-        <div className="overflow-hidden rounded-lg border-2 border-black bg-pokemon-yellow shadow-hard-md">
-        {/* The gauge shares this callout rather than taking a card of its
-            own: it is the same raw / grading / PSA 10 arithmetic read over
-            the sale price instead of over the outlay, and splitting one
-            decision across two boxes would have said "grading" three times
-            in a row down the panel. Two columns on wide screens, stacked
-            below the figures on narrow ones. */}
-        {/* Both figures spelled out in words, because "ROI" and "margin"
-            are trade terms and a visitor pricing their first card should
-            not have to already know them. Whole units, not the raw
-            medians: "USD 756,475" is 756 dollars and 47 cents under this
-            locale's decimal comma, and it reads as three-quarters of a
-            million to anyone who assumes otherwise. Cents are noise on a
-            median of four asks anyway. */}
-        <div className="p-5">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto] sm:items-center">
-            <div>
-              {/* The market is named here, not left implied. Every other
-                  block on this panel is titled with the market it reads, and
-                  this one is the only place the two can disagree. */}
-              <div className="mb-1 flex flex-wrap items-center gap-2 text-xs font-black tracking-[0.3px] text-[#5a4600] uppercase">
-                Grading ROI · {roiMarket} — raw → PSA 10
-                {!shownRoi.isReal && <IllustrativeTag label="Preview — eBay not connected yet" />}
-              </div>
-              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <span className="text-3xl font-black tracking-[-0.6px] text-foreground tabular-nums">
-                  {shownRoi.percent >= 0 ? "+" : ""}
-                  {shownRoi.percent.toFixed(0)}%
-                </span>
-                <span className="text-xs font-black tracking-[0.3px] text-[#5a4600] uppercase">Return on what you spend</span>
-              </div>
-              <p className="mt-1.5 max-w-[46ch] text-xs font-bold text-[#5a4600]">
-                {shownRoi.currency} {Math.round(shownRoi.rawMedian + shownRoi.gradingCostUsd).toLocaleString()} in (card +{" "}
-                {shownRoi.currency} {shownRoi.gradingCostUsd} grading) · a PSA 10 asks {shownRoi.currency}{" "}
-                {Math.round(shownRoi.psa10Median).toLocaleString()}
-              </p>
-            </div>
-
-            <GradingMarginGauge
-              currency={shownRoi.currency}
-              gradingCostUsd={shownRoi.gradingCostUsd}
-              psa10Median={shownRoi.psa10Median}
-              rawMedian={shownRoi.rawMedian}
-            />
-          </div>
-
-          {/* The two figures are the same money measured against different
-              things, and saying so is the only way the pair reads as one
-              answer rather than two competing ones. They are not
-              independent readings either — one is a fixed rearrangement of
-              the other — so presenting them as a cross-check would be a
-              lie by implication. */}
-          {/* Kept to the one thing neither figure says on its own — that they
-              are the same money over different denominators. The grading-fee
-              caveat lives in the panel's context row now instead of being
-              repeated here. */}
-          <p className="mt-4 border-t-2 border-black/15 pt-3 text-[11px] font-bold text-[#5a4600]">
-            Same {shownRoi.currency}{" "}
-            {Math.round(shownRoi.psa10Median - shownRoi.rawMedian - shownRoi.gradingCostUsd).toLocaleString()} either way —
-            measured against what you spend, then against what you sell for.{" "}
-            {shownRoi.isReal ? `${roiMarket} asking prices, not completed sales.` : "Preview numbers, not a real market reading."}{" "}
-            {market !== "France" && !roiFollowsMarket && shownRoi.isReal
+        <GradingRoiCard
+          currency={shownRoi.currency}
+          fallbackNote={
+            market !== "France" && !roiFollowsMarket && shownRoi.isReal
               ? `No priced ${market} raw and PSA 10 pair today, so English figures are shown.`
-              : ""}
-          </p>
-        </div>
-      </div>
+              : undefined
+          }
+          gradingCost={shownRoi.gradingCostUsd}
+          isReal={shownRoi.isReal}
+          market={roiMarket}
+          percent={shownRoi.percent}
+          psa10Median={shownRoi.psa10Median}
+          rawMedian={shownRoi.rawMedian}
+        />
       </div>
     </>
   );
