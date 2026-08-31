@@ -70,13 +70,17 @@ export function GradeLadderChart({
   const data = rows.map((r) => ({ tier: r.label, median: r.median }));
 
   return (
-    <div className="mt-6 rounded-md border-2 border-black bg-white p-5 shadow-hard-sm">
+    <div className="h-full rounded-lg border-2 border-black bg-white p-5 shadow-hard-sm">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
         <div>
           <span className="text-[10px] font-black tracking-[0.5px] text-muted-text uppercase">Grade ladder · {market}</span>
           <p className="mt-1 text-[10px] font-bold text-muted-text">Median asking price per grade, today</p>
         </div>
-        <MarketDataBadge isReal={isReal} />
+        {/* Only when this block specifically is not real. The panel head
+            carries one LIVE badge for the section, and four more saying the
+            same thing would be noise — but a block that is preview while the
+            rest is live still has to say so. */}
+        {!isReal && <MarketDataBadge isReal={isReal} />}
       </div>
 
       {/* Square bar ends and a black outline, because the library's default

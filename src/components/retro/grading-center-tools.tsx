@@ -6,6 +6,7 @@ import { GradingMarginGauge } from "@/components/retro/grading-margin-gauge";
 import { IllustrativeTag } from "@/components/retro/illustrative-tag";
 import { MarketGapRadar, type MarketGapRow } from "@/components/retro/market-gap-radar";
 import { useSelectedMarket, type MarketTab } from "@/components/retro/market-tab";
+import { StepHeading } from "@/components/retro/step-heading";
 import type { EbayCondition } from "@/lib/ebay-browse";
 import type { GradedMarketData, GradedMarketRoi } from "@/lib/graded-market";
 import { gradingRoi } from "@/lib/roi";
@@ -133,14 +134,41 @@ export function GradingCenterTools({
 
   return (
     <>
-      {/* Ordered as the decision is made: what each grade is worth, then
-          whether the other market pays better for it, then what the trade
-          returns, then what happens if the grade disappoints. */}
-      <GradeLadderChart currency={currency} isReal={ladderIsReal} market={gradedMarket} rows={ladder} />
+      {/* 01 — the three readings, in the mockup's two-column-then-full-width
+          arrangement. The ladder is the wide one because a bar chart with
+          four labelled rows needs the horizontal room; the radar is square by
+          nature and takes the narrower column beside it; the payoff rows are
+          full width because each is a track that reads left to right. */}
+      <div className="flex flex-col gap-3">
+        <StepHeading note="Two-column read" step="01" title="Grade analysis" tone="red" />
 
-      <MarketGapRadar currency={currency} isReal={gapIsReal} rows={gapRows} />
+        <div className="flex flex-wrap items-start gap-4">
+          <div className="min-w-[280px] flex-[1_1_56%]">
+            <GradeLadderChart currency={currency} isReal={ladderIsReal} market={gradedMarket} rows={ladder} />
+          </div>
+          <div className="min-w-[280px] flex-[1_1_36%]">
+            <MarketGapRadar currency={currency} isReal={gapIsReal} rows={gapRows} />
+          </div>
+          <div className="min-w-[280px] flex-[1_1_100%]">
+            {shownRoi.isReal && payoffCost > 0 && (
+              <GradePayoffGauges
+                cost={payoffCost}
+                currency={shownRoi.currency}
+                isReal={shownRoi.isReal}
+                market={roiMarket}
+                rows={payoffRows}
+              />
+            )}
+          </div>
+        </div>
+      </div>
 
-      <div className="mt-6 overflow-hidden rounded-md border-2 border-black bg-pokemon-yellow shadow-hard-md">
+      {/* 02 — the verdict. Its own step because everything above is a reading
+          and this is the answer they add up to. */}
+      <div className="flex flex-col gap-3">
+        <StepHeading note="Raw → PSA 10 · what you keep after fees" step="02" title="The verdict" tone="yellow" />
+
+      <div className="overflow-hidden rounded-lg border-2 border-black bg-pokemon-yellow shadow-hard-md">
         {/* The gauge shares this callout rather than taking a card of its
             own: it is the same raw / grading / PSA 10 arithmetic read over
             the sale price instead of over the outlay, and splitting one
@@ -206,18 +234,7 @@ export function GradingCenterTools({
           </p>
         </div>
       </div>
-      {/* After the ROI callout, not before: that block is the headline
-          answer for the grade everyone hopes for, and this is the rest of
-          the distribution behind it. */}
-      {shownRoi.isReal && payoffCost > 0 && (
-        <GradePayoffGauges
-          cost={payoffCost}
-          currency={shownRoi.currency}
-          isReal={shownRoi.isReal}
-          market={roiMarket}
-          rows={payoffRows}
-        />
-      )}
+      </div>
     </>
   );
 }

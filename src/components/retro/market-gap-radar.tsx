@@ -129,7 +129,7 @@ export function MarketGapRadar({
     .sort((a, b) => b.total - a.total);
 
   return (
-    <div className="mt-6 rounded-md border-2 border-black bg-white p-5 shadow-hard-sm">
+    <div className="h-full rounded-lg border-2 border-black bg-white p-5 shadow-hard-sm">
       {/* No flex-wrap, and the text column shrinks instead: with wrapping on,
           a subtitle this long pushed the badge onto its own line and it stopped
           reading as the card's status. It wraps inside its own column now and
@@ -142,7 +142,11 @@ export function MarketGapRadar({
             listings there.
           </p>
         </div>
-        <MarketDataBadge isReal={isReal} />
+        {/* Only when this block specifically is not real. The panel head
+            carries one LIVE badge for the section, and four more saying the
+            same thing would be noise — but a block that is preview while the
+            rest is live still has to say so. */}
+        {!isReal && <MarketDataBadge isReal={isReal} />}
       </div>
 
       <div className="mb-2 flex flex-wrap items-center gap-4">

@@ -64,7 +64,7 @@ export function GradePayoffGauges({
   const money = (n: number) => `${currency} ${Math.round(n).toLocaleString()}`;
 
   return (
-    <div className="mt-6 rounded-md border-2 border-black bg-white p-5 shadow-hard-sm">
+    <div className="h-full rounded-lg border-2 border-black bg-white p-5 shadow-hard-sm">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <span className="text-[10px] font-black tracking-[0.5px] text-muted-text uppercase">
@@ -75,7 +75,11 @@ export function GradePayoffGauges({
             profit.
           </p>
         </div>
-        <MarketDataBadge isReal={isReal} />
+        {/* Only when this block specifically is not real. The panel head
+            carries one LIVE badge for the section, and four more saying the
+            same thing would be noise — but a block that is preview while the
+            rest is live still has to say so. */}
+        {!isReal && <MarketDataBadge isReal={isReal} />}
       </div>
 
       <div className="flex flex-col gap-4">
