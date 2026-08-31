@@ -94,6 +94,22 @@ export type GradedMarketTypeData = {
   count: number;
   seeAllUrl: string;
   rows: GradedMarketListingRow[];
+  /**
+   * Every ask behind this tier, ascending. `rows` is the cheapest four of it;
+   * empty when the tier has no listings at all.
+   *
+   * `medianPrice` deliberately still comes from those four displayed rows, so
+   * adding this moved no price anywhere on the site. It is here for what four
+   * rows cannot show — how tightly a grade is priced, how far the second ask
+   * sits from the first — and it carries this panel's usual caveat twice
+   * over: these are asks rather than sales, AND they are the cheap end of the
+   * tier rather than a sample of it. See EbaySearchResult.asks.
+   *
+   * Illustrative whenever `isReal` is false, exactly like `medianPrice` and
+   * `rows`. A preview tier's spread is invented too, and has to be badged
+   * wherever it gets drawn.
+   */
+  asks: number[];
 };
 
 export type GradedMarketLanguageData = {
@@ -315,7 +331,7 @@ async function fetchActiveTier(
   variantTags?: string[]
 ): Promise<GradedMarketTypeData> {
   try {
-    const { listings, total } = await searchActiveListings(
+    const { listings, total, asks } = await searchActiveListings(
       card,
       condition,
       language,
@@ -341,6 +357,7 @@ async function fetchActiveTier(
         count: 0,
         seeAllUrl: conditionSearchLink(card, condition, language, nameOverride, numberOverride),
         rows: [],
+        asks: [],
       };
     }
     const med = listings.length > 0 ? median(listings.map((l) => l.price)) : null;
@@ -351,6 +368,7 @@ async function fetchActiveTier(
         currency: card.currency,
         count: total,
         seeAllUrl: conditionSearchLink(card, condition, language, nameOverride, numberOverride),
+        asks,
         rows: listings.map((listing) => ({
           date: listing.listedDate
             ? new Date(listing.listedDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
@@ -373,6 +391,9 @@ async function fetchActiveTier(
     currency: card.currency,
     count: total,
     seeAllUrl: conditionSearchLink(card, condition, language, nameOverride, numberOverride),
+    // Sorted rather than taken as-is: asks is an ascending array by contract,
+    // and the illustrative rows are ordered for display, not by price.
+    asks: rows.map((r) => r.price).sort((a, b) => a - b),
     rows: rows.map((row) => ({ ...row, currency: card.currency })),
   };
 }
@@ -401,6 +422,7 @@ function buildSoldTier(
     currency: card.currency,
     count: total,
     seeAllUrl: conditionSearchLink(card, condition, language, nameOverride, numberOverride),
+    asks: rows.map((r) => r.price).sort((a, b) => a - b),
     rows: rows.map((row) => ({ ...row, currency: card.currency })),
   };
 }

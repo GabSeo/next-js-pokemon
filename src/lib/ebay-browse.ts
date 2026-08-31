@@ -385,7 +385,28 @@ export type EbayActiveListing = {
   location?: string;
 };
 
-export type EbaySearchResult = { listings: EbayActiveListing[]; total: number };
+export type EbaySearchResult = {
+  /** The cheapest few, for display. See DISPLAY_LIMIT. */
+  listings: EbayActiveListing[];
+  total: number;
+  /**
+   * Every ask that survived every filter, ascending — the set `listings` is
+   * merely the first four of.
+   *
+   * Exists because four rows cannot describe a spread. eBay is asked for
+   * FETCH_LIMIT results per search and we were keeping four, so the other
+   * sixteen were paid for and discarded; anything that wants to say how
+   * tightly a tier is priced needs them back. It costs no extra quota — the
+   * request is byte-identical, only the slice moved downstream.
+   *
+   * Read it for what it is. These are the cheapest asks from ONE page of a
+   * price-sorted search, so the array describes the floor of a tier, not the
+   * tier. On a grade with 837 live listings it is still the cheap end, and a
+   * spread taken from it is the spread of the floor — presenting that as the
+   * tier's volatility would claim far more than it measures.
+   */
+  asks: number[];
+};
 
 type BrowseSearchResponse = {
   total?: number;
@@ -511,6 +532,12 @@ const MERGE_THRESHOLD = 2;
  * meant a search the merge went on to rescue still logged a failure.
  */
 type RunSearchResult = EbaySearchResult & {
+  /**
+   * The full post-filter set `listings` was sliced from, same ascending
+   * order. searchActiveListings merges on this rather than on the sliced
+   * rows, so `asks` survives the Best Match merge whole.
+   */
+  survivors: EbayActiveListing[];
   /** Everything eBay returned, before any local filtering. */
   rawCount: number;
   /** How many survived titleMatchesCard — i.e. before the market guard ran. */
@@ -518,7 +545,7 @@ type RunSearchResult = EbaySearchResult & {
 };
 
 const FETCH_LIMIT = 20;
-/** Shown to the user (and used for the median) — the first this-many survivors of titleMatchesCard, still newest-first. */
+/** Shown to the user (and used for the median) — the cheapest this-many survivors of titleMatchesCard, per the local sort below. */
 const DISPLAY_LIMIT = 4;
 
 /**
@@ -615,7 +642,7 @@ async function runSearch(
     titleMatchesCard(listing.title, card, condition, numberOverride, variantTags, language)
   );
 
-  const listings = titlePassed
+  const survivors = titlePassed
     // Applied after titleMatchesCard so the warning below still reports the
     // title check honestly, and so a guard can never be blamed for a result
     // set that was already empty.
@@ -643,11 +670,16 @@ async function runSearch(
     // into the fetched window — but the displayed order and therefore the
     // median must come from this local sort. Without it, which four rows a
     // visitor sees is decided by eBay's sharding.
-    .sort((a, b) => a.price - b.price)
-    .slice(0, DISPLAY_LIMIT);
+    .sort((a, b) => a.price - b.price);
+
+  // The slice lives here and nowhere upstream: `survivors` is what the asks
+  // array is built from, `listings` is only what the panel prints.
+  const listings = survivors.slice(0, DISPLAY_LIMIT);
 
   return {
     listings,
+    survivors,
+    asks: survivors.map((listing) => listing.price),
     total: data.total ?? listings.length,
     rawCount: rawItems.length,
     titlePassCount: titlePassed.length,
@@ -704,15 +736,25 @@ export async function searchActiveListings(
   // search alone may be short. Deduped by item URL, since the same listing
   // legitimately appears in both result sets.
   const seen = new Set<string>();
-  const merged = [...primary.listings, ...fallback.listings]
+  const merged = [...primary.survivors, ...fallback.survivors]
     .filter((listing) => (seen.has(listing.url) ? false : (seen.add(listing.url), true)))
     // Re-sorted because the merge interleaves two orderings, and the panel's
     // contract is cheapest-first (see PRIMARY_SORT).
-    .sort((a, b) => a.price - b.price)
-    .slice(0, DISPLAY_LIMIT);
+    .sort((a, b) => a.price - b.price);
 
-  if (merged.length === 0) reportEmpty(card, condition, language, guard, fallback);
-  return { listings: merged, total: Math.max(primary.total, fallback.total) };
+  // Merging the full survivor sets rather than the two sliced fours, so the
+  // merged `asks` is every ask both searches saw. The displayed rows are
+  // unchanged by that: each side was already its own cheapest-four, and the
+  // cheapest four of a union cannot contain anything that was not already in
+  // its own side's cheapest four.
+  const listings = merged.slice(0, DISPLAY_LIMIT);
+
+  if (listings.length === 0) reportEmpty(card, condition, language, guard, fallback);
+  return {
+    listings,
+    total: Math.max(primary.total, fallback.total),
+    asks: merged.map((listing) => listing.price),
+  };
 }
 
 /**
