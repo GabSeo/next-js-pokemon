@@ -43,6 +43,7 @@ const FETCH_TIMEOUT_MS = 6000;
 /** Same 24h window as this codebase's other card-identity sources. */
 const REVALIDATE_SECONDS = 60 * 60 * 24;
 
+import { cardmarketUrl } from "@/lib/cardmarket-search";
 import { memoizeFetch } from "@/lib/memo-fetch";
 import { resilientFetch } from "@/lib/upstream";
 
@@ -51,14 +52,31 @@ export type PokeWalletPriceEntry = {
   mid_price?: number;
   high_price?: number;
   market_price?: number;
+  direct_low_price?: number | null;
+  /** Which printing this row prices, e.g. "Holofoil". Confirmed live; the type was missing it. */
+  sub_type_name?: string;
   updated_at?: string;
 };
 
 export type PokeWalletCardmarketPrice = {
   avg?: number | null;
   low?: number | null;
-  trend?: number;
+  trend?: number | null;
+  /**
+   * Cardmarket's own rolling averages over the trailing 1, 7 and 30 days —
+   * the "1-day / 7-days / 30-days average price" rows on a Cardmarket product
+   * page, sent verbatim.
+   *
+   * Confirmed live and previously absent from this type, which is why nothing
+   * could read them: the API has been sending three extra numbers per variant
+   * that the codebase did not know existed. Null (not omitted) when Cardmarket
+   * has no data for that window yet, the same shape as `avg`/`low` above.
+   */
+  avg1?: number | null;
+  avg7?: number | null;
+  avg30?: number | null;
   updated_at?: string;
+  /** Which printing these prices belong to — "normal", "holo", ... */
   variant_type?: string;
 };
 
@@ -74,10 +92,67 @@ export type PokeWalletCard = {
     card_type?: string;
     card_text?: string | null;
   };
-  images?: { languages: string[] };
   tcgplayer?: { prices?: PokeWalletPriceEntry[]; url?: string } | null;
   cardmarket?: { product_name?: string; prices?: PokeWalletCardmarketPrice[]; product_url?: string } | null;
+  /**
+   * Which languages PokéWallet holds an IMAGE in — not, as it first appears,
+   * which languages the card is sold in. A Western print happens to report
+   * `["en","it","fr","de","es","pt"]`, which looks exactly like Cardmarket's
+   * Western language set and is tempting to read as one; the Japanese prints
+   * report `["en"]`, which settles it. Nothing derives language coverage from
+   * this field for that reason.
+   */
+  images?: { languages?: string[] };
 };
+
+/** One card's Cardmarket figures, nulls normalised away and the source's own product URL kept. */
+export type PokeWalletCardmarketStats = {
+  avg?: number;
+  low?: number;
+  trend?: number;
+  avg1?: number;
+  avg7?: number;
+  avg30?: number;
+  url?: string;
+  /** Which printing the figures describe — "normal", "holo". */
+  variant?: string;
+  updatedAt?: string;
+};
+
+/**
+ * The Cardmarket block for a PokéWallet card, ready for Card.cardmarket.
+ *
+ * Prices arrive as an array with one entry per printing ("normal", "holo"),
+ * and on every card checked only one of them carries real numbers while the
+ * others are all-null placeholders — so this picks the first entry that has
+ * any real figure rather than blindly taking `[0]`, which would have returned
+ * an empty row on a card whose holo variant happens to be listed first.
+ *
+ * Every field is normalised from `null` to `undefined` here, the one place
+ * this crosses into Card.cardmarket's plain `number` fields — same contract
+ * as cards.ts already applies to BerryWallet's identical shape.
+ */
+export function cardmarketStats(card: PokeWalletCard): PokeWalletCardmarketStats | undefined {
+  const prices = card.cardmarket?.prices;
+  if (!prices?.length) return undefined;
+
+  const real = prices.find(
+    (p) => p.avg != null || p.low != null || p.avg1 != null || p.avg7 != null || p.avg30 != null
+  );
+  if (!real) return undefined;
+
+  return {
+    avg: real.avg ?? undefined,
+    low: real.low ?? undefined,
+    trend: real.trend ?? undefined,
+    avg1: real.avg1 ?? undefined,
+    avg7: real.avg7 ?? undefined,
+    avg30: real.avg30 ?? undefined,
+    url: cardmarketUrl(card.cardmarket?.product_url),
+    variant: real.variant_type,
+    updatedAt: real.updated_at,
+  };
+}
 
 type CardResponse = PokeWalletCard;
 
@@ -166,7 +241,12 @@ export function pokeWalletPrice(card: PokeWalletCard): { price: number; currency
   }
   const cm = card.cardmarket?.prices?.find((p) => p.avg !== null && p.avg !== undefined);
   if (cm?.avg !== undefined && cm?.avg !== null) {
-    return { price: cm.avg, currency: "EUR", url: card.cardmarket?.product_url ?? undefined, asOfDate: cm.updated_at };
+    return {
+      price: cm.avg,
+      currency: "EUR",
+      url: cardmarketUrl(card.cardmarket?.product_url ?? undefined),
+      asOfDate: cm.updated_at,
+    };
   }
   return undefined;
 }

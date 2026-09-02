@@ -107,6 +107,68 @@ export type CardRef = {
    */
   pokeWalletCardId?: string;
   /**
+   * Pokémon only: the same card's WESTERN PokéWallet id — the print Cardmarket
+   * sells as one listing covering English, French, Italian, German, Spanish and
+   * Portuguese copies. `pokeWalletCardId` above is the Japanese counterpart,
+   * which Cardmarket treats as a different product entirely, so the two carry
+   * genuinely different prices and neither can stand in for the other.
+   *
+   * Stored rather than searched live for the same reason as the Japanese id,
+   * though it was far cheaper to find: the Western print keeps this card's own
+   * set and number, so `/search?q={name}` filtered to a matching
+   * `card_number` returned exactly one candidate for each of the three cards
+   * here, with no rarity/price cross-referencing needed. Re-run that search to
+   * add a card; omitting it simply leaves the Cardmarket panel off that page.
+   */
+  pokeWalletWesternCardId?: string;
+  /**
+   * ESCAPE HATCH 1 of 2 — a hand-confirmed BerryWallet row id (`op_...`)
+   * whose Cardmarket product is the right one for this card, per print.
+   *
+   * The derivation is expected to handle this on its own and nearly always
+   * does: a row with no usable Cardmarket block borrows one from a row that
+   * is provably the same TCGplayer product (findCardmarketSiblings), and the
+   * Japanese product is reached the same way (findJapaneseCardmarket). Reach
+   * for this field ONLY after `npx tsx scripts/card-audit.mts <slug>` shows
+   * the gap and shows that nothing links the two rows — an id stored where a
+   * rule would have worked is the thing this codebase has already had to
+   * unwind once.
+   *
+   * Use it when the row exists upstream but nothing connects it: no shared
+   * TCGplayer product, no matching card_number, no set relationship. Real
+   * figures still flow, because a real row is being read — this pins which
+   * row, it does not invent one.
+   *
+   * Takes precedence over the derivation when set, because a human confirmed
+   * it against the live catalogue and the derivation is a heuristic. The
+   * audit script reports an id the derivation now reaches by itself, so a
+   * pin that has become redundant can be deleted rather than quietly kept.
+   */
+  berryWalletCardmarketId?: { en?: string; jp?: string };
+  /**
+   * ESCAPE HATCH 2 of 2, and the last one — a Cardmarket product URL for a
+   * print NO source carries a row for.
+   *
+   * Confirmed live on 2026-09-02 that this case is real: Cardmarket sells
+   * Monkey D. Luffy OP09-061 under `Premium-Bandai-Products-Asia-Region-
+   * Legal`, and BerryWallet has no row on that set at all — its own
+   * `CM-PREMIUM-BANDAI` maps only to `Premium-Bandai-Products`, and the only
+   * `-Asia-Region-Legal` sets it carries are Starter-Deck-Egghead,
+   * Heroines-Edition and Egghead-Crisis. There is no shared TCGplayer
+   * product, no card code and no set to join on, so escape hatch 1 cannot
+   * help either.
+   *
+   * LINK ONLY. It carries no figures and never will: nothing is read from
+   * this URL, and no price is typed in beside it. The panel renders the real
+   * link above a plain statement that no price feed covers this print — the
+   * reader gets the page they wanted and is told exactly what we don't know.
+   *
+   * Applies only when nothing else produced a block, so it can never
+   * displace real figures — a pinned row (escape hatch 1) and the ordinary
+   * derivation both win over it.
+   */
+  cardmarketProductUrl?: { western?: string; japanese?: string };
+  /**
    * One Piece only: overrides `lookup.variantTags` specifically for eBay's
    * query text and title filter (graded-market.ts's `oneVariantTags`) —
    * everything else (BerryWallet's own pickVariantByTag/
@@ -177,6 +239,8 @@ export const cardRefs: CardRef[] = [
     character: "Gengar",
     lookup: { by: "nameSet", name: "Gengar VMAX", setName: "Fusion Strike", number: "271" },
     pokeWalletCardId: "pk_50b5047203194416e4c69f82722dcb9ec4a2fcc8626f50e7059c66ffba22f7ab44e0725622462923379d4833b2c194",
+    // "Gengar VMAX (Alternate Art Secret)", SWSH08: Fusion Strike 271/264.
+    pokeWalletWesternCardId: "pk_fcf663828d2352957442b3d07dfc5ffb9d23a528d5a71a8f4fcce0ab5ec1195122b354cfdd01a47b666d17ec392a1d",
   },
   {
     // Japanese counterpart: "Lugia V - 110/098", S12: Paradigm Trigger,
@@ -192,6 +256,8 @@ export const cardRefs: CardRef[] = [
     character: "Lugia",
     lookup: { by: "nameSet", name: "Lugia V", setName: "Silver Tempest", number: "186" },
     pokeWalletCardId: "pk_e88868d2c977bac87817cde39138f729bb1cd10824fcb08241d47c722c2c1a1fb566c0d9f9f343eae836188d9acb02c7",
+    // "Lugia V (Alternate Full Art)", SWSH12: Silver Tempest 186/195.
+    pokeWalletWesternCardId: "pk_a3829acca533caec5434c07aeeb7a197d797619efb12c127ad00f8207a3d70f9363c5f28284d52e6f618eea2a36e89",
   },
   {
     // Japanese counterpart: "Ethan's Typhlosion - 070/063", SV9a: Heat Wave
@@ -206,6 +272,8 @@ export const cardRefs: CardRef[] = [
     character: "Typhlosion",
     lookup: { by: "nameSet", name: "Ethan's Typhlosion", setName: "Destined Rivals", number: "190" },
     pokeWalletCardId: "pk_c7a601e8ac53e07dad8f184bdd431dc8aabadf6572cb198b19a3b62594a69dbc0e43347324b52f347ebf32f01c8022",
+    // "Ethan's Typhlosion - 190/182", SV10: Destined Rivals 190/182.
+    pokeWalletWesternCardId: "pk_dfffc82c6fc4e6a880b57f83ff1b8a97ebf0d84418898beda60d1634a9a2be86e33c87f5c3a10eb61cc22605a97e2fe8",
   },
   {
     // Both English and Japanese identity real, via BerryWallet — confirmed

@@ -38,6 +38,7 @@ const FETCH_TIMEOUT_MS = 6000;
 /** Same 24h window as apitcg.ts/tcgdex.ts, for the same reason — controls quota burn (1,000/day free tier) as much as freshness. */
 const REVALIDATE_SECONDS = 60 * 60 * 24;
 
+import { cardmarketUrl } from "@/lib/cardmarket-search";
 import { memoizeFetch } from "@/lib/memo-fetch";
 import { resilientFetch } from "@/lib/upstream";
 
@@ -182,6 +183,115 @@ export async function searchCards(query: string, limit = 20): Promise<BerryWalle
   const qs = new URLSearchParams({ q: query, limit: String(limit) });
   const { data } = await berryWalletFetch<SearchResponse>(`/op/search?${qs}`, REVALIDATE_SECONDS);
   return data;
+}
+
+/**
+ * The Cardmarket products for a card whose own row carries none.
+ *
+ * BerryWallet splits one physical card across several rows and maps only some
+ * of them to Cardmarket. Monkey D. Luffy OP09-061 resolves to a row named
+ * "English Version 2nd Anniversary Set" with `cardmarket: null`, while two
+ * other rows carry the real products; P-033 resolves to a row whose Cardmarket
+ * block exists but is entirely null. Neither can be repaired from the card
+ * number — the sibling rows carry `61`, `null`, or a different variant suffix.
+ *
+ * THE LINK IS THE TCGPLAYER PRODUCT URL. Rows that share one are the same
+ * physical card, whatever BerryWallet calls them, and grouping by it lands
+ * exactly on the products Cardmarket itself lists — verified against
+ * OP09-061 (Unnumbered Promos + Unnumbered Promos Japanese), P-033 (Promos +
+ * Promos Japanese) and OP09-004. Nothing here is stored per card; a sibling is
+ * only ever adopted when it is provably the same TCGplayer product.
+ *
+ * The Western/Japanese split comes from Cardmarket's own set slug — see
+ * isJapaneseProduct for the two suffixes it uses.
+ *
+ * One search per card, and only for a card that needs one.
+ */
+export async function findCardmarketSiblings(
+  card: BerryWalletCard
+): Promise<{ western?: BerryWalletCard; japanese?: BerryWalletCard }> {
+  const tcgplayerUrl = card.tcgplayer?.url;
+  const code = card.card_number;
+  if (!tcgplayerUrl || !code) return {};
+
+  const rows = await searchCards(code, 60).catch(() => [] as BerryWalletCard[]);
+  const siblings = rows.filter(
+    (row) => row.tcgplayer?.url === tcgplayerUrl && hasCardmarketPrices(row)
+  );
+
+  return {
+    western: siblings.find((row) => !isJapaneseProduct(row)),
+    japanese: siblings.find(isJapaneseProduct),
+  };
+}
+
+/**
+ * The Japanese Cardmarket product belonging to the Western product this site
+ * already quotes for a card.
+ *
+ * Only for a card whose own Japanese row carries no Japanese product — the
+ * ordinary case is that it does (see isJapaneseProduct), and this never runs.
+ *
+ * The walk starts from the Western product rather than from the Japanese row
+ * because those rows carry `tcgplayer: null` on the newer sets and so have
+ * nothing to join on. From the Western product it is the same TCGplayer link
+ * findCardmarketSiblings uses: find the row holding that product, then the
+ * Japanese row sharing its TCGplayer URL.
+ *
+ * Returns undefined rather than a near-miss when there is none. Pricing a
+ * different print as this one is exactly the merge this codebase refuses to
+ * make — OP09-004's other Japanese product is an Unnumbered Promo, not the set
+ * card being quoted.
+ *
+ * One search, paid only when it is actually needed.
+ */
+export async function findJapaneseCardmarket(
+  code: string,
+  westernProductUrl: string | undefined
+): Promise<BerryWalletCard | undefined> {
+  if (!westernProductUrl) return undefined;
+  const rows = await searchCards(code, 60).catch(() => [] as BerryWalletCard[]);
+  // Locale-normalised on both sides: the stored URL has been forced onto /en/
+  // while BerryWallet's raw rows are Italian (see cardmarketUrl).
+  const target = cardmarketUrl(westernProductUrl);
+  const tcgplayerUrl = rows.find((row) => cardmarketUrl(row.cardmarket?.product_url) === target)?.tcgplayer?.url;
+  if (!tcgplayerUrl) return undefined;
+  return rows.find(
+    (row) => row.tcgplayer?.url === tcgplayerUrl && isJapaneseProduct(row) && hasCardmarketPrices(row)
+  );
+}
+
+/**
+ * True when Cardmarket's own set slug marks this as the Japanese product.
+ *
+ * Cardmarket spells it two ways for One Piece and both are real, so both are
+ * tested here. The older sets get `-Japanese` (Awakening-of-the-New-Era-
+ * Japanese, Promos-Japanese, Unnumbered-Promos-Japanese); the newer ones get
+ * `-Non-English` instead, which reads Western but is not.
+ *
+ * That second one was originally excluded here on the assumption that
+ * "Non-English" meant the FR/DE/IT/ES printings. BerryWallet's own Japanese
+ * side says otherwise, three ways: `/op/sets?language=jp` lists OP09-JP
+ * "Emperors in the new world (Japanese)", every card in it maps to
+ * `Emperors-in-the-New-World-Non-English`, no `-Japanese` variant of that set
+ * exists anywhere in the catalogue, and the neighbouring set is named outright
+ * "Two Legends (Non English)".
+ *
+ * Not included: `-Asia-Region-Legal` (Starter-Deck-Egghead, Heroines-Edition,
+ * Egghead-Crisis). Those are region-locked printings and this codebase has no
+ * confirmation of which language they carry, so they stay Western-side rather
+ * than being guessed onto the Japanese view.
+ */
+export function isJapaneseProduct(card: BerryWalletCard): boolean {
+  const set = card.cardmarket?.product_url?.split("/Singles/")[1]?.split("/")[0] ?? "";
+  return /-(Japanese|Non-English)$/i.test(set);
+}
+
+/** A Cardmarket block that exists AND carries a figure — P-033's is present but entirely null. */
+export function hasCardmarketPrices(card: BerryWalletCard | undefined): boolean {
+  const p = card?.cardmarket?.prices;
+  if (!p) return false;
+  return [p.avg, p.low, p.trend, p.avg1, p.avg7, p.avg30].some((v) => v != null && v !== 0);
 }
 
 /** Every One Piece set, optionally filtered to one language. This is the real language boundary — see this file's header comment. */

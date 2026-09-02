@@ -8,13 +8,23 @@ import {
 } from "@/lib/apitcg";
 import {
   findCardInLanguage,
+  findCardmarketSiblings,
+  getCard as getBerryWalletCard,
+  findJapaneseCardmarket,
+  hasCardmarketPrices,
+  isJapaneseProduct,
   cardImageUrl as berryWalletCardImageUrl,
   variantIndex as berryWalletVariantIndex,
   type BerryWalletCard,
   type BerryWalletSet,
 } from "@/lib/berrywallet";
-import { getCard as getPokeWalletCard, cardImageUrl as pokeWalletCardImageUrl } from "@/lib/pokewallet";
+import {
+  getCard as getPokeWalletCard,
+  cardImageUrl as pokeWalletCardImageUrl,
+  cardmarketStats as pokeWalletCardmarketStats,
+} from "@/lib/pokewallet";
 import { buildCached } from "@/lib/build-cache";
+import { cardmarketUrl } from "@/lib/cardmarket-search";
 import { absoluteUrl, freshness } from "@/lib/site";
 import { describeUpstreamError, logUpstreamOnce } from "@/lib/upstream";
 import { findCardByNameAndSet, getCard, cardImageUrl, tcgplayerSnapshot, type TcgdexCard } from "@/lib/tcgdex";
@@ -164,7 +174,12 @@ function berryWalletPrice(card: BerryWalletCard): { price: number; currency: "US
   // omission, for a stat it has no data for yet (see
   // BerryWalletCardmarketPrices's doc comment, lib/berrywallet.ts).
   if (cardmarket?.avg != null) {
-    return { price: cardmarket.avg, currency: "EUR", url: card.cardmarket?.product_url, asOfDate: cardmarket.updated_at };
+    return {
+      price: cardmarket.avg,
+      currency: "EUR",
+      url: cardmarketUrl(card.cardmarket?.product_url),
+      asOfDate: cardmarket.updated_at,
+    };
   }
   return undefined;
 }
@@ -198,7 +213,7 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
   // outer try/catch — that outer catch is a last-resort safety net for
   // *this function* failing outright, not a substitute for handling one of
   // two independent sources failing while the other succeeds.
-  const [product, tcgdexCard, berryWalletMatch] = await Promise.all([
+  const [product, tcgdexCard, berryWalletMatch, westernCardmarket, pinnedWestern] = await Promise.all([
     resolveProduct(ref).catch((err) => {
       logUpstreamOnce(
         `apitcg:${ref.slug}`,
@@ -208,7 +223,24 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
     }),
     resolveTcgdexCard(ref),
     resolveBerryWalletCard(ref),
+    resolveWesternCardmarket(ref),
+    pinnedCardmarket(ref.berryWalletCardmarketId?.en, "western"),
   ]);
+
+  // A One Piece card whose own row has no usable Cardmarket block borrows one
+  // from a sibling row that is provably the same TCGplayer product — see
+  // findCardmarketSiblings. Sequential rather than in the batch above because
+  // it needs the matched row to look up, and it only runs for the cards that
+  // actually need it.
+  const berryWalletCardmarket =
+    berryWalletMatch && !hasCardmarketPrices(berryWalletMatch.card)
+      ? (
+          await findCardmarketSiblings(berryWalletMatch.card).catch(() => ({
+            western: undefined,
+            japanese: undefined,
+          }))
+        ).western
+      : undefined;
 
   // Genuinely nothing to build a card from — none of the three sources has
   // a match (or all failed). Always true for a franchise/card combination
@@ -303,23 +335,31 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
         currency: berryWalletPriceInfo?.currency ?? "USD",
         sourceUrl: berryWalletPriceInfo?.url,
         asOfDate: berryWalletPriceInfo?.asOfDate ?? new Date().toISOString(),
+        // BerryWallet's own TCGplayer block, matching berryWalletPrice's own
+        // preference for it. Measured identical to apitcg's figures on every
+        // One Piece card checked, which is expected — one upstream, two
+        // resellers of it — but taking it from the source that set
+        // `currentPrice` keeps that a fact rather than a coincidence to rely on.
+        tcgplayer: berryWalletMatch.card.tcgplayer?.prices && {
+          low: berryWalletMatch.card.tcgplayer.prices.low_price,
+          mid: berryWalletMatch.card.tcgplayer.prices.mid_price,
+          high: berryWalletMatch.card.tcgplayer.prices.high_price,
+          market: berryWalletMatch.card.tcgplayer.prices.market_price,
+          directLow: berryWalletMatch.card.tcgplayer.prices.direct_low_price ?? undefined,
+        },
         // Real Cardmarket EUR snapshot, independent of currentPrice/currency
         // above (which prefer TCGPlayer/USD when it's real) — see Card.
         // cardmarket's own doc comment (lib/types.ts) on why these can both
         // be present at once.
-        cardmarket: berryWalletMatch.card.cardmarket
-          ? {
-              // BerryWallet sends explicit null (not omission) for a stat
-              // Cardmarket has no data for yet — normalize to undefined here,
-              // the one place this crosses into Card.cardmarket's `number`
-              // (not `number | null`) fields. See BerryWalletCardmarketPrices's
-              // own doc comment (lib/berrywallet.ts).
-              avg: berryWalletMatch.card.cardmarket.prices?.avg ?? undefined,
-              low: berryWalletMatch.card.cardmarket.prices?.low ?? undefined,
-              trend: berryWalletMatch.card.cardmarket.prices?.trend ?? undefined,
-              url: berryWalletMatch.card.cardmarket.product_url,
-            }
-          : undefined,
+        // Prefer a sibling row's Cardmarket block when this row has no usable
+        // one — see findCardmarketSiblings. Strictly additive: with no sibling
+        // found, this row's own block is used exactly as before, so a card can
+        // never lose data it already had by passing through here.
+        cardmarket: cardmarketBlock(
+          hasCardmarketPrices(berryWalletMatch.card)
+            ? berryWalletMatch.card
+            : (berryWalletCardmarket ?? berryWalletMatch.card)
+        ),
         // The English match's own (V.N) index, computed here since the raw
         // BerryWalletCard is already in hand — see Card.printVariantIndex's
         // own doc comment (lib/types.ts) for why this exists at all and why
@@ -350,6 +390,10 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
           currency: "USD" as const,
           sourceUrl: tcgdexPrice?.url,
           asOfDate: tcgdexPrice?.updated ?? new Date().toISOString(),
+          // Straight from the variant tcgplayerSnapshot already chose, so the
+          // spread and the headline price are the same reading of the same
+          // printing at the same moment.
+          tcgplayer: tcgdexPrice?.band,
         }
       : product
         ? {
@@ -367,6 +411,16 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
             currency: "USD" as const,
             sourceUrl: product.markets?.tcgplayer?.url,
             asOfDate: product.updatedAt ?? new Date().toISOString(),
+            // apitcg carries no printing name on its price block, so `variant`
+            // stays undefined rather than being guessed — the panel simply
+            // omits that line instead of attributing the spread to a printing
+            // nobody told us about.
+            tcgplayer: product.markets?.tcgplayer?.prices && {
+              low: product.markets.tcgplayer.prices.low,
+              mid: product.markets.tcgplayer.prices.mid,
+              high: product.markets.tcgplayer.prices.high,
+              market: product.markets.tcgplayer.prices.market,
+            },
           }
         : undefined;
 
@@ -390,6 +444,23 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
     franchise: ref.franchise,
     character: ref.character,
     ...identity,
+    // After `...identity` because only the BerryWallet branch sets a
+    // `cardmarket` of its own, and only for One Piece — while westernCardmarket
+    // is only ever resolved for a Pokémon ref carrying a Western PokéWallet id.
+    // The two cannot both be present, and resolving them into one value here
+    // keeps that true rather than relying on it.
+    //
+    // Precedence, highest first: a pinned row, then whichever source resolved
+    // one, then a link-only pin. See CardRef's two escape-hatch fields — the
+    // link-only one is last so it can never displace real figures.
+    ...(() => {
+      const cardmarket =
+        pinnedWestern ??
+        westernCardmarket ??
+        ("cardmarket" in identity ? identity.cardmarket : undefined) ??
+        linkOnlyCardmarket(ref.cardmarketProductUrl?.western, "western");
+      return cardmarket ? { cardmarket } : {};
+    })(),
     asOfDate: identity.asOfDate.slice(0, 10),
     priceHistory,
     recentSnapshots,
@@ -423,8 +494,38 @@ export type LocalizedCardText = {
   setCode?: string;
   /** One Piece/getOnePieceJapaneseText only — see Card.printName's own doc comment (lib/types.ts). The real BerryWallet print name in this language, e.g. `"Shanks (OP09-004) (V.4)"` for Japanese. */
   printName?: string;
-  /** One Piece/getOnePieceJapaneseText only — see Card.cardmarket's own doc comment (lib/types.ts). This print's own Japanese-catalog Cardmarket listing (avg/low/trend, EUR, and its own product_url) — a genuinely different listing from the English print's, not the same numbers relabeled. */
-  cardmarket?: { avg?: number; low?: number; trend?: number; url?: string };
+  /**
+   * This print's OWN Cardmarket listing — see Card.cardmarket's doc comment
+   * (lib/types.ts). Set for both franchises' Japanese text now, and the
+   * distinction is the whole point: Cardmarket sells the Japanese print as a
+   * separate product from the Western one, so these are genuinely different
+   * numbers behind a different product_url, never the Western figures
+   * relabeled.
+   *
+   * French deliberately leaves this undefined. A French copy is not a
+   * separate Cardmarket product — it is a language option inside the same
+   * Western listing — so the FR page shows the canonical card's Cardmarket
+   * block unchanged, which is the correct one for it.
+   */
+  cardmarket?: Card["cardmarket"];
+  /**
+   * This print's own TCGplayer figures — market price, the spread behind it,
+   * and when the source last refreshed.
+   *
+   * Japanese Pokémon only. A Japanese card is a separate TCGplayer product
+   * with its own price, so a page presenting itself as that card must not
+   * quote the Western print's. One Piece leaves these undefined: BerryWallet's
+   * Japanese rows carry `tcgplayer: null` outright (see resolveOnePieceJapanese),
+   * so those pages fall back to the canonical figures, which is the honest
+   * result rather than a gap.
+   *
+   * French deliberately sets none either — a French copy IS the Western
+   * product, so the canonical price is already its own.
+   */
+  tcgplayer?: Card["tcgplayer"];
+  currentPrice?: number;
+  sourceUrl?: string;
+  asOfDate?: string;
   /** True only when a real translation/match was found — false means every field above is just the canonical original echoed back, never a fabricated translation. */
   translated: boolean;
 };
@@ -599,16 +700,20 @@ async function resolveOnePieceJapaneseText(card: Card, ref: CardRef): Promise<Lo
       // null) — and it's a genuinely different real listing from the
       // English print's, not the same numbers relabeled, so no fallback to
       // card.cardmarket here the way rarity falls back above.
-      cardmarket: match.card.cardmarket
-        ? {
-            // See the English branch above (resolveCard) for why null needs
-            // normalizing to undefined here — same BerryWallet quirk.
-            avg: match.card.cardmarket.prices?.avg ?? undefined,
-            low: match.card.cardmarket.prices?.low ?? undefined,
-            trend: match.card.cardmarket.prices?.trend ?? undefined,
-            url: match.card.cardmarket.product_url,
-          }
-        : undefined,
+      // ...but the Cardmarket PRODUCT this row points at is not always the
+      // Japanese one. Confirmed live: BerryWallet's Japanese rows for Shanks
+      // OP09-004 and Marshall D. Teach OP09-093 both carry an
+      // "Emperors-in-the-New-World-Non-English" product — and "-Non-English"
+      // is a WESTERN product (the FR/DE/IT/ES printings), not the Japanese
+      // one, which Cardmarket suffixes "-Japanese".
+      //
+      // So resolve it the same way the English branch does: keep this row's
+      // block when it already is the Japanese product, else take the
+      // "-Japanese" sibling reachable through the shared TCGplayer product.
+      cardmarket:
+        (await pinnedCardmarket(ref.berryWalletCardmarketId?.jp, "japanese")) ??
+        (await japaneseCardmarket(match.card, card, ref.lookup.code)) ??
+        linkOnlyCardmarket(ref.cardmarketProductUrl?.japanese, "japanese"),
       translated: true,
     };
   } catch (err) {
@@ -630,6 +735,120 @@ async function resolveOnePieceJapaneseText(card: Card, ref: CardRef): Promise<Lo
  * cache()- and buildCached-wrapped for the same reasons
  * getOnePieceJapaneseText is — see LOCALIZED_TEXT_CACHING on that resolver.
  */
+/**
+ * A Pokémon card's WESTERN Cardmarket figures, from the same PokéWallet
+ * catalog the Japanese toggle already reads.
+ *
+ * PokéWallet is not a Japanese-only source — it simply only ever got asked
+ * for Japanese cards, because `pokeWalletCardId` was the one id this codebase
+ * stored and its job was the JP toggle. The Western print is a second stored
+ * id away, and it carries the Cardmarket block a Pokémon page had no source
+ * for until now: avg, low, trend and Cardmarket's own 1/7/30-day averages.
+ *
+ * One extra request per Pokémon card per build, against a 60/hour ceiling
+ * that three cards were nowhere near (see lib/api-budget.ts). Runs inside
+ * resolveCard's existing Promise.all, so it costs latency only if it is the
+ * slowest of the four.
+ *
+ * Errors are already swallowed by getCard, which returns undefined rather
+ * than throwing; a card with no Cardmarket block simply renders the panel it
+ * rendered before.
+ */
+/**
+ * The Cardmarket block for the Japanese view — the Japanese PRODUCT, which is
+ * not always the product BerryWallet's Japanese row points at.
+ *
+ * Keeps that row's own block whenever it is one — Eustass "Captain" Kid
+ * OP05-074 lands on `Awakening-of-the-New-Era-Japanese` and Shanks OP09-004 on
+ * `Emperors-in-the-New-World-Non-English`, and isJapaneseProduct accepts both
+ * spellings. Only a row carrying neither walks to findJapaneseCardmarket.
+ *
+ * No fallback to a Western product: labelling one `japanese` would put French
+ * and Italian asks under a Japanese heading. An absent block renders as a
+ * stated absence, and page.tsx then falls back to the English card's own
+ * Cardmarket block, which the panel labels for what it is.
+ */
+async function japaneseCardmarket(
+  japaneseRow: BerryWalletCard,
+  english: Card,
+  code: string
+): Promise<Card["cardmarket"] | undefined> {
+  const product = isJapaneseProduct(japaneseRow)
+    ? japaneseRow
+    : await findJapaneseCardmarket(code, english.cardmarket?.url).catch(() => undefined);
+  const block = product && cardmarketBlock(product);
+  return block && { ...block, print: "japanese" as const };
+}
+
+/**
+ * One BerryWallet row's Cardmarket block, in Card.cardmarket's shape.
+ *
+ * BerryWallet sends explicit null (not omission) for a stat Cardmarket has no
+ * data for yet, so every field is normalised here — the one place this crosses
+ * into Card.cardmarket's plain `number` fields. See
+ * BerryWalletCardmarketPrices's own doc comment (lib/berrywallet.ts).
+ */
+function cardmarketBlock(card: BerryWalletCard): Card["cardmarket"] | undefined {
+  if (!card.cardmarket) return undefined;
+  const prices = card.cardmarket.prices;
+  return {
+    avg: prices?.avg ?? undefined,
+    low: prices?.low ?? undefined,
+    trend: prices?.trend ?? undefined,
+    avg1: prices?.avg1 ?? undefined,
+    avg7: prices?.avg7 ?? undefined,
+    avg30: prices?.avg30 ?? undefined,
+    // Forced onto /en/ — BerryWallet hands back Italian URLs.
+    url: cardmarketUrl(card.cardmarket.product_url),
+    print: "western" as const,
+  };
+}
+
+/**
+ * The Cardmarket block of one hand-pinned BerryWallet row — CardRef's
+ * `berryWalletCardmarketId`, the first of the two escape hatches, used when a
+ * real row exists upstream but nothing links it to this card.
+ *
+ * A pin that resolves to a row with no Cardmarket figures returns undefined
+ * rather than an empty block, so a stale or mistyped id degrades to the
+ * ordinary derivation instead of blanking a panel that was working.
+ */
+async function pinnedCardmarket(
+  id: string | undefined,
+  print: "western" | "japanese"
+): Promise<Card["cardmarket"] | undefined> {
+  if (!id) return undefined;
+  const card = await getBerryWalletCard(id).catch(() => undefined);
+  if (!card || !hasCardmarketPrices(card)) return undefined;
+  const block = cardmarketBlock(card);
+  return block && { ...block, print };
+}
+
+/**
+ * A Cardmarket block that is a link and nothing else — CardRef's
+ * `cardmarketProductUrl`, the last escape hatch, for a print no source carries
+ * a row for at all.
+ *
+ * Deliberately carries no figures. The panel reads that as "the product exists,
+ * we have no price feed for it" and says so, which is the honest shape of this
+ * gap: a reader gets the real page, and is told what we don't know rather than
+ * being shown a number nothing backs.
+ */
+function linkOnlyCardmarket(
+  url: string | undefined,
+  print: "western" | "japanese"
+): Card["cardmarket"] | undefined {
+  return url ? { url: cardmarketUrl(url), print } : undefined;
+}
+
+async function resolveWesternCardmarket(ref: CardRef): Promise<Card["cardmarket"] | undefined> {
+  if (!ref.pokeWalletWesternCardId) return undefined;
+  const match = await getPokeWalletCard(ref.pokeWalletWesternCardId);
+  if (!match) return undefined;
+  const stats = pokeWalletCardmarketStats(match);
+  return stats && { ...stats, print: "western" as const };
+}
+
 export const getJapaneseCardText = cache((card: Card, ref: CardRef): Promise<LocalizedCardText> =>
   buildCached(`ja-pokemon:${ref.slug}`, () => resolveJapaneseCardText(card, ref), untranslated)
 );
@@ -646,6 +865,22 @@ async function resolveJapaneseCardText(card: Card, ref: CardRef): Promise<Locali
   try {
     const match = await getPokeWalletCard(ref.pokeWalletCardId);
     if (!match) return fallback;
+
+    // The Japanese print's own TCGplayer listing. All four price fields below
+    // come from this one block or none of them do — PokéWallet returns an
+    // EMPTY `prices` array for a Japanese print TCGplayer does not carry
+    // (confirmed live: Gengar VMAX's High-Class Deck promo, `tcgplayer: []`,
+    // while Lugia V and Ethan's Typhlosion both have real ones), and the page
+    // then falls back to the canonical Western figures as a set rather than
+    // showing a Japanese price above a Western spread.
+    //
+    // Deliberately NOT pokeWalletPrice(), which falls back to Cardmarket/EUR
+    // when TCGplayer has nothing. That returned €2,200 for Gengar, and the
+    // panel — which reads its currency from the card, not the price — printed
+    // it as "USD 2 200,00" over the Western spread. Reading the TCGplayer
+    // block directly is what makes USD structurally true here.
+    const jaTcg = match.tcgplayer?.prices?.[0];
+    const jaBand = jaTcg?.market_price === undefined ? undefined : jaTcg;
     return {
       name: card.name, // Same reasoning as getOnePieceJapaneseText — the character's real name doesn't change across languages here.
       set: match.card_info.set_name,
@@ -657,6 +892,29 @@ async function resolveJapaneseCardText(card: Card, ref: CardRef): Promise<Locali
       setCode: match.card_info.set_code,
       rarity: match.card_info.rarity ?? card.rarity,
       imageUrl: pokeWalletCardImageUrl(match.id),
+      // The Japanese print's own Cardmarket product, which is a different
+      // listing from the Western one this card's page otherwise shows — same
+      // catalog, same call, and it was being discarded until now.
+      // Same precedence as the Western side and the One Piece Japanese side:
+      // PokéWallet's own figures when it has them, then a link-only pin. No
+      // BerryWallet pin here — that escape hatch is One Piece's, and a Pokémon
+      // card's Japanese row is already pinned by `pokeWalletCardId` itself.
+      cardmarket:
+        (() => {
+          const stats = pokeWalletCardmarketStats(match);
+          return stats && { ...stats, print: "japanese" as const };
+        })() ?? linkOnlyCardmarket(ref.cardmarketProductUrl?.japanese, "japanese"),
+      currentPrice: jaBand?.market_price,
+      sourceUrl: jaBand && match.tcgplayer?.url,
+      asOfDate: jaBand?.updated_at,
+      tcgplayer: jaBand && {
+        low: jaBand.low_price,
+        mid: jaBand.mid_price,
+        high: jaBand.high_price,
+        market: jaBand.market_price,
+        directLow: jaBand.direct_low_price ?? undefined,
+        variant: jaBand.sub_type_name,
+      },
       translated: true,
     };
   } catch (err) {

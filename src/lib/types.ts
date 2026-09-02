@@ -118,18 +118,72 @@ export type Card = {
    */
   printName?: string;
   /**
-   * Real Cardmarket EUR figures for a One Piece card's own BerryWallet
-   * match — separate from `currentPrice`/`currency` above (which prefer
-   * TCGPlayer/USD when a real one exists, see cards.ts's berryWalletPrice)
-   * so a card WITH a real USD price can still show its real EUR Cardmarket
-   * numbers too, rather than the two being mutually exclusive. Powers
-   * CardmarketPricesPanel in place of the illustrative
-   * InternationalPricesPanel for any card that has this — real data
-   * replacing a fabricated currency conversion, not sitting alongside it.
-   * Undefined for every Pokémon card and any One Piece card whose
-   * BerryWallet match carries no Cardmarket block at all.
+   * Real Cardmarket EUR figures — separate from `currentPrice`/`currency`
+   * above (which prefer TCGPlayer/USD when a real one exists, see cards.ts's
+   * berryWalletPrice) so a card WITH a real USD price can still show its real
+   * EUR Cardmarket numbers too, rather than the two being mutually exclusive.
+   * Powers CardmarketPricesPanel in place of the illustrative
+   * InternationalPricesPanel for any card that has this — real data replacing
+   * a fabricated currency conversion, not sitting alongside it.
+   *
+   * Two sources now, one shape: a One Piece card's own BerryWallet match, or
+   * a Pokémon card's Western PokéWallet print (CardRef.pokeWalletWesternCardId).
+   * Both are the WESTERN Cardmarket product, which is the right one to show
+   * next to an English page: Cardmarket sells English, French, Italian,
+   * German, Spanish and Portuguese copies as language options WITHIN one
+   * listing, and splits only Japanese and Korean off as separate products.
+   * `languages` carries that set so the panel can say which copies the price
+   * covers instead of implying it is English-only.
+   *
+   * `avg1`/`avg7`/`avg30` are Cardmarket's own trailing averages, the same
+   * three rows its product page prints. Undefined for a card whose source
+   * carries no Cardmarket block, which is not rare — BerryWallet returns none
+   * at all for some One Piece prints.
    */
-  cardmarket?: { avg?: number; low?: number; trend?: number; url?: string };
+  /**
+   * The TCGplayer spread behind `currentPrice` — the low, mid, high and
+   * direct-low a single market price is the middle of.
+   *
+   * Always from the SAME source that supplied `currentPrice`, never merged
+   * across sources. TCGdex, apitcg and BerryWallet each carry their own copy
+   * of this block, and while apitcg and BerryWallet were measured returning
+   * identical figures, TCGdex refreshes hourly against apitcg's 24h — so a
+   * band from one source beside a market price from another would be two
+   * snapshots of the same card quietly disagreeing, the exact thing this
+   * codebase already refuses to do for identity fields.
+   *
+   * `variant` names the printing the numbers describe ("holofoil",
+   * "normal", ...), because TCGplayer prices each separately and a spread
+   * with no printing attached is not attributable to anything.
+   */
+  tcgplayer?: {
+    low?: number;
+    mid?: number;
+    high?: number;
+    market?: number;
+    directLow?: number;
+    variant?: string;
+  };
+  cardmarket?: {
+    avg?: number;
+    low?: number;
+    trend?: number;
+    avg1?: number;
+    avg7?: number;
+    avg30?: number;
+    url?: string;
+    /**
+     * Which of Cardmarket's two products these figures come from.
+     *
+     * Set from WHICH id we resolved, never inferred from the payload. The
+     * obvious-looking source — PokéWallet's `images.languages` — turned out to
+     * be image availability, reporting `["en"]` for the Japanese prints, so
+     * reading listing coverage off it would have labelled a Japanese page
+     * "1 language: EN". Knowing which id was asked for is the one thing that
+     * cannot be wrong.
+     */
+    print?: "western" | "japanese";
+  };
   /**
    * One Piece only — the English BerryWallet match's own `(V.N)` rarity-tier
    * index (see lib/berrywallet.ts's variantIndex), stored here purely so a

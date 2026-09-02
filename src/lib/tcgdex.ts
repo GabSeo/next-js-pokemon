@@ -196,7 +196,18 @@ export type TcgdexCard = {
  * apitcg's own `markets.tcgplayer.url` stop being needed for a Pokémon card
  * once TCGdex has matched it.
  */
-export function tcgplayerSnapshot(card: TcgdexCard): { price?: number; updated?: string; url?: string } {
+export function tcgplayerSnapshot(card: TcgdexCard): {
+  price?: number;
+  updated?: string;
+  url?: string;
+  /**
+   * The rest of the spread for the same variant the price came from. Returned
+   * alongside rather than as a second lookup so the two can never describe
+   * different printings — the loop below picks one variant, and everything
+   * reported here belongs to it.
+   */
+  band?: { low?: number; mid?: number; high?: number; market?: number; directLow?: number; variant?: string };
+} {
   const tcgplayer = card.pricing?.tcgplayer;
   if (!tcgplayer) return {};
   for (const [key, value] of Object.entries(tcgplayer)) {
@@ -208,6 +219,14 @@ export function tcgplayerSnapshot(card: TcgdexCard): { price?: number; updated?:
         price,
         updated: tcgplayer.updated,
         url: value.productId ? `https://www.tcgplayer.com/product/${value.productId}` : undefined,
+        band: {
+          low: value.lowPrice,
+          mid: value.midPrice,
+          high: value.highPrice,
+          market: value.marketPrice,
+          directLow: value.directLowPrice,
+          variant: key,
+        },
       };
     }
   }
