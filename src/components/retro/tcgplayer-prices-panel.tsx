@@ -56,6 +56,88 @@ function spread(
     .filter((row): row is { label: string; amount: number } => row.amount != null);
 }
 
+/**
+ * TCGplayer as one line under Cardmarket, for the JA market only.
+ *
+ * The Japanese print is the one product two marketplaces both really carry:
+ * Americans buy it on TCGplayer, Europeans on Cardmarket. US and FR each have
+ * a single authoritative source, so they lead with it and show nothing else —
+ * JA has two, and hiding one of them would be hiding a real price.
+ *
+ * A strip rather than a second full panel because Cardmarket still leads here
+ * (MARKET_CONFIG.JP), and two equal blocks read as two competing answers to
+ * one question — the exact failure the market card was rebuilt to fix. This
+ * says the US number exists, in its own currency, without arguing with the
+ * European one.
+ *
+ * NO CONVERSION, and none is implied: the euros above and the dollars here are
+ * two marketplaces' own figures for one product, and the only honest thing to
+ * do with them is show both and label them.
+ */
+export function TcgplayerStrip({ card }: { card: Card }) {
+  const band = card.tcgplayer;
+
+  // "US market", not "TCGplayer": the section's vocabulary is markets, and this
+  // line answers what the Japanese print costs in the US one. The marketplace
+  // is what the link goes to, not what the label argues about.
+  const label = <span className="block text-[10px] font-black tracking-[0.4px] text-muted-text uppercase">US market · Japanese print</span>;
+
+  // Absent, and said so rather than dropped. The two franchises are absent for
+  // different reasons and only one of them is a fact about TCGplayer, so they
+  // do not get the same sentence: PokéWallet returns an empty `prices` array
+  // for a Japanese print TCGplayer genuinely does not carry (Gengar VMAX's
+  // High-Class Deck promo), while BerryWallet returns `tcgplayer: null` on
+  // every Japanese One Piece row — which says BerryWallet has no figures, not
+  // that TCGplayer has no listing. Claiming the first for the second would be
+  // asserting something nobody checked.
+  //
+  // Quieter than the live bar — subtle border, no arrow, nothing to click —
+  // because there is nowhere to go. Same box either way, so the JA market card
+  // keeps its height whether or not a US price exists for the print.
+  if (!band?.market) {
+    return (
+      <div className="mt-3 rounded-md border-2 border-border-subtle bg-muted-surface px-3 py-2">
+        {label}
+        <p className="mt-0.5 text-[12px] font-bold text-muted-text text-pretty">
+          {card.franchise === "one-piece"
+            ? "No TCGplayer figures for the Japanese print in our sources."
+            : "TCGplayer carries no listing for this print."}
+        </p>
+      </div>
+    );
+  }
+
+  // The whole bar is the link. It was a label, a price and a separate "View on
+  // TCGplayer" line, which wrapped on this column's width and read as leftover
+  // text under the Cardmarket link rather than as one element. One target, one
+  // arrow, one row.
+  // Stacked, not label-left/price-right: at this column's width the label wraps
+  // to two lines and a vertically centred price beside it reads as a mistake.
+  // Stacking also gives the live and absent states the same shape, so switching
+  // cards does not move the box.
+  return (
+    <a
+      className="mt-3 block rounded-md border-2 border-black bg-muted-surface px-3 py-2 transition-colors hover:bg-card-surface"
+      href={card.sourceUrl}
+      rel="noopener noreferrer"
+      target="_blank"
+    >
+      {label}
+      <span className="mt-0.5 flex items-baseline gap-1.5">
+        {/* Same `data value` convention as Headline: the exact figure stays in
+            the markup for an agent while a person reads the formatted one.
+            Market price alone — the spread belongs to the panel whose market
+            this is, and repeating it here would turn a one-line cross-reference
+            back into the second competing block it replaced. */}
+        <data className="text-sm font-black tabular-nums" value={String(band.market)}>
+          {money(band.market, card.currency)}
+        </data>
+        <span className="text-xs font-black text-pokemon-blue">↗</span>
+      </span>
+    </a>
+  );
+}
+
 function TcgplayerLink({ url }: { url?: string }) {
   if (!url) return null;
   return (

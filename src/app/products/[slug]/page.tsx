@@ -144,6 +144,13 @@ async function localeVariantsFor(card: Card): Promise<LocaleVariant[]> {
               // either of them could never reach the page.
               ...card,
               cardmarket: ja?.cardmarket,
+              // Same rule as `cardmarket` above, and it became load-bearing when
+              // the JA tab started rendering a TCGplayer strip: `...card` carries
+              // the WESTERN band, which that strip would print under a Japanese
+              // label. Undefined instead, which the panel already states as
+              // "TCGplayer carries no listing for this print" — true for every
+              // One Piece card, whose Japanese rows have no TCGplayer block.
+              tcgplayer: ja?.tcgplayer,
             },
     },
     {

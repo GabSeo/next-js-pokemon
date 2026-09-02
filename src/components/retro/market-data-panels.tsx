@@ -4,7 +4,7 @@ import { ProductLocaleToggle, useProductLocale } from "@/components/product-loca
 import { CardmarketAbsent, CardmarketPrimary, cardmarketSourceLabel } from "@/components/retro/cardmarket-prices-panel";
 import { InternationalPricesPanel } from "@/components/retro/international-prices-panel";
 import { PriceComparison } from "@/components/retro/price-comparison";
-import { TcgplayerPrimary } from "@/components/retro/tcgplayer-prices-panel";
+import { TcgplayerPrimary, TcgplayerStrip } from "@/components/retro/tcgplayer-prices-panel";
 import { MARKET_CONFIG, type Market } from "@/lib/market-config";
 import type { GradedMarketData } from "@/lib/graded-market";
 import type { Card } from "@/lib/types";
@@ -112,7 +112,11 @@ export function MarketDataPanels({
             {tcgplayerLeads ? (
               <TcgplayerPrimary card={card} priceKnown={priceKnown} unlistedNote={unlistedNote} />
             ) : hasCardmarket ? (
-              <CardmarketPrimary card={card} />
+              // The strip is JA-only and self-suppressing: it renders nothing
+              // unless this print has a TCGplayer band of its own, which One
+              // Piece never does and Gengar VMAX's Japanese promo does not
+              // either. See TcgplayerStrip.
+              <CardmarketPrimary card={card} footer={active === "JP" ? <TcgplayerStrip card={card} /> : undefined} />
             ) : active === "JP" ? (
               // The Japanese print has no Cardmarket product of its own. NOT
               // the illustrative conversion below: that estimate is derived

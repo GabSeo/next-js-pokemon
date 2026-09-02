@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import { Headline, Metric, MetricGrid, Note } from "@/components/retro/market-panel-parts";
 import type { Card } from "@/lib/types";
 
@@ -115,7 +117,7 @@ export function CardmarketAbsent({ hasWestern }: { hasWestern: boolean }) {
   );
 }
 
-export function CardmarketPrimary({ card }: { card: Card }) {
+export function CardmarketPrimary({ card, footer }: { card: Card; footer?: ReactNode }) {
   const cardmarket = card.cardmarket;
   if (!cardmarket) return null;
 
@@ -166,9 +168,12 @@ export function CardmarketPrimary({ card }: { card: Card }) {
       {cardmarket.print && <Note>{PRINT_NOTE[cardmarket.print]}</Note>}
 
       {/* mt-auto pins the link to the card's floor so both cards in the row
-          end on the same line, whichever has more rows. */}
+          end on the same line, whichever has more rows. `footer` rides inside
+          it — the JA market's TCGplayer strip — so adding a second source does
+          not cost that alignment. */}
       <div className="mt-auto pt-3">
         <CardmarketLink url={cardmarket.url} />
+        {footer}
       </div>
     </div>
   );

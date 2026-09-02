@@ -154,7 +154,14 @@ export function PriceComparison({
           label: "TCGplayer",
           amount: japaneseCard?.tcgplayer?.market ?? null,
           color: TCGPLAYER_COLOR,
-          absent: "No listing for this print",
+          // "Not in our sources", not "no listing". Only PokéWallet actually
+          // establishes the second — it returns an empty `prices` array for a
+          // print TCGplayer does not carry. BerryWallet returns
+          // `tcgplayer: null` on every Japanese One Piece row, which says
+          // BerryWallet has no figures and nothing at all about TCGplayer. The
+          // strip under the market card makes the same distinction; this row
+          // takes the weaker claim because it has to cover both franchises.
+          absent: "Not in our sources for this print",
         },
         ebayRow(data, "Raw", "Japanese", "eBay · raw", RAW_COLOR),
         ebayRow(data, "PSA 8", "Japanese", "PSA 8", PSA8_COLOR),
