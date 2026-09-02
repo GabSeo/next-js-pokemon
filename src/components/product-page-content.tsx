@@ -7,6 +7,7 @@ import { OpenDataLinks } from "@/components/open-data-links";
 import { PriceChart } from "@/components/price-chart";
 import { PriceDataTabs } from "@/components/price-data-tabs";
 import { LocaleSlot, ProductLocaleProvider, type LocaleCode } from "@/components/product-locale";
+import { MarketFilterBar } from "@/components/retro/market-filter-bar";
 import { StructuredData } from "@/components/structured-data";
 import { ConditionFilterChips } from "@/components/retro/condition-filter-chips";
 import { MarketSections } from "@/components/retro/market-sections";
@@ -112,6 +113,10 @@ export function ProductPageContent({
       )}
 
       <div className="mx-auto max-w-[1180px] px-6 py-16">
+        {/* The market control shares the breadcrumb's row rather than taking a
+            row of its own — it is page-level state, and this is the page-level
+            line. */}
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <nav aria-label="Breadcrumb" className="text-sm font-bold text-muted-text">
           <Link href="/" className="hover:text-foreground hover:underline">
             Home
@@ -125,8 +130,10 @@ export function ProductPageContent({
             <LocaleSlot variants={localized((c) => c.name)} />
           </span>
         </nav>
+        <MarketFilterBar />
+        </div>
 
-        <div className="mt-5 mb-8 flex flex-wrap items-center justify-between gap-3 rounded-lg border-2 border-black bg-card-surface p-6 shadow-hard-md">
+        <div className="mt-5 mb-12 flex flex-wrap items-center justify-between gap-3 rounded-lg border-2 border-black bg-card-surface p-6 shadow-hard-md">
           <div className="flex flex-wrap items-center gap-3">
             {/* One slot for the whole identity strip rather than four —
                 the h1, the type badges, the set and the number all have to
@@ -220,7 +227,11 @@ export function ProductPageContent({
             <OpenDataLinks markdownHref={markdownHref} jsonHref={jsonHref} okfHref={okfHref} className="mt-4" />
           </div>
 
-          <div className="space-y-10">
+          {/* The rhythm between the stacked sections. Widened from 40px once the
+              pinned chrome grew: a section heading arriving 40px after the last
+              row of the section above it reads as part of that section when
+              both are sliding under a fixed block. */}
+          <div className="space-y-14">
             {/* Real-time market data — everything here is either already
                 live (TCGplayer/history) or has a real TCGGO endpoint lined
                 up in tcggo-integration-plan.md §1/§2.4, once that's wired

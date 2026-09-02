@@ -33,12 +33,12 @@ export type MarketConfig = {
 
 export const MARKET_CONFIG: Record<Market, MarketConfig> = {
   US: { label: "US market", primary: "tcgplayer" },
-  FR: { label: "FR / EU market", primary: "cardmarket" },
+  FR: { label: "EU market", primary: "cardmarket" },
   // Cardmarket leads here too, on the Japanese print's own listing. Deliberately
   // NOT called a Japanese market index: the product is Japanese, the
   // marketplace is European, and the panel's own label says "Cardmarket ·
   // Japanese" so the reader is never told euros are a Tokyo price.
-  JP: { label: "JP market", primary: "cardmarket" },
+  JP: { label: "JA market", primary: "cardmarket" },
 };
 
 export function marketConfig(code: string): MarketConfig {

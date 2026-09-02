@@ -39,8 +39,35 @@ import { createContext, useContext, useState, type ReactNode } from "react";
  * that never runs the toggle.
  */
 
-/** ISO 3166-1 alpha-2, matching the flag asset and the visible label. */
+/** ISO 3166-1 alpha-2 of the MARKET, which is the key every variant is stored under. */
 export type LocaleCode = "US" | "FR" | "JP";
+
+/**
+ * What the reader sees, which is not the code.
+ *
+ * "EU" rather than "FR": that market was never really France. Cardmarket sells
+ * one Western product to English, French, Italian, German, Spanish and
+ * Portuguese buyers, and the panel has always said so — the flag was the only
+ * thing claiming otherwise. "JA" rather than "JP" for the same reason in
+ * reverse: it names the Japanese PRINT, a property of the card, not a country.
+ */
+export const MARKET_LABEL: Record<LocaleCode, string> = { US: "US", JP: "JA", FR: "EU" };
+
+/** The flag asset per market — EU gets the union's own flag, not one member state's. */
+const FLAG_CODE: Record<LocaleCode, string> = { US: "us", JP: "jp", FR: "eu" };
+
+/**
+ * Which marketplaces a figure comes from. NEVER a conversion: USD is TCGplayer
+ * and eBay, EUR is Cardmarket.
+ *
+ * NOT a control. It was briefly a second toggle beside the market, and that was
+ * one axis too many for what the data actually supports: US is American
+ * marketplaces and EU is Cardmarket, so offering the other currency there just
+ * gave a reader two ways to reach the same wrong answer. Only the Japanese
+ * print is genuinely carried by both, and that view shows both at once rather
+ * than asking anyone to choose. See MARKET_CONFIG.
+ */
+export type Currency = "USD" | "EUR";
 
 type LocaleContextValue = {
   active: LocaleCode;
@@ -113,69 +140,8 @@ export function ProductLocaleProvider({
  * exactly what SVG compresses best and JPEG compresses worst (visible
  * ringing on the hard color edges a flag is made of).
  */
-export function flagSvgUrl(isoCode: LocaleCode): string {
-  return `https://flagcdn.com/${isoCode.toLowerCase()}.svg`;
-}
-
-/**
- * The US/JP/FR toggle — now the product page's single market control, sitting
- * on the right of the Market Overview panel's own heading, where that panel's
- * English/Japanese/France pills used to be (see
- * components/retro/graded-market-panel.tsx). One click both selects the
- * marketplace whose listings are shown and names the card in that language.
- *
- * No visible "Market" label and no caption: the heading it sits opposite
- * already says Market Overview, and the flags need no word to be read as
- * languages. The accessible name stays on the group for anyone who can't see
- * that pairing.
- *
- * THE PAGE'S ONE MARKET CONTROL. It selects a market, and the print follows
- * from it — a reader asking about the Japanese market wants the Japanese
- * print, so making them say both was friction, not precision.
- *
- * It briefly was two controls, market and card language, following the
- * architecture note's "market is not language" split. The distinction is real
- * and the data model still honours it (lib/market-config.ts maps a market to
- * its authoritative source, independently of which print is on screen), but as
- * two toggles it put a nine-cell grid in front of anyone who just wanted a
- * price. The model stayed; the surface collapsed back to one.
- *
- * Why no locale is inert any more: this used to grey out a language with no
- * real translation, so a visitor could never see English text wearing a
- * foreign flag. LocaleSlot still falls back to the US nodes there, so nothing
- * is ever a fabricated translation — but the flag also selects which print's
- * listings the eBay and Vinted sections show, and those exist for every card
- * whether or not PokéWallet/BerryWallet catalogue a foreign print of it.
- * Making those flags inert would have quietly cut off real market data, so
- * all three stay clickable. Only the card's own name and art fall back.
- */
-export function ProductLocaleToggle() {
-  const ctx = useProductLocaleOptional();
-  if (!ctx || ctx.options.length === 0) return null;
-  const { active, setActive, options } = ctx;
-
-  return (
-    <div aria-label="Market" className="flex overflow-hidden rounded-md border-2 border-black" role="group">
-      {options.map((option, i) => {
-        const isActive = option.code === active;
-        return (
-          <button
-            key={option.code}
-            type="button"
-            onClick={() => setActive(option.code)}
-            aria-pressed={isActive}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-black tracking-[0.3px] uppercase transition-colors ${
-              i > 0 ? "border-l-2 border-black" : ""
-            } ${isActive ? "bg-pokemon-red text-white" : "bg-white text-foreground hover:bg-muted-surface"}`}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element -- external CDN image, domain not allowlisted for next/image */}
-            <img src={flagSvgUrl(option.code)} alt="" className="h-3 w-4 rounded-[1px] object-cover" />
-            {option.code}
-          </button>
-        );
-      })}
-    </div>
-  );
+export function flagSvgUrl(code: LocaleCode): string {
+  return `https://flagcdn.com/${FLAG_CODE[code]}.svg`;
 }
 
 /**

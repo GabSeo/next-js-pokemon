@@ -1,6 +1,6 @@
 "use client";
 
-import { ProductLocaleToggle, useProductLocale } from "@/components/product-locale";
+import { useProductLocale } from "@/components/product-locale";
 import { CardmarketAbsent, CardmarketPrimary, cardmarketSourceLabel } from "@/components/retro/cardmarket-prices-panel";
 import { InternationalPricesPanel } from "@/components/retro/international-prices-panel";
 import { PriceComparison } from "@/components/retro/price-comparison";
@@ -84,10 +84,6 @@ export function MarketDataPanels({
           <h2 className="mt-1 text-[clamp(22px,3.2vw,32px)] leading-none font-black tracking-[-1px] uppercase">
             Real-time market data
           </h2>
-        </div>
-        <div>
-          <p className="mb-1.5 text-[10px] font-black tracking-[0.6px] text-muted-text uppercase">Valuation market</p>
-          <ProductLocaleToggle />
         </div>
       </div>
 
