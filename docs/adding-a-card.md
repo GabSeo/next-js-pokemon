@@ -93,11 +93,23 @@ feed we use covers it."
 Two cases, both confirmed by hand on cardmarket.com — the only place they can
 be, since Cardmarket answers automated requests with a CDN bot challenge:
 
-- **No row exists.** Cardmarket sells Monkey D. Luffy OP09-061 under
-  `Premium-Bandai-Products-Asia-Region-Legal`; BerryWallet's `CM-PREMIUM-BANDAI`
-  maps only to `Premium-Bandai-Products`, and the only `-Asia-Region-Legal`
-  sets it carries are Starter-Deck-Egghead, Heroines-Edition and
-  Egghead-Crisis. Nothing to join on, so (b) cannot help either.
+- **No row exists.** `monkey-d-luffy-p-106` is the live case: Cardmarket sells
+  that printing under `Winner-Cards`, and BerryWallet has no row on it.
+  Measured 2026-09-02 by sweeping every `CM-*` set row by row — its entire
+  Cardmarket coverage is eleven sets:
+
+  ```
+  Unnumbered-Promos            Promos              Reprints
+  Unnumbered-Promos-Japanese   Promos-Japanese     Premium-Bandai-Products
+  One-Piece-Products           Judge-Promos        Special-Tournaments-Promos
+  Mini-Promo-Cards             Special-Tournament-Promos-Japanese
+  ```
+
+  `Winner-Cards` is not among them, no BerryWallet set matches `/winner/i`,
+  and no row in the flat index points at it. Nothing to join on, so (b) cannot
+  help either. Note the four P-106 rows BerryWallet *does* hold are the OTHER
+  printings of that code — pricing one of them here would be the merge this
+  codebase refuses to make.
 - **The row is wrong.** BerryWallet's Japanese rows for the One Piece promo
   sets carry URLs that break on arrival:
   `Unnumbered-Promos-Japanese/MonkeyDLuffy-OP09-061` redirects to root, and

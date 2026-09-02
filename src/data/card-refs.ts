@@ -411,4 +411,59 @@ export const cardRefs: CardRef[] = [
     // for this exact print say "Weekly Shonen Jump", never "Event"/"Vol.".
     ebayVariantTags: { en: ["Event Pack Vol. 2"], jp: ["Shonen Jump"] },
   },
+  {
+    // Added 2026-09-02 to exercise the add-a-card workflow on the hardest
+    // shape there is (docs/adding-a-card.md). P-106 is the case where
+    // BerryWallet's two row families do not meet: three TCGplayer rows with
+    // full identity and `cardmarket: null`, and four Cardmarket rows with
+    // every identity field null and `tcgplayer: null`. Nothing joins them —
+    // not the TCGplayer product, and not the card code, which reads "P-106"
+    // on one side and "106" on the other. So the Cardmarket blocks are not
+    // reachable by derivation and have to be pinned once verified.
+    //
+    // Of the three real printings this is the only one worth tracking: the
+    // Winner Pack foil is USD 52.29 against USD 1.38 and USD 1.16 for the two
+    // Store/Tournament Pack normals.
+    //
+    // No berryWalletSetCode: P-106 is not in OP-PR (checked, 1,200 rows) and
+    // no other set has been confirmed to hold it, so the bounded walk finds
+    // it or it doesn't. Fill the code in from a real resolution rather than a
+    // guess — see the field's own comment.
+    franchise: "one-piece",
+    tcg: "one-piece",
+    slug: "monkey-d-luffy-p-106",
+    displayName: "Monkey D. Luffy",
+    character: "Monkey D. Luffy",
+    // "Winner Pack" is the one string only this printing's name carries —
+    // "Vol. 2" alone also matches "Tournament Pack 2026 Vol. 2".
+    lookup: { by: "code", code: "P-106", variantTags: ["Winner Pack"] },
+    // OFF, unlike every other One Piece ref, because BerryWallet has nothing
+    // to give this card. Identity comes from apitcg (confirmed: name, set,
+    // number, rarity and image all resolve without it), the Cardmarket product
+    // is pinned below, and BerryWallet's own four P-106 rows are the other
+    // printings of this code. Left on, it spends its bounded 6-set walk twice
+    // per resolution — ~14 calls against a 100/hour ceiling — to fail both
+    // times.
+    //
+    // The cost of switching it off is that a Japanese identity row appearing
+    // upstream later would not be picked up on its own. Flip it back when
+    // there is a reason to think one exists.
+    berryWalletEnabled: false,
+    // Cardmarket sells this printing under the `Winner-Cards` set, and
+    // BerryWallet has no row on it — swept every CM-* set row by row on
+    // 2026-09-02 and its Cardmarket coverage is 11 sets: Unnumbered-Promos,
+    // Unnumbered-Promos-Japanese, Promos, Promos-Japanese, One-Piece-Products,
+    // Judge-Promos, Reprints, Premium-Bandai-Products,
+    // Special-Tournaments-Promos, Mini-Promo-Cards and
+    // Special-Tournament-Promos-Japanese. Winner-Cards is not among them, no
+    // set matches /winner/i, and no row in the flat index points at it.
+    //
+    // LINK ONLY, and no figures anywhere to keep: the four P-106 rows
+    // BerryWallet does hold are Promos/-V1 and Promos-Japanese/-V1/-V2/-V3,
+    // which are the other printings of this code, not this one. Pricing any of
+    // them here would be the merge this codebase refuses to make.
+    cardmarketProductUrl: {
+      western: "https://www.cardmarket.com/en/OnePiece/Products/Singles/Winner-Cards/MonkeyDLuffy-P-106-V1",
+    },
+  },
 ];
