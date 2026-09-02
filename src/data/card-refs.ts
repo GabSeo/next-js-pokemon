@@ -146,26 +146,39 @@ export type CardRef = {
    */
   berryWalletCardmarketId?: { en?: string; jp?: string };
   /**
-   * ESCAPE HATCH 2 of 2, and the last one — a Cardmarket product URL for a
-   * print NO source carries a row for.
+   * ESCAPE HATCH 2 of 2, and the last one — a hand-verified Cardmarket product
+   * URL, for a print whose real product nothing here can reach correctly.
    *
-   * Confirmed live on 2026-09-02 that this case is real: Cardmarket sells
-   * Monkey D. Luffy OP09-061 under `Premium-Bandai-Products-Asia-Region-
-   * Legal`, and BerryWallet has no row on that set at all — its own
-   * `CM-PREMIUM-BANDAI` maps only to `Premium-Bandai-Products`, and the only
-   * `-Asia-Region-Legal` sets it carries are Starter-Deck-Egghead,
-   * Heroines-Edition and Egghead-Crisis. There is no shared TCGplayer
-   * product, no card code and no set to join on, so escape hatch 1 cannot
-   * help either.
+   * Two separate cases, both confirmed on cardmarket.com by hand on
+   * 2026-09-02, which is the only way they can be confirmed (Cardmarket
+   * answers automated requests with a CDN bot challenge):
    *
-   * LINK ONLY. It carries no figures and never will: nothing is read from
-   * this URL, and no price is typed in beside it. The panel renders the real
-   * link above a plain statement that no price feed covers this print — the
-   * reader gets the page they wanted and is told exactly what we don't know.
+   * 1. NO ROW EXISTS. Cardmarket sells Monkey D. Luffy OP09-061 under
+   *    `Premium-Bandai-Products-Asia-Region-Legal`; BerryWallet has no row on
+   *    that set at all — its `CM-PREMIUM-BANDAI` maps only to
+   *    `Premium-Bandai-Products`, and the only `-Asia-Region-Legal` sets it
+   *    carries are Starter-Deck-Egghead, Heroines-Edition and Egghead-Crisis.
+   *    No shared TCGplayer product, no code, no set to join on.
    *
-   * Applies only when nothing else produced a block, so it can never
-   * displace real figures — a pinned row (escape hatch 1) and the ordinary
-   * derivation both win over it.
+   * 2. THE ROW IS WRONG. BerryWallet's Japanese rows for the One Piece promo
+   *    sets carry product URLs that do not survive contact with Cardmarket:
+   *    `Unnumbered-Promos-Japanese/MonkeyDLuffy-OP09-061` redirects to root,
+   *    and `Promos-Japanese/MonkeyDLuffy-P-033-V1` opens a product listing
+   *    Chinese copies — the real Japanese product is `-V2`.
+   *
+   * CORRECTS THE LINK AND KEEPS THE FIGURES. In case 2 the row is not the
+   * wrong CARD — it is the right card's prices behind a URL that has gone
+   * bad, confirmed by checking both rows' euros against the real product
+   * pages. So the figures stay and only the URL is replaced.
+   *
+   * That makes a value here an assertion, and the comment beside it must say
+   * the prices were checked against the pinned product. Nothing in the code
+   * can check it: Cardmarket answers automated requests with a CDN bot
+   * challenge, so a URL and its figures can only ever be verified by a person
+   * opening the page. In case 1, where there is no row at all, there are no
+   * figures to keep and the panel says so.
+   *
+   * Nothing is ever read FROM this URL and no price is typed in beside it.
    */
   cardmarketProductUrl?: { western?: string; japanese?: string };
   /**
@@ -340,6 +353,20 @@ export const cardRefs: CardRef[] = [
     lookup: { by: "code", code: "OP09-061", variantTags: ["2nd Anniversary Set"] },
     berryWalletSetCode: { en: "OP09" },
     berryWalletEnabled: true,
+    // The derivation reaches `Unnumbered-Promos-Japanese/MonkeyDLuffy-OP09-061`
+    // through the shared TCGplayer product, and Cardmarket redirects that URL
+    // to root — the product does not exist. The real one, confirmed by hand,
+    // is the Premium Bandai Asia-region listing below, which BerryWallet has
+    // no row for at all (its CM-PREMIUM-BANDAI set maps only to
+    // `Premium-Bandai-Products`), so nothing here can reach it automatically.
+    //
+    // The row's PRICES were checked against that page and are correct, so only
+    // the URL is replaced; the JP tab's euros are still BerryWallet's own live
+    // figures.
+    cardmarketProductUrl: {
+      japanese:
+        "https://www.cardmarket.com/en/OnePiece/Products/Singles/Premium-Bandai-Products-Asia-Region-Legal/MonkeyDLuffy-OP09-061",
+    },
   },
   {
     // A different card_number and product entirely from OP09-061 above,
@@ -358,6 +385,17 @@ export const cardRefs: CardRef[] = [
     lookup: { by: "code", code: "P-033", variantTags: ["Event Pack", "Vol. 2"] },
     berryWalletSetCode: { en: "OP-PR" },
     berryWalletEnabled: true,
+    // The derivation reaches `Promos-Japanese/MonkeyDLuffy-P-033-V1` through
+    // the shared TCGplayer product, and that URL opens the wrong product —
+    // checked by hand on cardmarket.com, it lists Chinese copies. The real
+    // Japanese product is -V2.
+    //
+    // The row's PRICES were checked against that -V2 page and are correct, so
+    // only the URL is replaced; the euros on the JP tab are still BerryWallet's
+    // own live figures. See cardmarketProductUrl's own comment.
+    cardmarketProductUrl: {
+      japanese: "https://www.cardmarket.com/en/OnePiece/Products/Singles/Promos-Japanese/MonkeyDLuffy-P-033-V2",
+    },
     // Per language, because this card's two tiers need OPPOSITE vocabulary
     // and a single value can only ever serve one of them. Measured with
     // scripts/ebay-query-lab.mts on 2026-08-30, PSA 10, both tiers:

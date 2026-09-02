@@ -1,7 +1,7 @@
 "use client";
 
 import { ProductLocaleToggle, useProductLocale } from "@/components/product-locale";
-import { CardmarketPrimary, cardmarketSourceLabel } from "@/components/retro/cardmarket-prices-panel";
+import { CardmarketAbsent, CardmarketPrimary, cardmarketSourceLabel } from "@/components/retro/cardmarket-prices-panel";
 import { InternationalPricesPanel } from "@/components/retro/international-prices-panel";
 import { PriceComparison } from "@/components/retro/price-comparison";
 import { TcgplayerPrimary } from "@/components/retro/tcgplayer-prices-panel";
@@ -113,6 +113,13 @@ export function MarketDataPanels({
               <TcgplayerPrimary card={card} priceKnown={priceKnown} unlistedNote={unlistedNote} />
             ) : hasCardmarket ? (
               <CardmarketPrimary card={card} />
+            ) : active === "JP" ? (
+              // The Japanese print has no Cardmarket product of its own. NOT
+              // the illustrative conversion below: that estimate is derived
+              // from the Western price, so on this tab it would put a figure
+              // computed from the Western listing under a JP heading — the
+              // same thing, one step further removed.
+              <CardmarketAbsent hasWestern={Boolean(variants[0]?.card.cardmarket)} />
             ) : (
               // No real Cardmarket block for this print — the illustrative
               // conversion panel stands in, badged as an estimate by its own

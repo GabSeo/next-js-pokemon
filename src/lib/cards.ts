@@ -454,11 +454,11 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
     // one, then a link-only pin. See CardRef's two escape-hatch fields — the
     // link-only one is last so it can never displace real figures.
     ...(() => {
-      const cardmarket =
-        pinnedWestern ??
-        westernCardmarket ??
-        ("cardmarket" in identity ? identity.cardmarket : undefined) ??
-        linkOnlyCardmarket(ref.cardmarketProductUrl?.western, "western");
+      const cardmarket = withPinnedUrl(
+        pinnedWestern ?? westernCardmarket ?? ("cardmarket" in identity ? identity.cardmarket : undefined),
+        ref.cardmarketProductUrl?.western,
+        "western"
+      );
       return cardmarket ? { cardmarket } : {};
     })(),
     asOfDate: identity.asOfDate.slice(0, 10),
@@ -660,6 +660,17 @@ async function resolveOnePieceJapaneseText(card: Card, ref: CardRef): Promise<Lo
     set: card.set,
     rarity: card.rarity,
     imageUrl: card.imageUrl,
+    // Carried on the FALLBACK too, not only on a resolved match. A hand-pinned
+    // Japanese Cardmarket product is the answer for exactly the cards whose
+    // identity BerryWallet cannot resolve — monkey-d-luffy-op09-061 and
+    // monkey-d-luffy-p-033 both have a real Japanese product and no Japanese
+    // identity row — so building it only inside the success path put the
+    // escape hatch out of reach of every card that needs one.
+    //
+    // `translated` stays false: the name and art really are still English, and
+    // this says nothing about them. It only means the Japanese LISTING is real
+    // and was pinned by hand.
+    cardmarket: await japaneseCardmarketWithoutIdentity(card, ref),
     translated: false,
   };
   if (!ref.berryWalletEnabled || ref.lookup.by !== "code") return fallback;
@@ -710,10 +721,16 @@ async function resolveOnePieceJapaneseText(card: Card, ref: CardRef): Promise<Lo
       // So resolve it the same way the English branch does: keep this row's
       // block when it already is the Japanese product, else take the
       // "-Japanese" sibling reachable through the shared TCGplayer product.
-      cardmarket:
+      cardmarket: withPinnedUrl(
         (await pinnedCardmarket(ref.berryWalletCardmarketId?.jp, "japanese")) ??
-        (await japaneseCardmarket(match.card, card, ref.lookup.code)) ??
-        linkOnlyCardmarket(ref.cardmarketProductUrl?.japanese, "japanese"),
+          (await japaneseCardmarket(match.card, card, ref.lookup.code)),
+        ref.cardmarketProductUrl?.japanese,
+        "japanese"
+      ),
+      // NOTE for whoever adds a card: nothing below falls back to the Western
+      // block. A Japanese view showing the Western listing's euros is the one
+      // thing this section must never do, however honestly the panel labels
+      // it — see page.tsx, where that fallback used to live.
       translated: true,
     };
   } catch (err) {
@@ -825,20 +842,73 @@ async function pinnedCardmarket(
 }
 
 /**
- * A Cardmarket block that is a link and nothing else — CardRef's
- * `cardmarketProductUrl`, the last escape hatch, for a print no source carries
- * a row for at all.
+ * Applies CardRef's hand-verified `cardmarketProductUrl` to whatever block the
+ * pipeline resolved — correcting the LINK and keeping the figures.
  *
- * Deliberately carries no figures. The panel reads that as "the product exists,
- * we have no price feed for it" and says so, which is the honest shape of this
- * gap: a reader gets the real page, and is told what we don't know rather than
- * being shown a number nothing backs.
+ * The upstream failure this exists for is narrow and real: BerryWallet prices
+ * the right card and hands back a `product_url` that does not survive contact
+ * with Cardmarket. Confirmed by hand on both One Piece promo cards — the
+ * OP09-061 row's URL redirects to root, and the P-033 row's opens a different
+ * variant listing Chinese copies (the real Japanese product is `-V2`) — while
+ * the euros on both rows check out against the real product pages.
+ *
+ * So this replaces the URL and nothing else. Keeping the figures is a
+ * deliberate assertion by whoever adds the pin, that the row prices THIS
+ * product; the comment beside each pin has to say it was checked, because
+ * nothing in the code can check it (Cardmarket answers automated requests with
+ * a CDN bot challenge).
+ *
+ * With no block to correct, the result is the URL alone — the "Cardmarket
+ * lists this print, no price feed we use covers it" state, for a product no
+ * source carries a row for.
  */
-function linkOnlyCardmarket(
+function withPinnedUrl(
+  block: Card["cardmarket"] | undefined,
   url: string | undefined,
   print: "western" | "japanese"
 ): Card["cardmarket"] | undefined {
-  return url ? { url: cardmarketUrl(url), print } : undefined;
+  if (!url) return block;
+  return { ...block, url: cardmarketUrl(url), print };
+}
+
+/**
+ * The Japanese Cardmarket product for a One Piece card whose Japanese IDENTITY
+ * could not be resolved — the two facts are independent, and treating them as
+ * one is what hid real data behind a missing name.
+ *
+ * Both Luffys are the case in point. BerryWallet has no Japanese identity row
+ * for either, so the resolver above returns its fallback before ever asking
+ * about Cardmarket — yet `Unnumbered-Promos-Japanese/MonkeyDLuffy-OP09-061`
+ * and `Promos-Japanese/MonkeyDLuffy-P-033-V1` both exist and both share a
+ * TCGplayer product with the Western listing this page already quotes, which
+ * is exactly the link findJapaneseCardmarket walks. The data was reachable the
+ * whole time; nothing was asking.
+ *
+ * A pinned row wins over the derivation, and a pinned URL is then applied to
+ * whichever of them answered — see withPinnedUrl.
+ */
+async function japaneseCardmarketWithoutIdentity(card: Card, ref: CardRef): Promise<Card["cardmarket"] | undefined> {
+  const resolved =
+    (await pinnedCardmarket(ref.berryWalletCardmarketId?.jp, "japanese")) ??
+    (await derivedJapaneseCardmarket(card, ref));
+  return withPinnedUrl(resolved, ref.cardmarketProductUrl?.japanese, "japanese");
+}
+
+/** The Japanese product reachable from the Western one, for a card with no Japanese identity row. */
+async function derivedJapaneseCardmarket(card: Card, ref: CardRef): Promise<Card["cardmarket"] | undefined> {
+  if (!ref.berryWalletEnabled || ref.lookup.by !== "code") return undefined;
+  const product = await findJapaneseCardmarket(ref.lookup.code, card.cardmarket?.url).catch(() => undefined);
+  const block = product && cardmarketBlock(product);
+  return block && { ...block, print: "japanese" as const };
+}
+
+/** The Pokémon side of the above — pins only; the BerryWallet walk is One Piece's. */
+async function pinnedJapaneseCardmarket(ref: CardRef): Promise<Card["cardmarket"] | undefined> {
+  return withPinnedUrl(
+    await pinnedCardmarket(ref.berryWalletCardmarketId?.jp, "japanese"),
+    ref.cardmarketProductUrl?.japanese,
+    "japanese"
+  );
 }
 
 async function resolveWesternCardmarket(ref: CardRef): Promise<Card["cardmarket"] | undefined> {
@@ -859,6 +929,8 @@ async function resolveJapaneseCardText(card: Card, ref: CardRef): Promise<Locali
     set: card.set,
     rarity: card.rarity,
     imageUrl: card.imageUrl,
+    // Same reason as the One Piece resolver's own fallback above.
+    cardmarket: await pinnedJapaneseCardmarket(ref),
     translated: false,
   };
   if (!ref.pokeWalletCardId) return fallback;
@@ -899,11 +971,14 @@ async function resolveJapaneseCardText(card: Card, ref: CardRef): Promise<Locali
       // PokéWallet's own figures when it has them, then a link-only pin. No
       // BerryWallet pin here — that escape hatch is One Piece's, and a Pokémon
       // card's Japanese row is already pinned by `pokeWalletCardId` itself.
-      cardmarket:
+      cardmarket: withPinnedUrl(
         (() => {
           const stats = pokeWalletCardmarketStats(match);
           return stats && { ...stats, print: "japanese" as const };
-        })() ?? linkOnlyCardmarket(ref.cardmarketProductUrl?.japanese, "japanese"),
+        })(),
+        ref.cardmarketProductUrl?.japanese,
+        "japanese"
+      ),
       currentPrice: jaBand?.market_price,
       sourceUrl: jaBand && match.tcgplayer?.url,
       asOfDate: jaBand?.updated_at,

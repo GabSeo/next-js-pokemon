@@ -19,11 +19,32 @@ export function cardmarketHomepage(franchise: "pokemon" | "one-piece"): string {
 /**
  * Cardmarket's own product URL, forced onto the English locale.
  *
- * The first path segment is Cardmarket's UI language and nothing else — the
- * PRODUCT is identified by the set and card slugs after it, so
+ * The first path segment is taken to be Cardmarket's UI language and nothing
+ * else — the PRODUCT identified by the set and card slugs after it, so
  * /it/OnePiece/Products/Singles/... and /en/OnePiece/Products/Singles/... are
- * the same page in two languages. Confirmed against Cardmarket's own URLs for
- * one card in two locales: only the leading segment differs.
+ * the same page in two languages.
+ *
+ * The evidence is ONE product observed under two different locale prefixes
+ * with identical slugs after them: Monkey D. Luffy OP09-061's Unnumbered
+ * Promos listing, which BerryWallet returns as
+ * `/it/OnePiece/Products/Singles/Unnumbered-Promos/MonkeyDLuffy-OP09-061` and
+ * which was found by hand on Cardmarket as the same path under `/fr/`. A
+ * `-Japanese` set was confirmed the same way, by hand, under `/en/`
+ * (`/en/OnePiece/Products/Singles/Promos-Japanese/MonkeyDLuffy-P-033-V2`), so
+ * the Japanese sets are reachable in English too and not only in the locale
+ * that happened to return them.
+ *
+ * An earlier version of this comment claimed the same thing on worse evidence
+ * — two DIFFERENT products (sv3134 and OBF223) that merely sat under different
+ * locales, which shows the site serves both locales, not that one product
+ * resolves under either. Recorded because the claim was right and the proof
+ * was not, and that is the kind of thing that survives unexamined.
+ *
+ * Cardmarket cannot be checked from here to re-confirm it: it answers
+ * automated requests with a CDN bot challenge (403 to every URL, valid ones
+ * included), which is not worked around. If a link is ever reported dead,
+ * delete the `.replace(...)` below and return `raw` — the upstream URL is real
+ * as given, and the only cost is that One Piece links open in Italian.
  *
  * It has to be normalised because the upstreams disagree. BerryWallet returns
  * Italian URLs (`/it/…`) for One Piece while PokéWallet returns English ones,

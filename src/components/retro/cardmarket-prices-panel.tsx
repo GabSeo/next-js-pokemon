@@ -88,6 +88,33 @@ function priced(
     .filter((row): row is { label: string; amount: number } => row.amount != null);
 }
 
+/**
+ * The Japanese market with no Japanese Cardmarket product to show.
+ *
+ * Exists because the alternative on this tab was showing the WESTERN listing's
+ * euros under a "JP MARKET" heading. The panel labelled it correctly and the
+ * layout still said something false — seen in preview, and it is the reason
+ * the substitution in page.tsx was removed.
+ *
+ * Says which product is missing and where the one we do have lives, so the
+ * absence is a fact the reader can act on rather than a blank.
+ */
+export function CardmarketAbsent({ hasWestern }: { hasWestern: boolean }) {
+  return (
+    <div className="flex h-full flex-col">
+      <div>
+        <p className="text-[10px] font-black tracking-[0.6px] text-muted-text uppercase">Price trend</p>
+        <p className="text-2xl font-black tracking-[-0.6px]">No Japanese listing</p>
+      </div>
+      <Note>
+        {hasWestern
+          ? "No Japanese Cardmarket product resolved for this print. The Western listing is on the US and EU tabs — it prices a different product, so its figures are not repeated here."
+          : "No Japanese Cardmarket product resolved for this print."}
+      </Note>
+    </div>
+  );
+}
+
 export function CardmarketPrimary({ card }: { card: Card }) {
   const cardmarket = card.cardmarket;
   if (!cardmarket) return null;

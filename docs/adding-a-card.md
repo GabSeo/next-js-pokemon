@@ -85,20 +85,40 @@ print). Same idea, same standard of proof.
 
 **c. Pin the link** — `cardmarketProductUrl: { western?, japanese? }`.
 
-Last resort, for a print no source carries a row for at all. It is a link and
+For a print whose real product nothing here reaches correctly. A link and
 nothing else: no figures are read from it and none are typed beside it. The
 panel renders the real link above "Cardmarket lists this print, but no price
 feed we use covers it."
 
-Confirmed case: Cardmarket sells Monkey D. Luffy OP09-061 under
-`Premium-Bandai-Products-Asia-Region-Legal`. BerryWallet has no row on that
-set — its own `CM-PREMIUM-BANDAI` maps only to `Premium-Bandai-Products`, and
-the only `-Asia-Region-Legal` sets it carries are Starter-Deck-Egghead,
-Heroines-Edition and Egghead-Crisis. No shared TCGplayer product, no code, no
-set to join on, so (b) cannot help either. A link is all that honestly exists.
+Two cases, both confirmed by hand on cardmarket.com — the only place they can
+be, since Cardmarket answers automated requests with a CDN bot challenge:
 
-Applies only when nothing else produced a block, so it can never displace real
-figures.
+- **No row exists.** Cardmarket sells Monkey D. Luffy OP09-061 under
+  `Premium-Bandai-Products-Asia-Region-Legal`; BerryWallet's `CM-PREMIUM-BANDAI`
+  maps only to `Premium-Bandai-Products`, and the only `-Asia-Region-Legal`
+  sets it carries are Starter-Deck-Egghead, Heroines-Edition and
+  Egghead-Crisis. Nothing to join on, so (b) cannot help either.
+- **The row is wrong.** BerryWallet's Japanese rows for the One Piece promo
+  sets carry URLs that break on arrival:
+  `Unnumbered-Promos-Japanese/MonkeyDLuffy-OP09-061` redirects to root, and
+  `Promos-Japanese/MonkeyDLuffy-P-033-V1` opens a product listing Chinese
+  copies — the real Japanese product is `-V2`.
+
+It **corrects the link and keeps the figures**. In the second case the row is
+not the wrong card — it is the right card's prices behind a URL that has gone
+bad, which is what the euros on both promo rows turned out to be when they were
+checked against the real product pages. So a pin replaces the URL and nothing
+else, and both cards' JP tabs still show live BerryWallet figures.
+
+That makes a pin an assertion, so the comment beside it has to say the prices
+were checked against the pinned product. Nothing in the code can check it. In
+the first case, where no row exists at all, there are no figures to keep and
+the panel says so.
+
+**Verify a URL before pinning it.** A Cardmarket URL can fail three ways and
+only one of them looks like failure: a 404, a redirect to root, or a product
+page that loads and is the wrong variant. The last is the dangerous one — check
+that the listings on the page are the language and printing you expect.
 
 **d. Accept the gap.** Leave it, and write one comment on the ref saying what
 you checked and what you found. An inert locale toggle and a stated absence
@@ -107,8 +127,24 @@ are both real UI states this site renders on purpose.
 There is deliberately no override for identity text. `monkey-d-luffy-op09-061`
 and `monkey-d-luffy-p-033` have no Japanese identity row in BerryWallet — the
 rows carrying their Japanese Cardmarket products hold English names and a null
-`card_number`, so nothing can match them — and their JP toggle stays inert
-rather than showing English text under a Japanese flag.
+`card_number`, so nothing can match them — and their Japanese name and art
+stay English rather than being hand-typed.
+
+**Identity and market data are separate facts, and the code treats them that
+way.** Both of those cards do have a real Japanese Cardmarket product
+(`Unnumbered-Promos-Japanese/MonkeyDLuffy-OP09-061`,
+`Promos-Japanese/MonkeyDLuffy-P-033-V1`), reached by the ordinary derivation,
+and their JP tab shows those real euros — €375.59 against the Western €485.65
+for OP09-061 — under an English name. A missing translation is not a reason to
+withhold a price that exists.
+
+The inverse is enforced just as hard: the JP tab never shows the WESTERN
+listing's figures. It did until this was seen in preview, on the reasoning
+that a real listing beats an empty panel and the panel labels the print
+honestly. It does not hold — the section heading says "JP MARKET", and euros
+under that heading tell the reader something false whatever the small print
+says. With no Japanese product, the panel states the absence and points at the
+tabs where the Western listing lives.
 
 ## 4. Verify
 

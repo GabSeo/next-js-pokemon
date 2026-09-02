@@ -67,7 +67,18 @@ async function localeVariantsFor(card: Card): Promise<LocaleVariant[]> {
     { code: "US", card, available: true },
     {
       code: "JP",
-      available: !!ja?.translated,
+      // "Has something of its own to show", NOT "has translated text". Identity
+      // and market data are independent facts about a print, and conflating
+      // them hid real data: both Luffys have a real Japanese Cardmarket product
+      // and no Japanese identity row, so this read false, ProductPageContent
+      // filtered the JP variant out of MarketDataPanels entirely, and the JP
+      // tab fell back to the US card — Western euros under a "JP MARKET"
+      // heading, which is what this whole section exists not to do.
+      //
+      // Name and art still fall back to English on such a card, exactly as
+      // before. Only figures that are genuinely the Japanese print's are
+      // added.
+      available: !!ja?.translated || !!ja?.cardmarket,
       card:
         ja?.translated
           ? {
@@ -88,14 +99,19 @@ async function localeVariantsFor(card: Card): Promise<LocaleVariant[]> {
               // uses one universal card code across every region.
               number: ja.number ?? card.number,
               setCode: ja.setCode ?? card.setCode,
-              // One Piece only — the Japanese print's own real Cardmarket
-              // listing (different real numbers and a different real
-              // product_url from the English print's, not a relabeling —
-              // see getOnePieceJapaneseText's own comment). Falls back to
-              // the English card's cardmarket rather than undefined so a
-              // Japanese row with no cardmarket block of its own still
-              // shows something real instead of the panel disappearing.
-              cardmarket: ja.cardmarket ?? card.cardmarket,
+              // The Japanese print's own real Cardmarket listing — different
+              // real numbers behind a different real product_url, never the
+              // English print's relabeled.
+              //
+              // NO FALLBACK to the English card's block, which is what this
+              // did until it was seen in preview. The reasoning for the
+              // fallback was that a real listing beats an empty panel, and the
+              // panel does label a Western block for what it is — but the
+              // section header above it says "JP MARKET", and a reader
+              // scanning euros under that heading has been told something
+              // false by the layout no matter what the small print says.
+              // Undefined here, and the panel states the absence instead.
+              cardmarket: ja.cardmarket,
               // The Japanese print's own TCGplayer product. Price, spread and
               // freshness date move together or not at all — a Japanese market
               // price over a Western spread would be two products in one
@@ -118,7 +134,17 @@ async function localeVariantsFor(card: Card): Promise<LocaleVariant[]> {
               // print whose TCGplayer panel is hidden.
               tcgplayer: ja.tcgplayer,
             }
-          : card,
+          : {
+              // Identity could not be resolved, so name and art stay English —
+              // LocaleSlot's documented fallback (components/product-locale.tsx).
+              // The Cardmarket block does NOT come along with them: it is
+              // whatever was pinned for the Japanese product by hand, or
+              // nothing. This is the path monkey-d-luffy-op09-061 and
+              // monkey-d-luffy-p-033 take, and before it existed a pin on
+              // either of them could never reach the page.
+              ...card,
+              cardmarket: ja?.cardmarket,
+            },
     },
     {
       code: "FR",

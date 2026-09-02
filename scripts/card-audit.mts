@@ -118,7 +118,7 @@ async function auditOne(slug: string): Promise<number> {
   console.log(`${cm ? OK : NO}block: ${product(cm?.url)}`);
   console.log(`       figures: ${cm?.trend != null ? `trend €${cm.trend}` : "none"}`);
   if (pinnedEn) console.log(`       PINNED to BerryWallet row ${pinnedEn} — see below for whether that is still needed`);
-  if (linkEn) console.log(`       LINK-ONLY pin (${product(linkEn)}) — no figures by design`);
+  if (linkEn) console.log(`       URL PIN (${product(linkEn)}) — hand-verified link; figures are the resolved row's`);
   if (!cm) {
     gaps.push({
       what: "no Western Cardmarket block",
@@ -126,7 +126,7 @@ async function auditOne(slug: string): Promise<number> {
         "1. Confirm the product really exists on cardmarket.com. If it doesn't, this is not a gap.",
         "2. Look for a row sharing this card's TCGplayer product — the derivation already does this (findCardmarketSiblings); if one exists and is being missed, fix the rule, don't pin.",
         "3. If a row exists but nothing links it: `berryWalletCardmarketId.en`.",
-        "4. If no row exists anywhere: `cardmarketProductUrl.western` (link only).",
+        "4. If the row is right but its URL is bad, or no row exists at all: `cardmarketProductUrl.western`.",
       ],
     });
   }
@@ -149,7 +149,7 @@ async function auditOne(slug: string): Promise<number> {
     console.log(`${ja.translated ? OK : NO}identity: ${ja.translated ? `${ja.printName ?? ja.name} — ${ja.set}` : "not found — JP toggle renders inert"}`);
     console.log(`${ja.cardmarket ? OK : NO}cardmarket: ${product(ja.cardmarket?.url)}`);
     if (pinnedJp) console.log(`       PINNED to BerryWallet row ${pinnedJp}`);
-    if (linkJp) console.log(`       LINK-ONLY pin (${product(linkJp)}) — no figures by design`);
+    if (linkJp) console.log(`       URL PIN (${product(linkJp)}) — hand-verified link; figures are the resolved row's`);
   }
   if (ja && !ja.translated) {
     gaps.push({
