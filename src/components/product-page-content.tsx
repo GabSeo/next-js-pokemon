@@ -113,11 +113,55 @@ export function ProductPageContent({
       )}
 
       <div className="mx-auto max-w-[1180px] px-6 py-16">
-        {/* The market control shares the breadcrumb's row rather than taking a
-            row of its own — it is page-level state, and this is the page-level
-            line. */}
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <nav aria-label="Breadcrumb" className="text-sm font-bold text-muted-text">
+        {/* PINNED: breadcrumb, market control and card identity, under the site
+            header (66px — its height plus its 2px border).
+
+            This block's height is a CONSTANT BY CONSTRUCTION, and that is the
+            whole design. Two sticky elements have to stack — this one and the
+            card art below it — and CSS cannot say "sit under that element"
+            without being told its height. Measuring it at runtime worked and
+            cost a client component and a ResizeObserver; padding for the worst
+            case worked and cost 44px of dead air on every short-named card.
+            Removing the variability instead makes one hard number correct for
+            every card there will ever be: see lg:flex-nowrap on the identity
+            row, which stops the only thing that changed the height.
+
+            pb-1 = 4px = exactly the identity strip's hard shadow, and nothing
+            more. Two bugs were found here in a row and they pull in opposite
+            directions:
+
+            It first had pb-12, so the 48px gap to the card art rode inside the
+            pinned block — which made that gap OPAQUE. Content scrolling up
+            vanished at the top of a band of page-coloured background with
+            nothing in it, and the art looked clipped by empty space. The edge
+            where content disappears has to be an edge a reader can see.
+
+            Dropping the padding to zero put that edge on the strip's border,
+            but the strip's shadow is drawn 4px BELOW its border box and the
+            block sits at z-30 — so the art's top 4px slid under the shadow.
+            Four pixels of padding puts the block's opaque edge exactly at the
+            shadow's bottom: nothing hidden, nothing showing through, and the
+            art rests against a line rather than against nothing.
+
+            The resting gap lives on the GRID below (lg:mt-11), not on the
+            strip. A bottom margin on the strip stops collapsing out the moment
+            this block has bottom padding, so it silently joined the block's
+            height — 200px instead of 152 — and put the art back underneath.
+            Below lg the strip keeps its own mb-12, where nothing is pinned and
+            margin collapsing is not in play.
+
+            `lg:` only. Below it the layout is one column, so the art sits ABOVE
+            the data rather than beside it, and anything pinned is guaranteed to
+            cross it. Pinning is only coherent once the art has its own
+            column. */}
+        <div className="lg:sticky lg:top-[66px] lg:z-30 lg:-mx-6 lg:bg-muted-surface lg:px-6 lg:pt-2 lg:pb-1">
+        {/* lg:flex-nowrap for the same reason as the identity row below: a long
+            card name wrapped this line in two and took the pinned block's
+            height with it (216px against 196px, measured on Eustass"Captain"Kid
+            and P-106 versus Lugia V). Both rows have to be unwrappable or the
+            block's height is not a constant and the art's offset is a guess. */}
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 lg:flex-nowrap">
+        <nav aria-label="Breadcrumb" className="text-sm font-bold text-muted-text lg:min-w-0 lg:truncate">
           <Link href="/" className="hover:text-foreground hover:underline">
             Home
           </Link>
@@ -133,8 +177,18 @@ export function ProductPageContent({
         <MarketFilterBar />
         </div>
 
-        <div className="mt-5 mb-12 flex flex-wrap items-center justify-between gap-3 rounded-lg border-2 border-black bg-card-surface p-6 shadow-hard-md">
-          <div className="flex flex-wrap items-center gap-3">
+        <div className="mt-5 mb-12 flex flex-wrap items-center justify-between gap-3 rounded-lg border-2 border-black bg-card-surface p-6 shadow-hard-md lg:mb-0 lg:flex-nowrap">
+          {/* lg:flex-nowrap + lg:min-w-0 is what makes the pinned block a fixed
+              height. Eustass"Captain"Kid's name wrapped this row to two lines
+              and the block grew 44px, which is how the art ended up underneath
+              it. On one line the height cannot move, so the art's offset is a
+              number rather than a measurement.
+
+              The h1 ellipsizes rather than the chips being dropped: the full
+              name is still in the markup for a reader's tooltip, for search and
+              for an agent parsing the page, and the chips are the part that
+              cannot be inferred from the breadcrumb directly above. */}
+          <div className="flex flex-wrap items-center gap-3 lg:min-w-0 lg:flex-nowrap">
             {/* One slot for the whole identity strip rather than four —
                 the h1, the type badges, the set and the number all have to
                 change together or the header reads as a half-translated
@@ -149,21 +203,27 @@ export function ProductPageContent({
             <LocaleSlot
               variants={localized((c) => (
                 <>
-                  <h1 className="text-2xl font-black tracking-[-0.6px] uppercase">{c.printName ?? c.name}</h1>
+                  <h1 className="text-2xl font-black tracking-[-0.6px] uppercase lg:min-w-0 lg:truncate" title={c.printName ?? c.name}>
+                    {c.printName ?? c.name}
+                  </h1>
                   {card.types?.map((englishType, i) => (
                     <TypeBadge key={englishType} colorKey={englishType} label={c.types?.[i] ?? englishType} />
                   ))}
-                  <span className="rounded-full border-2 border-black bg-pokemon-blue px-3.5 py-1 text-xs font-black tracking-[0.35px] text-white uppercase">
+                  {/* whitespace-nowrap on all three chips: a long set name wrapped
+                      inside its own pill and added 8px to the strip. Every element of
+                      the pinned block has to be unwrappable for its height to be the
+                      constant the card art's offset assumes. */}
+                  <span className="rounded-full border-2 border-black bg-pokemon-blue px-3.5 py-1 text-xs font-black tracking-[0.35px] whitespace-nowrap text-white uppercase">
                     {c.set}
                     {c.setCode ? ` · ${c.setCode}` : ""}
                   </span>
                   {c.number && (
-                    <span className="rounded-full border-2 border-black bg-white px-3.5 py-1 text-xs font-black tracking-[0.35px] uppercase">
+                    <span className="rounded-full border-2 border-black bg-white px-3.5 py-1 text-xs font-black tracking-[0.35px] whitespace-nowrap uppercase">
                       #{c.number}
                     </span>
                   )}
                   {c.rarity && (
-                    <span className="rounded-full border-2 border-black bg-pokemon-yellow px-3.5 py-1 text-xs font-black tracking-[0.35px] uppercase">
+                    <span className="rounded-full border-2 border-black bg-pokemon-yellow px-3.5 py-1 text-xs font-black tracking-[0.35px] whitespace-nowrap uppercase">
                       {c.rarity}
                     </span>
                   )}
@@ -171,13 +231,41 @@ export function ProductPageContent({
               ))}
             />
           </div>
-          <span className="rounded-md border-2 border-black bg-muted-surface px-3 py-1.5 text-sm font-black">
+          {/* nowrap + shrink-0: a long slug wrapped this chip to two lines and
+              took the strip from 88px to 108px, which is the third and last
+              thing that made the pinned block's height depend on the card.
+              `Card ID: eustass-captain-kid-op05-074` is the one that found it. */}
+          <span className="rounded-md border-2 border-black bg-muted-surface px-3 py-1.5 text-sm font-black lg:shrink-0 lg:whitespace-nowrap">
             Card ID: {card.id}
           </span>
         </div>
+        </div>
 
-        <div className="grid grid-cols-1 gap-9 lg:grid-cols-[320px_1fr] lg:items-start">
-          <div className="lg:sticky lg:top-[88px]">
+        {/* lg:mt-11 (44px) plus the block's own 4px shadow cover is the 48px
+            that used to be the strip's bottom margin. It sits here because a
+            margin inside the pinned block joins its height; outside it, it just
+            spaces the layout. */}
+        <div className="grid grid-cols-1 gap-9 lg:mt-11 lg:grid-cols-[320px_1fr] lg:items-start">
+          {/* 262 = 66 header + 148 to the identity strip's border + the same
+              48px the page shows at rest, so the separation a reader sees is
+              identical pinned or not. Measured against the STRIP's edge, not
+              the block's: the block runs 4px further to cover the strip's
+              shadow, and counting from there made the pinned gap 52.
+
+              Resting ON the block's edge (218) measured as zero overlap and
+              still read as the art sliding underneath — with no visible space,
+              "stopped against it" and "disappearing behind it" look the same.
+
+              The gap can be transparent here, unlike below the strip, because
+              NOTHING scrolls through it: this is the left column and the art is
+              the only thing in it. The 48px band shows page background at every
+              scroll position rather than content sliding past.
+
+              The constant is honest only because the block's height is fixed by
+              construction (lg:flex-nowrap above) — this same number written
+              against a block that could grow is what put the identity strip on
+              top of this art in the first place. */}
+          <div className="lg:sticky lg:top-[262px]">
             <PsaTiltCard>
               <LocaleSlot
                 variants={localized((c) => (
