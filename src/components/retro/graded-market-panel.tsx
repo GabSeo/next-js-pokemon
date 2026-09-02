@@ -1,7 +1,7 @@
-import { ProductLocaleToggle } from "@/components/product-locale";
 import { MarketVitals } from "@/components/retro/market-vitals";
 import { GradedMarketTabs, type ConditionEntry, type TypeSummary, type VintedSummary } from "@/components/retro/graded-market-tabs";
 import { franchiseLabel } from "@/lib/cards";
+import { formatPrice } from "@/lib/format-price";
 import type { GradedMarketData, GradedMarketTypeData } from "@/lib/graded-market";
 import { relativeTimeLabel } from "@/lib/vinted-listings";
 import type { Card } from "@/lib/types";
@@ -12,8 +12,13 @@ function ListingRow({ date, description, price, currency, url }: { date: string;
     <div className="grid grid-cols-[76px_1fr_auto_20px] items-center gap-3 border-t border-dashed border-border-subtle py-3 text-[13px] first:border-t-0">
       <span className="text-[11px] font-bold text-muted-text">{date}</span>
       <span className="truncate font-bold">{description}</span>
+      {/* Deliberately NOT formatPrice: this is one seller's actual asking
+          price, where 2,599.99 is the real number and rounding it to 2,600
+          would be inventing a figure nobody listed. Two fixed decimals rather
+          than the locale default, so a row ending .99 and a row ending .00
+          line up instead of one showing cents and the next not. */}
       <span className="font-black tabular-nums">
-        {currency} {price.toLocaleString()}
+        {currency} {price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
       </span>
       {url ? (
         <a href={url} target="_blank" rel="noopener noreferrer" className="text-muted-text hover:text-pokemon-blue">
@@ -30,7 +35,13 @@ function toTypeSummary(data: GradedMarketTypeData): TypeSummary {
   return {
     // An empty tier has no median, and "USD 0" reads as a real price of zero
     // rather than an absence. See GradedMarketTypeData.noListings.
-    avgLabel: data.noListings ? "—" : `${data.currency} ${data.medianPrice.toLocaleString()}`,
+    // formatPrice, not a bare toLocaleString. A median of four asks carries
+    // three decimals — (2600 + 2628.49) / 2 is 2614.245 — and this locale
+    // prints that as "2 614,245", space for thousands and comma for decimals,
+    // so a $2,614 card read as two and a half million. formatPrice rounds to
+    // whole units first, which is also what the Grading Center table already
+    // does, so the same card now reads the same in both sections.
+    avgLabel: data.noListings ? "—" : formatPrice(data.medianPrice, data.currency),
     medianPrice: data.medianPrice,
     currency: data.currency,
     count: data.count,
@@ -97,7 +108,7 @@ export function GradedMarketPanel({ card, data }: { card: Card; data: GradedMark
     title: data.vinted.title,
     imageUrl: data.vinted.imageUrl,
     character: data.vinted.character,
-    avgLabel: `${data.vinted.currency} ${data.vinted.avgPrice.toLocaleString()}`,
+    avgLabel: formatPrice(data.vinted.avgPrice, data.vinted.currency),
     belowAverageCount: data.vinted.belowAverageCount,
     totalCount: data.vinted.rows.length,
     collectedLabel: data.vinted.collectedAtMs ? relativeTimeLabel(data.vinted.collectedAtMs) : undefined,
@@ -105,7 +116,7 @@ export function GradedMarketPanel({ card, data }: { card: Card; data: GradedMark
       timeAgo: row.timeAgo,
       condition: row.condition,
       price: row.price,
-      priceLabel: `${row.currency} ${row.price.toLocaleString()}`,
+      priceLabel: `${row.currency} ${row.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       dealPct: row.dealPct,
       dealTier: row.dealTier,
       title: row.title,
@@ -117,16 +128,19 @@ export function GradedMarketPanel({ card, data }: { card: Card; data: GradedMark
   return (
     <div className="rounded-lg border-2 border-black bg-card-surface p-7 shadow-hard-md">
       {/* The toggle rides this heading rather than sitting in its own row
-          above the condition tabs: it selects what the entire panel below is
-          about, so pairing it with the panel's title says that, and it stops
-          reading as another filter alongside PSA 10/9/8/Raw. The rule shrinks
-          to nothing before the toggle wraps, so on a narrow card the flags
-          drop to their own line and stay right-aligned (ProductLocaleToggle's
-          own ml-auto), never colliding with the title. */}
+          above the condition tabs: it selected what the entire panel below is
+          about.
+
+          The toggle itself has moved up to the market-data component, which
+          now carries both axes side by side and labelled. Two identical rows
+          of US/JP/FR flags in different sections read as one control
+          duplicated, and switching either moved numbers in both places — so
+          there is exactly one of each on the page now. This panel still
+          follows the card-language axis; it just no longer offers a second
+          way to set it. */}
       <div className="mb-5 flex flex-wrap items-center gap-x-3 gap-y-2">
         <span className="text-xs font-black tracking-[0.6px] text-pokemon-blue uppercase">📊 {franchiseLabel(card.franchise)} Market Overview</span>
         <span className="h-px min-w-4 flex-1 bg-border-subtle" />
-        <ProductLocaleToggle />
       </div>
 
       {/* Above the tabs, because these four answers do not change with the

@@ -1,6 +1,6 @@
 import { GradedMarketPanel } from "@/components/retro/graded-market-panel";
 import { GradingCenterSection } from "@/components/retro/grading-center-section";
-import { getGradedMarketData } from "@/lib/graded-market";
+import { getGradedMarketData, type GradedMarketData } from "@/lib/graded-market";
 import type { Card } from "@/lib/types";
 
 /**
@@ -17,8 +17,17 @@ import type { Card } from "@/lib/types";
  * result down keeps the cost identical to what it was when there was one
  * panel.
  */
-export async function MarketSections({ card }: { card: Card }) {
-  const data = await getGradedMarketData(card);
+/**
+ * For callers with no page-level fetch of their own — the price checker, which
+ * resolves one card on its own route. The product page hoists the same call
+ * into page.tsx instead, because its first section needs the identical tiers
+ * and two calls would be sixteen eBay searches.
+ */
+export async function MarketSectionsForCard({ card }: { card: Card }) {
+  return <MarketSections card={card} data={(await getGradedMarketData(card)) ?? null} />;
+}
+
+export function MarketSections({ card, data }: { card: Card; data: GradedMarketData | null }) {
   if (!data) return null;
 
   return (

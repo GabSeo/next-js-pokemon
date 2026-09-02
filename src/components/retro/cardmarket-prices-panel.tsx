@@ -1,61 +1,149 @@
+"use client";
+
+import { Headline, Metric, MetricGrid, Note } from "@/components/retro/market-panel-parts";
 import type { Card } from "@/lib/types";
 
 /**
- * Real Cardmarket EUR figures (card.cardmarket — see its own doc comment,
- * lib/types.ts) in the same panel slot InternationalPricesPanel occupies for
- * a card with no such source. No IllustrativeTag here on purpose — this
- * codebase's own convention is that the *absence* of that tag is what marks
- * a number as real (see graded-market-panel.tsx's ListingRow), and every
- * figure here comes straight from BerryWallet's own Cardmarket block, not a
- * currency-converted estimate.
+ * Cardmarket's figures, in two shapes: leading a market, or referencing one.
  *
- * Currently reachable only for a One Piece card with a real BerryWallet
- * match — Pokémon cards never carry card.cardmarket, so
- * ProductPageContent keeps rendering InternationalPricesPanel for them.
+ * Neither draws its own card. MarketDataPanels frames both inside a single
+ * bordered surface, because two separate cards side by side read as two
+ * competing answers when the point is that one leads and the other is context.
+ *
+ * Every figure comes straight from a Cardmarket block, never a currency
+ * conversion — and no IllustrativeTag, because this codebase's convention is
+ * that the *absence* of that tag is what marks a number as real (see
+ * graded-market-panel.tsx's ListingRow).
  */
-export function CardmarketPricesPanel({ card }: { card: Card }) {
+
+/**
+ * Cardmarket's own row labels, so the panel and the source read the same.
+ * Price trend is absent because the primary layout promotes it to the hero.
+ */
+const ROWS = [
+  { label: "From", key: "low" },
+  { label: "30-day avg", key: "avg30" },
+  { label: "7-day avg", key: "avg7" },
+  { label: "1-day avg", key: "avg1" },
+  { label: "Avg sell", key: "avg" },
+] as const;
+
+/**
+ * Two decimals always, because these are prices and Cardmarket prints them
+ * that way — a bare toLocaleString renders 682.8 as "682,8", which reads as a
+ * truncated number next to "725,45" rather than as €682.80.
+ */
+function euros(amount: number): string {
+  return amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+/**
+ * "Cardmarket · Japanese" rather than anything containing "Japanese market".
+ * The print is Japanese; the marketplace is European, and conflating the two
+ * would tell a reader these euros are a Tokyo price.
+ */
+export function cardmarketSourceLabel(card: Card): string {
+  return card.cardmarket?.print === "japanese" ? "Cardmarket · Japanese" : "Cardmarket";
+}
+
+/**
+ * Which copies the price actually covers. A Western listing prices any of six
+ * languages, and the Japanese print is a different product — saying which is
+ * the difference between a real number and a mislabeled one.
+ */
+const PRINT_NOTE: Record<"western" | "japanese", string> = {
+  western: "One listing, covering EN · FR · IT · DE · ES · PT copies.",
+  japanese: "The Japanese print — a separate listing from the Western one.",
+};
+
+function CardmarketLink({ url }: { url?: string }) {
+  if (!url) return null;
+  return (
+    <a
+      className="text-xs font-black whitespace-nowrap text-pokemon-blue uppercase"
+      href={url}
+      rel="noopener noreferrer"
+      target="_blank"
+    >
+      View on Cardmarket ↗
+    </a>
+  );
+}
+
+/**
+ * `!= null` (not `!== undefined`) throughout: both sources have been seen
+ * sending an explicit `null` for a figure Cardmarket has no data for yet — see
+ * BerryWalletCardmarketPrices (lib/berrywallet.ts) and PokeWalletCardmarketPrice
+ * (lib/pokewallet.ts). A raw null would crash toLocaleString and take the
+ * static build with it, rather than dropping one row.
+ */
+function priced(
+  card: Card,
+  rows: readonly { label: string; key: "low" | "trend" | "avg30" | "avg7" | "avg1" | "avg" }[]
+): { label: string; amount: number }[] {
+  const cardmarket = card.cardmarket;
+  if (!cardmarket) return [];
+  return rows
+    .map((row) => ({ label: row.label as string, amount: cardmarket[row.key] }))
+    .filter((row): row is { label: string; amount: number } => row.amount != null);
+}
+
+export function CardmarketPrimary({ card }: { card: Card }) {
   const cardmarket = card.cardmarket;
   if (!cardmarket) return null;
 
-  const rows = [
-    { label: "Average", amount: cardmarket.avg },
-    { label: "Low", amount: cardmarket.low },
-    { label: "Trend", amount: cardmarket.trend },
-    // `!= null` (not `!== undefined`) is deliberate: the type says `number`,
-    // but BerryWallet has been seen sending an explicit `null` through this
-    // exact field before it gets normalized in cards.ts — see
-    // BerryWalletCardmarketPrices's doc comment (lib/berrywallet.ts). A stale
-    // build cache or a future second cardmarket source could reintroduce a
-    // raw null here, and `.toLocaleString()` below would crash the whole
-    // page (and the static build) on it rather than just omitting one row.
-  ].filter((row): row is { label: string; amount: number } => row.amount != null);
+  const trend = cardmarket.trend;
+  const rows = priced(card, ROWS);
 
-  if (rows.length === 0) return null;
+  // No figures at all, but a real product URL: this is CardRef's link-only
+  // escape hatch (see cardmarketProductUrl), for a print Cardmarket sells and
+  // no price source of ours covers. Say that and hand over the link, rather
+  // than dropping the panel — a reader who can see the product on Cardmarket
+  // and nothing here would reasonably read the silence as "no listing exists".
+  if (rows.length === 0 && trend == null) {
+    if (!cardmarket.url) return null;
+    return (
+      <div className="flex h-full flex-col">
+        <div>
+          <p className="text-[10px] font-black tracking-[0.6px] text-muted-text uppercase">Price trend</p>
+          <p className="text-2xl font-black tracking-[-0.6px]">Not tracked</p>
+        </div>
+        <Note>Cardmarket lists this print, but no price feed we use covers it. The link goes to the product itself.</Note>
+        <div className="mt-auto pt-3">
+          <CardmarketLink url={cardmarket.url} />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="rounded-lg border-2 border-black bg-card-surface p-6 shadow-hard-md">
-      <div className="mb-3 flex flex-wrap items-center gap-2 text-xs font-black tracking-[0.6px] text-muted-text uppercase">
-        🇪🇺 Cardmarket
-      </div>
-      {rows.map((row, i) => (
-        <div
-          key={row.label}
-          className={`flex items-center justify-between py-2 text-sm font-bold ${i > 0 ? "border-t-2 border-dashed border-border-subtle" : ""}`}
-        >
-          <span>{row.label}</span>
-          <b className="text-base font-black tabular-nums">€{row.amount.toLocaleString()}</b>
+    <div className="flex h-full flex-col">
+      {/* Trend rather than "From": trend is Cardmarket's own considered
+          valuation, while From is whatever the cheapest seller happens to be
+          asking today. */}
+      {trend == null ? (
+        <div>
+          <p className="text-[10px] font-black tracking-[0.6px] text-muted-text uppercase">Price trend</p>
+          <p className="text-2xl font-black tracking-[-0.6px]">Not published</p>
         </div>
-      ))}
-      {cardmarket.url && (
-        <a
-          href={cardmarket.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-2 block border-t-2 border-dashed border-border-subtle pt-2 text-xs font-black text-pokemon-blue uppercase"
-        >
-          View on Cardmarket ↗
-        </a>
+      ) : (
+        <Headline amount={trend} currency="EUR" label="Price trend" />
       )}
+
+      <MetricGrid>
+        {rows.map((row) => (
+          <Metric key={row.label} label={row.label} value={`€${euros(row.amount)}`} />
+        ))}
+      </MetricGrid>
+
+      {cardmarket.print && <Note>{PRINT_NOTE[cardmarket.print]}</Note>}
+
+      {/* mt-auto pins the link to the card's floor so both cards in the row
+          end on the same line, whichever has more rows. */}
+      <div className="mt-auto pt-3">
+        <CardmarketLink url={cardmarket.url} />
+      </div>
     </div>
   );
 }
+

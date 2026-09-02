@@ -129,15 +129,25 @@ export function flagSvgUrl(isoCode: LocaleCode): string {
  * languages. The accessible name stays on the group for anyone who can't see
  * that pairing.
  *
+ * THE PAGE'S ONE MARKET CONTROL. It selects a market, and the print follows
+ * from it — a reader asking about the Japanese market wants the Japanese
+ * print, so making them say both was friction, not precision.
+ *
+ * It briefly was two controls, market and card language, following the
+ * architecture note's "market is not language" split. The distinction is real
+ * and the data model still honours it (lib/market-config.ts maps a market to
+ * its authoritative source, independently of which print is on screen), but as
+ * two toggles it put a nine-cell grid in front of anyone who just wanted a
+ * price. The model stayed; the surface collapsed back to one.
+ *
  * Why no locale is inert any more: this used to grey out a language with no
  * real translation, so a visitor could never see English text wearing a
  * foreign flag. LocaleSlot still falls back to the US nodes there, so nothing
- * is ever a fabricated translation — but the flag also picks a market now,
- * and eBay's Japanese market and the French Vinted feed exist for every card
+ * is ever a fabricated translation — but the flag also selects which print's
+ * listings the eBay and Vinted sections show, and those exist for every card
  * whether or not PokéWallet/BerryWallet catalogue a foreign print of it.
  * Making those flags inert would have quietly cut off real market data, so
- * all three stay clickable. The listings under them are the selected market's
- * either way; only the card's own name and art fall back.
+ * all three stay clickable. Only the card's own name and art fall back.
  */
 export function ProductLocaleToggle() {
   const ctx = useProductLocaleOptional();
@@ -145,7 +155,7 @@ export function ProductLocaleToggle() {
   const { active, setActive, options } = ctx;
 
   return (
-    <div className="ml-auto flex overflow-hidden rounded-md border-2 border-black" role="group" aria-label="Market">
+    <div aria-label="Market" className="flex overflow-hidden rounded-md border-2 border-black" role="group">
       {options.map((option, i) => {
         const isActive = option.code === active;
         return (

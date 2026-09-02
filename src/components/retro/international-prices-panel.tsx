@@ -1,3 +1,5 @@
+"use client";
+
 import { IllustrativeTag } from "@/components/retro/illustrative-tag";
 import { illustrativeInternational } from "@/lib/illustrative";
 import type { Card } from "@/lib/types";

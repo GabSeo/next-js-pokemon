@@ -8,16 +8,16 @@ import { PriceChart } from "@/components/price-chart";
 import { PriceDataTabs } from "@/components/price-data-tabs";
 import { LocaleSlot, ProductLocaleProvider, type LocaleCode } from "@/components/product-locale";
 import { StructuredData } from "@/components/structured-data";
-import { CardmarketPricesPanel } from "@/components/retro/cardmarket-prices-panel";
 import { ConditionFilterChips } from "@/components/retro/condition-filter-chips";
 import { MarketSections } from "@/components/retro/market-sections";
+import type { GradedMarketData } from "@/lib/graded-market";
 import { IllustrativeTag } from "@/components/retro/illustrative-tag";
-import { InternationalPricesPanel } from "@/components/retro/international-prices-panel";
 import { PopulationPanel } from "@/components/retro/population-panel";
 import { PsaTiltCard } from "@/components/retro/psa-tilt-card";
 import { TypeBadge } from "@/components/retro/type-badge";
 import { computeAlertBands } from "@/lib/cards";
-import { CARDMARKET_HOMEPAGE_URL } from "@/lib/cardmarket-search";
+import { MarketDataPanels } from "@/components/retro/market-data-panels";
+import { cardmarketHomepage } from "@/lib/cardmarket-search";
 import { ONE_PIECE_MARKET_ENABLED } from "@/lib/graded-market";
 import type { Card } from "@/lib/types";
 
@@ -56,6 +56,8 @@ type ProductPageContentProps = {
    * a localized clone must never leak into those).
    */
   localeVariants: LocaleVariant[];
+  /** Fetched once in page.tsx and shared by the first section and MarketSections. */
+  gradedMarket: GradedMarketData | null;
   franchiseLabel: string;
   collectionHref: string;
   markdownHref: string;
@@ -67,6 +69,7 @@ type ProductPageContentProps = {
 export function ProductPageContent({
   card,
   localeVariants,
+  gradedMarket,
   franchiseLabel,
   collectionHref,
   markdownHref,
@@ -191,8 +194,13 @@ export function ProductPageContent({
               </a>
             )}
 
+            {/* A real per-product link whenever the card's own Cardmarket
+                block carried one, the homepage otherwise. The "Unconnected"
+                tag follows the same test rather than being hardcoded: it used
+                to show on every card, which now contradicts the panel of real
+                Cardmarket figures further down the same page. */}
             <a
-              href={CARDMARKET_HOMEPAGE_URL}
+              href={card.cardmarket?.url ?? cardmarketHomepage(card.franchise)}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-2 flex items-center justify-between rounded-md border-2 border-black bg-card-surface px-4 py-3 text-sm font-black shadow-hard-sm transition-[transform,box-shadow] duration-100 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-md"
@@ -200,7 +208,7 @@ export function ProductPageContent({
               <span className="flex items-center gap-2.5">
                 <span className="h-2.5 w-2.5 rounded-full border-2 border-black bg-pokemon-yellow" />
                 Cardmarket
-                <IllustrativeTag label="Unconnected" />
+                {!card.cardmarket?.url && <IllustrativeTag label="Unconnected" />}
               </span>
               ↗
             </a>
@@ -218,70 +226,58 @@ export function ProductPageContent({
                 up in tcggo-integration-plan.md §1/§2.4, once that's wired
                 in. Kept together and clearly labeled so the split with the
                 still-illustrative section below is legible, not implied. */}
+            {/* Two independent axes meet here, so this is one client
+                component rather than a LocaleSlot: the card LANGUAGE decides
+                which print's prices exist, the MARKET decides which source
+                leads, and neither is derived from the other. See
+                retro/market-data-panels.tsx. */}
+            <MarketDataPanels
+              gradedMarket={gradedMarket}
+              priceKnown={priceKnown}
+              variants={localeVariants.filter((v) => v.available).map((v) => ({ code: v.code, card: v.card }))}
+            />
+
             <section>
-              <div className="mb-4 flex items-center gap-2">
-                <h2 className="text-xs font-black tracking-[0.6px] text-pokemon-blue uppercase">Real-time market data</h2>
-                <span className="h-px flex-1 bg-border-subtle" />
-              </div>
-
               <div className="space-y-6">
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                  <div className="rounded-lg border-2 border-black bg-card-surface p-6 shadow-hard-md">
-                    <div className="mb-3 flex items-center gap-2 text-xs font-black tracking-[0.6px] text-muted-text uppercase">
-                      🛒 TCGplayer
-                      <span className="ml-auto font-bold text-[#999] normal-case">{priceKnown ? card.asOfDate : "—"}</span>
-                    </div>
-                    <span className="mb-1 inline-block rounded-full border-2 border-black bg-muted-surface px-2.5 py-0.5 text-[11px] font-black tracking-[0.35px] uppercase">
-                      Market price
-                    </span>
-                    {priceKnown ? (
-                      <data value={String(card.currentPrice)} className="block text-4xl font-black tracking-[-1px] tabular-nums">
-                        {card.currency} {card.currentPrice}
-                      </data>
-                    ) : (
-                      <p className="block text-lg font-black tracking-[-0.4px]">
-                        Temporarily unavailable
-                        <span className="mt-1 block text-xs font-bold text-muted-text">
-                          Our price sources couldn&apos;t be reached for this card. Nothing else on this page has changed.
-                        </span>
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Real Cardmarket EUR figures (the locale variant's own
-                      `cardmarket`) replace the illustrative
-                      currency-conversion panel wherever they exist —
-                      currently only a One Piece card with a real
-                      BerryWallet match; every other card keeps the estimate
-                      panel it always had. Per-locale, not per-card: the
-                      Japanese print carries its own real Cardmarket listing
-                      with genuinely different numbers and a different
-                      product_url from the English print's, not the English
-                      one relabeled (see cards.ts's
-                      getOnePieceJapaneseText). priceKnown itself still
-                      checks `card`, since price *availability* is a
-                      canonical fact no display override changes. */}
-                  {priceKnown && (
-                    <LocaleSlot
-                      variants={localized((c) =>
-                        c.cardmarket ? <CardmarketPricesPanel card={c} /> : <InternationalPricesPanel card={c} />
-                      )}
-                    />
-                  )}
-                </div>
-
-                {/* Gated the same way getGradedMarketData itself is (see its
+                {/* Gated the same way getGradedMarketData itself is (see its same way getGradedMarketData itself is (see its
                     own comment, lib/graded-market.ts) — One Piece isn't
                     ready yet, not permanently excluded, so this mirrors
                     ONE_PIECE_MARKET_ENABLED rather than hardcoding the
                     franchise check. A One Piece card's own real price still
                     shows above regardless, via BerryWallet. */}
                 {(card.franchise === "pokemon" || ONE_PIECE_MARKET_ENABLED) && (
-                  <MarketSections card={card} />
+                  <MarketSections card={card} data={gradedMarket} />
                 )}
 
                 <div>
                   <h3 className="mb-3 flex items-center gap-2 text-lg font-black tracking-[-0.45px]">📈 Raw Card Price History</h3>
+                  {/* The series is the Western print's, and only the Western
+                      print has one — apitcg's history endpoint is keyed to
+                      that product, and PokéWallet offers no history at all.
+                      Now that the panel above switches to the Japanese card's
+                      own market price, an unlabelled chart underneath would
+                      read as that card's history. Said only on JP: a French
+                      copy IS the Western product, so for FR this chart is
+                      already its own. */}
+                  <LocaleSlot
+                    variants={Object.fromEntries(
+                      localeVariants
+                        .filter((v) => v.available)
+                        .map((v) => [
+                          v.code,
+                          // Only when the Japanese card actually carries its
+                          // own price. On a print TCGplayer does not list, the
+                          // panel above already fell back to the Western
+                          // figures, so there is no mismatch to explain and
+                          // the note would just add doubt.
+                          v.code === "JP" && v.card.currentPrice !== card.currentPrice ? (
+                            <p className="mb-3 text-[11px] font-bold text-muted-text">
+                              History below is the Western print&apos;s — no Japanese series is published.
+                            </p>
+                          ) : null,
+                        ])
+                    )}
+                  />
                   <ConditionFilterChips />
                   {card.priceHistory.length > 0 ? (
                     <PriceChart history={card.priceHistory} currency={card.currency} trend={card.trend} className="w-full" />

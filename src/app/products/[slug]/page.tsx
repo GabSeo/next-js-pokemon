@@ -96,6 +96,27 @@ async function localeVariantsFor(card: Card): Promise<LocaleVariant[]> {
               // Japanese row with no cardmarket block of its own still
               // shows something real instead of the panel disappearing.
               cardmarket: ja.cardmarket ?? card.cardmarket,
+              // The Japanese print's own TCGplayer product. Price, spread and
+              // freshness date move together or not at all — a Japanese market
+              // price over a Western spread would be two products in one
+              // panel. Each falls back to the canonical card independently
+              // only because a missing field there means the Japanese row
+              // genuinely lacks it (One Piece carries no TCGplayer block at
+              // all), and the canonical figure is then the honest answer.
+              currentPrice: ja.currentPrice ?? card.currentPrice,
+              sourceUrl: ja.sourceUrl ?? card.sourceUrl,
+              asOfDate: (ja.asOfDate ?? card.asOfDate).slice(0, 10),
+              // NO fallback here, unlike the three above. `tcgplayer` is what
+              // ProductPageContent tests to decide whether TCGplayer lists
+              // this print at all, so inheriting the Western band would answer
+              // "yes" for a Japanese card TCGplayer has never carried and put
+              // the Western spread under a Japanese flag. Undefined is the
+              // honest value, and the panel omits itself on it.
+              //
+              // The three above still fall back because Card requires a price
+              // and other panels read one; nothing displays those figures on a
+              // print whose TCGplayer panel is hidden.
+              tcgplayer: ja.tcgplayer,
             }
           : card,
     },
@@ -151,6 +172,11 @@ export default async function ProductPage({ params }: PageProps) {
   if (!card) notFound();
 
   const label = franchiseLabel(card.franchise);
+  // Already fetched here for the JSON-LD offers below; now also handed to
+  // ProductPageContent so the first section's comparison and MarketSections
+  // share it. getGradedMarketData is eight eBay searches plus a Vinted read
+  // and buildCached only dedupes during a build, so one call for the whole
+  // page matters — it is why MarketSections used to own the fetch.
   const gradedMarket = await getGradedMarketData(card);
   const localeVariants = await localeVariantsFor(card);
 
@@ -229,6 +255,7 @@ export default async function ProductPage({ params }: PageProps) {
   return (
     <ProductPageContent
       card={card}
+      gradedMarket={gradedMarket ?? null}
       localeVariants={localeVariants}
       franchiseLabel={label}
       collectionHref={`/collections/${card.franchise}`}

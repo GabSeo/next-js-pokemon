@@ -9,7 +9,7 @@ import { PriceDataTabs } from "@/components/price-data-tabs";
 import { ProductLocaleProvider } from "@/components/product-locale";
 import { StructuredData } from "@/components/structured-data";
 import { ConditionFilterChips } from "@/components/retro/condition-filter-chips";
-import { MarketSections } from "@/components/retro/market-sections";
+import { MarketSectionsForCard } from "@/components/retro/market-sections";
 import { InternationalPricesPanel } from "@/components/retro/international-prices-panel";
 import { PopulationPanel } from "@/components/retro/population-panel";
 import { computeAlertBands, franchiseLabel } from "@/lib/cards";
@@ -158,7 +158,7 @@ export function PriceCheckerView({ cardId, card }: { cardId?: string; card?: Car
               ]}
             >
               <Suspense fallback={<MarketPanelSkeleton franchise={card.franchise} />}>
-                <MarketSections card={card} />
+                <MarketSectionsForCard card={card} />
               </Suspense>
             </ProductLocaleProvider>
 
