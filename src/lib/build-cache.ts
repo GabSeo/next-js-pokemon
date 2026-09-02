@@ -91,6 +91,24 @@ import path from "node:path";
  *      this bump the fix would have been invisible for 24h on exactly
  *      the cards it was made for, which is how it was caught: gengar
  *      -vmax-271 served history: 0 while carrying a valid apitcg id.
+ *   8. resolveCard started computing fields it had never computed before:
+ *      Card.cardmarket for a Pokemon card's WESTERN print (from
+ *      pokeWalletWesternCardId), the TCGplayer band for the variant
+ *      tcgplayerSnapshot actually picked, `print` on every Cardmarket
+ *      block, and the One Piece Japanese product resolution. Cached
+ *      entries predate all of it and a new field does not refill an
+ *      entry that already exists — so production served cards with no
+ *      Cardmarket block at all while every local check passed. Caught on
+ *      the live site: lugia-v-186's Cardmarket link was the
+ *      cardmarket.com/en/Pokemon homepage fallback, badged Unconnected,
+ *      while localhost resolved both Silver-Tempest and Paradigm-Trigger.
+ *
+ *      Worth knowing for next time: the pre-deploy `npm run build` did
+ *      NOT catch this, and could not have. That run had no cache to
+ *      restore — `.next` had been deleted earlier in the session — so it
+ *      recomputed everything and passed. Vercel restored the cache this
+ *      bump exists to invalidate. A green local build says nothing about
+ *      a deploy that starts from a warm cache.
  *
  * Surviving deploys is the whole point of this cache (see the header
  * comment) — it is what keeps a redeploy from re-spending quota. So the fix
@@ -98,7 +116,7 @@ import path from "node:path";
  * able to say so. Bumping this starts a fresh namespace; the previous one is
  * simply never read again.
  */
-const CACHE_VERSION = 6;
+const CACHE_VERSION = 7;
 
 /** Versioned so a computation change cannot silently reuse pre-change values across a deploy — see CACHE_VERSION. */
 const CACHE_DIR = path.join(process.cwd(), ".next", "cache", "resolved-cards", `v${CACHE_VERSION}`);
