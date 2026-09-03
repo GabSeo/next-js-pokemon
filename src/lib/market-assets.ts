@@ -24,7 +24,7 @@
  * would be a home-made imitation of a wordmark this project does not own.
  */
 
-import { EBAY_LOGO_URL } from "@/lib/marketplace-logos";
+import { CARDMARKET_LOGO_URL, EBAY_LOGO_URL, TCGPLAYER_LOGO_URL } from "@/lib/marketplace-logos";
 
 export type MarketAsset = {
   src: string;
@@ -47,19 +47,21 @@ export const MARKET_ASSET_FALLBACK = "/market/logo-placeholder.svg";
  * width/height — they are the reserved box, not a guess at the artwork.
  */
 export const MARKET_LOGOS = {
+  /** Real wordmark, self-hosted. The box below is unchanged from the placeholder's on purpose — see this file's header. */
   tcgplayer: {
-    src: "/market/tcgplayer-logo.svg",
+    src: TCGPLAYER_LOGO_URL,
     alt: "TCGplayer",
     width: 36,
     height: 30,
-    placeholder: true,
+    placeholder: false,
   },
+  /** Real logo, self-hosted. Square, so object-contain fills the box's height rather than its width. */
   cardmarket: {
-    src: "/market/cardmarket-logo.svg",
+    src: CARDMARKET_LOGO_URL,
     alt: "Cardmarket",
     width: 36,
     height: 30,
-    placeholder: true,
+    placeholder: false,
   },
   psa: {
     src: "/market/psa-logo.svg",

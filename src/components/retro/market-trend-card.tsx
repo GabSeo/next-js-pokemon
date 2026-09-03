@@ -1,18 +1,15 @@
 "use client";
 
 import { AreaChart } from "@/components/charts/area-chart";
-import { MarketImage } from "@/components/retro/market-image";
 import {
-  ANCHOR_SUPPORT,
   ANCHOR_VIZ,
-  CollectorInsightBlock,
   CurrencyBadge,
   MarketCard,
   MarketCardHead,
   SourceLockup,
+  WhatThisMeans,
 } from "@/components/retro/market-panel-parts";
-import { MARKET_ART } from "@/lib/market-assets";
-import { formatMarketMoney, type MarketViewId, type TrendIntelligence } from "@/lib/market-views";
+import { formatMarketMoney, type MarketNote, type TrendIntelligence } from "@/lib/market-views";
 
 /**
  * The EU tab's right-hand card: where Cardmarket's price has been going.
@@ -42,13 +39,13 @@ import { formatMarketMoney, type MarketViewId, type TrendIntelligence } from "@/
 export function MarketTrendCard({
   intelligence,
   isActive,
-  onNavigate,
+  note,
 }: {
   intelligence: TrendIntelligence;
+  /** Closes this card — see WhatThisMeans for why the explanation lives under the evidence. */
+  note: MarketNote;
   /** Whether this card's tab is on screen — the chart only mounts (and only measures) when it is. */
   isActive: boolean;
-  /** Switches the section to another tab, without leaving the card page. */
-  onNavigate: (view: MarketViewId) => void;
 }) {
   const points = intelligence.points;
   const plottable = points.filter((p) => p.amount != null).length;
@@ -56,7 +53,11 @@ export function MarketTrendCard({
   return (
     <MarketCard>
       <MarketCardHead>
-        <SourceLockup context={intelligence.subtitle} logo="cardmarket" name={intelligence.title} />
+        {/* No logo here — see SourceLockup's own doc comment. This is the EU
+            tab's RIGHT panel; the Cardmarket mark already sits one column to
+            the left, on the valuation card, which is the only place a
+            TCGplayer/Cardmarket logo shows on the US and EU tabs. */}
+        <SourceLockup context={intelligence.subtitle} name={intelligence.title} />
         <CurrencyBadge currency={intelligence.currency} />
       </MarketCardHead>
 
@@ -120,40 +121,7 @@ export function MarketTrendCard({
         </dl>
       </div>
 
-      <CollectorInsightBlock insight={intelligence.insight} />
-
-      {/* The hand-off to the Japanese tab. A button rather than a link
-          because nothing is being navigated to: it moves this section's
-          selected tab, which is the same state the tabs themselves write, so
-          the card art and the panels further down the page follow along
-          exactly as if the tab had been clicked. */}
-      <div className={`flex flex-wrap items-center justify-between gap-x-4 gap-y-3 px-5 py-3.5 ${ANCHOR_SUPPORT}`}>
-        <div className="flex min-w-0 items-center gap-3">
-          <MarketImage
-            asset={{ ...MARKET_ART["print-comparison"], width: 34, height: 46 }}
-            className="hidden flex-none rounded-sm sm:block"
-          />
-          <div className="min-w-0">
-            <span className="text-[9px] font-black tracking-[0.6px] text-muted-text uppercase">
-              {intelligence.action.eyebrow}
-            </span>
-            <h5 className="mt-0.5 text-[13px] font-black tracking-[-0.2px] text-pretty">
-              {intelligence.action.heading}
-            </h5>
-            <p className="text-[11px] font-bold text-muted-text text-pretty">{intelligence.action.body}</p>
-          </div>
-        </div>
-        <button
-          className="group flex shrink-0 items-center gap-2 rounded-md border-2 border-black bg-nav-dark px-3 py-2 text-[10px] font-black tracking-[0.5px] text-white uppercase transition-[transform,box-shadow] duration-100 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pokemon-blue"
-          onClick={() => onNavigate(intelligence.action.target)}
-          type="button"
-        >
-          {intelligence.action.button}
-          <span aria-hidden className="transition-transform group-hover:translate-x-0.5">
-            →
-          </span>
-        </button>
-      </div>
+      <WhatThisMeans note={note} />
     </MarketCard>
   );
 }

@@ -1,16 +1,18 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 import { MarketImage } from "@/components/retro/market-image";
-import { MARKET_ART, MARKET_LOGOS, type MarketLogoId } from "@/lib/market-assets";
+import { MARKET_ART, MARKET_LOGOS, type MarketArtId, type MarketLogoId } from "@/lib/market-assets";
 import {
   formatMarketMoney,
   type CollectorInsight,
+  type InsightPhoto,
   type MarketContextChip,
   type MarketCurrency,
   type MarketNote,
   type MarketRegion,
+  type MarketScope,
 } from "@/lib/market-views";
 
 /**
@@ -37,24 +39,41 @@ import {
 export const ANCHOR_HEAD = "min-h-[64px]";
 /** Headline figure block. */
 export const ANCHOR_VALUE = "lg:h-[140px]";
-/** The 2x2 statistics grid. */
-export const ANCHOR_STATS = "lg:h-[152px]";
+/**
+ * The 2x2 statistics grid, and the LEFT card's elastic block.
+ *
+ * A minimum plus flex-1, not a fixed height. The two cards are forced to equal
+ * height, the right one is always the taller, and the difference used to land
+ * as one dead gap above "View on TCGplayer" — 135px of nothing at the bottom
+ * of a card that looked finished 135px earlier. Now the four stat cells absorb
+ * it: the same slack becomes breathing room INSIDE bordered boxes, which reads
+ * as calm rather than as a card that ran out of things to say.
+ */
+export const ANCHOR_STATS = "lg:min-h-[152px] lg:flex-1";
 /** "What this means". Generous: two lines of copy at this column width is ~40px, so nothing is at risk of clipping. */
 export const ANCHOR_NOTE = "lg:min-h-[84px]";
-/** The visualisation — comparison bars on US/JA, the trend chart on EU. */
-export const ANCHOR_VIZ = "lg:h-[300px]";
+/** The visualisation — comparison bars on US/JA, the trend chart on EU. The RIGHT card's elastic block, for the same reason as ANCHOR_STATS. */
+export const ANCHOR_VIZ = "lg:min-h-[300px] lg:flex-1";
 /** Collector insight. */
+/** Kept for the skeleton, which still reserves the insight band's box below the grid. */
 export const ANCHOR_INSIGHT = "lg:h-[112px]";
 /**
- * The strip under the insight: scope on US/JA, the Japanese-card action on EU.
- * A hard height rather than a minimum, because the EU strip carries a heading,
- * two lines and a button while the other two carry one sentence — left to
- * grow, that one tab stood 10px taller than its neighbours and the whole panel
- * stepped down when you moved onto it.
+ * The row itself.
+ *
+ * Sized to what the cards actually hold rather than to a round number. It was
+ * 560px against 448px of content, so both columns carried ~100px of reserved
+ * emptiness before either card had a chance to fill it — the flat, uniform
+ * blankness this section was criticised for. The floor still exists so a tab
+ * whose note runs short cannot shrink the panel, it is just no longer larger
+ * than every tab's content.
+ *
+ * 496 is the TALLEST tab measured, not the shortest. Left to their natural
+ * heights the three came out 483 / 487 / 496, so the panel stepped 13px as a
+ * reader moved between markets. Held at the tallest, the two elastic blocks
+ * above absorb that difference on the shorter tabs instead: nothing moves
+ * between tabs, and nothing sits empty.
  */
-export const ANCHOR_SUPPORT = "lg:h-[92px]";
-/** The row itself, so a tab whose note runs short does not shrink the panel. */
-export const ANCHOR_PANEL = "lg:min-h-[560px]";
+export const ANCHOR_PANEL = "lg:min-h-[496px]";
 
 /**
  * The hard-bordered surface both cards sit on — the site's standard card, not
@@ -123,13 +142,21 @@ export function SourceLockup({
   name,
   context,
 }: {
-  logo: MarketLogoId;
+  /**
+   * Optional. The valuation card (left panel, every tab) always passes one —
+   * that is the one place a TCGplayer/Cardmarket mark belongs. The trend
+   * card's own header (EU's right panel) omits it: the source is already
+   * named in text here and in full, with its own logo, one column to the
+   * left, and repeating the mark on the same card pair said nothing a second
+   * time that the first mark hadn't already said.
+   */
+  logo?: MarketLogoId;
   name: string;
   context: string;
 }) {
   return (
     <span className="flex min-w-0 items-center gap-2.5">
-      <MarketImage asset={MARKET_LOGOS[logo]} className="rounded-sm border-2 border-border-subtle bg-white" />
+      {logo && <MarketImage asset={MARKET_LOGOS[logo]} className="rounded-sm border-2 border-border-subtle bg-white" />}
       <span className="flex min-w-0 flex-col">
         <b className="truncate text-xs font-black tracking-[0.3px] uppercase">{name}</b>
         <small className="truncate text-[10px] font-black tracking-[0.5px] text-muted-text uppercase">{context}</small>
@@ -142,22 +169,20 @@ export function SourceLockup({
  * A market's own identity, for the Japanese view where two of them share a
  * panel.
  *
- * Reads as "EU · EUROPEAN MARKET · Cardmarket · Japanese print" — an index
- * chip, then the market in full words, then the source under it. The chip is
- * a shorthand for the title beside it and never appears without it, so the
- * two letters and the tint are both redundant with text a reader already has.
+ * Reads as "EUROPEAN MARKET · Cardmarket · Japanese print" — the market in
+ * full words, then the source under it, then the source's own mark.
+ *
+ * NO COLOURED BADGE. It used to lead with a two-letter tinted chip — blue
+ * "EU", red "US" — ahead of the title that already says "European market" /
+ * "United States market" in full. The chip was a shorthand for words sitting
+ * right next to it, never appeared without them, and the tint was
+ * "confirmation only" by this file's own original rule (see
+ * REGION_HEAD_TINT) — so removing it drops zero information, only the two
+ * things restating it.
  */
 export function RegionLockup({ region, logo }: { region: MarketRegion; logo: MarketLogoId }) {
   return (
     <span className="flex min-w-0 items-center gap-2.5">
-      <span
-        aria-hidden
-        className={`grid h-7 w-9 flex-none place-items-center rounded-sm text-[10px] font-black tracking-[0.5px] text-white ${
-          region.tone === "eu" ? "bg-pokemon-blue" : "bg-pokemon-red"
-        }`}
-      >
-        {region.badge}
-      </span>
       <MarketImage
         asset={MARKET_LOGOS[logo]}
         className="hidden rounded-sm border-2 border-border-subtle bg-white sm:block"
@@ -178,15 +203,6 @@ export const REGION_HEAD_TINT: Record<MarketRegion["tone"], string> = {
   us: "bg-[color-mix(in_srgb,var(--pokemon-red)_7%,#ffffff)]",
 };
 
-/** The yellow "Primary" pill from the market card, unchanged. */
-export function PrimaryBadge() {
-  return (
-    <span className="shrink-0 rounded-full border-2 border-black bg-pokemon-yellow px-2 py-0.5 text-[10px] font-black tracking-[0.4px] text-foreground uppercase">
-      Primary
-    </span>
-  );
-}
-
 /**
  * The currency, stated on the card that uses it.
  *
@@ -204,9 +220,9 @@ export function CurrencyBadge({ currency }: { currency: MarketCurrency }) {
 }
 
 /** The panel's context chips — market, print, currency, date. */
-export function ContextChips({ chips }: { chips: MarketContextChip[] }) {
+export function ContextChips({ chips, className = "" }: { chips: MarketContextChip[]; className?: string }) {
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
+    <div className={`flex flex-wrap items-center gap-1.5 ${className}`}>
       {chips.map((chip) => (
         <span
           className={`inline-flex items-center rounded-full border-2 px-2.5 py-0.5 text-[10px] font-black tracking-[0.4px] uppercase ${CHIP_TONE[chip.tone]}`}
@@ -337,32 +353,41 @@ export function Stat({
  * bolded inline, which is the point: an abstract explanation of "market
  * value versus asking price" teaches nothing, the same sentence carrying
  * this card's own two figures teaches it in one read.
+ *
+ * WHERE IT SITS, and why. It began in the valuation card under the figures it
+ * names, and now closes the evidence card instead — an explanation lands better
+ * once a reader has seen the thing being explained. It carries its own two
+ * figures bolded inline, so it stays self-contained a column away from them.
+ *
+ * FULL BLEED inside that card, not a floating box. It used to be inset by a
+ * 20px margin on three sides, which put white gutters either side of a
+ * paragraph and made the card look like it had stopped early. Edge to edge, on
+ * its own tint, it reads as the card's closing band rather than as something
+ * left over at the bottom.
  */
 export function WhatThisMeans({ note }: { note: MarketNote }) {
   return (
-    <div className={`mx-5 mt-4 grid grid-cols-[24px_1fr] items-start gap-2.5 rounded-md border-l-4 border-pokemon-blue bg-muted-surface px-3 py-2.5 ${ANCHOR_NOTE}`}>
-      <span
-        aria-hidden
-        className="mt-0.5 grid h-6 w-6 place-items-center rounded-full bg-pokemon-blue text-[13px] font-black text-white"
-      >
-        i
-      </span>
-      <div>
-        <strong className="block text-[10px] font-black tracking-[0.7px] text-pokemon-blue uppercase">
-          {note.title}
-        </strong>
-        <p className="mt-1 text-[12px] leading-[1.45] font-bold text-pretty">
-          {note.segments.map((segment, i) =>
-            segment.strong ? (
-              <b className="font-black tabular-nums" key={i}>
-                {segment.text}
-              </b>
-            ) : (
-              <span key={i}>{segment.text}</span>
-            )
-          )}
-        </p>
-      </div>
+    <div className="mt-auto border-t-2 border-border-subtle border-l-[6px] border-l-pokemon-blue bg-muted-surface px-5 py-3.5">
+      {/* No ⓘ badge. It cost a 24px column plus a gap to restate what the
+          label beneath it already says — the badge and the label were two
+          renderings of "this is commentary", and the blue left edge alone
+          already carries that job everywhere else on the page. Dropping it
+          gives the reclaimed height back to the bars/chart above (both are
+          `flex-1`, so the space is never simply lost). */}
+      <strong className="block text-[10px] font-black tracking-[0.7px] text-pokemon-blue uppercase">
+        {note.title}
+      </strong>
+      <p className="mt-1 text-[12px] leading-[1.45] font-bold text-pretty">
+        {note.segments.map((segment, i) =>
+          segment.strong ? (
+            <b className="font-black tabular-nums" key={i}>
+              {segment.text}
+            </b>
+          ) : (
+            <span key={i}>{segment.text}</span>
+          )
+        )}
+      </p>
     </div>
   );
 }
@@ -392,28 +417,111 @@ export function SourceAction({ label, url }: { label: string; url?: string }) {
 }
 
 /**
- * The collector insight — one identical block in all three tabs.
+ * The collector insight — the section's conclusion, full width beneath both
+ * cards.
  *
- * Same three columns, same illustration box, same label placement, same copy
- * hierarchy, same ratio dial. Only the sentence and the picture change,
- * which is what makes it read as the same idea applied to three markets
- * rather than three different features.
+ * IT SAT INSIDE THE RIGHT-HAND CARD, and that was the mistake. The claim it
+ * makes is about the MARKET on screen — raw against PSA 10, Western against
+ * Japanese — not about the contents of one of two side-by-side cards, and
+ * nesting it in one of them attributed it to that card's figures alone.
+ *
+ * Moving it out also fixes the reading order. Figures first (valuation),
+ * evidence second (bars or trend), takeaway last and full width, where the eye
+ * returns after scanning two columns — instead of a conclusion buried
+ * mid-column competing with the bars directly above it.
+ *
+ * And it takes the layout hack with it: this block used to be pinned to a
+ * fixed 112px so its prose could not push the right card taller than the left
+ * one. Out of the cards, sentence length stops driving card height at all, and
+ * the copy gets the full width it wanted — the support line wrapped to three
+ * lines in a 435px column and fits in one here.
  *
  * The ratio dial is a REPEAT of the multiple already in the headline, not a
- * figure of its own — that is why it is `aria-hidden` and why it drops out
- * on small screens without any loss.
+ * figure of its own — that is why it is `aria-hidden` and why it drops out on
+ * small screens without any loss.
  */
-export function CollectorInsightBlock({ insight }: { insight: CollectorInsight }) {
+/**
+ * The cheapest live listing's own photo, in a frame that looks the same on
+ * every card whatever eBay returns.
+ *
+ * THE PROBLEM THIS SOLVES is not aspect ratio, though that is the visible
+ * half. Measured on two real listings for one card: the Japanese one is a
+ * clean 104x225 photograph of the slab; the English one is a 225x225 SELLER
+ * MARKETING TEMPLATE — a collage with "PERFECT CONDITION" and "SHELL IS
+ * INTACT" badges pasted around a card render. Neither the shape nor the
+ * content can be relied on, so the frame has to carry the polish by itself
+ * and the image has to be allowed to be whatever it is.
+ *
+ * Hence CONTAIN, never cover. Cover would fill the box perfectly and crop a
+ * tall slab photo by ~38% of its height — taking the top and bottom of the
+ * slab, which is exactly where PSA prints the grade. Cropping the evidence
+ * out of the evidence.
+ *
+ * The dead space contain leaves is filled by the SAME IMAGE, blown up and
+ * blurred behind it. The frame is therefore always full, always colour-
+ * matched to its own photo, and never shows the white letterboxing that made
+ * a 58px box look like a mistake on half the cards.
+ */
+function InsightPhotoFrame({ photo, fallbackArt }: { photo: InsightPhoto; fallbackArt: MarketArtId }) {
+  const [failed, setFailed] = useState(false);
+
+  // A seller can end a listing at any moment and leave the cached URL
+  // pointing at nothing, so the illustration has to be able to come back.
+  if (failed) return <MarketImage asset={MARKET_ART[fallbackArt]} className="hidden flex-none rounded-md sm:block" />;
+
   return (
-    <div
-      className={`flex items-center gap-3.5 border-b-2 border-border-subtle bg-[linear-gradient(100deg,var(--muted-surface),transparent)] px-5 py-3.5 ${ANCHOR_INSIGHT}`}
-    >
-      <MarketImage asset={MARKET_ART[insight.art]} className="hidden flex-none rounded-md sm:block" />
-      <div className="min-w-0 flex-1">
-        <span className="text-[10px] font-black tracking-[0.6px] text-muted-text uppercase">Collector insight</span>
-        <h4 className="mt-1 text-[15px] leading-[19px] font-black tracking-[-0.3px] text-pretty">{insight.headline}</h4>
-        <p className="mt-1 text-[11px] leading-[1.4] font-bold text-muted-text text-pretty">{insight.support}</p>
-      </div>
+    <span className="relative hidden h-[78px] w-[78px] flex-none overflow-hidden rounded-md border-2 border-black bg-nav-dark sm:block">
+      <span
+        aria-hidden
+        className="absolute inset-0 scale-[1.35] bg-cover bg-center blur-[11px] brightness-90 saturate-[1.35]"
+        style={{ backgroundImage: `url(${photo.imageUrl})` }}
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element -- remote eBay CDN host, not allowlisted for next/image; see market-image.tsx */}
+      <img
+        alt={photo.alt}
+        className="relative h-full w-full object-contain drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]"
+        decoding="async"
+        loading="lazy"
+        onError={() => setFailed(true)}
+        src={photo.imageUrl}
+      />
+      {/* Scrim first, caption on top of it: the caption is white and the
+          photo underneath it could be any colour, so the gradient is what
+          makes the word legible rather than luck. */}
+      <span aria-hidden className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/55 to-transparent" />
+      <span
+        aria-hidden
+        className="absolute inset-x-0 bottom-0 py-0.5 text-center text-[8px] leading-none font-black tracking-[0.4px] text-white uppercase"
+      >
+        Live ask
+      </span>
+    </span>
+  );
+}
+
+export function CollectorInsightBlock({ insight }: { insight: CollectorInsight }) {
+  const href = insight.photo?.url;
+
+  const frame = insight.photo ? (
+    <InsightPhotoFrame fallbackArt={insight.art} photo={insight.photo} />
+  ) : (
+    <MarketImage asset={MARKET_ART[insight.art]} className="hidden flex-none rounded-md sm:block" />
+  );
+
+  const body = (
+    <>
+      {frame}
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center gap-1.5 text-[10px] font-black tracking-[0.6px] text-muted-text uppercase">
+          Collector insight
+          {/* The arrow is the only thing that says this block leaves the site.
+              It appears with the link and never without it, so it can never
+              promise a destination that is not there. */}
+          {href && <span aria-hidden>↗</span>}
+        </span>
+        <span className="mt-1 block text-[15px] leading-[19px] font-black tracking-[-0.3px] text-pretty">{insight.headline}</span>
+        <span className="mt-1 block text-[11px] leading-[1.4] font-bold text-muted-text text-pretty">{insight.support}</span>
+      </span>
       {insight.ratio && (
         <span
           aria-hidden
@@ -422,6 +530,48 @@ export function CollectorInsightBlock({ insight }: { insight: CollectorInsight }
           {insight.ratio}
         </span>
       )}
-    </div>
+    </>
+  );
+
+  const shell =
+    "mt-5 flex items-center gap-3.5 rounded-lg border-2 border-black bg-[linear-gradient(100deg,var(--muted-surface),transparent)] px-5 py-4 shadow-hard-sm";
+
+  // A link ONLY when there is a real listing to open. An illustrative tier
+  // has no url (see GradedMarketListingRow), and a block that looks clickable
+  // and goes nowhere is worse than one that never offered.
+  if (!href) return <div className={shell}>{body}</div>;
+
+  return (
+    <a
+      className={`${shell} transition-[transform,box-shadow] duration-100 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-md`}
+      href={href}
+      rel="noopener noreferrer"
+      target="_blank"
+    >
+      {body}
+    </a>
+  );
+}
+
+
+/**
+ * What this tab's figures cover, and what they are not — one line closing the
+ * section.
+ *
+ * ONE LINE, not two. The scope sat inside the right-hand card and the view's
+ * footnote sat under the grid, so the same idea — "here is what these numbers
+ * are and are not" — was qualified in two places a column apart. They read as
+ * one sentence because they are one thought.
+ *
+ * The trend tab had no scope at all before, which was the half of the old
+ * asymmetry that mattered least visually and most factually: Cardmarket's
+ * trailing averages are not asks, and nothing on that tab said so.
+ */
+export function MarketSectionFooter({ footer, footnote }: { footer: MarketScope; footnote: string }) {
+  return (
+    <p className="mt-3 text-[11px] leading-[1.5] font-bold text-muted-text text-pretty">
+      <strong className="font-black text-foreground">{footer.scopeLabel}:</strong> {footer.scope}{" "}
+      <span className="text-[#999]">· {footnote}</span>
+    </p>
   );
 }

@@ -3,14 +3,14 @@ import type { ReactNode } from "react";
 import { AddToCollectionButton } from "@/components/add-to-collection-button";
 import { AlertSubscribe } from "@/components/alert-subscribe";
 import { CardImage } from "@/components/card-image";
-import { OpenDataLinks } from "@/components/open-data-links";
+import { META_ROW_CLASS, OpenDataLinks } from "@/components/open-data-links";
 import { PriceChart } from "@/components/price-chart";
 import { PriceDataTabs } from "@/components/price-data-tabs";
 import { LocaleSlot, ProductLocaleProvider, type LocaleCode } from "@/components/product-locale";
-import { MarketFilterBar } from "@/components/retro/market-filter-bar";
 import { StructuredData } from "@/components/structured-data";
 import { ConditionFilterChips } from "@/components/retro/condition-filter-chips";
 import { MarketSections } from "@/components/retro/market-sections";
+import { MarketFilterBand } from "@/components/retro/market-filter-band";
 import type { GradedMarketData } from "@/lib/graded-market";
 import { IllustrativeTag } from "@/components/retro/illustrative-tag";
 import { PopulationPanel } from "@/components/retro/population-panel";
@@ -112,7 +112,7 @@ export function ProductPageContent({
         </>
       )}
 
-      <div className="mx-auto max-w-[1180px] px-6 py-16">
+      <div className="mx-auto max-w-[1180px] px-6 pt-28 pb-16 lg:pt-0">
         {/* PINNED: breadcrumb, market control and card identity, under the site
             header (66px — its height plus its 2px border).
 
@@ -154,14 +154,14 @@ export function ProductPageContent({
             the data rather than beside it, and anything pinned is guaranteed to
             cross it. Pinning is only coherent once the art has its own
             column. */}
-        <div className="lg:sticky lg:top-[66px] lg:z-30 lg:-mx-6 lg:bg-muted-surface lg:px-6 lg:pt-2 lg:pb-1">
-        {/* lg:flex-nowrap for the same reason as the identity row below: a long
-            card name wrapped this line in two and took the pinned block's
-            height with it (216px against 196px, measured on Eustass"Captain"Kid
-            and P-106 versus Lugia V). Both rows have to be unwrappable or the
-            block's height is not a constant and the art's offset is a guess. */}
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 lg:flex-nowrap">
-        <nav aria-label="Breadcrumb" className="text-sm font-bold text-muted-text lg:min-w-0 lg:truncate">
+        <div className="lg:sticky lg:top-[66px] lg:z-30 lg:-mx-6 lg:bg-muted-surface lg:px-6 lg:pt-4 lg:pb-0.5">
+        {/* lg:truncate for the same reason as the identity row below: a long
+            card name wrapped this line and took the pinned block's height
+            with it (measured on Eustass"Captain"Kid and P-106 versus Lugia
+            V). Every row in this block has to be unwrappable, or the block's
+            height stops being a constant and the art's offset below becomes
+            a guess. */}
+        <nav aria-label="Breadcrumb" className="text-sm font-bold text-muted-text lg:block lg:min-w-0 lg:truncate">
           <Link href="/" className="hover:text-foreground hover:underline">
             Home
           </Link>
@@ -174,8 +174,6 @@ export function ProductPageContent({
             <LocaleSlot variants={localized((c) => c.name)} />
           </span>
         </nav>
-        <MarketFilterBar />
-        </div>
 
         <div className="mt-5 mb-12 flex flex-wrap items-center justify-between gap-3 rounded-lg border-2 border-black bg-card-surface p-6 shadow-hard-md lg:mb-0 lg:flex-nowrap">
           {/* lg:flex-nowrap + lg:min-w-0 is what makes the pinned block a fixed
@@ -188,8 +186,7 @@ export function ProductPageContent({
               name is still in the markup for a reader's tooltip, for search and
               for an agent parsing the page, and the chips are the part that
               cannot be inferred from the breadcrumb directly above. */}
-          <div className="flex flex-wrap items-center gap-3 lg:min-w-0 lg:flex-nowrap">
-            {/* One slot for the whole identity strip rather than four —
+          {/* One slot for the whole identity strip rather than four —
                 the h1, the type badges, the set and the number all have to
                 change together or the header reads as a half-translated
                 mix. printName (One Piece only, real BerryWallet print
@@ -200,12 +197,25 @@ export function ProductPageContent({
                 (`card.types`, never the localized clone) — TCGdex localizes
                 the type name but the palette in lib/pokemon-types.ts is
                 keyed by the English one. See TypeBadge's own doc comment. */}
-            <LocaleSlot
-              variants={localized((c) => (
-                <>
-                  <h1 className="text-2xl font-black tracking-[-0.6px] uppercase lg:min-w-0 lg:truncate" title={c.printName ?? c.name}>
-                    {c.printName ?? c.name}
-                  </h1>
+          <LocaleSlot
+            variants={localized((c) => (
+              <>
+                <h1 className="text-2xl font-black tracking-[-0.6px] uppercase lg:min-w-0 lg:truncate" title={c.printName ?? c.name}>
+                  {c.printName ?? c.name}
+                </h1>
+                {/* The tags travel as ONE group so they can be pinned to the
+                    strip's right edge rather than trailing whatever width the
+                    name happened to take. Loose, they sat wherever the h1 left
+                    them — a different place on every card, which is exactly
+                    what a fixed strip should not do. Grouped and right-aligned
+                    (justify-between on the parent), they land in the same
+                    place on every card, so a reader learns one spot to look
+                    for the set and the rarity.
+
+                    lg:shrink-0 keeps the group whole and lets the h1 do the
+                    ellipsising instead — the name is recoverable from the
+                    breadcrumb and the title attribute, the chips are not. */}
+                <div className="flex flex-wrap items-center gap-3 lg:shrink-0 lg:flex-nowrap">
                   {card.types?.map((englishType, i) => (
                     <TypeBadge key={englishType} colorKey={englishType} label={c.types?.[i] ?? englishType} />
                   ))}
@@ -227,18 +237,19 @@ export function ProductPageContent({
                       {c.rarity}
                     </span>
                   )}
-                </>
-              ))}
-            />
-          </div>
-          {/* nowrap + shrink-0: a long slug wrapped this chip to two lines and
-              took the strip from 88px to 108px, which is the third and last
-              thing that made the pinned block's height depend on the card.
-              `Card ID: eustass-captain-kid-op05-074` is the one that found it. */}
-          <span className="rounded-md border-2 border-black bg-muted-surface px-3 py-1.5 text-sm font-black lg:shrink-0 lg:whitespace-nowrap">
-            Card ID: {card.id}
-          </span>
+                </div>
+              </>
+            ))}
+          />
         </div>
+
+        {/* THE MARKET FILTER, inside the pinned block rather than down in
+            Real-time market data where it used to live. That is what makes
+            the frozen chrome CONTIGUOUS: header, card identity and filter are
+            one block with no gap, so scrolling content passes under a single
+            visible edge instead of through a 45px slot between two floating
+            bars. See market-filter-band.tsx. */}
+        <MarketFilterBand />
         </div>
 
         {/* lg:mt-11 (44px) plus the block's own 4px shadow cover is the 48px
@@ -246,26 +257,33 @@ export function ProductPageContent({
             margin inside the pinned block joins its height; outside it, it just
             spaces the layout. */}
         <div className="grid grid-cols-1 gap-9 lg:mt-11 lg:grid-cols-[320px_1fr] lg:items-start">
-          {/* 262 = 66 header + 148 to the identity strip's border + the same
-              48px the page shows at rest, so the separation a reader sees is
-              identical pinned or not. Measured against the STRIP's edge, not
-              the block's: the block runs 4px further to cover the strip's
-              shadow, and counting from there made the pinned gap 52.
+          {/* 335 = 66 header + 225 pinned-block height + 44 (lg:mt-11, the
+              same margin the grid itself sits below the block at rest) — so
+              the gap a reader sees between the identity strip and the art is
+              identical pinned or not. Re-measured every time the block's own
+              content changed: 196 with the old rich toggle inline, 140 once
+              that toggle left, 153 with a small flag pill in the breadcrumb
+              row, 229 once the market filter itself moved into the block (see
+              market-filter-band.tsx), 225 once the Card ID chip left it for
+              the open-data rows under the art. A stale number here opens a
+              gap or an overlap, never quite the 44px this margin reads as
+              everywhere else.
 
-              Resting ON the block's edge (218) measured as zero overlap and
-              still read as the art sliding underneath — with no visible space,
-              "stopped against it" and "disappearing behind it" look the same.
+              The pinned block's own height already covers its shadow (see the
+              wrapper's lg:pb-1, sized to the identity strip's own
+              shadow-hard-md offset) — nothing extra to add for that here, only
+              the visual margin.
 
-              The gap can be transparent here, unlike below the strip, because
-              NOTHING scrolls through it: this is the left column and the art is
-              the only thing in it. The 48px band shows page background at every
-              scroll position rather than content sliding past.
+              The gap can be transparent, unlike a gap below a card full of
+              rows: this is the left column and the art is the only thing in
+              it, so the band shows page background at every scroll position
+              rather than content sliding past underneath it.
 
               The constant is honest only because the block's height is fixed by
-              construction (lg:flex-nowrap above) — this same number written
-              against a block that could grow is what put the identity strip on
-              top of this art in the first place. */}
-          <div className="lg:sticky lg:top-[262px]">
+              construction (lg:truncate above, lg:flex-nowrap on the identity
+              row) — the same number written against a block that could grow is
+              what put the identity strip on top of this art once already. */}
+          <div className="lg:sticky lg:top-[335px]">
             <PsaTiltCard>
               <LocaleSlot
                 variants={localized((c) => (
@@ -313,6 +331,23 @@ export function ProductPageContent({
             </div>
 
             <OpenDataLinks markdownHref={markdownHref} jsonHref={jsonHref} okfHref={okfHref} className="mt-4" />
+
+            {/* The card's ID, which used to be a chip in the pinned identity
+                strip. It was the widest fixed thing on that row and the h1 is
+                the row's headline, so the slug was spending header width — the
+                one place on this page where width is scarcest — on a string
+                nobody reads unless they are addressing the card by name.
+
+                Here it sits with the page's other machine-facing facts, in
+                their style: an agent or a developer looking for how to
+                identify this card finds the ID beside the Markdown, JSON and
+                OKF mirrors that take it, which is where they were already
+                looking. Removing it from the pinned block also took the last
+                card-dependent width out of that block. */}
+            <p className={`${META_ROW_CLASS} mt-1.5`}>
+              <span>Card ID:</span>
+              <span className="text-foreground">{card.id}</span>
+            </p>
           </div>
 
           {/* The rhythm between the stacked sections. Widened from 40px once the

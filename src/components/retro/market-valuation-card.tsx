@@ -6,14 +6,12 @@ import {
   Headline,
   MarketCard,
   MarketCardHead,
-  PrimaryBadge,
   REGION_HEAD_TINT,
   RegionLockup,
   SourceAction,
   SourceLockup,
   Stat,
   StatGrid,
-  WhatThisMeans,
 } from "@/components/retro/market-panel-parts";
 import type { MarketValuation } from "@/lib/market-views";
 
@@ -53,14 +51,12 @@ export function MarketValuationCard({ valuation }: { valuation: MarketValuation 
         ) : (
           <SourceLockup context={valuation.sourceContext} logo={valuation.logo} name={valuation.sourceName} />
         )}
+        {/* Currency only. There was a yellow "Primary" pill beside it saying
+            this source is the one its market answers to — which the tab, the
+            region chip and the source lockup all say already, so it was a
+            fourth voice on a settled point and it went. */}
         <span className="flex shrink-0 items-center gap-2">
           <CurrencyBadge currency={valuation.currency} />
-          {/* "Primary" says this source is the one this MARKET answers to, so
-              it belongs on a tab that shows one market. The Japanese view shows
-              two, each primary for its own region, and a badge on only one of
-              them would rank them — which is the opposite of what that tab is
-              for. The regional header says everything it would have. */}
-          {!valuation.region && <PrimaryBadge />}
         </span>
       </MarketCardHead>
 
@@ -86,8 +82,10 @@ export function MarketValuationCard({ valuation }: { valuation: MarketValuation 
         ))}
       </StatGrid>
 
-      <WhatThisMeans note={valuation.note} />
-
+      {/* "What this means" is no longer here — it sits under the evidence in
+          the right-hand card, where the thing it explains actually is. This
+          card is now the figure and nothing but: headline, four stats, source
+          link. See WhatThisMeans for why the note survives the move. */}
       <SourceAction label={valuation.actionLabel} url={valuation.url} />
     </MarketCard>
   );

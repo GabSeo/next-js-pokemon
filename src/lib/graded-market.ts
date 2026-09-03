@@ -73,6 +73,21 @@ export type GradedMarketListingRow = {
   currency: string;
   /** Real per-item link — only present for real (non-illustrative) rows. See lib/illustrative.ts on why illustrative rows never carry one. */
   url?: string;
+  /**
+   * The seller's own photo of THIS listing, straight from the Browse API's
+   * `image.imageUrl` — already in every response we make, previously dropped
+   * on the floor here.
+   *
+   * Same rule as `url` above, and for the same reason: real rows only, never
+   * fabricated for an illustrative one. A preview row inventing a price is
+   * bad enough when it is badged; a preview row showing a PHOTO of a card
+   * that nobody is selling would read as evidence, which is the one thing a
+   * placeholder must never do.
+   *
+   * Optional even on real rows — eBay does not guarantee an image on every
+   * item summary, so every consumer needs a path for its absence.
+   */
+  imageUrl?: string;
 };
 
 export type GradedMarketTypeData = {
@@ -377,6 +392,7 @@ async function fetchActiveTier(
           price: listing.price,
           currency: listing.currency,
           url: listing.url,
+          imageUrl: listing.imageUrl,
         })),
       };
     }

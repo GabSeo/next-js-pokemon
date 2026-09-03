@@ -6,17 +6,16 @@ import { DEFAULT_CHART_ENTER_TRANSITION } from "@/components/charts/animation";
 import { MarketDataBadge } from "@/components/retro/market-data-badge";
 import { MarketImage } from "@/components/retro/market-image";
 import {
-  ANCHOR_SUPPORT,
   ANCHOR_VIZ,
-  CollectorInsightBlock,
   CurrencyBadge,
   MarketCard,
   MarketCardHead,
   REGION_HEAD_TINT,
   RegionLockup,
+  WhatThisMeans,
 } from "@/components/retro/market-panel-parts";
 import { MARKET_LOGOS } from "@/lib/market-assets";
-import { formatMarketMoney, type BarsIntelligence, type ComparisonRow } from "@/lib/market-views";
+import { formatMarketMoney, type BarsIntelligence, type ComparisonRow, type MarketNote } from "@/lib/market-views";
 
 /**
  * Every real US price we hold for one print, as one scannable comparison.
@@ -60,8 +59,11 @@ const STAGGER_SECONDS = 0.055;
 export function MarketComparisonCard({
   intelligence,
   isActive,
+  note,
 }: {
   intelligence: BarsIntelligence;
+  /** Closes this card — see WhatThisMeans for why the explanation lives under the evidence. */
+  note: MarketNote;
   /**
    * Whether this card's tab is the one on screen.
    *
@@ -140,20 +142,15 @@ export function MarketComparisonCard({
               reduceMotion={Boolean(reduceMotion)}
               row={row}
               scale={scale}
+              // Only the Japanese tab's bars keep the TCGplayer row mark — see
+              // BarRow's own comment on why `region` is what decides it.
+              showSourceLogo={Boolean(intelligence.region)}
             />
           ))}
         </dl>
       </div>
 
-      <CollectorInsightBlock insight={intelligence.insight} />
-
-      <div className={`flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-5 py-3.5 ${ANCHOR_SUPPORT}`}>
-        <p className="text-[11px] leading-[1.4] font-bold text-muted-text text-pretty">
-          <strong className="font-black text-foreground">{intelligence.footer.scopeLabel}:</strong>{" "}
-          {intelligence.footer.scope}
-        </p>
-        <p className="text-[10px] font-black tracking-[0.4px] text-muted-text uppercase">Dearest ask = full width</p>
-      </div>
+      <WhatThisMeans note={note} />
     </MarketCard>
   );
 }
@@ -165,6 +162,7 @@ function BarRow({
   isActive,
   reduceMotion,
   currency,
+  showSourceLogo,
 }: {
   row: ComparisonRow;
   scale: number;
@@ -172,8 +170,22 @@ function BarRow({
   isActive: boolean;
   reduceMotion: boolean;
   currency: BarsIntelligence["currency"];
+  /**
+   * Whether the TCGplayer row may show its own logo. eBay's row logo is
+   * untouched by this and always shows — the US/EU-only rule is specifically
+   * about the TCGplayer and Cardmarket marks, and eBay is neither.
+   *
+   * True only on the Japanese tab (`Boolean(intelligence.region)`), where
+   * this card sits under a plain "United States market" heading with no
+   * source mark of its own — the row is the only place a reader sees which
+   * US marketplace the top bar came from. On the US tab that same mark
+   * already leads the valuation card one column to the left, so repeating it
+   * here would be the source announcing itself twice on one screen.
+   */
+  showSourceLogo: boolean;
 }) {
   const width = row.amount != null && scale > 0 ? Math.max(4, (row.amount / scale) * 100) : 0;
+  const showLogo = row.logo && (row.logo !== "tcgplayer" || showSourceLogo);
 
   return (
     <div>
@@ -181,9 +193,9 @@ function BarRow({
           the depth behind it as a chip between them. */}
       <div className="flex items-baseline justify-between gap-2">
         <dt className="flex items-baseline gap-1.5 overflow-hidden">
-          {row.logo && (
+          {showLogo && (
             <MarketImage
-              asset={{ ...MARKET_LOGOS[row.logo], alt: "", width: 24, height: 17 }}
+              asset={{ ...MARKET_LOGOS[row.logo!], alt: "", width: 24, height: 17 }}
               className="translate-y-0.5 rounded-[3px] border border-border-subtle bg-white"
             />
           )}

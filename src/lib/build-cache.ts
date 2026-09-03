@@ -110,13 +110,21 @@ import path from "node:path";
  *      bump exists to invalidate. A green local build says nothing about
  *      a deploy that starts from a warm cache.
  *
+ *   9. GradedMarketListingRow gained `imageUrl` — the eBay listing photo,
+ *      which the Browse API was already returning and fetchActiveTier was
+ *      already discarding. Every cached graded-market entry predates the
+ *      field, so without this bump the collector insight would fall back to
+ *      its placeholder art on every card that restored from cache, which is
+ *      precisely the reason-8 failure again: correct locally on a cold
+ *      cache, wrong in production on a warm one.
+ *
  * Surviving deploys is the whole point of this cache (see the header
  * comment) — it is what keeps a redeploy from re-spending quota. So the fix
  * is not to shorten its reach but to make a deliberate computation change
  * able to say so. Bumping this starts a fresh namespace; the previous one is
  * simply never read again.
  */
-const CACHE_VERSION = 7;
+const CACHE_VERSION = 8;
 
 /** Versioned so a computation change cannot silently reuse pre-change values across a deploy — see CACHE_VERSION. */
 const CACHE_DIR = path.join(process.cwd(), ".next", "cache", "resolved-cards", `v${CACHE_VERSION}`);

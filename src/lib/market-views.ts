@@ -39,9 +39,46 @@ export type MarketCurrency = "USD" | "EUR";
 /** The three views, in tab order. Not the LocaleCode union — these are views of the section, and "EU"/"JA" is how the page words them. */
 export type MarketViewId = "US" | "EU" | "JA";
 
-/** LocaleCode <-> view id. The section's tabs write the page's existing locale context, so a tab click also moves the card art and the panels below. */
+/**
+ * The order the three markets are presented in, everywhere.
+ *
+ * Two Western markets first and the Japanese print last, because the first
+ * two are the same card in two currencies and the third is a different print
+ * — so the jump a reader makes between neighbours is a small one twice, then
+ * a real one once, rather than the largest jump sitting in the middle.
+ *
+ * buildMarketViews already returned `[us, eu, ja]`; the market filter was
+ * drawing US -> JA -> EU because it inherited the provider's array order
+ * (US -> JP -> FR, a different thing for a different reason), so the control
+ * and the section it controls disagreed. This constant is what they now
+ * agree on — exported so the filter orders by it rather than keeping a
+ * second copy of the same list.
+ */
+export const MARKET_VIEW_ORDER: MarketViewId[] = ["US", "EU", "JA"];
+
+/** LocaleCode <-> view id. The market filter writes the page's existing locale context, so choosing a market also moves the card art and the panels below. */
 export const VIEW_BY_LOCALE = { US: "US", FR: "EU", JP: "JA" } as const;
 export const LOCALE_BY_VIEW = { US: "US", EU: "FR", JA: "JP" } as const;
+
+/**
+ * What the market filter calls each view, kept here rather than in the
+ * component that draws it.
+ *
+ * The filter lives in the page's own pinned header (market-filter-band.tsx),
+ * far from this file's panels, and it has to name the three markets WITHOUT
+ * paying for buildMarketViews — that function needs both cards, the graded
+ * market and a price lookup, none of which page chrome should have to hold
+ * just to draw three buttons. These four strings are the only part of a view
+ * that is constant for every card, so they are the only part the chrome
+ * needs. buildMarketViews reads them from here too, which is the point: one
+ * source, so a label can never say one thing in the filter and another in
+ * the panel it selects.
+ */
+export const MARKET_TAB_META: Record<MarketViewId, { label: string; hint: string }> = {
+  US: { label: "US market", hint: "English print · USD" },
+  EU: { label: "EU market", hint: "Western print · EUR" },
+  JA: { label: "Japanese card", hint: "EU + US data" },
+};
 
 const SYMBOL: Record<MarketCurrency, string> = { USD: "$", EUR: "€" };
 
@@ -139,8 +176,34 @@ export type ComparisonRow = {
   absent: string;
 };
 
+/**
+ * The cheapest live listing behind the insight's own sentence, as a picture.
+ *
+ * Real eBay data or nothing. There is no illustrative variant of this and
+ * there must not be: the whole value of the photo is that it is a copy
+ * somebody is selling right now, so a fabricated one would turn the block's
+ * decoration into false evidence. When it is absent — preview data, an empty
+ * tier, or an item summary eBay returned without an image — the block keeps
+ * its existing MarketArt illustration, which reads as decoration precisely
+ * because it always has.
+ */
+export type InsightPhoto = {
+  imageUrl: string;
+  /** Describes what the picture IS, not the seller's keyword-stuffed title. */
+  alt: string;
+  /**
+   * The eBay page for THIS listing — the one the photo shows and the one the
+   * headline's graded figure came from. Carrying it here rather than beside
+   * it keeps the picture and the destination the same object, so the block
+   * can never link to one listing while showing another.
+   */
+  url?: string;
+};
+
 export type CollectorInsight = {
   art: MarketArtId;
+  /** The cheapest real listing's own photo, when the tier the headline names has one. */
+  photo?: InsightPhoto;
   /** The one line a reader should leave with. */
   headline: string;
   /** The two figures the headline was computed from, in words. */
@@ -148,6 +211,22 @@ export type CollectorInsight = {
   /** The multiple, for the ratio dial. Null when the comparison could not be made. */
   ratio: string | null;
 };
+
+/**
+ * What every tab says under its insight — one slot, the same on all three.
+ *
+ * It used to be one slot each and a different one: `bars` carried a scope line
+ * and no action, `trend` carried a cross-link to the other print and no scope.
+ * So two tabs ended in a grey sentence and one ended in an illustrated block
+ * with a button, and the same section read as three different features
+ * depending on which toggle was open.
+ *
+ * The cross-link is gone rather than copied to the other two. It was a card-
+ * sized restatement of the market toggle sitting a few hundred pixels above it
+ * — a second way to do the one thing that control already does, taking the
+ * space of a real figure to do it.
+ */
+export type MarketScope = { scopeLabel: string; scope: string };
 
 /** One window of Cardmarket's own trailing averages. */
 export type TrendPoint = { label: string; shortLabel: string; amount: number | null };
@@ -165,7 +244,7 @@ export type BarsIntelligence = {
   /** False when eBay could not be reached and the tiers are illustrative previews. */
   isReal: boolean;
   insight: CollectorInsight;
-  footer: { scopeLabel: string; scope: string };
+  footer: MarketScope;
 };
 
 export type TrendIntelligence = {
@@ -179,8 +258,7 @@ export type TrendIntelligence = {
   /** Spoken description of the chart for a screen reader — the chart itself is geometry. */
   chartDescription: string;
   insight: CollectorInsight;
-  /** The cross-link to the Japanese view. Only this tab has one. */
-  action: { eyebrow: string; heading: string; body: string; button: string; target: MarketViewId };
+  footer: MarketScope;
 };
 
 export type MarketIntelligence = BarsIntelligence | TrendIntelligence;
@@ -322,13 +400,51 @@ function multiple(ratio: number): string {
  * but a thin ladder can leave only PSA 8, and the sentence has to name the
  * grade it really used or the multiple is unattributable.
  */
-function gradedInsight(rows: ComparisonRow[], currency: MarketCurrency): CollectorInsight {
+/**
+ * The photo of the cheapest listing in the tier the insight is about.
+ *
+ * `rows[0]` is genuinely the cheapest and not merely the first: eBay's Browse
+ * API returns price-sorted results that are only sorted WITHIN shards (see
+ * ebay-browse.ts, which measured two ascending runs concatenated), so
+ * searchActiveListings re-sorts locally before slicing. That local sort is
+ * what makes "cheapest" a fact here rather than a hope.
+ *
+ * Gated on `isReal` as well as on the row: an illustrative tier has rows and
+ * prices but must never have a photo (see GradedMarketListingRow.imageUrl).
+ */
+function insightPhoto(
+  data: GradedMarketData | null,
+  top: ComparisonRow | undefined,
+  language: "English" | "Japanese"
+): InsightPhoto | undefined {
+  if (!top) return undefined;
+  const tier = activeTier(data, top.label, language);
+  if (!tier?.isReal) return undefined;
+  const cheapest = tier.rows[0];
+  if (!cheapest?.imageUrl) return undefined;
+  return {
+    imageUrl: cheapest.imageUrl,
+    alt: `Seller photo of the cheapest ${top.label} copy listed on eBay`,
+    url: cheapest.url,
+  };
+}
+
+function gradedInsight(
+  rows: ComparisonRow[],
+  currency: MarketCurrency,
+  data: GradedMarketData | null,
+  language: "English" | "Japanese"
+): CollectorInsight {
   const raw = rows.find((r) => r.label.toLowerCase().includes("raw"));
   const top = rows.filter((r) => r.label.startsWith("PSA") && r.amount != null).at(-1);
+  // Computed before the branch: a tier with no raw copy to compare against
+  // still has a cheapest listing, and that listing still has a photo.
+  const photo = insightPhoto(data, top, language);
 
   if (!raw?.amount || !top?.amount) {
     return {
       art: "psa-slab",
+      photo,
       headline: "No graded-versus-raw comparison today",
       support:
         raw?.amount == null && top?.amount == null
@@ -343,6 +459,7 @@ function gradedInsight(rows: ComparisonRow[], currency: MarketCurrency): Collect
   const ratio = top.amount / raw.amount;
   return {
     art: "psa-slab",
+    photo,
     headline: `${top.label} asks ${multiple(ratio)} a raw copy`,
     support: `${formatMarketMoney(top.amount, currency)} graded versus ${formatMarketMoney(raw.amount, currency)} raw on eBay.`,
     ratio: multiple(ratio),
@@ -442,8 +559,11 @@ function tcgplayerValuation(card: Card, priceKnown: boolean, unlisted: boolean):
       { label: "Direct seller", amount: priceOrNull(band?.directLow), absent: "No Direct copy" },
       { label: "Highest listing", amount: priceOrNull(band?.high), absent: "No asks" },
     ],
+    // A real title per case, not the generic "What this means" repeated on
+    // every tab — the label is a caption now that the ⓘ badge is gone (see
+    // WhatThisMeans), so it has to carry the point on its own.
     note: {
-      title: "What this means",
+      title: headline == null ? "Why there's no price" : "Recent sales vs. asks",
       segments:
         headline == null
           ? [
@@ -515,6 +635,12 @@ function cardmarketValuation(
               { text: " is Cardmarket’s reference trend — not today’s cheapest offer. No live listing price is published for this card right now." },
             ];
 
+  // A real title per case, same reasoning as tcgplayerValuation's own note:
+  // the JA branch is not "trend vs. cheapest" at all, it is two currencies
+  // side by side, and the old shared "What this means" said neither.
+  const noteTitle =
+    trend == null ? "Why there's no price" : print === "japanese" ? "Two currencies, not converted" : "Trend vs. cheapest offer";
+
   return {
     logo: "cardmarket",
     region,
@@ -535,7 +661,7 @@ function cardmarketValuation(
       { label: "7-day avg", amount: priceOrNull(cm?.avg7), absent: "Not published" },
       { label: "1-day avg", amount: priceOrNull(cm?.avg1), absent: "Not published" },
     ],
-    note: { title: "What this means", segments },
+    note: { title: noteTitle, segments },
     url: cm?.url,
     actionLabel: "View on Cardmarket",
   };
@@ -568,8 +694,8 @@ export function buildMarketViews({
   const usRows = usdRows(gradedMarket, westernCard, "English", "No listing");
   const us: MarketView = {
     id: "US",
-    tabLabel: "US market",
-    tabHint: "English print · USD",
+    tabLabel: MARKET_TAB_META.US.label,
+    tabHint: MARKET_TAB_META.US.hint,
     heading: "US market valuation",
     chips: [
       { text: "US market", tone: "region-us" },
@@ -587,7 +713,7 @@ export function buildMarketViews({
       currency: "USD",
       rows: usRows,
       isReal: ebayIsReal(gradedMarket, "English"),
-      insight: gradedInsight(usRows, "USD"),
+      insight: gradedInsight(usRows, "USD", gradedMarket, "English"),
       footer: { scopeLabel: "Scope", scope: "English print · US sources · asks unless marked as sales." },
     },
     footnote: "One regional market · one print scope · one currency.",
@@ -606,8 +732,8 @@ export function buildMarketViews({
 
   const eu: MarketView = {
     id: "EU",
-    tabLabel: "EU market",
-    tabHint: "Western print · EUR",
+    tabLabel: MARKET_TAB_META.EU.label,
+    tabHint: MARKET_TAB_META.EU.hint,
     heading: "EU market valuation",
     chips: [
       { text: "EU market", tone: "region" },
@@ -631,12 +757,9 @@ export function buildMarketViews({
               .map((p) => `${p.label} ${formatMarketMoney(p.amount as number, "EUR")}`)
               .join(", ")}.`,
       insight: printInsight(euTrend, jaTrend),
-      action: {
-        eyebrow: "Explore the other print",
-        heading: "How does the Japanese card compare?",
-        body: "See its European and US market data.",
-        button: "View Japanese card",
-        target: "JA",
+      footer: {
+        scopeLabel: "Scope",
+        scope: "Western print · Cardmarket's own trailing averages, not asks.",
       },
     },
     footnote: "EU valuation stays in EUR · US figures live on their own tabs and are never converted.",
@@ -656,9 +779,9 @@ export function buildMarketViews({
   );
   const ja: MarketView = {
     id: "JA",
-    tabLabel: "Japanese card",
-    tabHint: "EU + US data",
-    heading: "Japanese card valuation",
+    tabLabel: MARKET_TAB_META.JA.label,
+    tabHint: MARKET_TAB_META.JA.hint,
+    heading: "Japanese market valuation",
     chips: [
       { text: "Europe · EUR", tone: "region", srText: "European market, prices in euros" },
       { text: "Japanese print", tone: "plain" },
@@ -679,7 +802,7 @@ export function buildMarketViews({
       currency: "USD",
       rows: jaRows,
       isReal: ebayIsReal(gradedMarket, "Japanese"),
-      insight: gradedInsight(jaRows, "USD"),
+      insight: gradedInsight(jaRows, "USD", gradedMarket, "Japanese"),
       footer: {
         scopeLabel: "European reference",
         scope:

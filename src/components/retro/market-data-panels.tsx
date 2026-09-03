@@ -1,11 +1,14 @@
 "use client";
 
-import { useCallback, useId, useMemo, useRef } from "react";
+import { useId, useMemo } from "react";
 
-import { useProductLocale, type LocaleCode } from "@/components/product-locale";
+import { useProductLocale } from "@/components/product-locale";
 import { MarketTrendCard } from "@/components/retro/market-trend-card";
 import {
+  ANCHOR_INSIGHT,
   ANCHOR_PANEL,
+  CollectorInsightBlock,
+  MarketSectionFooter,
   ContextChips,
   MarketCard,
 } from "@/components/retro/market-panel-parts";
@@ -14,7 +17,6 @@ import { MarketComparisonCard } from "@/components/retro/price-comparison";
 import type { GradedMarketData } from "@/lib/graded-market";
 import {
   buildMarketViews,
-  LOCALE_BY_VIEW,
   VIEW_BY_LOCALE,
   type MarketView,
   type MarketViewId,
@@ -72,9 +74,8 @@ export function MarketDataPanels({
   /** Shared with MarketSections below; fetched once in page.tsx. */
   gradedMarket: GradedMarketData | null;
 }) {
-  const { active, setActive } = useProductLocale();
+  const { active } = useProductLocale();
   const baseId = useId().replace(/:/g, "");
-  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   // The Western print — the card this page is about, and the only variant
   // guaranteed to exist.
@@ -92,50 +93,30 @@ export function MarketDataPanels({
 
   const activeView: MarketViewId = VIEW_BY_LOCALE[active] ?? "US";
 
-  const select = useCallback(
-    (view: MarketViewId) => setActive(LOCALE_BY_VIEW[view] as LocaleCode),
-    [setActive]
-  );
-
-  /**
-   * Arrow keys move between tabs and select as they go, which is the
-   * automatic-activation half of the WAI-ARIA tabs pattern — correct here
-   * because every panel is already rendered, so moving selection costs
-   * nothing and a reader arrowing across the strip sees each market in turn.
-   * Home/End jump to the ends. Tab itself leaves the strip for the panel,
-   * via the roving tabindex below.
-   */
-  const onKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
-      const keys: Record<string, number> = {
-        ArrowRight: index + 1,
-        ArrowLeft: index - 1,
-        Home: 0,
-        End: views.length - 1,
-      };
-      const next = keys[event.key];
-      if (next === undefined) return;
-      event.preventDefault();
-      const target = views[(next + views.length) % views.length];
-      if (!target) return;
-      select(target.id);
-      tabRefs.current[target.id]?.focus();
-    },
-    [select, views]
-  );
-
   if (!westernCard || views.length === 0) return null;
 
   return (
     <section aria-labelledby={`${baseId}-title`}>
-      {/* A real section head rather than a caption. This is the first thing on
-          the page after the card itself and the most valuable thing on it, so
-          it is allowed to announce itself — the live dot carries the one
-          quality the rest of the page cannot claim, that these figures were
-          read today. */}
-      <div className="mb-4">
+      {/* A real section head rather than a caption. This is the first thing
+          on the page after the card itself and the most valuable thing on
+          it, so it is allowed to announce itself — the live dot carries the
+          one quality the rest of the page cannot claim, that these figures
+          were read today.
+
+          The standfirst that used to sit under the heading ("Three markets,
+          each in its own currency...") is gone. The market filter in the
+          pinned header already names all three markets and their currencies,
+          and every panel carries its own currency badge — so the sentence was
+          explaining on arrival what the section states continuously, in the
+          one position that delays reaching the figures.
+
+          mb-8 rather than mb-4 because the heading now closes the head on its
+          own. A display line needs the room under it that the paragraph used
+          to occupy, or the section title reads as a label attached to the
+          first panel instead of as the head of everything below it. */}
+      <div className="mb-8">
         <p className="flex items-center gap-2 text-[11px] font-black tracking-[0.9px] text-pokemon-blue uppercase">
-          <span className="inline-block h-2 w-2 rounded-full bg-pokemon-red" />
+          <span aria-hidden className="inline-block h-2 w-2 rounded-full bg-pokemon-red" />
           Live market data
         </p>
         <h2
@@ -144,81 +125,30 @@ export function MarketDataPanels({
         >
           Real-time market data
         </h2>
-        <p className="mt-2 max-w-[62ch] text-[12px] font-bold text-muted-text text-pretty">
-          Three markets, each in its own currency and from its own source. Nothing here is converted between EUR and
-          USD.
-        </p>
-      </div>
-
-      {/* The tab strip. Horizontal scroll rather than wrapping below 520px:
-          three wrapped tabs read as a list of links, and the strip's job is to
-          look like one control with three positions. */}
-      <div
-        aria-label="Market view"
-        className="mb-4 flex gap-1 overflow-x-auto rounded-lg border-2 border-black bg-card-surface p-1 shadow-hard-sm"
-        role="tablist"
-      >
-        {views.map((view, index) => {
-          const selected = view.id === activeView;
-          return (
-            <button
-              aria-controls={`${baseId}-panel-${view.id}`}
-              aria-selected={selected}
-              className={`flex min-w-[128px] flex-1 flex-col items-center rounded-md px-3 py-2 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pokemon-blue ${
-                selected ? "bg-nav-dark text-white" : "text-muted-text hover:bg-muted-surface"
-              }`}
-              id={`${baseId}-tab-${view.id}`}
-              key={view.id}
-              onClick={() => select(view.id)}
-              onKeyDown={(event) => onKeyDown(event, index)}
-              ref={(node) => {
-                tabRefs.current[view.id] = node;
-              }}
-              role="tab"
-              // Roving tabindex: one stop for the whole strip, arrows move
-              // within it. Without this a keyboard reader pays three tab
-              // presses to get past a control they may not want.
-              tabIndex={selected ? 0 : -1}
-              type="button"
-            >
-              <span className="text-[13px] font-black tracking-[-0.2px] whitespace-nowrap">{view.tabLabel}</span>
-              <span
-                className={`mt-0.5 text-[9px] font-black tracking-[0.5px] whitespace-nowrap uppercase ${selected ? "text-white/70" : "text-muted-text"}`}
-              >
-                {view.tabHint}
-              </span>
-            </button>
-          );
-        })}
       </div>
 
       {views.map((view) => (
         <div
-          aria-labelledby={`${baseId}-tab-${view.id}`}
+          aria-label={`${view.tabLabel} — ${view.tabHint}`}
           hidden={view.id !== activeView}
           id={`${baseId}-panel-${view.id}`}
           key={view.id}
-          role="tabpanel"
-          // Focusable so a keyboard reader arriving from the strip lands on
-          // the content it just selected rather than on the first link in it.
-          tabIndex={0}
+          // A labelled region rather than a tabpanel. The control that
+          // selects it is the page's own market filter now
+          // (market-filter-band.tsx), which lives up in the pinned header and
+          // moves the card art and every panel below as well — too far away,
+          // and too broad, to honestly claim the tab/tabpanel pairing this
+          // used to have when the strip sat directly above these panels.
+          role="region"
         >
-          <MarketPanel isActive={view.id === activeView} onNavigate={select} view={view} />
+          <MarketPanel isActive={view.id === activeView} view={view} />
         </div>
       ))}
     </section>
   );
 }
 
-function MarketPanel({
-  view,
-  isActive,
-  onNavigate,
-}: {
-  view: MarketView;
-  isActive: boolean;
-  onNavigate: (view: MarketViewId) => void;
-}) {
+function MarketPanel({ view, isActive }: { view: MarketView; isActive: boolean }) {
   return (
     <div>
       {/* The panel's own head, inside the panel rather than above the tabs, so
@@ -227,9 +157,24 @@ function MarketPanel({
           tabs sees the context change with the figures; an agent reading the
           raw HTML finds each set of numbers already labelled with the market
           and currency it belongs to. */}
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-x-6 gap-y-3 lg:min-h-[54px]">
+      {/* Chips UNDER the heading, not opposite it. Ranged right on the same
+          line they were a second column whose left edge moved with the
+          heading's length — "US market valuation" and "Japanese market
+          valuation" are different widths, so the row of chips started in a
+          different place in each tab and appeared to shift when a reader
+          switched. Stacked, both the heading and the chips share one left
+          edge that is the same in all three views, which is the same rule
+          the ANCHOR_* heights follow for everything below.
+
+          62px is a floor, not a height: measured at 59 in all three views
+          (one line of chips under one line of heading), set just above so a
+          card that resolves fewer chips, or a shorter heading, still leaves
+          the grid below starting on the same row. It cannot defend against
+          chips WRAPPING to a second line — a min-height never can — which is
+          the same limitation the 54px single-row version had. */}
+      <div className="mb-4 lg:min-h-[62px]">
         <h3 className="text-lg font-black tracking-[-0.5px] uppercase">{view.heading}</h3>
-        <ContextChips chips={view.chips} />
+        <ContextChips chips={view.chips} className="mt-2" />
       </div>
 
       {/* Deliberately uneven in width — a bar needs length to be read as one,
@@ -239,13 +184,16 @@ function MarketPanel({
         <MarketValuationCard valuation={view.valuation} />
 
         {view.intelligence.kind === "bars" ? (
-          <MarketComparisonCard intelligence={view.intelligence} isActive={isActive} />
+          <MarketComparisonCard intelligence={view.intelligence} isActive={isActive} note={view.valuation.note} />
         ) : (
-          <MarketTrendCard intelligence={view.intelligence} isActive={isActive} onNavigate={onNavigate} />
+          <MarketTrendCard intelligence={view.intelligence} isActive={isActive} note={view.valuation.note} />
         )}
       </div>
 
-      <p className="mt-3 text-[11px] font-bold text-muted-text text-pretty">{view.footnote}</p>
+      {/* The takeaway, then what it covers. The explanation stays inside the
+          evidence card — see WhatThisMeans. */}
+      <CollectorInsightBlock insight={view.intelligence.insight} />
+      <MarketSectionFooter footer={view.intelligence.footer} footnote={view.footnote} />
     </div>
   );
 }
@@ -284,6 +232,10 @@ export function MarketDataPanelsSkeleton() {
           </div>
         </MarketCard>
       </div>
+      {/* The insight band's own box, so a skeleton replaced by data moves
+          nothing below it — the same contract every other block here keeps. */}
+      <SkeletonBox className={`mt-5 w-full rounded-lg ${ANCHOR_INSIGHT}`} />
+      <SkeletonBox className="mt-3 h-3 w-2/3" />
     </section>
   );
 }
