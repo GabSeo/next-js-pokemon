@@ -18,50 +18,66 @@
  * (not Japanese) concern. `set.id` (e.g. "swsh3") is the closest thing to a
  * short set code; there's no separate `code` field on the Set object.
  *
- * WHY THIS USES api.eu1.tcgdex.net RATHER THAN api.tcgdex.net
+ * WHICH API HOST, AND WHY IT HAS NOW MOVED TWICE
  *
- * api.tcgdex.net is GeoDNS'd across OVH nodes. On 2026-08-29 the North
- * American one was dead while the French one was healthy, so anything
- * resolving from the US — Vercel's default iad1 region included — got a host
- * that never answered:
+ * Currently api.tcgdex.net (the apex). It was api.eu1.tcgdex.net between
+ * 2026-08-29 and 2026-09-03, and the round trip is worth keeping because
+ * each host has failed in a completely different way.
+ *
+ * 2026-08-29 — apex broke by ROUTING. api.tcgdex.net is GeoDNS'd across OVH
+ * nodes and the North American one was dead, so anything resolving from the
+ * US, Vercel's default iad1 build region included, got a host that never
+ * answered:
  *
  *   217.182.193.43 (OVH FR)  -> 200 in ~50ms
  *   198.27.75.82   (OVH CA)  -> connect ETIMEDOUT, from every network tried
  *
- * `api.eu1.` is TCGdex's own per-region hostname (confirmed by a maintainer
- * on their Discord during the incident, and it is what their status page at
- * status.tcgdex.dev tracks). It resolves straight to the healthy French node
- * from any network, GeoDNS uninvolved.
+ * Pinning the region fixed it. `api.eu1.` is TCGdex's own per-region
+ * hostname (confirmed by a maintainer on their Discord during that
+ * incident, and what status.tcgdex.dev tracks), and it resolved straight to
+ * the healthy French node with GeoDNS uninvolved.
  *
- * Pinning a region costs nothing here, which is the part worth understanding
- * before "fixing" this back: every call in this file is made SERVER-SIDE,
- * from Vercel, never from a visitor's browser. So there is no user-latency
- * argument for geo-routing — the only question is which endpoint the server
- * can actually reach, and a pinned one answers that deterministically
- * instead of depending on which node the build or function region draws.
+ * 2026-09-03 — eu1 broke by CERTIFICATE, which is not the same thing at all
+ * and is why the previous fix could not survive it. Measured:
  *
- * Deliberately NOT applied to assets.tcgdex.net (cardImageUrl below,
- * next.config.ts's remotePatterns): `assets.eu1.` resolves but serves a
- * certificate that does not cover it (TLS failure, not a 404), and the
- * plain asset host was verified reachable from iad1 during the same
- * incident — 200 in 0.35s through Vercel's own image optimizer while the
- * API was timing out. Only the API host is affected.
+ *   api.eu1.tcgdex.net -> 51.255.35.48, TLS validation FAILS
+ *   api.tcgdex.net     -> 51.255.35.48, 200 in ~15ms
  *
- * Reverting to api.tcgdex.net once their NA node is healthy is optional and
- * gains nothing. If eu1 itself ever fails, the region prefix is the one
- * thing to change here.
+ * The SAME IP, one hostname working and one not: the certificate served
+ * there stopped covering the eu1 name. Nothing was down and no retry could
+ * have helped — a build against it prerendered every Pokémon card from
+ * apitcg instead, which yields a real price and so looks fine, while the
+ * card ART and the French identity silently vanish. That is precisely the
+ * degraded shape cards.ts's buildCached negative predicate exists to catch.
+ *
+ * This is the second time an `eu1.` host has failed by certificate rather
+ * than by outage — `assets.eu1.` already did, which is why the asset host
+ * below was never region-pinned. Two for two is the reason the API is back
+ * on the apex rather than pinned to some other region.
+ *
+ * NOT api.na1.tcgdex.net, before anyone tries it as the new pin. Its
+ * certificate is valid and it answers, but it 404s every path including
+ * bare `/v2` — it serves no API at all. A pin there would fail more quietly
+ * than eu1 did.
+ *
+ * What to watch, since the apex's own 2026-08-29 routing flaw is not fixed,
+ * merely not currently firing: if Pokémon card art and French names
+ * disappear together again while prices survive, this is the first place to
+ * look, and `curl -sI https://api.tcgdex.net/v2/en/sets` from the failing
+ * region is the whole diagnosis.
  *
  * Two earlier attempts, recorded so they are not retried: raising the
- * timeout (pointless — a dead host is not a slow one) and pinning Vercel's
- * function region to cdg1 (worked at runtime, but `regions` does not move
- * `next build`, so deploys still prerendered the fallback).
+ * timeout (pointless — neither a dead host nor a bad certificate is a slow
+ * one) and pinning Vercel's function region to cdg1 (worked at runtime, but
+ * `regions` does not move `next build`, so deploys still prerendered the
+ * fallback).
  */
 
 import { memoizeFetch } from "@/lib/memo-fetch";
 import { resilientFetch } from "@/lib/upstream";
 
-/** Region-pinned on purpose — see this file's header comment. `api.` alone is GeoDNS'd and can resolve to a dead node from US regions. */
-const API_BASE = "https://api.eu1.tcgdex.net/v2";
+/** The apex, deliberately un-pinned — see this file's header comment for both incidents. Region-pinned hosts have now failed twice by certificate. */
+const API_BASE = "https://api.tcgdex.net/v2";
 
 /**
  * Collapses redundant identical requests (including failed ones) across
