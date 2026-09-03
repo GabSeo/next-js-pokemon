@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 60" width="72" height="60" role="presentation">
+  <!-- Neutral placeholder standing in for a real marketplace logo. Deliberately
+       carries no letterforms: a wordmark drawn in text would be an imitation of
+       a brand we do not own. Swap the file, keep the box. -->
+  <defs>
+    <pattern id="lp-hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="8" height="8" fill="#f2f3f6"/>
+      <rect width="3" height="8" fill="#e6e8ee"/>
+    </pattern>
+  </defs>
+  <rect x="1" y="1" width="70" height="58" rx="7" fill="url(#lp-hatch)" stroke="#cfd4dd" stroke-width="2" stroke-dasharray="5 4"/>
+  <circle cx="36" cy="30" r="9" fill="none" stroke="#b9c0cc" stroke-width="3"/>
+</svg>

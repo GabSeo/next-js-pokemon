@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 116 156" width="116" height="156" role="presentation">
+  <!-- Neutral stand-in for a collector-insight illustration. Same 58x78 box the
+       final artwork will occupy, so swapping the file moves nothing. -->
+  <defs>
+    <pattern id="ap-hatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="10" height="10" fill="#f4f5f8"/>
+      <rect width="4" height="10" fill="#e8eaf0"/>
+    </pattern>
+  </defs>
+  <rect x="3" y="3" width="110" height="150" rx="10" fill="url(#ap-hatch)" stroke="#c6ccd7" stroke-width="3" stroke-dasharray="8 6"/>
+  <rect x="24" y="30" width="68" height="96" rx="6" fill="none" stroke="#b4bcc9" stroke-width="3"/>
+  <circle cx="58" cy="78" r="14" fill="none" stroke="#b4bcc9" stroke-width="3"/>
+</svg>

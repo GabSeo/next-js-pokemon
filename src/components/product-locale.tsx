@@ -65,7 +65,8 @@ const FLAG_CODE: Record<LocaleCode, string> = { US: "us", JP: "jp", FR: "eu" };
  * marketplaces and EU is Cardmarket, so offering the other currency there just
  * gave a reader two ways to reach the same wrong answer. Only the Japanese
  * print is genuinely carried by both, and that view shows both at once rather
- * than asking anyone to choose. See MARKET_CONFIG.
+ * than asking anyone to choose. See lib/market-views.ts, which maps each
+ * market to its one authoritative source and its one currency.
  */
 export type Currency = "USD" | "EUR";
 
