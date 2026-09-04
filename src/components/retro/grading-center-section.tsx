@@ -76,7 +76,14 @@ export function GradingCenterSection({ data }: { data: GradedMarketData }) {
         <img
           alt=""
           aria-hidden="true"
-          className="pointer-events-none absolute -right-[30px] -bottom-10 hidden w-[230px] saturate-110 sm:block lg:w-[300px]"
+          // Grey and at 10% opacity — a watermark rather than an illustration.
+          // At 230-300px bleeding off the corner this is the largest thing in
+          // the section, and at full strength it pulled the eye away from the
+          // heading and the figures it introduces. Faded, it still marks the
+          // section without competing with it. The small cap in the
+          // section-break pill above keeps its colour: at 24px it is an icon
+          // saying where the section starts, not artwork.
+          className="pointer-events-none absolute -right-[30px] -bottom-10 hidden w-[230px] opacity-10 grayscale sm:block lg:w-[300px]"
           src={CAP_SRC}
         />
         <div className="relative flex flex-col gap-3 sm:pr-[210px] lg:pr-[280px]">

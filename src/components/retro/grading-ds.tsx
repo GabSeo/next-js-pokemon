@@ -3,6 +3,8 @@
 import { animate, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
+import { CHIP_COLORS } from "@/lib/chip-colors";
+
 /**
  * The Grade Analysis / Verdict design system, ported from the CardTrace
  * Verdict reference.
@@ -46,6 +48,18 @@ export const DS = {
   rule: "#C9C9C4",
   hairline: "#E2E2DC",
   slabTop: "#E7E7E1",
+  /** The hero rail's "after" column — the side worth money takes a warmer ground. */
+  afterTint: "#FCFBF4",
+  /**
+   * The two hover grounds for the hero's raw / PSA 10 columns. Each is its own
+   * resting ground stepped one notch, never a shared highlight: the columns
+   * are a cool before and a warm after, and washing both to the same colour on
+   * hover would undo the one cue that says which side is which.
+   */
+  beforeTintHover: "#F4F4F1",
+  afterTintHover: "#F8F4E4",
+  /** The well a listing photo sits in before it loads. */
+  photoWell: "#EDEDE8",
 } as const;
 
 export const SHADOW = { focal: "6px 6px 0 #111", chart: "4px 4px 0 #111" } as const;
@@ -163,18 +177,112 @@ export function FocalNumber({
 }
 
 /** Flat, border-only. The step below the chart cards, and never given a shadow. */
+/**
+ * A corner tag: the grade a card is about, or that its figures are live.
+ *
+ * Same idiom as the eBay "Live" chip elsewhere on the page — a dot that
+ * pulses, small black caps — but square and 2px-stroked like everything in
+ * these two screens, rather than the pill shape the rest of the site uses.
+ * The pulse rides the shared `.ct-pulse` class, which already stops under a
+ * reduced-motion preference; an indefinite animation is exactly what that
+ * preference is asking about.
+ */
+/**
+ * The grade a card is about, worn as a chip.
+ *
+ * Deliberately the SAME shape as the Live/Preview badge the eBay listings
+ * box carries (components/retro/market-data-badge.tsx) — pill, 10px black
+ * caps, the same tracking — because these three cards sit a screen away from
+ * that box and a second, differently-shaped status chip would read as a
+ * second, different kind of thing.
+ *
+ * Amber comes from lib/chip-colors.ts rather than this section's own yellow.
+ * That file exists precisely to stop each chip system inventing a competing
+ * tint, and its amber is the tint in that palette closest to the yellow used
+ * elsewhere here — matching the shape but then hand-picking a new colour for
+ * it would have reintroduced the mismatch the shared palette prevents.
+ */
+export function CardTag({ children }: { children: ReactNode }) {
+  return (
+    <span
+      className="flex flex-none items-center rounded-full px-2 py-0.5 text-[10px] font-black tracking-[0.3px] uppercase"
+      style={{ backgroundColor: CHIP_COLORS.amber.bg, color: CHIP_COLORS.amber.text }}
+    >
+      {children}
+    </span>
+  );
+}
+
 export function StatCard({
   label,
+  sub,
+  tag,
   children,
 }: {
-  label: string;
+  /** The small caps kicker. Omit it when the title alone carries the card. */
+  label?: string;
+  /** The card's title — "Japanese vs English". Becomes the heading when there is no label. */
+  sub?: string;
+  /** Sits opposite the heading, on its bottom edge. */
+  tag?: ReactNode;
   children: ReactNode;
 }) {
+  // Whichever line is the top one gets the tag beside it. The comparison
+  // cards dropped their kicker (the title said the same thing twice, once in
+  // caps), so there the title IS the top line; the verdict's cards still lead
+  // with a kicker and have no title at all.
+  const headingIsLabel = Boolean(label);
+
   return (
-    <div className="border-2 p-4" style={{ borderColor: DS.ink }}>
-      <div className="text-[10px] font-black tracking-[0.1em]" style={{ color: DS.kicker }}>
-        {label}
+    // A LIGHTER TREATMENT THAN THE REST OF THE SECTION, on purpose. The focal
+    // card, the chart cards and the assumptions panel keep the 2px stroke,
+    // square corners and hard shadow; these three carry a hairline, a 14px
+    // radius and a white surface against the page's warm ground instead. They
+    // are the supporting tier, and reading as a quieter module is what lets
+    // the focal number above them stay the loudest thing on screen.
+    //
+    // h-full because the grid stretches the entrance wrapper, not this card.
+    <div
+      className="flex h-full flex-col rounded-[14px] px-6 py-5"
+      style={{ background: DS.surface, boxShadow: `inset 0 0 0 1px ${DS.hairline}` }}
+    >
+      {/* The tag sits ABOVE its heading, not opposite it. Beside the title it
+          was competing for the same line as the thing it qualifies, and on a
+          220px card that line had to hold both — which is what kept forcing
+          the title to wrap. Stacked on top, it reads as the card's subject
+          ("PSA 10 — Japanese vs English") and the title gets the full width. */}
+      <div>
+        {/* Full width, deliberately. Both CardTag and MarketDataBadge are
+            `display:flex` — block-level — so in a plain block wrapper they
+            span the card and read as a banner across the top of it rather
+            than a chip in a corner. That is the intent here: the tag names
+            what the whole card is about, so it gets the whole card's width. */}
+        {tag && <div className="mb-2.5">{tag}</div>}
+        {headingIsLabel ? (
+          <div
+            className="flex min-h-[2lh] items-end text-[9.5px] leading-none font-medium tracking-[0.12em] uppercase"
+            style={{ color: DS.meta }}
+          >
+            {label}
+          </div>
+        ) : (
+          // min-h of two lines: "Total listings by grade" wraps at widths
+          // where "Japanese vs English" does not, and without the reservation
+          // every row beneath it in that one card starts a line lower than in
+          // the two beside it.
+          <div
+            className="flex min-h-[2lh] items-end text-[13px] leading-snug font-semibold"
+            style={{ color: DS.ink }}
+          >
+            {sub}
+          </div>
+        )}
       </div>
+      {headingIsLabel && sub && (
+        <div className="mt-3 text-[13px] leading-snug font-semibold" style={{ color: DS.ink }}>
+          {sub}
+        </div>
+      )}
       {children}
     </div>
   );
@@ -386,8 +494,15 @@ export function HoverTip({
   const [open, setOpen] = useState(false);
   return (
     <span className="relative inline-flex">
+      {/* inline-flex, not the button default. A button lays its child out as
+          an inline box, and an inline box whose `overflow` is not `visible`
+          takes its baseline from its bottom edge — so the PSA slab chips
+          (which clip their two rows) picked up a line-box descender beneath
+          them and sat 8px lower than the RAW chip, which has no overflow and
+          no such shift. As a flex container there is no baseline to
+          synthesise and every trigger is exactly its child's height. */}
       <button
-        className="ct-focus cursor-help border-0 bg-transparent p-0 text-left"
+        className="ct-focus inline-flex cursor-help border-0 bg-transparent p-0 text-left"
         onBlur={() => setOpen(false)}
         onFocus={() => setOpen(true)}
         onMouseEnter={() => setOpen(true)}
@@ -406,6 +521,89 @@ export function HoverTip({
         >
           {label}
         </span>
+      )}
+    </span>
+  );
+}
+
+/**
+ * A real eBay listing's own photo, in a frame that looks the same whatever
+ * eBay returns.
+ *
+ * Lifted out of market-panel-parts.tsx when the Grade Analysis pair needed
+ * the same treatment. Two components framing listing photos by two copies of
+ * the same rules is how the two drift, and these rules were expensive to
+ * arrive at:
+ *
+ * THE PROBLEM IS NOT ASPECT RATIO, though that is the visible half. Measured
+ * on two real listings for one card: the Japanese one is a clean 104x225
+ * photograph of the slab; the English one is a 225x225 SELLER MARKETING
+ * TEMPLATE — a collage with "PERFECT CONDITION" badges pasted around a card
+ * render. Neither the shape nor the content can be relied on, so the frame
+ * carries the polish and the image is allowed to be whatever it is.
+ *
+ * Hence CONTAIN, never cover. Cover fills the box perfectly and crops a tall
+ * slab photo by ~38% of its height — taking the top and bottom of the slab,
+ * which is exactly where PSA prints the grade. Cropping the evidence out of
+ * the evidence.
+ *
+ * The dead space contain leaves is filled by the SAME IMAGE, blown up and
+ * blurred behind it, so the frame is always full and always colour-matched
+ * to its own photo rather than showing white letterboxing.
+ *
+ * `className` and `style` carry the size and shape, because the two callers
+ * need different ones — a fixed 78px rounded chip beside the collector
+ * insight, a responsive square inside the Grade Analysis pair — while
+ * everything that makes the frame trustworthy stays here.
+ */
+export function ListingPhoto({
+  imageUrl,
+  alt,
+  caption,
+  className = "",
+  style,
+  fallback = null,
+}: {
+  imageUrl: string;
+  alt: string;
+  /** Small caps line across the foot of the frame, over a scrim. */
+  caption?: string;
+  className?: string;
+  style?: React.CSSProperties;
+  /** Shown instead when the image fails — a seller can end a listing at any moment. */
+  fallback?: ReactNode;
+}) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return <>{fallback}</>;
+
+  return (
+    <span className={`relative block overflow-hidden ${className}`} style={style}>
+      <span
+        aria-hidden
+        className="absolute inset-0 scale-[1.35] bg-cover bg-center blur-[11px] brightness-90 saturate-[1.35]"
+        style={{ backgroundImage: `url(${imageUrl})` }}
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element -- remote eBay CDN host, not allowlisted for next/image; see market-image.tsx */}
+      <img
+        alt={alt}
+        className="relative h-full w-full object-contain drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]"
+        decoding="async"
+        onError={() => setFailed(true)}
+        src={imageUrl}
+      />
+      {caption && (
+        <>
+          {/* Scrim first, caption on top of it: the caption is white and the
+              photo underneath could be any colour, so the gradient is what
+              makes the word legible rather than luck. */}
+          <span aria-hidden className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/55 to-transparent" />
+          <span
+            aria-hidden
+            className="absolute inset-x-0 bottom-0 py-0.5 text-center text-[8px] leading-none font-black tracking-[0.4px] text-white uppercase"
+          >
+            {caption}
+          </span>
+        </>
       )}
     </span>
   );

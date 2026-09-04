@@ -51,7 +51,18 @@ export function GradingCenterTools({
   const tableRows: GradeTableRow[] = [...conditions].reverse().map((entry) => {
     const cell = (language: string) => {
       const tier = entry.languages.find((l) => l.language === language)?.active;
-      return tier ? { median: tier.medianPrice, count: tier.count } : null;
+      if (!tier) return null;
+      // rows[0] is genuinely the cheapest, not merely the first: eBay's own
+      // price sort only orders within shards, so searchActiveListings re-sorts
+      // locally before slicing (see ebay-browse.ts). Photo and link ride along
+      // only for real tiers — never for an illustrative one.
+      const cheapest = tier.isReal ? tier.rows[0] : undefined;
+      return {
+        median: tier.medianPrice,
+        count: tier.count,
+        imageUrl: cheapest?.imageUrl,
+        url: cheapest?.url,
+      };
     };
     return { label: entry.condition, english: cell("English"), japanese: cell("Japanese") };
   });
@@ -124,7 +135,15 @@ export function GradingCenterTools({
 
   return (
     <div className="flex flex-col gap-12">
-      <GradeAnalysisScreen currency={currency} isReal={ladderIsReal} rows={tableRows} />
+      {/* France is not an eBay grading market — Vinted sells one condition and
+          it is not a PSA grade — so the focal premium falls back to English
+          there, exactly as the verdict's ROI already does. */}
+      <GradeAnalysisScreen
+        currency={currency}
+        isReal={ladderIsReal}
+        market={market === "Japanese" ? "Japanese" : "English"}
+        rows={tableRows}
+      />
 
       <VerdictScreen
         currency={shownRoi.currency}

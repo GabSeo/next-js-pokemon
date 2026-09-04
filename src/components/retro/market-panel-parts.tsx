@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 
+import { ListingPhoto } from "@/components/retro/grading-ds";
 import { MarketImage } from "@/components/retro/market-image";
-import { MARKET_ART, MARKET_LOGOS, type MarketArtId, type MarketLogoId } from "@/lib/market-assets";
+import { MARKET_ART, MARKET_LOGOS, type MarketLogoId } from "@/lib/market-assets";
 import {
   formatMarketMoney,
   type CollectorInsight,
-  type InsightPhoto,
   type MarketContextChip,
   type MarketCurrency,
   type MarketNote,
@@ -440,70 +440,17 @@ export function SourceAction({ label, url }: { label: string; url?: string }) {
  * figure of its own — that is why it is `aria-hidden` and why it drops out on
  * small screens without any loss.
  */
-/**
- * The cheapest live listing's own photo, in a frame that looks the same on
- * every card whatever eBay returns.
- *
- * THE PROBLEM THIS SOLVES is not aspect ratio, though that is the visible
- * half. Measured on two real listings for one card: the Japanese one is a
- * clean 104x225 photograph of the slab; the English one is a 225x225 SELLER
- * MARKETING TEMPLATE — a collage with "PERFECT CONDITION" and "SHELL IS
- * INTACT" badges pasted around a card render. Neither the shape nor the
- * content can be relied on, so the frame has to carry the polish by itself
- * and the image has to be allowed to be whatever it is.
- *
- * Hence CONTAIN, never cover. Cover would fill the box perfectly and crop a
- * tall slab photo by ~38% of its height — taking the top and bottom of the
- * slab, which is exactly where PSA prints the grade. Cropping the evidence
- * out of the evidence.
- *
- * The dead space contain leaves is filled by the SAME IMAGE, blown up and
- * blurred behind it. The frame is therefore always full, always colour-
- * matched to its own photo, and never shows the white letterboxing that made
- * a 58px box look like a mistake on half the cards.
- */
-function InsightPhotoFrame({ photo, fallbackArt }: { photo: InsightPhoto; fallbackArt: MarketArtId }) {
-  const [failed, setFailed] = useState(false);
-
-  // A seller can end a listing at any moment and leave the cached URL
-  // pointing at nothing, so the illustration has to be able to come back.
-  if (failed) return <MarketImage asset={MARKET_ART[fallbackArt]} className="hidden flex-none rounded-md sm:block" />;
-
-  return (
-    <span className="relative hidden h-[78px] w-[78px] flex-none overflow-hidden rounded-md border-2 border-black bg-nav-dark sm:block">
-      <span
-        aria-hidden
-        className="absolute inset-0 scale-[1.35] bg-cover bg-center blur-[11px] brightness-90 saturate-[1.35]"
-        style={{ backgroundImage: `url(${photo.imageUrl})` }}
-      />
-      {/* eslint-disable-next-line @next/next/no-img-element -- remote eBay CDN host, not allowlisted for next/image; see market-image.tsx */}
-      <img
-        alt={photo.alt}
-        className="relative h-full w-full object-contain drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]"
-        decoding="async"
-        loading="lazy"
-        onError={() => setFailed(true)}
-        src={photo.imageUrl}
-      />
-      {/* Scrim first, caption on top of it: the caption is white and the
-          photo underneath it could be any colour, so the gradient is what
-          makes the word legible rather than luck. */}
-      <span aria-hidden className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/55 to-transparent" />
-      <span
-        aria-hidden
-        className="absolute inset-x-0 bottom-0 py-0.5 text-center text-[8px] leading-none font-black tracking-[0.4px] text-white uppercase"
-      >
-        Live ask
-      </span>
-    </span>
-  );
-}
-
 export function CollectorInsightBlock({ insight }: { insight: CollectorInsight }) {
   const href = insight.photo?.url;
 
   const frame = insight.photo ? (
-    <InsightPhotoFrame fallbackArt={insight.art} photo={insight.photo} />
+    <ListingPhoto
+      alt={insight.photo.alt}
+      caption="Live ask"
+      className="hidden h-[78px] w-[78px] flex-none rounded-md border-2 border-black bg-nav-dark sm:block"
+      fallback={<MarketImage asset={MARKET_ART[insight.art]} className="hidden flex-none rounded-md sm:block" />}
+      imageUrl={insight.photo.imageUrl}
+    />
   ) : (
     <MarketImage asset={MARKET_ART[insight.art]} className="hidden flex-none rounded-md sm:block" />
   );

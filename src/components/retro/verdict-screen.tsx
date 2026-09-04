@@ -262,11 +262,20 @@ export function VerdictScreen({
         </div>
 
         <div className="ct-enter border-2 p-4" style={{ borderColor: DS.ink, animationDelay: "80ms" }}>
+          {/* Same min-h-[2lh] as StatCard's label. This card is its own grid
+              item rather than a StatCard, so it does not inherit that
+              normalisation — and "GRADING PAYS AT EVERY GRADE" wraps to two
+              lines at widths where "CONDITIONAL OPPORTUNITY" does not, which
+              would drift its sentence out of line with the figures beside
+              it. */}
           <div
-            className="flex items-center gap-[7px] text-[10px] font-black tracking-[0.1em]"
+            className="flex min-h-[2lh] items-start gap-[7px] text-[10px] font-black tracking-[0.1em]"
             style={{ color: DS.kicker }}
           >
-            <span className="h-[9px] w-[9px] rounded-full" style={{ background: verdict.tone }} />
+            <span
+              className="mt-[3px] h-[9px] w-[9px] flex-none rounded-full"
+              style={{ background: verdict.tone }}
+            />
             {verdict.status}
           </div>
           <div className="mt-[7px] text-sm leading-[1.3] font-bold">{verdict.lead}</div>

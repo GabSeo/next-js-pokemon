@@ -248,3 +248,37 @@
 @media (prefers-reduced-motion: reduce) {
   .ct-enter, .ct-bar-enter { animation: none; }
 }
+
+/* The hero card's control: presses into its own hard shadow on click, which
+   is the section's shadow scale doing the affordance rather than a colour
+   change bolted on. */
+.ct-hero-btn:hover { background: #FFFBE6; }
+.ct-hero-btn:active { box-shadow: 0 0 0 #111 !important; transform: translate(3px, 3px); }
+
+/* The hero rail's raw / PSA 10 columns.
+
+   THE WHOLE COLUMN IS THE TARGET, not the photo inside it. A column is one
+   claim — a condition, the copy on sale, and what it costs — so hovering the
+   price and having only the picture answer read as two separate controls
+   stacked by accident. The ground shifts for the column, the photo lifts into
+   the section's own hard shadow, and both are driven from whichever of the
+   two the pointer is over.
+
+   `:focus-within` carries the same states to the keyboard: the column is a
+   link, so tabbing to it must show what a mouse would. */
+.ct-side {
+  background: var(--ct-side-bg, transparent);
+  transition: background-color 160ms ease;
+}
+.ct-side:hover,
+.ct-side:focus-within { background: var(--ct-side-bg-hover, transparent); }
+
+.ct-side-photo { transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 180ms ease; }
+.ct-side:hover .ct-side-photo,
+.ct-side:focus-within .ct-side-photo { transform: translateY(-3px); box-shadow: 4px 4px 0 #111; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-side, .ct-side-photo { transition: none; }
+  .ct-side:hover .ct-side-photo,
+  .ct-side:focus-within .ct-side-photo { transform: none; }
+}
