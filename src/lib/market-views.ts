@@ -74,6 +74,26 @@ export const LOCALE_BY_VIEW = { US: "US", EU: "FR", JA: "JP" } as const;
  * source, so a label can never say one thing in the filter and another in
  * the panel it selects.
  */
+/**
+ * EU says "Western print", never "English", and that wording is load-bearing.
+ *
+ * A Cardmarket price is LANGUAGE-BLIND. One Western product carries English,
+ * French, Italian, German, Spanish and Portuguese copies in a single listing,
+ * and its avg/low/trend average all of them together — so a figure from it is
+ * not an English price and must not be labelled as one.
+ *
+ * Inferred here originally; CONFIRMED at source 2026-05-25, when the upstream
+ * dev team was asked for per-language Cardmarket pricing and answered that
+ * Cardmarket itself does not expose pricing by language or condition, so they
+ * cannot either, and would add it only if that changed. It is an upstream
+ * ceiling rather than a gap on either side, which is why there is nothing to
+ * chase here — do not re-open it looking for an English-only figure.
+ *
+ * The Japanese split is a different axis and still holds: Cardmarket lists the
+ * Japanese print as a separate PRODUCT (isJapaneseProduct reads the set slug),
+ * and that separation is real even though the prices within each product are
+ * language-blind.
+ */
 export const MARKET_TAB_META: Record<MarketViewId, { label: string; hint: string }> = {
   US: { label: "US market", hint: "English print · USD" },
   EU: { label: "EU market", hint: "Western print · EUR" },

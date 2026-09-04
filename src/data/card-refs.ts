@@ -411,4 +411,76 @@ export const cardRefs: CardRef[] = [
     // for this exact print say "Weekly Shonen Jump", never "Event"/"Vol.".
     ebayVariantTags: { en: ["Event Pack Vol. 2"], jp: ["Shonen Jump"] },
   },
+  {
+    // ONE CODE, FOUR PRINTINGS, AND A 200x SPREAD. searchCards("ST21-014")
+    // returns four real rows on 2026-09-04, all rarity SR, all the same
+    // character, cost, power and colour:
+    //
+    //   (3rd Anniversary Treasure Campaign Pack)  USD 1,747.19   cardmarket null
+    //   (014) (Parallel)                          USD    29.51   cardmarket null
+    //   (014)                                     USD     8.67   cardmarket null
+    //   (Luffy Deck)                              USD     8.58   Learn-Together-Deck-Set-01
+    //
+    // The card number is the identity, not the printing (docs/adding-a-card.md),
+    // so variantTags is not a refinement on this ref — it is the only thing
+    // standing between the card the page claims to price and a USD 8 deck
+    // common. Matching is a case-insensitive substring, every tag required
+    // (pickVariantByTag), and "3rd Anniversary Treasure" appears in exactly
+    // one of the four names.
+    franchise: "one-piece",
+    tcg: "one-piece",
+    slug: "monkey-d-luffy-st21-014",
+    displayName: "Monkey D. Luffy",
+    character: "Monkey D. Luffy",
+    lookup: { by: "code", code: "ST21-014", variantTags: ["3rd Anniversary Treasure"] },
+    // NO berryWalletSetCode, deliberately. This card is why prefixCandidates
+    // exists (lib/berrywallet.ts): the prefix of "ST21-014" is "ST21" and
+    // BerryWallet's real code is "ST-21", so the old single-shape guess missed
+    // and the bounded walk gave up after 6 sets in BOTH languages — the card
+    // resolved to nothing at all. A stored code would have fixed this one ref
+    // and left every future ST and EB card to fail the same way, which is the
+    // trade docs/adding-a-card.md §3a exists to refuse. The rule was fixed
+    // instead and the pin was never kept.
+    //
+    // Worth knowing for the next ST card: getSetCards("ST-21") does NOT
+    // contain this row — it lists only the base (014) and (Parallel) prints.
+    // The Campaign Pack row is reached by findVariantAcrossProducts against
+    // the flat index, the same path P-033 needs, and the set reported back is
+    // the set of ORIGIN. That is correct rather than a fallback artefact: a
+    // reprint keeps its original card number, so ST-21 is where this identity
+    // began and the Campaign Pack is a product it later appeared in.
+    berryWalletEnabled: true,
+    // NO cardmarketProductUrl, and the gap is upstream rather than ours.
+    // Measured 2026-09-05: BerryWallet knows exactly two Cardmarket products
+    // for this code, and neither is this printing.
+    //
+    //   Learn-Together-Deck-Set-01/MonkeyDLuffy-ST21-014      EUR 4.87
+    //   Unnumbered-Promos-Japanese/MonkeyDLuffy-ST21-014-V1   EUR 169.53
+    //
+    // The first is the deck common (USD 8.58 on TCGplayer against this card's
+    // USD 1,747) and pricing it here would be the merge this codebase refuses.
+    // The second is a real Japanese-pathed row and a DIFFERENT PRINTING —
+    // checked on cardmarket.com 2026-09-05, it is not the Campaign Pack. So
+    // there is no berryWalletCardmarketId.jp here either: the pin path would
+    // have worked mechanically (it bypasses the English side entirely, see
+    // pinnedCardmarket in lib/cards.ts) and would have priced the wrong
+    // object. See the note on pickVariantForJapanese in lib/berrywallet.ts.
+    //
+    // And no berryWalletSetCode.jp either, which is the tempting next move
+    // since CM-UNNUMBERED-JP is where that row lives. Tried: it still returns
+    // undefined, because the set was never the obstacle. The Japanese pick
+    // aligns against the English variant index, this card's English side is a
+    // promo with no parseable (V.N), and pickVariantForJapanese refuses rather
+    // than guessing. Storing the code would spend a call per resolution to
+    // reach the same refusal.
+    //
+    // The product a person actually found for this print is
+    // `Special-Tournaments-Promos/MonkeyDLuffy-ST21-014-V1`. BerryWallet DOES
+    // track that Cardmarket set as CM-SPECIAL-PROMOS — 21 rows, all 21
+    // pointing at Special-Tournaments-Promos — but its coverage of it is
+    // partial: 20 DON!! prints plus one Luffy (EB04-061), no ST21-014, and it
+    // skips DON!! V.12. Backfill was requested from the upstream devs on
+    // 2026-09-05. If it lands, this resolves by ordinary derivation and no pin
+    // is needed; until then the panel states the absence, which is correct.
+  },
 ];

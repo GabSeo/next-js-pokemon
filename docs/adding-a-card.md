@@ -69,6 +69,19 @@ a `-Japanese` set suffix. Cardmarket spells it `-Non-English` on the newer
 sets. One predicate changed, both cards fixed, and every future OP09-era card
 with it. A pin on each card would have "worked" and taught nothing.
 
+Worked example: Monkey D. Luffy ST21-014 resolved to **nothing at all** — the
+bounded walk gave up after six sets in both languages. The set guess was
+`cardNumber.split("-")[0]`, so `ST21-014` asked for `ST21`; BerryWallet's real
+code is `ST-21`. One character. Storing `berryWalletSetCode: { en: "ST-21" }`
+fixed the card in thirty seconds and was the wrong fix: the same miss applies to
+every starter deck and every extra booster, because the catalogue writes
+`OP05` unhyphenated but `ST-21`, `EB-01`, `PRB-01`, `LT-01` hyphenated, while
+their card numbers are uniformly `ST21-014`, `EB01-001`. `prefixCandidates`
+(lib/berrywallet.ts) now offers both shapes; the pin was deleted before it was
+ever committed. The extra candidate costs no requests — candidates are only
+matched against set codes the catalogue already returned, so one that names no
+real set reorders the walk and nothing else.
+
 Worked example: Monkey D. Luffy P-033 had no Western Cardmarket block. The
 first fix was a stored id on that one ref. The general rule underneath it —
 rows sharing a TCGplayer product are the same physical card
@@ -169,6 +182,77 @@ tabs where the Western listing lives.
 Re-run the audit. Then load the page and switch the market toggle through
 every state the card supports — a block that resolves is not the same as a
 block that renders.
+
+**A failed lookup is cached like any other answer.** `getCardBySlug` is wrapped
+in `buildCached` (lib/build-cache.ts), which writes to
+`.next/cache/resolved-cards/v<N>/card%3A<slug>.json`. If a source was rate-
+limited the first time a card resolved, the *degraded* card is what gets
+stored — and it survives fixing the credential, because nothing re-reads the
+source. Confirmed on ST21-014 on 2026-09-04: apitcg 429'd during the first
+audit, the card cached with zero history points, and two further audits with a
+working key still reported zero. Deleting that one file returned 100 points on
+the next run.
+
+So when a gap does not close after you have fixed its cause, delete the card's
+cache entry before believing the gap:
+
+```bash
+rm ".next/cache/resolved-cards/v8/card%3A<slug>.json"
+```
+
+---
+
+## Known upstream gaps — check here before investigating
+
+Measured 2026-09-05 while adding `monkey-d-luffy-st21-014`. Each of these cost
+real quota to find. None is a bug in this codebase, and none should be
+re-derived.
+
+### BerryWallet's `getSets("en")` is not the whole Western catalogue
+
+Four Cardmarket-backed sets are returned **only** by `getSets("jp")`, despite
+carrying no `(Japanese)` suffix and holding Western products:
+
+```
+CM-SPECIAL-PROMOS   Special Tournaments Promos
+CM-PREMIUM-BANDAI   Premium Bandai Products
+CM-PRODUCTS         One Piece Products
+CM-REPRINTS         Reprints
+```
+
+`getSets("en")` returns only four `CM-*` sets at all — `CM-UNNUMBERED`,
+`CM-PROMO`, `CM-JUDGE`, `CM-MINI-PROMO`. Since `findCardInLanguage(code, "en")`
+walks the English list, **the four above are unreachable from any English
+resolution**, including `Premium-Bandai-Products` — the exact family OP09-061's
+`cardmarketProductUrl` pin was written for. Worth remembering before concluding
+that a Western Cardmarket product is absent: it may just be on the other list.
+
+### Whole sets carry `card_number: null`
+
+All 300 rows of `CM-UNNUMBERED-JP` have a null `card_number`; the code lives
+only inside `name`, as `Monkey.D.Luffy (ST21-014) (V.1)`. `CM-SPECIAL-PROMOS`
+also carries a `card_number` of `61.0` — a float — where `EB04-061` belongs.
+
+`findCardInLanguage` already survives this, because it matches
+`c.card_number === cardNumber || c.name.includes(cardNumber)`. Anything new
+that keys on `card_number` alone will silently miss these rows. Treat
+`card_number` as a hint, never as a key.
+
+### Upstream coverage is partial, and asking is cheaper than working around it
+
+BerryWallet tracks the `Special-Tournaments-Promos` Cardmarket set as
+`CM-SPECIAL-PROMOS` — 21 rows, all 21 pointing at that slug — but holds only 20
+`DON!!` prints plus one Luffy (`EB04-061`). It has no row for
+`MonkeyDLuffy-ST21-014-V1`, and skips `DON!! (V.12)`.
+
+So the missing thing is a **row inside a set they already track**, not the set.
+A backfill was requested from the upstream devs on 2026-09-05. If it lands,
+`monkey-d-luffy-st21-014` gains its Western Cardmarket block through ordinary
+derivation and needs no pin at all — which is why no pin was added meanwhile.
+
+**Phrase an upstream request in their terms.** Name the set code they already
+have, say how many rows it holds, and name the exact product slug that is
+missing. "Add this set" invites the answer "we have it".
 
 ---
 

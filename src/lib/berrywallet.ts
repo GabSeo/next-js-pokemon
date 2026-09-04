@@ -453,6 +453,31 @@ function highestVariant(matches: BerryWalletCard[]): BerryWalletCard {
  * they are simply not in any catalogue this app can read. Do not re-derive
  * this; it costs real quota. See docs/i18n-deferred.md.
  *
+ * AMENDED 2026-09-05, and the amendment matters: "no match" above is true of
+ * those two cards, NOT of every promo. ST21-014 does have a row in
+ * CM-UNNUMBERED-JP — `Monkey.D.Luffy (ST21-014) (V.1)`, a real
+ * Unnumbered-Promos-Japanese product at EUR 169.53, and the only ST21-014
+ * candidate in that set. It is still refused here, by the `targetIndex ===
+ * undefined` branch below, and that is still the right answer: the English
+ * side resolved to the 3rd Anniversary Treasure Campaign Pack promo, which
+ * carries no parseable (V.N), so pairing it with the single ordinary Japanese
+ * variant would be a guess dressed as a match — and the two differ by an
+ * order of magnitude (USD 1,747 against EUR 169.53), which is exactly the
+ * shape a wrong pairing takes.
+ *
+ * SETTLED 2026-09-05, by a person opening the Cardmarket page: the two are
+ * NOT the same printing. So the refusal below is not merely the cautious
+ * answer on this card, it is the correct one — a blind "highest variant"
+ * guess would have put an unrelated EUR 169.53 print under a USD 1,747 card's
+ * Japanese toggle, which is precisely the fabricated pairing this function was
+ * written to prevent. Two cards have now confirmed it the same way (OP09-061's
+ * V.2 Parallel, and this). ST21-014 has no known Japanese counterpart in any
+ * catalogue this app reads, and its JP toggle is correctly inert.
+ *
+ * Worth knowing that the whole set carries `card_number: null` on all 300
+ * rows, so only the `name.includes(cardNumber)` half of the match in
+ * findCardInLanguage can ever reach it.
+ *
  * Returns undefined — no guess at all — when the English side is a
  * confirmed promo product (findVariantAcrossProducts' own case: a real
  * match, just outside the normal V.1-V.4 tiering, so it has no parseable
@@ -532,10 +557,10 @@ async function findVariantAcrossProducts(cardNumber: string, variantTags: string
  *    the `getSets` call below is shared across every card in the build
  *    (memoized by path, see lib/memo-fetch.ts), so the real marginal cost
  *    of a card with a stored code is a single request.
- * 2. The prefix guess — a card_number's own prefix (`OP09-004` -> `OP09`)
- *    is almost always its set's code, `-JP` appended for Japanese
- *    (confirmed live: `OP09` / `OP09-JP` is exactly this pattern). Right
- *    for every ordinary numbered set, wrong for promos.
+ * 2. The prefix guess — see prefixCandidates below. A card_number's own
+ *    prefix is almost always its set's code, in one of two shapes, `-JP`
+ *    appended for Japanese. Right for every ordinary numbered set and every
+ *    starter deck / extra booster, wrong for promos.
  * 3. A BOUNDED walk of the remaining sets, for the case both miss.
  *
  * Tier 3 is bounded and did not used to be, which was a real quota bug
@@ -569,6 +594,33 @@ async function findVariantAcrossProducts(cardNumber: string, variantTags: string
  * than failing the whole lookup — same non-fatal shape every other
  * cross-source call in this codebase follows.
  */
+/**
+ * The set codes a card_number's prefix could plausibly name, best first.
+ *
+ * BerryWallet writes a set code in two shapes and the card number only ever
+ * shows one of them. Confirmed against the live English catalogue on
+ * 2026-09-04: the main booster sets are unhyphenated and match the prefix
+ * exactly (`OP05-119` -> `OP05`), while every other family separates its
+ * letters from its digits — `ST21-014` -> `ST-21` ("Starter Deck EX: Gear
+ * 5"), `EB01-001` -> `EB-01`, and likewise the `PRB-01` / `LT-01` products.
+ *
+ * So the bare prefix was not a guess but half of one, and the half it missed
+ * was every starter deck and extra booster in the catalogue. ST21-014 gave up
+ * after six speculative sets in BOTH languages before this existed, and the
+ * card resolved to nothing at all.
+ *
+ * The alternate costs nothing when it names no real set. These strings are
+ * only ever compared against set codes the catalogue has already returned, so
+ * an unmatched candidate changes the ORDER of the walk and never adds a
+ * request — `OP05-119` still yields `OP-05`, which simply matches nothing.
+ */
+function prefixCandidates(cardNumber: string, language: BerryWalletLanguage): string[] {
+  const prefix = cardNumber.split("-")[0];
+  const parts = /^([A-Za-z]+)(\d+)$/.exec(prefix);
+  const codes = parts ? [prefix, `${parts[1]}-${parts[2]}`] : [prefix];
+  return language === "jp" ? codes.map((code) => `${code}-JP`) : codes;
+}
+
 export async function findCardInLanguage(
   cardNumber: string,
   language: BerryWalletLanguage,
@@ -592,12 +644,13 @@ export async function findCardInLanguage(
 ): Promise<{ card: BerryWalletCard; set: BerryWalletSet } | undefined> {
   const knownEnglishVariant = options?.knownEnglishVariant;
   const sets = await getSets(language);
-  const guessedCode = language === "jp" ? `${cardNumber.split("-")[0]}-JP` : cardNumber.split("-")[0];
+  const guessedCodes = prefixCandidates(cardNumber, language);
 
   // Confirmed code first, prefix guess second, everything else after — and
   // `ordered` is only ever *walked* as far as MAX_FALLBACK_SETS past those
   // two, see the loop below.
-  const priority = (code: string): number => (code === options?.knownSetCode ? 0 : code === guessedCode ? 1 : 2);
+  const priority = (code: string): number =>
+    code === options?.knownSetCode ? 0 : guessedCodes.includes(code) ? 1 : 2;
   const ordered = [...sets].sort((a, b) => priority(a.set_code) - priority(b.set_code));
   const targeted = ordered.filter((set) => priority(set.set_code) < 2).length;
 
