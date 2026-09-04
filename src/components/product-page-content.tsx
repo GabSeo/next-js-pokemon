@@ -433,7 +433,14 @@ export function ProductPageContent({
 
             {/* Grading & population — no real source exists yet for either
                 (see tcggo-integration-plan.md §1). Kept visually separate
-                on purpose, not just below the fold by coincidence. */}
+                on purpose, not just below the fold by coincidence.
+
+                Population specifically is blocked upstream rather than
+                unbuilt: PSA discontinued free public API access on
+                2026-09-02 and now starts at $2,500/year, and their API has
+                no way to reach a SpecID except through a certificate
+                number. The measured findings and the build that runs the
+                day access reopens are in psa-population-plan.md. */}
             {priceKnown && (
               <section>
                 <div className="mb-4 flex items-center gap-2">

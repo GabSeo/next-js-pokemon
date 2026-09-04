@@ -18,9 +18,17 @@ const THOUSANDS = 10_000;
  * It exists so a future six-figure grail shortens instead of wrapping or
  * overflowing its cell.
  *
- * Deliberately keeps the page's own locale for the grouped case, so this
- * reads the same as every other price on the site rather than introducing a
- * third convention alongside them.
+ * Grouped in "en-US" explicitly, which REPLACES an earlier decision to keep
+ * the runtime's own locale here. That reasoning was right about the goal —
+ * one convention everywhere — and wrong about how to reach it, because the
+ * runtime locale is not one convention: it is Node's on the server and the
+ * visitor's in the browser. A French machine renders "USD 1 466" where the
+ * server rendered "USD 1,466", which is both a visible inconsistency against
+ * lib/market-views.ts (already pinned to en-US, for this reason) and a
+ * hydration mismatch React reports. Observed live in the grade table.
+ *
+ * Pinning is also what makes the note above true: the "2 449,995" it
+ * describes is exactly this bug, seen before the rounding was added.
  */
 export function formatPrice(value: number, currency: string): string {
   const rounded = Math.round(value);
@@ -28,5 +36,5 @@ export function formatPrice(value: number, currency: string): string {
 
   if (magnitude >= MILLIONS) return `${currency} ${(rounded / MILLIONS).toFixed(2)}M`;
   if (magnitude >= THOUSANDS) return `${currency} ${(rounded / 1000).toFixed(1)}K`;
-  return `${currency} ${rounded.toLocaleString()}`;
+  return `${currency} ${rounded.toLocaleString("en-US")}`;
 }

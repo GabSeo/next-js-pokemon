@@ -1,12 +1,10 @@
 "use client";
 
-import { GradeAnalysisCard } from "@/components/retro/grade-analysis-card";
+import { GradeAnalysisScreen } from "@/components/retro/grade-analysis-screen";
 import type { GradeTableRow } from "@/components/retro/grade-rows";
-import type { ProfitLadderGrade } from "@/components/retro/profit-ladder";
-import { GradingRoiCard } from "@/components/retro/grading-roi-card";
-import { MarketDataBadge } from "@/components/retro/market-data-badge";
+import type { DecisionOutcome } from "@/components/retro/net-outcome-diverging";
+import { VerdictScreen } from "@/components/retro/verdict-screen";
 import { useSelectedMarket, type MarketTab } from "@/components/retro/market-tab";
-import { StepHeading } from "@/components/retro/step-heading";
 import type { EbayCondition } from "@/lib/ebay-browse";
 import type { GradedMarketData, GradedMarketRoi } from "@/lib/graded-market";
 import { gradingRoi } from "@/lib/roi";
@@ -45,11 +43,6 @@ export function GradingCenterTools({
   const marketTabs: MarketTab[] = [...conditions[0].languages.map((l) => l.language), "France"];
   const market = useSelectedMarket(marketTabs);
 
-  // The tier the ladder and the payoff rows price against. France is not an
-  // eBay market and has no grading tiers at all, so the whole panel falls
-  // back to English there rather than rendering empty — Vinted sells one
-  // condition and it is not a PSA grade.
-  const gradedMarket: MarketTab = market === "France" ? marketTabs[0] : market;
   const currency = conditions[0].languages[0].active.currency;
 
   // Every grade, both markets, with the depth behind each price — the one
@@ -100,75 +93,54 @@ export function GradingCenterTools({
     : roi;
   const roiMarket: MarketTab = roiFollowsMarket ? market : "English";
 
-  // The same bet, priced for every grade it could come back as. Raw is not an
-  // outcome of grading — it is the input — so it is the one tier excluded.
-  // Read from roiMarket rather than `market` so the payoff rows and the ROI
-  // callout above can never quote different markets at each other.
-  // Raw is the input rather than an outcome, so it is the one tier the ladder
-  // does not list as a grade — it gets its own "sell raw now" row instead. The
-  // target grade IS listed: on a shared scale it is what the weaker rows are
-  // read against. A tier with nothing listed comes through as null, which the
-  // ladder draws as an empty bar rather than a zero-price one.
-  const payoffRows: ProfitLadderGrade[] = conditions
-    .filter((entry) => entry.condition !== "Raw")
-    .map((entry) => {
-      const median = entry.languages.find((l) => l.language === roiMarket)?.active.medianPrice ?? 0;
-      return { label: entry.condition, sale: median > 0 ? median : null, target: entry.condition === "PSA 10" };
-    });
-  const payoffCost = shownRoi.rawMedian + shownRoi.gradingCostUsd;
+  const TARGET_GRADE = "PSA 10";
 
-  // The chart plots both markets, so it is only "real" when both of the tiers
-  // it draws are — a preview badge on one side would otherwise sit silently
-  // under live bars from the other.
-  const ladderIsReal = conditions.every((entry) =>
-    entry.languages.every((l) => l.active.isReal)
-  );
+  // Every outcome of the same decision: each grade it could come back as,
+  // then the one that skips grading entirely. Raw is not a grade — it is what
+  // happens if you do nothing — which is why it carries `graded: false` and
+  // is priced without the submission fee.
+  const outcomes: DecisionOutcome[] = [
+    ...conditions
+      .filter((entry) => entry.condition !== "Raw")
+      .map((entry) => {
+        const median = entry.languages.find((l) => l.language === roiMarket)?.active.medianPrice ?? 0;
+        return {
+          label: entry.condition,
+          sale: median > 0 ? median : null,
+          graded: true,
+          target: entry.condition === TARGET_GRADE,
+        };
+      }),
+    { label: "Sell raw", sale: shownRoi.rawMedian > 0 ? shownRoi.rawMedian : null, graded: false },
+  ];
+
+  const rawListings =
+    conditions.find((c) => c.condition === "Raw")?.languages.find((l) => l.language === roiMarket)?.active.count ?? 0;
+
+  // The ladder plots both markets, so it is only "real" when every tier it
+  // draws is — a preview badge on one side would otherwise sit silently under
+  // live bars from the other.
+  const ladderIsReal = conditions.every((entry) => entry.languages.every((l) => l.active.isReal));
 
   return (
-    <>
-      {/* 01 reads the market: what the grades are worth, and whether the
-          other market pays better for them. One column, full width each —
-          side by side the narrower block only got squeezed. */}
-      <div className="flex flex-col gap-4">
-        {/* No market toggle here any more. The bar chart draws English and
-            Japanese together, so there is nothing left for this step to
-            switch — the Market Overview panel still carries the one toggle on
-            the page, and the verdict below names whichever market it read. */}
-        <StepHeading action={<MarketDataBadge isReal={shownRoi.isReal} />} step="01" title="Grade analysis" tone="red" />
+    <div className="flex flex-col gap-12">
+      <GradeAnalysisScreen currency={currency} isReal={ladderIsReal} rows={tableRows} />
 
-        <GradeAnalysisCard
-          currency={currency}
-          ladderIsReal={ladderIsReal}
-          market={gradedMarket}
-          tableRows={tableRows}
-        />
-      </div>
-
-      {/* 02 answers the question, and it takes both cards to answer it. The
-          ROI card prices the outcome everyone hopes for; the payoff rows
-          price the ones you might actually get. Split across two steps, the
-          verdict read as though PSA 10 were the whole answer and the other
-          grades were background reading — which is backwards, since the
-          grade is the part you do not choose. */}
-      <div className="flex flex-col gap-4">
-        <StepHeading step="02" title="The verdict" tone="yellow" />
-
-        <GradingRoiCard
-          currency={shownRoi.currency}
-          fallbackNote={
-            market !== "France" && !roiFollowsMarket && shownRoi.isReal
-              ? `No priced ${market} raw and PSA 10 pair today, so English figures are shown.`
-              : undefined
-          }
-          gradingCost={shownRoi.gradingCostUsd}
-          isReal={shownRoi.isReal}
-          market={roiMarket}
-          outcomes={shownRoi.isReal && payoffCost > 0 ? payoffRows : []}
-          percent={shownRoi.percent}
-          psa10Median={shownRoi.psa10Median}
-          rawMedian={shownRoi.rawMedian}
-        />
-      </div>
-    </>
+      <VerdictScreen
+        currency={shownRoi.currency}
+        defaultGradingFee={shownRoi.gradingCostUsd}
+        fallbackNote={
+          market !== "France" && !roiFollowsMarket && shownRoi.isReal
+            ? `No priced ${market} raw and PSA 10 pair today, so English figures are shown.`
+            : undefined
+        }
+        isReal={shownRoi.isReal}
+        market={roiMarket}
+        outcomes={outcomes}
+        rawListings={rawListings}
+        rawMedian={shownRoi.rawMedian}
+        targetSale={shownRoi.psa10Median}
+      />
+    </div>
   );
 }

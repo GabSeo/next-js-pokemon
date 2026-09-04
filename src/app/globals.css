@@ -207,3 +207,44 @@
 .grade-ladder-chart g[class^="bar-series-"] > rect[width="0"] {
   display: none;
 }
+
+/* --- Grading Center (Grade Analysis / The Verdict) ---------------------
+   Three rules the reference design needs that Tailwind utilities cannot
+   express: a keyframed pulse, and the hover/focus tints on the assumption
+   inputs. Scoped to their own classes so nothing else on the site inherits
+   them. The yellow focus ring is deliberate and replaces the browser
+   default — every interactive element in these two screens must show one. */
+@keyframes ct-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+.ct-pulse { animation: ct-pulse 1.8s ease-in-out infinite; }
+
+.ct-input:hover { background: #FCFCF7; }
+.ct-input:focus { background: #FFFBE6; }
+.ct-input:focus-visible,
+.ct-focus:focus-visible { outline: 2px solid #FFD400; outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-pulse { animation: none; }
+}
+
+/* Mount entrance for the grading screens' cards and bars.
+   CSS rather than a JS animation because it must run ONCE, on mount, and not
+   on every recalculation — a keyframe on a node that never remounts does
+   exactly that for free, whereas a JS tween would need to be told which
+   renders are the first one. */
+@keyframes ct-rise {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes ct-grow {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+.ct-enter { animation: ct-rise 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.ct-bar-enter { transform-origin: bottom; animation: ct-grow 0.46s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-enter, .ct-bar-enter { animation: none; }
+}
