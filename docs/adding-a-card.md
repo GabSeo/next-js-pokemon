@@ -38,6 +38,10 @@ is downstream of it:
   `ebayVariantTags` — for exactly that reason. See
   `docs/ebay-market-pipeline.md`.)
 
+For One Piece, *why* one code covers several products is worth understanding
+before you write the tags — see **How a One Piece card number is built** at
+the end of this document.
+
 ## 2. Audit it
 
 ```bash
@@ -93,8 +97,10 @@ feed we use covers it."
 Two cases, both confirmed by hand on cardmarket.com — the only place they can
 be, since Cardmarket answers automated requests with a CDN bot challenge:
 
-- **No row exists.** `monkey-d-luffy-p-106` is the live case: Cardmarket sells
-  that printing under `Winner-Cards`, and BerryWallet has no row on it.
+- **No row exists.** `monkey-d-luffy-p-106` was the worked case. The ref was
+  removed on 2026-09-04, so this is a finding rather than something the audit
+  will reproduce — the measurement stands and the shape recurs. Cardmarket
+  sells that printing under `Winner-Cards`, and BerryWallet has no row on it.
   Measured 2026-09-02 by sweeping every `CM-*` set row by row — its entire
   Cardmarket coverage is eleven sets:
 
@@ -163,6 +169,75 @@ tabs where the Western listing lives.
 Re-run the audit. Then load the page and switch the market toggle through
 every state the card supports — a block that resolves is not the same as a
 block that renders.
+
+---
+
+## How a One Piece card number is built
+
+Source: a collector-guide carousel (`win the card`, Instagram), supplied
+2026-09-04. **Third-party, not measured here** — orientation, not the same
+standard of proof as the hand-confirmed findings above. Where this codebase's
+own data speaks to a claim, it is said so.
+
+Everything printed in the bottom-right corner of a card, in order:
+
+```
+OP05-119  SEC  ★  (2)
+  │   │    │   │   └── block icon — tournament regulation only
+  │   │    │   └────── alternate version (incl. Manga alt art)
+  │   │    └────────── rarity code: C · UC · R · SR · SEC · L
+  │   └─────────────── identifier within that set
+  └─────────────────── prefix + set number
+```
+
+- **Prefix — the family.** `OP` booster pack, `ST` starter deck, `EB` extra
+  booster, `P` promo. It records where the identity *began*, not every product
+  it later appears in.
+- **Set number — the era.** OP01 Romance Dawn (2022), OP05 Awakening of the New
+  Era (2023), OP09 Emperors in the New World (2024), OP13 Carrying on His Will
+  (2025).
+- **Block icon — ignore it.** The digit in the Devil Fruit near the number is
+  Bandai's Standard-format regulation block (1 = OP01–04, 2 = OP05–08,
+  3 = OP09–12, 4 = OP13–16). It is play eligibility, never part of the code.
+
+### The four points that change how you write a ref
+
+**1. The code is an identity, not a printing.** `OP05-119` says *which card*,
+not which copy. It does not carry the printing, the artwork, whether it is a
+special version, or which product it came from. Two cards can share the number,
+look nothing alike and be worth wildly different amounts. This is the whole
+reason `lookup.by: "code"` under-determines a One Piece card and `variantTags`
+exists next to it.
+
+**2. Each prefix family runs its own sequence.** `OP01-001`, `ST01-001` and
+`EB01-001` all exist at once and are three different cards. **A bare number is
+never a key** — which is exactly how the P-106 join failed here: TCGplayer's
+rows said `P-106`, Cardmarket's said `106`, and nothing could tell whether that
+was the same card or a coincidence.
+
+**3. Product code ≠ card number — the PRB trap.** A card reprinted inside
+PRB-01 (Premium Booster) does *not* become `PRB01-xxx`; it keeps `OP05-119`.
+PRB-01 is the product, `OP05-119` is the card. Upstream catalogues organise by
+product, and our `lookup` keys on the card, so expect a set name that reports a
+product the card was *reprinted into* rather than where its identity began.
+That gap is what makes guessing `berryWalletSetCode` expensive — see Budget.
+
+**4. One promo number, several official versions.** Promo numbering is just
+`P-` plus an identifier, and Bandai reuses it: `P-001` shipped as both a Super
+Pre-Release participation card and a Winner Card Silver Foil Version.
+**Corroborated by our own data** — BerryWallet holds four separate `P-106` rows
+(Promos/-V1 and Promos-Japanese/-V1/-V2/-V3), each a different printing of one
+code. For a `P-` card, `variantTags` is load-bearing rather than a refinement,
+and picking the wrong row prices a different physical object.
+
+### And one that changes what you should expect to find
+
+**SP, Manga and Parallel treatments are versions, not cards.** The artwork,
+foil and texture change; the number and the printed rarity do not. `OP05-119 |
+SEC` and `OP05-119 | ★ SEC` are the same identity in two collector versions. So
+no distinct code will ever separate them — the separation has to come from
+`variantTags` matching the catalogue's own product name, or it does not happen
+at all.
 
 ---
 
