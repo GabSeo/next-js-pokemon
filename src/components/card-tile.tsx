@@ -34,7 +34,7 @@ export function CardTile({ card }: { card: Card }) {
   return (
     <Link
       href={`/products/${card.slug}`}
-      className="group flex flex-col overflow-hidden rounded-lg border-2 border-black bg-card-surface shadow-hard-sm transition-[transform,box-shadow] duration-150 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-md"
+      className="group flex h-full flex-col overflow-hidden rounded-lg border-2 border-black bg-card-surface shadow-hard-sm transition-[transform,box-shadow] duration-150 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-md"
     >
       <div className="relative bg-muted-surface p-6">
         {card.rarity && (
@@ -51,7 +51,15 @@ export function CardTile({ card }: { card: Card }) {
             there is one — see Card.printName's own doc comment
             (lib/types.ts). Every Pokémon card falls back to the clean name,
             unchanged. */}
-        <h3 className="text-sm font-black tracking-[-0.3px]">{card.printName ?? card.name}</h3>
+        {/* Two lines reserved, not clamped. Print names run from "Lugia V" to
+            "Monkey.D.Luffy - ST21-014 (3rd Anniversary Treasure Campaign
+            Pack)", and a one-line name next to a two-line one pushed the set
+            row and the price row of one tile out of line with its
+            neighbours'. Reserving the second line normalises where everything
+            below starts; letting a longer name still wrap past it means no
+            title is ever truncated, and h-full plus mt-auto keep the price
+            pinned to the same baseline regardless. */}
+        <h3 className="min-h-[2lh] text-sm font-black tracking-[-0.3px]">{card.printName ?? card.name}</h3>
         <p className="text-xs font-bold text-muted-text">
           {card.set} · {card.number ?? ""}
         </p>

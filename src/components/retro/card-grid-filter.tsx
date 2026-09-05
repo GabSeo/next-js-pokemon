@@ -66,7 +66,12 @@ export function CardGridFilter({ cards }: { cards: Card[] }) {
 
       <div className="grid grid-cols-2 gap-6 sm:grid-cols-3">
         {cards.map((card) => (
-          <div key={card.id} hidden={!visible.has(card.id)} style={{ order: order.get(card.id) }}>
+          // h-full because THIS div is the grid item, not the tile inside it.
+          // The grid stretches its own children to the row height, so without
+          // it the wrapper grows and the tile keeps its content height — which
+          // is how one long print name made its tile taller than its
+          // neighbours' while they all sat in an equal-height row.
+          <div className="h-full" key={card.id} hidden={!visible.has(card.id)} style={{ order: order.get(card.id) }}>
             <CardTile card={card} />
           </div>
         ))}
