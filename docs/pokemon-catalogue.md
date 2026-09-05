@@ -241,33 +241,18 @@ affordable:
 
 ```
 identity   lib/catalog.ts        off disk, 0 requests, instant
-prices     lib/catalog-prices.ts live TCGdex, bounded concurrency 8
+prices     lib/catalog-prices.ts off disk, from the snapshot (see §7)
 ```
 
-**Measured, Pitch Black (`me05`, 120 cards), rendered through `next dev`:**
+**Measured, Pitch Black (`me05`, 120 cards):** 120 of 120 priced, 0 "No price"
+tiles, and every metered counter identical before and after — apitcg 182,
+BerryWallet 16, PokéWallet 4. The invariant demonstrated rather than asserted.
+Render time was 1.74s when prices were fetched live; it is 5–8ms now (§7).
 
-```
-HTTP 200 in 1.74s · 120 of 120 cards priced · 0 "No price" tiles
-metered quota before: apitcg 182 · BerryWallet 16 · PokéWallet 4
-metered quota after:  apitcg 182 · BerryWallet 16 · PokéWallet 4   (identical)
-```
-
-That last pair is the invariant demonstrated rather than asserted: a 120-card
-priced page moved no metered counter at all.
-
-**Freshness needs no machinery.** `getCard` goes through `tcgdexFetch`, which
-already sets `next: { revalidate: 86400 }`, so every figure is at most 24h old
-and refreshes itself. There is no snapshot store, no scheduled job and nothing
-to operate. Do not add a cache on top — it would only make the real age of a
-figure harder to reason about.
-
-**Not prerendered at build.** `generateStaticParams` returns an empty array
-deliberately: prerendering 218 sets would fire ~23,500 requests into every
-build. Empty array + `revalidate` is what Next requires for on-demand ISR
-("You must return an empty array … in order to revalidate (ISR) paths at
-runtime"). The route is correspondingly **not** in
-`scripts/check-static-routes.mjs`'s `REQUIRED_PATTERNS` — it prerenders zero
-pages by design and would fail that gate for doing the right thing.
+**Prerendered at build, all 203.** That was originally refused — prerendering
+fired ~23,500 requests per build — and became correct once prices moved to a
+local file (§7). Set pages are now static HTML on the CDN, and the route is
+correspondingly no longer a zero-page route.
 
 **One number per card is a choice, and it is labelled.** A grid has room for
 one price, so `primaryVariantType` quotes the `normal` printing when the card
@@ -339,9 +324,74 @@ and never a `node:fs` shim or a bundler exception.
 
 ---
 
-## 7. Operating it
+## 7. Why prices are a local file
+
+The catalogue used to fetch one live price per card while a visitor waited.
+That is fine at 120 requests and untenable at scale, and it failed three ways
+that all trace to the same cause.
+
+| | measured |
+|---|---|
+| a set nobody had opened | **2–10s**, paid by whoever clicked first |
+| `/cards` on unseen cards | **0.35–1.26s**, every request, forever |
+| prerendering to fix it | **strictly worse** — see below |
+
+The third one is the important one. Prerendering all 203 sets fired ~21,000
+requests across parallel build workers, tripped the circuit breaker, and
+**froze the empty results into static HTML for 24 hours**: `sv08` and `base1`
+shipped with no prices at all, `me05` with 1 of 120. Slow is recoverable;
+wrong-and-cached is not.
+
+So `scripts/price-refresh.mts` writes `data/prices/pokemon.json` and rendering
+became a map lookup:
+
+```
+20,452 of 21,066 physical cards · 45s · 5.9 MB · zero metered quota
+```
+
+| | before | after |
+|---|---|---|
+| `/sets/[setId]` | 2–10s first visit | **5–8ms**, prerendered, static on the CDN |
+| `/cards` | 0.35–1.26s | **50–100ms** |
+| whole-catalogue price sort | capped at 250 results | **all 21,066**, ~100ms |
+
+Prerendering is safe *now* precisely because the build makes no requests —
+there is nothing left to fail mid-build and freeze.
+
+### This is not price history
+
+One file, overwritten on each run. No time series, no per-day rows, no charts.
+TCGdex publishes trailing `avg1 / avg7 / avg30` and no series, so a history
+could not be built from this source even if it were wanted.
+
+### On "pointers may be stored, content may not"
+
+This stores content, deliberately. That rule exists so a figure on the page was
+machine-read recently and its age is knowable — not to forbid caching. Every
+entry is read from the source and never typed, the file carries `generatedAt`,
+and both pages **print that date**. The old copy said *"at most 24 hours"*,
+which the snapshot would have made false; it now reads *"as of <date>"*.
+
+What the rule actually forbids — a hand-typed price rotting silently — remains
+impossible.
+
+### Freshness is a deploy concern now
+
+`prebuild` regenerates the snapshot, so prices are as of the last deploy.
+Refresh without deploying with `npm run prices`. The file is committed as well
+as generated, so a deploy never depends on TCGdex being up.
+
+The reader keeps a **per-card** live fallback for a card the snapshot lacks —
+added upstream since the last refresh — because a handful of live reads is
+cheap and a wrong "No price" is not. There is deliberately no *whole-file*
+fallback: 21,066 live reads is the exact failure this removes.
+
+---
+
+## 8. Operating it
 
 ```bash
+npm run prices                                       # refresh prices, ~45s
 npx tsx scripts/catalog-crawl.mts                    # full crawl, ~69s
 npx tsx scripts/catalog-crawl.mts --sets swsh12,sv10 # a few sets
 npx tsx scripts/catalog-crawl.mts --force            # re-fetch everything
