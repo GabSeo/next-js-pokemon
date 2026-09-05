@@ -667,6 +667,20 @@ async function runSearch(
     // The cost is a Japanese seller shipping a genuine English print, which
     // this drops. Accepted: a wrong print in an English median misprices the
     // card, a missing listing only thins the sample.
+    //
+    // Just Japan, deliberately, and not a longer list of "Asian" countries —
+    // the claim is the narrow checkable one. Hong Kong or Singapore would be
+    // a guess that discards real English listings.
+    //
+    // This replaces graded-market.ts's JAPANESE_MARKET_COUNTRIES guard, which
+    // did the same job for the English tier only, and only for cards with a
+    // readable price. Do NOT reintroduce it there: two places deciding what a
+    // JP-located listing means is how they drift apart.
+    //
+    // NOT the eBay "Country of Origin" aspect, which is a different field and
+    // useless for this: One Piece cards are printed "BANDAI MADE IN JAPAN"
+    // regardless of language, so that aspect reads Japan on English cards too
+    // and filtering by it would discard the entire market.
     .filter((listing) => !(language !== "Japanese" && listing.location === "JP"))
     // A CARD SHIPPING FROM CHINA IS DROPPED ON EVERY TIER. Not a language
     // question — it is a different market, priced differently, and this site

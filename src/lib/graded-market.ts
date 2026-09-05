@@ -240,7 +240,11 @@ export type GradedMarketData = {
  * overwhelmingly that Japanese print. Hong Kong or Singapore would be a
  * guess, and a wrong one discards real English listings.
  */
-const JAPANESE_MARKET_COUNTRIES = ["JP"];
+// MOVED 2026-09-05 into ebay-browse.ts's own survivor chain, where it is
+// unconditional and applies to every tier rather than only the English one
+// and only when a card has a readable price. The reasoning above still holds
+// and is repeated there; this constant is gone rather than kept unused so
+// there is exactly one place that decides what a JP-located listing means.
 
 /**
  * How far below the card's own TCGPlayer reference price an ENGLISH listing
@@ -302,8 +306,12 @@ function marketGuardFor(card: Card, condition: EbayCondition, language: EbayLang
   if (card.priceUnavailable) return undefined;
   const floor = card.currentPrice * (1 - ENGLISH_PRICE_GAP_THRESHOLD);
 
+  // No excludeCountries: the JP rule is universal now and lives in
+  // ebay-browse.ts. What is left here is the price floor, which is genuinely
+  // English-tier-specific because it is anchored to this card's own western
+  // reference price.
   if (language === "English") {
-    return { excludeCountries: JAPANESE_MARKET_COUNTRIES, minPrice: floor };
+    return { minPrice: floor };
   }
 
   // Japanese, graded tiers only. The floor here rests on market structure

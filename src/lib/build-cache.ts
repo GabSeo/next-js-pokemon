@@ -118,13 +118,25 @@ import path from "node:path";
  *      precisely the reason-8 failure again: correct locally on a cold
  *      cache, wrong in production on a warm one.
  *
+ *  10. Variant resolution changed in three ways that a cached entry cannot
+ *      express, all on 2026-09-05. `excludeTags` lets a lookup reject a
+ *      decorated print whose name contains the wanted one, and OP05-119
+ *      resolved to a EUR 8,000 Manga without it. A cross-product English
+ *      match now refuses Japanese index alignment, so two cards that cached
+ *      a WRONG Japanese identity (OP05-119 against a EUR 171.50 print,
+ *      OP01-024 against a USD 240.03 one) must resolve again to become
+ *      inert. And eBay listings are now filtered by ship-from country, which
+ *      changes which asks are in every graded tier. A warm cache would serve
+ *      all three of the old answers, and the Japanese ones are wrong rather
+ *      than merely stale.
+ *
  * Surviving deploys is the whole point of this cache (see the header
  * comment) — it is what keeps a redeploy from re-spending quota. So the fix
  * is not to shorten its reach but to make a deliberate computation change
  * able to say so. Bumping this starts a fresh namespace; the previous one is
  * simply never read again.
  */
-const CACHE_VERSION = 8;
+const CACHE_VERSION = 10;
 
 /** Versioned so a computation change cannot silently reuse pre-change values across a deploy — see CACHE_VERSION. */
 const CACHE_DIR = path.join(process.cwd(), ".next", "cache", "resolved-cards", `v${CACHE_VERSION}`);
