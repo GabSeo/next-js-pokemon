@@ -145,6 +145,37 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  /**
+   * Ship the card corpus with the routes that read it at RUNTIME.
+   *
+   * `lib/catalog.ts` reads `data/catalog/pokemon/` off disk with
+   * `process.cwd()`. Next's tracer follows `import` statements, and nothing
+   * imports those 219 JSON files — they are opened by a computed path — so
+   * without this they are simply absent from the serverless bundle and
+   * `existsSync` returns false. The loader is deliberately written to treat an
+   * absent corpus as an EMPTY catalogue rather than a crash (a fresh checkout
+   * that has not run the crawl should degrade, not explode), which means the
+   * failure mode in production is silent and total: /cards renders "no cards
+   * match", /sets renders nothing, and no error is logged anywhere.
+   *
+   * Both listed routes read the corpus after the build has finished:
+   *
+   *   /cards         reads searchParams, so it is request-time by definition
+   *   /sets/[setId]  generateStaticParams returns [] for on-demand ISR, so a
+   *                  set is rendered by a serverless invocation on first visit
+   *
+   * `/sets` itself is prerendered at build time, where the working directory
+   * really does contain `data/`, so it needs nothing here — but it is included
+   * anyway rather than reasoned about per deploy, since its own revalidation
+   * runs in the same serverless context as the other two.
+   *
+   * Globs resolve from the project root; keys are route globs.
+   */
+  outputFileTracingIncludes: {
+    "/cards": ["./data/catalog/pokemon/**"],
+    "/sets": ["./data/catalog/pokemon/**"],
+    "/sets/[setId]": ["./data/catalog/pokemon/**"],
+  },
 };
 
 export default nextConfig;
