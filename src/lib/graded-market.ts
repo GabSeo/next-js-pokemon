@@ -247,6 +247,49 @@ export type GradedMarketData = {
 // there is exactly one place that decides what a JP-located listing means.
 
 /**
+ * The second, far looser price floor — a backstop for the tiers the 60% one
+ * cannot guard, expressing a DIFFERENT claim.
+ *
+ * The 40%-gap floor below says "this is probably a different PRINT". It is
+ * tight, so it can only be aimed where a mismatch is likely and a real
+ * listing is unlikely to sit that low. This one says "this cannot be this
+ * card AT ALL" — a tenth of the reference is not a damaged copy, a bad
+ * scan, or a motivated seller. Condition takes a card to a third of NM, not
+ * to a hundredth.
+ *
+ * It exists because Japanese Raw was guarded by nothing, and could not be
+ * guarded by the tight floor: Ethan's Typhlosion's Japanese raw tier returns
+ * genuine listings at USD 15.96 against a USD 26.83 reference, which a 60%
+ * floor discards. Against that counter-example 0.10 leaves a 6x margin
+ * (0.59 vs 0.10), which is the whole reason a second threshold works where a
+ * tightened first one could not.
+ *
+ * Verified live on 2026-09-05, same query, guard the only difference —
+ * eustass-captain-kid-op05-074, Japanese Raw, reference USD 883.73:
+ *
+ *   unguarded   0.99, 0.99, 0.99, 1.00
+ *   floored     635.17, 649.90, 719.00, 779.61
+ *
+ * The tier's "cheapest live ask" was 99 cents on an 883-dollar card, and
+ * every grading-ROI figure derived from it was built on that. Those are base
+ * R prints of the same card_number, not damaged copies of this one — a ratio
+ * of 0.0011 against Typhlosion's 0.59, roughly 500x apart, which is why one
+ * threshold separates them cleanly and no percentage tweak could.
+ *
+ * Typhlosion's own Japanese raw tier returns nothing that passes the title
+ * check today, for reasons unrelated to price, so its 15.96 could not be
+ * re-measured live — it stands on the 2026-08-29 measurement recorded below.
+ *
+ * Anchored to card.currentPrice like the other floor, and for the same
+ * reason — never to the result set, which can be majority-wrong (see below).
+ * Using the English reference on a Japanese tier is safe at this coarseness:
+ * every cross-language pair measured on this site sits near 1.0 (OP05-119
+ * USD 208 vs 208, OP01-024 USD 2.16 vs 2.16, OP09-061 EUR 485 vs 375), so a
+ * tenth is nowhere near any real Japanese discount.
+ */
+const ABSURD_PRICE_RATIO = 0.1;
+
+/**
  * How far below the card's own TCGPlayer reference price an ENGLISH listing
  * may sit before it is treated as a different print rather than a cheap copy.
  * 0.40 means "40% or more below the reference is not this card".
@@ -328,6 +371,10 @@ function marketGuardFor(card: Card, condition: EbayCondition, language: EbayLang
   // and a raw reference of $1,037. Cheapest-first sorting put it at the top
   // of the panel.
   //
+  // Japanese Raw gets the ABSURDITY floor instead of nothing. See
+  // ABSURD_PRICE_RATIO — a different and much weaker claim than the 60% one,
+  // which is what lets it apply where the 60% floor provably cannot.
+  //
   // NOT applied to Japanese Raw. The evidence for that is narrower than an
   // earlier version of this comment implied, so state it exactly: Ethan's
   // Typhlosion's Japanese Raw tier returns real listings at $15.96 and
@@ -341,7 +388,7 @@ function marketGuardFor(card: Card, condition: EbayCondition, language: EbayLang
   //
   // No excludeCountries either — a Japanese card shipping from Japan is
   // exactly what this tab wants, unlike the English one.
-  if (condition === "Raw") return undefined;
+  if (condition === "Raw") return { minPrice: card.currentPrice * ABSURD_PRICE_RATIO };
   return { minPrice: floor };
 }
 

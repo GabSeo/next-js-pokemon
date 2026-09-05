@@ -122,7 +122,11 @@ const BUDGETS: Record<string, Budget> = {
   // bounded. It is strictly better than the alternative: without a monthly
   // guard the same spend hits apitcg's own 1,000 and returns hard 429s, which
   // degrades identically but uncontrolled, and across every surface at once.
-  "api.apitcg.com": { limit: 900, windowMs: MONTH_MS, burst: { limit: 90, windowMs: DAY_MS } },
+  // Burst raised 90 -> 200 on 2026-09-05: the account has real headroom
+  // against apitcg's own monthly ceiling, and 90/day was stopping cold
+  // rebuilds rather than protecting anything. The monthly 900 is still the
+  // limit that matters; this one only shapes how fast it may be spent.
+  "api.apitcg.com": { limit: 900, windowMs: MONTH_MS, burst: { limit: 200, windowMs: DAY_MS } },
   // 5,000/day real. Comfortably the loosest of the four, but still bounded:
   // graded-market.ts spends 6-8 of these per card per resolution, so this
   // is the one budget that scales hardest with the tracked-card count.
