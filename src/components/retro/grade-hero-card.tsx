@@ -239,8 +239,28 @@ function SideColumn({
         />
       </div>
 
-      <div className="mt-2.5 flex w-full max-w-[150px] flex-wrap items-baseline gap-2">
-        <span className="font-black tabular-nums" style={{ fontSize: "clamp(26px, 5.4cqw, 32px)", letterSpacing: "-0.03em" }}>
+      {/* No max-w-[150px] here, unlike the chip and the photo above.
+          Capping this row at the photo's width is what broke "USD 1,244"
+          across two lines: at 32px it needs about 170px, so it wrapped at its
+          own space and the currency ended up alone above the figure. The
+          column is ~350px wide, so the block takes the full width and aligns
+          back to the photo's edge — the number stays flush with the image and
+          grows outward, AWAY from the centre rail, which is the one direction
+          with room. Shrinking the type instead would have been the wrong
+          trade: this figure is the comparison.
+
+          A COLUMN, not a wrapping row. The listing count always sat on its own
+          line, but only because the 150px cap forced a wrap — "USD 516" plus
+          "11 listings" did not fit either. With the cap gone they shared a
+          line, and justify-end pushed the pair right as a group, leaving the
+          RAW price 64px short of its photo's edge while PSA sat flush.
+          Stacking them explicitly keeps the layout the design already had and
+          puts the price alone on its line by construction, not by overflow. */}
+      <div className={`mt-2.5 flex w-full flex-col gap-2 ${align === "end" ? "items-end" : "items-start"}`}>
+        <span
+          className="font-black whitespace-nowrap tabular-nums"
+          style={{ fontSize: "clamp(26px, 5.4cqw, 32px)", letterSpacing: "-0.03em" }}
+        >
           {side.price}
         </span>
         <span className="text-[11px] font-semibold tabular-nums" style={{ color: DS.meta }}>
