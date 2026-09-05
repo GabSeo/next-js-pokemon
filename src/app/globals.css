@@ -282,3 +282,32 @@
   .ct-side:hover .ct-side-photo,
   .ct-side:focus-within .ct-side-photo { transform: none; }
 }
+
+/**
+ * Browse Sets card entrance.
+ *
+ * CSS rather than a JS `whileInView`, and that is a correctness choice, not a
+ * preference. The motion version rendered `opacity:0` into the SERVER HTML for
+ * all 203 cards and waited for an IntersectionObserver to reveal each one — so
+ * a JS failure, a slow hydrate, or any reader without JS got a blank page.
+ * This site is explicitly built to be read on a single fetch with no retry
+ * (see scripts/check-static-routes.mjs's header), which makes that trade a bad
+ * one at any animation quality.
+ *
+ * A CSS animation runs on paint with no observer and no script, so the content
+ * is never gated on anything. Only the first row or so is staggered — cards
+ * below the fold are not being watched anyway, and animating 203 of them would
+ * be noise rather than polish.
+ */
+@keyframes set-card-enter {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.set-card-enter {
+  animation: set-card-enter 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .set-card-enter { animation: none; }
+}

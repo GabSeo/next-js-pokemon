@@ -1,53 +1,59 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { EyebrowTitle } from "@/components/retro/eyebrow-title";
-import { catalogStats, getCatalogSets, type CatalogSet } from "@/lib/catalog";
+import { SetsBrowser, type BrowseSet } from "@/components/sets-browser";
+import { catalogStats, getCatalogSets, getCatalogSetCards } from "@/lib/catalog";
 import { absoluteUrl } from "@/lib/site";
 
 /**
- * Every Pokémon set in the crawled catalogue.
+ * Browse Sets — every Pokémon set in the crawled catalogue.
  *
  * COSTS NOTHING TO RENDER. Reads `data/catalog/pokemon/` off disk and makes no
- * network call at all — the whole point of the tier-1/tier-2 split (see
- * lib/catalog.ts's header). Every set is listed here without touching a single
- * metered quota, which is what makes browsing at catalogue scale a thing this
- * app can offer.
+ * network call at all (see lib/catalog.ts's header). Digital-only Pokémon TCG
+ * Pocket sets are excluded — isDigitalOnlySet — so this is 203 sets, not 218.
  *
- * Digital-only Pokémon TCG Pocket sets are excluded — see isDigitalOnlySet.
- * They stay in the corpus and are filtered at this layer, so the decision is
- * one predicate rather than a hole in the data.
- *
- * Prices live one level down, on the set page, and are fetched live there.
+ * Every figure below is COUNTED from the corpus rather than written down, so
+ * the page cannot drift from the data the way a hardcoded "23,546" already did
+ * once.
  */
 
-// 24 hours, matching every other page here. The catalogue itself only changes
-// when the corpus is re-crawled (a commit), so this is generous rather than tight.
-export const revalidate = 86400;
+// One year. Nothing here changes until the corpus is re-crawled, which is a
+// commit and therefore a deploy.
+export const revalidate = 31536000;
 
 export const metadata: Metadata = {
-  title: "Pokémon sets",
-  description: "Every Pokémon TCG set, with card counts and release dates.",
+  title: "Browse Pokémon sets",
+  description: "Every Pokémon TCG set, from Base Set to the latest drop — pick one to see every card inside it.",
   alternates: { canonical: "/sets" },
 };
 
-function releaseSortKey(set: CatalogSet): string {
-  return set.releaseDate ?? "0000-00-00";
-}
-
 export default function SetsIndexPage() {
-  const sets = getCatalogSets();
   const stats = catalogStats();
 
-  // getCatalogSets already excludes digital-only sets — see isDigitalOnlySet.
-  const physical = [...sets].sort((a, b) => releaseSortKey(b).localeCompare(releaseSortKey(a)));
+  const browse: BrowseSet[] = getCatalogSets()
+    .map((set) => ({
+      id: set.id,
+      name: set.name,
+      serie: set.serie?.name ?? "Other",
+      releaseDate: set.releaseDate,
+      cardCount: getCatalogSetCards(set.id).length,
+      logo: set.logo,
+    }))
+    .sort((a, b) => (b.releaseDate ?? "").localeCompare(a.releaseDate ?? ""));
+
+  const newest = browse[0];
+
+  // Eras in the order their newest set appears, so the filter reads
+  // newest-first the way the grid does.
+  const eras: string[] = [];
+  for (const set of browse) if (!eras.includes(set.serie)) eras.push(set.serie);
 
   const itemListJsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
     name: "Pokémon TCG sets",
     url: absoluteUrl("/sets"),
-    numberOfItems: sets.length,
-    itemListElement: physical.slice(0, 50).map((set, index) => ({
+    numberOfItems: browse.length,
+    itemListElement: browse.slice(0, 50).map((set, index) => ({
       "@type": "ListItem",
       position: index + 1,
       url: absoluteUrl(`/sets/${set.id}`),
@@ -56,61 +62,107 @@ export default function SetsIndexPage() {
   };
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
+    <main className="mx-auto w-full max-w-[1180px] px-6 py-6 pb-24">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }} />
 
-      <EyebrowTitle tone="blue">Catalogue</EyebrowTitle>
-      <h1 className="mt-2 text-3xl font-black tracking-tight">Pokémon sets</h1>
+      <div className="mb-6">
+        <h1 className="text-[32px] font-black tracking-[-0.8px]">Browse Sets</h1>
+        <p className="mt-1 text-sm text-muted-text">
+          Every Pokémon TCG set, from the 1999 Base Set to the latest drop — pick one to see every card inside it.
+        </p>
+      </div>
 
-      <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-text">
-        {stats.sets} sets and {stats.cards.toLocaleString("en-US")} cards, read from our own catalogue snapshot. Card
-        identity is stored locally; prices are read live when you open a set.
+      <div className="mb-6 grid grid-cols-2 gap-6 lg:grid-cols-4">
+        <Stat label="Total Sets" value={String(browse.length)} sub="Catalogued & priced" accent />
+        <Stat label="Total Cards" value={stats.cards.toLocaleString("en-US")} sub="Across all sets" />
+        <Stat
+          label="Newest Set"
+          value={newest?.name ?? "—"}
+          sub={
+            newest?.releaseDate
+              ? `Released ${new Date(newest.releaseDate).toLocaleDateString("en-US", { month: "short", year: "numeric" })}`
+              : undefined
+          }
+          small
+        />
+        {/* The mockup's fourth tile reads "Most Chased — +9.4% this month".
+            That needs a price history the catalogue does not have, and this
+            codebase does not render a figure it has not measured. So the slot
+            is kept and the promise stated, with no number attached. See
+            docs/pokemon-catalogue.md §7 on why there is no time series. */}
+        <Stat label="Most Chased" value="Coming soon" sub="Trending needs price history" small />
+      </div>
+
+      {newest && (
+        <section className="relative mb-14 flex flex-wrap items-center justify-between gap-6 overflow-hidden rounded-lg border-2 border-black bg-pokemon-red p-10 text-white shadow-hard-lg">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{
+              backgroundImage: "radial-gradient(rgba(255,255,255,.18) 1.5px, transparent 1.5px)",
+              backgroundSize: "16px 16px",
+            }}
+          />
+          <div className="relative z-10">
+            <span className="mb-3 inline-block rounded-full border-2 border-black bg-white px-3 py-1 text-[11px] font-black tracking-[0.6px] text-pokemon-red uppercase">
+              🔥 Latest Drop
+            </span>
+            <h2 className="mb-2 text-[32px] font-black tracking-[-0.8px]">{newest.name}</h2>
+            <p className="max-w-[420px] text-sm leading-5 opacity-90">
+              {newest.cardCount} cards in {newest.serie}. Freshly indexed, with Cardmarket and TCGplayer prices on every
+              card our sources reach.
+            </p>
+            <Link
+              href={`/sets/${newest.id}`}
+              className="mt-5 inline-block rounded-md border-2 border-black bg-[#0a0a0a] px-5 py-3 text-sm font-black text-white shadow-[4px_4px_0px_0px_rgba(255,255,255,0.85)] transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5"
+            >
+              Browse this set →
+            </Link>
+          </div>
+          <div className="relative z-10 flex h-[120px] w-[120px] flex-shrink-0 items-center justify-center overflow-hidden rounded-lg border-2 border-black bg-white shadow-hard-md">
+            {newest.logo ? (
+              /* eslint-disable-next-line @next/next/no-img-element -- see SetsBrowser's own note: TCGdex serves a bare URL that needs an extension appended, which next/image's loader does not produce */
+              <img src={`${newest.logo}.webp`} alt="" className="h-full w-full object-contain p-2" />
+            ) : (
+              <span className="text-[56px]">⚡</span>
+            )}
+          </div>
+        </section>
+      )}
+
+      <SetsBrowser sets={browse} eras={eras} />
+
+      <p className="mt-14 text-xs text-muted-text">
+        Looking for one card rather than a set?{" "}
+        <Link href="/cards" className="font-bold underline underline-offset-4">
+          Search all {stats.cards.toLocaleString("en-US")} cards
+        </Link>
+        .
       </p>
-
-      <Link
-        href="/cards"
-        className="mt-4 inline-block rounded-lg border-2 border-black bg-pokemon-yellow px-4 py-2 text-sm font-black shadow-hard-sm transition-[transform,box-shadow] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-md"
-      >
-        Search all cards →
-      </Link>
-
-      <SetGrid heading="Sets" sets={physical} />
     </main>
   );
 }
 
-function SetGrid({ heading, sets, note }: { heading: string; sets: CatalogSet[]; note?: string }) {
+function Stat({
+  label,
+  value,
+  sub,
+  accent,
+  small,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  accent?: boolean;
+  small?: boolean;
+}) {
   return (
-    <section className="mt-10">
-      <h2 className="text-lg font-black tracking-tight uppercase">{heading}</h2>
-      {note && <p className="mt-1 text-xs text-muted-text">{note}</p>}
-      <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {sets.map((set) => (
-          <li key={set.id}>
-            <Link
-              href={`/sets/${set.id}`}
-              className="flex h-full items-center gap-3 rounded-lg border-2 border-black bg-card-surface p-3 shadow-hard-sm transition-[transform,box-shadow] duration-150 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-md"
-            >
-              {/* Set symbols are small, decorative and frequently absent — a
-                  missing one leaves the row's text alignment untouched. */}
-              {set.symbol && (
-                // eslint-disable-next-line @next/next/no-img-element -- external asset host, no loader configured for it
-                <img src={`${set.symbol}.png`} alt="" width={28} height={28} className="h-7 w-7 shrink-0 object-contain" />
-              )}
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-bold">{set.name}</span>
-                <span className="block text-xs text-muted-text">
-                  {set.serie?.name}
-                  {set.releaseDate ? ` · ${set.releaseDate.slice(0, 4)}` : ""}
-                </span>
-              </span>
-              <span className="shrink-0 rounded-full border-2 border-black bg-muted-surface px-2 py-0.5 text-[10px] font-black">
-                {set.cardCount?.total ?? "?"}
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </section>
+    <div className={`rounded-lg border-2 border-black p-5 shadow-hard-md ${accent ? "bg-pokemon-blue text-white" : "bg-card-surface"}`}>
+      <div className={`mb-3 text-[11px] font-black tracking-[0.6px] uppercase ${accent ? "opacity-75" : "text-muted-text"}`}>
+        {label}
+      </div>
+      <div className={`font-black tracking-[-0.6px] ${small ? "text-xl" : "text-[28px]"}`}>{value}</div>
+      {sub && <div className={`mt-1 text-xs font-bold ${accent ? "text-white/75" : "text-muted-text"}`}>{sub}</div>}
+    </div>
   );
 }
