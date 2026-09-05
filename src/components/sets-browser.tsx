@@ -200,25 +200,28 @@ function SetCard({ set, index }: { set: BrowseSet; index: number }) {
         href={`/sets/${set.id}`}
         className="group relative flex h-full flex-col overflow-hidden rounded-lg border-2 border-black bg-card-surface p-5 shadow-hard-md transition-[transform,box-shadow] duration-150 hover:-translate-x-[3px] hover:-translate-y-[3px] hover:shadow-hard-lg"
       >
-        <span
-          className={`mb-4 flex h-12 w-12 items-center justify-center overflow-hidden rounded-md border-2 border-black ${
-            set.logo && !logoFailed ? "bg-white" : accentFor(set.id)
-          }`}
-        >
-          {set.logo && !logoFailed ? (
-            /* eslint-disable-next-line @next/next/no-img-element -- TCGdex needs an extension appended to a bare URL, which next/image's loader does not produce; lazy + onError are what this needs and next/image cannot express the fallback */
-            <img
-              src={`${set.logo}.webp`}
-              alt=""
-              loading="lazy"
-              decoding="async"
-              className="h-full w-full object-contain p-0.5"
-              onError={() => setLogoFailed(true)}
-            />
-          ) : (
-            <span className="text-sm font-black">{set.name.slice(0, 2).toUpperCase()}</span>
-          )}
-        </span>
+        {/* The logo sits unboxed and left-aligned: a set logo is already a
+            finished piece of artwork with its own outline, and the 48px
+            bordered tile it used to sit in both cropped it and fought it.
+            A set with NO logo still needs a shape to occupy the same space,
+            so only the fallback keeps the tile. */}
+        {set.logo && !logoFailed ? (
+          /* eslint-disable-next-line @next/next/no-img-element -- TCGdex needs an extension appended to a bare URL, which next/image's loader does not produce; lazy + onError are what this needs and next/image cannot express the fallback */
+          <img
+            src={`${set.logo}.webp`}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="mb-4 h-14 w-auto max-w-[70%] self-start object-contain object-left"
+            onError={() => setLogoFailed(true)}
+          />
+        ) : (
+          <span
+            className={`mb-4 flex h-14 w-14 items-center justify-center rounded-md border-2 border-black text-base font-black ${accentFor(set.id)}`}
+          >
+            {set.name.slice(0, 2).toUpperCase()}
+          </span>
+        )}
 
         <span className="mb-0.5 text-base font-black tracking-[-0.3px]">{set.name}</span>
         <span className="mb-3 text-xs font-bold text-muted-text">
