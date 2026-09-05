@@ -275,7 +275,60 @@ snapshotting on a schedule into a store of our own; deliberately not done.
 
 ---
 
-## 6. Operating it
+## 6. Search and filters
+
+`/cards` searches all 23,546 — a horizontal sort bar, a vertical facet panel,
+and 60 results a page.
+
+**Every control writes the URL and the server does the filtering.** Three
+reasons, and the first is not negotiable: 23,546 cards cannot be shipped to a
+browser to filter client-side. `CardGridFilter` can hide and reorder in the DOM
+because it works on eleven tracked cards; that does not survive two more orders
+of magnitude. Second, a filtered view is a thing people send each other —
+`?serie=XY&rarity=Rare` is a link and component state is not. Third, only the
+server can tell whether a price sort is affordable at all.
+
+**Facets exclude their own dimension.** Counting every filter including the
+one being counted makes each unselected option read 0 the moment one is
+picked — true and useless, since the number a person wants is "how many would
+I get if I switched to this instead".
+
+**Price sort is capped and says so.** Sorting by price requires pricing the
+whole result set, one live request per card, so it is offered only below
+`PRICE_SORT_MAX` (250) and refused above it with the reason on screen. A "sort
+by price" that silently reordered only the sixty rows already visible would be
+a control lying about its own scope. Unpriced cards sort to the END in both
+directions — "we have no price" is not "this card is free", and a low-to-high
+sort led by cards with no price would be actively misleading.
+
+Verified against the live corpus:
+
+| query | matches |
+|---|---|
+| none | 23,546 |
+| `q=charizard` | 125 |
+| `serie=XY` | 1,932 |
+| `category=Trainer` | 3,055 |
+| `variant=reverse` | 8,193 |
+| `priced=1` | 20,092 — the same 95.4% as §4d |
+
+### The split that the boundary forced
+
+`lib/catalog-query.ts` exists because the first version of the filter UI
+imported `SORTS` from `catalog-search.ts`, which reaches `catalog.ts`, which
+imports `node:fs`. Turbopack refused the build outright: *"the chunking context
+does not support external modules (request: node:fs)"*.
+
+**That refusal is §2's invariant working, not an obstacle to it.** A Client
+Component genuinely cannot reach the corpus, so it cannot ship 13 MB to a
+browser or convince a page it can filter 23,546 cards client-side. The fix is
+therefore always a split — the query *vocabulary* (sort ids, facet shape,
+limits; imports nothing) apart from the query *execution* (needs the corpus) —
+and never a `node:fs` shim or a bundler exception.
+
+---
+
+## 7. Operating it
 
 ```bash
 npx tsx scripts/catalog-crawl.mts                    # full crawl, ~69s

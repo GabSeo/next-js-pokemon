@@ -78,6 +78,13 @@ export default function SetsIndexPage() {
         identity is stored locally; prices are read live when you open a set.
       </p>
 
+      <Link
+        href="/cards"
+        className="mt-4 inline-block rounded-lg border-2 border-black bg-pokemon-yellow px-4 py-2 text-sm font-black shadow-hard-sm transition-[transform,box-shadow] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-md"
+      >
+        Search all cards →
+      </Link>
+
       <SetGrid heading="Sets" sets={physical} />
       {digital.length > 0 && (
         <SetGrid

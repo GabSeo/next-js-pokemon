@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EyebrowTitle } from "@/components/retro/eyebrow-title";
-import { getCatalogSet, getCatalogSetCards, type CatalogCard } from "@/lib/catalog";
-import { getCatalogPrices, primaryVariantType, type CatalogPrice } from "@/lib/catalog-prices";
+import { CatalogCardTile } from "@/components/catalog-card-tile";
+import { getCatalogSet, getCatalogSetCards } from "@/lib/catalog";
+import { getCatalogPrices } from "@/lib/catalog-prices";
 import { absoluteUrl } from "@/lib/site";
 
 /**
@@ -102,9 +103,11 @@ export default async function SetPage({ params }: PageProps) {
         </div>
       </div>
 
-      {/* A stated absence rather than an empty grid. Coverage is genuinely
-          uneven across eras — four of them sit near zero (see
-          docs/pokemon-catalogue.md) — and a reader deserves to know they are
+      {/* A stated absence rather than an empty grid. Coverage is 95.4% of
+          physical cards but genuinely uneven — Trainer kits sit at 48%, and a
+          card can carry a marketplace pointer while that marketplace publishes
+          no figures (the whole Gym series does exactly this, see
+          docs/pokemon-catalogue.md). A reader deserves to know they are
           looking at a real gap rather than a page that failed to load. */}
       <p className="mt-6 rounded-lg border-2 border-black bg-muted-surface p-3 text-xs">
         {pricedCount === 0 ? (
@@ -120,63 +123,10 @@ export default async function SetPage({ params }: PageProps) {
       <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {entries.map(({ card }) => (
           <li key={card.tcgdexId}>
-            <SetCardTile card={card} price={prices.get(card.tcgdexId)} />
+            <CatalogCardTile card={card} price={prices.get(card.tcgdexId)} />
           </li>
         ))}
       </ul>
     </main>
-  );
-}
-
-function money(amount: number, currency: "EUR" | "USD"): string {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 2 }).format(amount);
-}
-
-/**
- * One card in the grid.
- *
- * Shows the Cardmarket average when there is one and the TCGplayer market
- * price otherwise — never both, and never a figure derived from the other.
- * The variant is labelled whenever the card has more than one printing,
- * because the reverse holo of the same card can trade at several times the
- * normal (Venonat swsh12-001: EUR 0.04 against EUR 0.18) and a bare number in
- * a grid would not say which one it is.
- */
-function SetCardTile({ card, price }: { card: CatalogCard; price?: CatalogPrice }) {
-  const cm = price?.cardmarket?.avg;
-  const tp = price?.tcgplayer?.market;
-  const shown = cm !== undefined ? money(cm, "EUR") : tp !== undefined ? money(tp, "USD") : undefined;
-  const multiVariant = card.variants.length > 1;
-  const variantLabel = multiVariant ? (price?.variantType ?? primaryVariantType(card)) : undefined;
-
-  return (
-    <div className="flex h-full flex-col overflow-hidden rounded-lg border-2 border-black bg-card-surface shadow-hard-sm">
-      <div className="bg-muted-surface p-2">
-        {card.image ? (
-          // eslint-disable-next-line @next/next/no-img-element -- TCGdex asset host; the URL needs a quality/extension suffix a loader would strip
-          <img
-            src={`${card.image}/low.webp`}
-            alt={card.name}
-            loading="lazy"
-            className="aspect-[300/420] w-full rounded object-contain"
-          />
-        ) : (
-          <div className="aspect-[300/420] w-full rounded bg-card-surface" />
-        )}
-      </div>
-      <div className="flex flex-1 flex-col gap-0.5 border-t-2 border-black p-2">
-        <span className="truncate text-xs font-bold" title={card.name}>
-          {card.name}
-        </span>
-        <span className="text-[10px] text-muted-text">
-          #{card.localId}
-          {card.rarity ? ` · ${card.rarity}` : ""}
-        </span>
-        <span className="mt-auto pt-1 text-xs font-black">
-          {shown ?? <span className="font-bold text-muted-text">No price</span>}
-        </span>
-        {variantLabel && <span className="text-[10px] text-muted-text">{variantLabel}</span>}
-      </div>
-    </div>
   );
 }

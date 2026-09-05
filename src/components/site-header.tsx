@@ -3,6 +3,10 @@ import { SITE_NAME } from "@/lib/site";
 
 const NAV_LINKS = [
   { href: "/tools/price-checker", label: "Price Checker" },
+  { href: "/cards", label: "Search Cards" },
+  // NOTE: this points at the 11 tracked cards, not at sets. /sets is the
+  // catalogue's own 218-set index and is arguably what this label promises —
+  // left as-is rather than repointed, since the destination is a product call.
   { href: "/collections/pokemon", label: "Browse Sets" },
   { href: "/tools/grading-calculator", label: "Grading" },
   { href: "/#movers", label: "Market Movers" },
