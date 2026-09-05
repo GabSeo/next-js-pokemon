@@ -111,7 +111,7 @@ function marketPrice(markets: ApitcgProduct["markets"]): number | undefined {
 
 async function resolveProduct(ref: CardRef): Promise<ApitcgProduct | undefined> {
   if (ref.lookup.by === "code") {
-    return findProductByCode(ref.tcg, ref.lookup.code, ref.lookup.variantTags);
+    return findProductByCode(ref.tcg, ref.lookup.code, ref.lookup.variantTags, ref.lookup.excludeTags);
   }
   return findProductByNameAndSet(
     ref.tcg,
@@ -135,7 +135,9 @@ async function resolveProduct(ref: CardRef): Promise<ApitcgProduct | undefined> 
  * apitcg below, since BerryWallet has no history endpoint on its free tier
  * (see lib/berrywallet.ts's file header).
  */
-async function resolveBerryWalletCard(ref: CardRef): Promise<{ card: BerryWalletCard; set: BerryWalletSet } | undefined> {
+async function resolveBerryWalletCard(
+  ref: CardRef
+): Promise<{ card: BerryWalletCard; set: BerryWalletSet; crossProduct?: boolean } | undefined> {
   if (ref.tcg !== "one-piece" || !ref.berryWalletEnabled || ref.lookup.by !== "code") return undefined;
   try {
     // knownSetCode turns the set search into a single getSetCards call
@@ -143,6 +145,7 @@ async function resolveBerryWalletCard(ref: CardRef): Promise<{ card: BerryWallet
     // CardRef.berryWalletSetCode (data/card-refs.ts) for what a miss cost
     // before this existed. Undefined is fine and stays the guess path.
     return await findCardInLanguage(ref.lookup.code, "en", ref.lookup.variantTags, {
+      excludeTags: ref.lookup.excludeTags,
       knownSetCode: ref.berryWalletSetCode?.en,
     });
   } catch (err) {
@@ -365,7 +368,13 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
         // own doc comment (lib/types.ts) for why this exists at all and why
         // `null` (a real print, confirmed no V-number) is kept distinct from
         // `undefined` (not resolved via BerryWallet here).
-        printVariantIndex: berryWalletVariantIndex(berryWalletMatch.card) ?? null,
+        // `null` when the match came from another product: the index is
+        // readable but belongs to that product's tiering, so aligning a
+        // Japanese lookup against it compares numbers from two different
+        // sets. null is already the documented "resolved, but no index worth
+        // aligning" value, so this needs no new state — see
+        // pickVariantForJapanese (lib/berrywallet.ts) for what it refuses.
+        printVariantIndex: berryWalletMatch.crossProduct ? null : (berryWalletVariantIndex(berryWalletMatch.card) ?? null),
       }
     : tcgdexCard
       ? {
@@ -678,6 +687,7 @@ async function resolveOnePieceJapaneseText(card: Card, ref: CardRef): Promise<Lo
     const knownEnglishVariant =
       card.printVariantIndex === undefined ? undefined : { index: card.printVariantIndex === null ? undefined : card.printVariantIndex };
     const match = await findCardInLanguage(ref.lookup.code, "jp", ref.lookup.variantTags, {
+      excludeTags: ref.lookup.excludeTags,
       knownEnglishVariant,
       // Unset on every ref today — see berryWalletSetCode's own comment on
       // why no Japanese code has been confirmed yet. The `-JP` prefix guess

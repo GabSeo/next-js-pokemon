@@ -38,6 +38,15 @@ is downstream of it:
   `ebayVariantTags` — for exactly that reason. See
   `docs/ebay-market-pipeline.md`.)
 
+- `excludeTags` rejects a candidate whose name contains any of them, even when
+  it satisfies every `variantTags`. Reach for it the moment one product's name
+  is a **prefix** of another's, because then no positive tag can separate them
+  and the winner is catalogue order. `OP05-119` has two such pairs —
+  `(Alternate Art)` inside `(Alternate Art) (Manga)`, and `(SP)` inside
+  `(SP) (Gold)` — and the plain tag measurably returned the EUR 8,000 Manga
+  instead of the EUR 283 card. It applies to BerryWallet and apitcg, **not** to
+  eBay, whose query is built from the positive tags only.
+
 For One Piece, *why* one code covers several products is worth understanding
 before you write the tags — see **How a One Piece card number is built** at
 the end of this document.

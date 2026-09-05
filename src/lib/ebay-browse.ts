@@ -643,6 +643,46 @@ async function runSearch(
   );
 
   const survivors = titlePassed
+    // A CARD SHIPPING FROM JAPAN IS A JAPANESE CARD. Universal, not a
+    // per-card guard, and not opt-in: no tier other than the Japanese one may
+    // contain a JP-located listing.
+    //
+    // This is the ship-from country (`itemLocation.country`), which is not
+    // literally the country of manufacture — Browse's search endpoint does
+    // not return `localizedAspects`, so the real "Country/Region of
+    // Manufacture" aspect would cost one getItem call per listing and is far
+    // outside this app's eBay budget. Ship-from is the strongest signal
+    // available for free, and it is strong in this DIRECTION specifically:
+    // a copy posted from Japan is overwhelmingly the Japanese print, while
+    // the converse says nothing at all.
+    //
+    // Which is exactly why EbayMarketGuard.excludeCountries was never enough
+    // on its own — measured on P-033, it caught 1 of 7 wrong-print listings
+    // because the other 6 were US-located resellers. That measurement is
+    // about what this rule MISSES, not about it being wrong. It is a floor,
+    // not a filter, and it complements the title check in titleMatchesCard
+    // (`japanese|jp`) rather than replacing it: one reads what the
+    // seller wrote, this reads where the parcel starts.
+    //
+    // The cost is a Japanese seller shipping a genuine English print, which
+    // this drops. Accepted: a wrong print in an English median misprices the
+    // card, a missing listing only thins the sample.
+    .filter((listing) => !(language !== "Japanese" && listing.location === "JP"))
+    // A CARD SHIPPING FROM CHINA IS DROPPED ON EVERY TIER. Not a language
+    // question — it is a different market, priced differently, and this site
+    // tracks none of it.
+    //
+    // The title check in titleMatchesCard already rejects titles that SAY
+    // "Chinese", and this is the same rule reaching the listings that do not
+    // say it. Both are needed: eBay's `Language` aspect is seller-declared
+    // and was measured letting a Chinese print through a Language:{Japanese}
+    // filter, so neither the aspect nor the title can be trusted alone.
+    //
+    // CN only, deliberately. HK and TW are also separate eBay markets and are
+    // NOT excluded here, because nothing has been measured about what they
+    // actually list for these cards — adding them would be a guess wearing
+    // the same clothes as this measured rule.
+    .filter((listing) => listing.location !== "CN")
     // Applied after titleMatchesCard so the warning below still reports the
     // title check honestly, and so a guard can never be blamed for a result
     // set that was already empty.

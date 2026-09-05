@@ -148,13 +148,21 @@ async function apitcgFetch<T>(path: string, revalidateSeconds: number): Promise<
 export async function findProductByCode(
   tcg: string,
   code: string,
-  variantTags?: string[]
+  variantTags?: string[],
+  /** See CodeLookup.excludeTags in data/card-refs.ts. Applied here too, or history attaches to the wrong print. */
+  excludeTags?: string[]
 ): Promise<ApitcgProduct | undefined> {
   const qs = new URLSearchParams({ tcg, type: "card", code, limit: "20" });
   const { data } = await apitcgFetch<ProductsResponse>(`/products?${qs}`, REVALIDATE_SECONDS);
   const candidates = data.filter((p) => p.code === code);
   if (variantTags && variantTags.length > 0) {
-    const tagged = candidates.find((p) => variantTags.every((tag) => p.name.toLowerCase().includes(tag.toLowerCase())));
+    const tagged = candidates.find((p) => {
+      const lower = p.name.toLowerCase();
+      return (
+        variantTags.every((tag) => lower.includes(tag.toLowerCase())) &&
+        !excludeTags?.some((tag) => lower.includes(tag.toLowerCase()))
+      );
+    });
     if (tagged) return tagged;
   }
   return candidates[0] ?? data[0];

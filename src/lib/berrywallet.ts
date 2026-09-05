@@ -385,9 +385,19 @@ export async function getSetCards(setCode: string, options?: { allPages?: boolea
  */
 const MAX_FALLBACK_SETS = 6;
 
-function pickVariantByTag(matches: BerryWalletCard[], variantTags?: string[]): BerryWalletCard | undefined {
+function matchesTags(name: string, variantTags: string[], excludeTags?: string[]): boolean {
+  const lower = name.toLowerCase();
+  if (!variantTags.every((tag) => lower.includes(tag.toLowerCase()))) return false;
+  return !excludeTags?.some((tag) => lower.includes(tag.toLowerCase()));
+}
+
+function pickVariantByTag(
+  matches: BerryWalletCard[],
+  variantTags?: string[],
+  excludeTags?: string[]
+): BerryWalletCard | undefined {
   if (!variantTags || variantTags.length === 0) return undefined;
-  return matches.find((c) => variantTags.every((tag) => c.name.toLowerCase().includes(tag.toLowerCase())));
+  return matches.find((c) => matchesTags(c.name, variantTags, excludeTags));
 }
 
 /**
@@ -478,6 +488,21 @@ function highestVariant(matches: BerryWalletCard[]): BerryWalletCard {
  * rows, so only the `name.includes(cardNumber)` half of the match in
  * findCardInLanguage can ever reach it.
  *
+ * EXTENDED 2026-09-05 to the case this was plainly written for and did not
+ * cover. The refusal used to fire only when the English index was
+ * UNPARSEABLE. It now also fires when the index is perfectly parseable but
+ * belongs to a different product — a cross-product English match, flagged by
+ * findCardInLanguage as `crossProduct` and turned into a null
+ * printVariantIndex by cards.ts.
+ *
+ * Measured on monkey-d-luffy-op05-119 and monkey-d-luffy-op01-024, both
+ * PRB-01 reprints: the English side resolves in The-Best at index 2, the
+ * guessed Japanese set is the ORIGIN set, and its index 2 is a different card
+ * entirely. OP05-119 paired a USD 215 English print with a EUR 171.50
+ * Japanese one; OP01-024 paired USD 73.23 with USD 240.03, 3.3x out. Both
+ * matched a NUMBER across two sets and called it a card, which is the same
+ * fabricated pairing described above wearing a parseable index.
+ *
  * Returns undefined — no guess at all — when the English side is a
  * confirmed promo product (findVariantAcrossProducts' own case: a real
  * match, just outside the normal V.1-V.4 tiering, so it has no parseable
@@ -536,11 +561,13 @@ function pickVariantForJapanese(matches: BerryWalletCard[], targetIndex: number 
  * a Japanese promo counterpart, if one even exists, stays unresolved rather
  * than guessed at from an unconfirmed assumption.
  */
-async function findVariantAcrossProducts(cardNumber: string, variantTags: string[]): Promise<BerryWalletCard | undefined> {
+async function findVariantAcrossProducts(
+  cardNumber: string,
+  variantTags: string[],
+  excludeTags?: string[]
+): Promise<BerryWalletCard | undefined> {
   const candidates = await searchCards(cardNumber, 50);
-  return candidates.find(
-    (c) => c.card_number === cardNumber && variantTags.every((tag) => c.name.toLowerCase().includes(tag.toLowerCase()))
-  );
+  return candidates.find((c) => c.card_number === cardNumber && matchesTags(c.name, variantTags, excludeTags));
 }
 
 /**
@@ -640,8 +667,10 @@ export async function findCardInLanguage(
      * everywhere else.
      */
     knownEnglishSetCode?: string;
+    /** See CodeLookup.excludeTags in data/card-refs.ts — the negative half of the variant match. */
+    excludeTags?: string[];
   }
-): Promise<{ card: BerryWalletCard; set: BerryWalletSet } | undefined> {
+): Promise<{ card: BerryWalletCard; set: BerryWalletSet; crossProduct?: boolean } | undefined> {
   const knownEnglishVariant = options?.knownEnglishVariant;
   const sets = await getSets(language);
   const guessedCodes = prefixCandidates(cardNumber, language);
@@ -678,7 +707,7 @@ export async function findCardInLanguage(
     if (matches.length === 0) continue;
 
     if (language === "en") {
-      const tagged = pickVariantByTag(matches, variantTags);
+      const tagged = pickVariantByTag(matches, variantTags, options?.excludeTags);
       if (tagged) return { card: tagged, set };
       // The guessed set has this card_number but not the requested variant
       // — check whether it's a separate promo product instead (see
@@ -687,8 +716,14 @@ export async function findCardInLanguage(
       // cross-product match too — it's the best real set label available;
       // a promo product carries no set of its own to report instead.
       if (variantTags && variantTags.length > 0) {
-        const crossProduct = await findVariantAcrossProducts(cardNumber, variantTags);
-        if (crossProduct) return { card: crossProduct, set };
+        const crossMatch = await findVariantAcrossProducts(cardNumber, variantTags, options?.excludeTags);
+        // `crossProduct: true` is load-bearing, not a diagnostic. This card
+        // came from a DIFFERENT product than `set`, so its (V.N) index counts
+        // within that other product's tiering and means nothing against this
+        // set's — see cards.ts, which turns the flag into a null
+        // printVariantIndex, and pickVariantForJapanese's own comment for
+        // what that then refuses.
+        if (crossMatch) return { card: crossMatch, set, crossProduct: true };
       }
       return { card: highestVariant(matches), set };
     }
@@ -703,6 +738,7 @@ export async function findCardInLanguage(
       try {
         const englishMatch = await findCardInLanguage(cardNumber, "en", variantTags, {
           knownSetCode: options?.knownEnglishSetCode,
+          excludeTags: options?.excludeTags,
         });
         if (englishMatch) {
           targetIndex = variantIndex(englishMatch.card);

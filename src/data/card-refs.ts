@@ -12,6 +12,40 @@ type CodeLookup = {
    * card, so a request naming two mutually-exclusive tags has to pick one.
    */
   variantTags?: string[];
+  /**
+   * The negative half of the variant match: a candidate is rejected if its
+   * name contains ANY of these, even when it satisfies every `variantTags`.
+   *
+   * Exists because `variantTags` is a positive substring AND-match, and that
+   * cannot express "this print, not the fancier one built on top of it".
+   * Whenever one product's name is a strict PREFIX of another's, every tag
+   * that selects the plain one also selects the decorated one, and which you
+   * actually get is catalogue order — a coin flip dressed as a lookup.
+   *
+   * Confirmed on OP05-119, where the collision appears twice in one card's
+   * family:
+   *
+   *   Monkey.D.Luffy (119) (Alternate Art)            EUR   283.80
+   *   Monkey.D.Luffy (119) (Alternate Art) (Manga)    EUR 8,000
+   *   Monkey.D.Luffy (119) (SP)                       EUR 7,500
+   *   Monkey.D.Luffy (119) (SP) (Gold)                EUR 4,500
+   *
+   * `variantTags: ["Alternate Art"]` measured live on 2026-09-05 returns the
+   * EUR 8,000 Manga — 28x the intended card, silently, with a complete and
+   * confident page around it. `excludeTags: ["Manga"]` is what makes the
+   * request say what it means.
+   *
+   * Applied everywhere the positive tags are: BerryWallet's pickVariantByTag
+   * and findVariantAcrossProducts, and apitcg's findProductByCode — that last
+   * one matters on its own, or identity resolves to one print and price
+   * HISTORY to another.
+   *
+   * NOT applied to eBay. graded-market.ts builds a search query out of the
+   * positive tags, and a negative has no query form; filtering eBay titles by
+   * exclusion is a separate change with its own evidence (see
+   * scripts/ebay-query-lab.mts).
+   */
+  excludeTags?: string[];
 };
 type NameSetLookup = { by: "nameSet"; name: string; setName: string; number: string };
 
@@ -482,5 +516,162 @@ export const cardRefs: CardRef[] = [
     // skips DON!! V.12. Backfill was requested from the upstream devs on
     // 2026-09-05. If it lands, this resolves by ordinary derivation and no pin
     // is needed; until then the panel states the absence, which is correct.
+  },
+  {
+    // The PRB-01 Alternate Art — "Premium Booster -The Best-", not the OP-05
+    // original. Both exist, both are legitimately "OP05-119", and a reprint
+    // keeps its original number (docs/adding-a-card.md), which is why this
+    // page's set line reads "Awakening of the New Era · OP05": that is where
+    // the identity began, and the resolver reports the set of origin. The
+    // Cardmarket block is the one that names the actual product —
+    // The-Best/MonkeyDLuffy-OP05-119-V2.
+    //
+    // OP05-119 is the widest family in this catalogue: 14 catalogued products
+    // on 2026-09-05, EUR 4.49 to EUR 7,500, across five Cardmarket sets. The
+    // two that matter here both call themselves Alternate Art:
+    //
+    //   Awakening-of-the-New-Era/-V2   "(119) (Alternate Art)"        USD 208.30
+    //   The-Best/-V2                   "(OP05-119) (Alternate Art)"   USD 215.13  <- this ref
+    //
+    // The tag carries the full "(OP05-119) (Alternate Art)" for exactly that
+    // reason. The bare "Alternate Art" matches both, and also matches the
+    // EUR 8,000 "(119) (Alternate Art) (Manga)" in the origin set — measured
+    // live, the bare tag returned the Manga. The parenthesised code is the
+    // only thing separating the two Alternate Arts, since the origin set names
+    // this card "(119)" while every reprint set names it "(OP05-119)".
+    //
+    // DO NOT "simplify" this tag. It looks like a needlessly literal string
+    // and it is the whole disambiguation.
+    //
+    // Two notes on the Japanese side, the first now FIXED in the resolver:
+    //
+    // 1. The JP toggle is inert, correctly. It used to resolve to
+    //    Awakening-of-the-New-Era-Japanese/-V2 (EUR 171.50) — the wrong card.
+    //    "(V.2)" is a PER-SET index, not an identifier: six OP05-119 products
+    //    carry the cardmarket product_name "(OP05-119) (V.2)" across five
+    //    sets, so aligning this card's English V.2 (which lives in The-Best)
+    //    against the guessed Japanese set matched an index, not a card.
+    //    findCardInLanguage now flags a cross-product English match and
+    //    pickVariantForJapanese refuses to align it — see both comments.
+    //    The real counterpart is The-Best-Non-English/MonkeyDLuffy-OP05-119,
+    //    confirmed by hand on cardmarket.com 2026-09-05, and no PRB set exists
+    //    in getSets("jp") to reach it — so a pin is the only way it will ever
+    //    carry figures, and nobody has decided those are worth asserting.
+    // 2. eBay pulls mostly Awakening listings; see ebayVariantTags' own
+    //    comment and scripts/ebay-query-lab.mts before picking a value.
+    // ALL THREE PRB-01 PRINTS SHARE THIS CODE, and sellers name them apart
+    // in a way BerryWallet's catalogue does not:
+    //
+    //   SEC Alt Art    <- this ref            "SEC Alt Art", "Alternate Art"
+    //   SEC (plain)                           "SEC ... Non Alt"
+    //   SEC Alt Manga                         "Manga Alt Art"
+    //
+    // Measured on the real page, PSA 10 / English, 2026-09-05:
+    //
+    //   (none) -> derived "Alternate Art"   raw 235/24  PSA10 325/28  1.4x  high
+    //             also matches the OP-05 original's listings — a different
+    //             product, and the reason the tier looked healthy.
+    //   ["PRB01"]                           raw 300/15  PSA10 148/14  0.5x
+    //             drops Awakening, admits the plain SEC and the Manga:
+    //             three products, USD 9 to USD 15,000, graded priced BELOW raw.
+    //   ["PRB01","alt"]                     raw 162/3   PSA10 651/5   4.0x  medium
+    //             one "Non Alt" survives, because titleMatchesCard ORs each
+    //             tag with its own FIRST WORD and "Non Alt" contains "alt".
+    //   ["PRB","alt"]     <- SHIPPED       raw 162/4   PSA10 651/5   4.0x  medium
+    //             same tier plus one more real raw listing. The stem matters:
+    //             the match is a plain substring, so "PRB01" silently rejects
+    //             every seller who writes "PRB-01" or "PRB 01", and plenty
+    //             do. "PRB" catches all three spellings and still excludes
+    //             every Awakening listing, none of which say PRB at all.
+    //   ["PRB01","alt","art"]               raw 162/3   PSA10 875/4   5.4x  medium
+    //             every remaining listing is a real SEC Alt Art — the only
+    //             perfectly clean tier, and NOT the one shipped. Adding "art"
+    //             also drops any seller who writes "SEC Alt" without "Art",
+    //             and at four listings the tier cannot afford it. Chosen
+    //             deliberately: one stale "Non Alt" in a wider sample beats a
+    //             spotless sample too thin to mean anything.
+    //
+    // NEVER write "alt art" as one tag. titleMatchesCard ORs each tag with its
+    // own FIRST WORD, so the two-word phrase degrades to "alt" and buys
+    // nothing — the words only do separate work as separate tags, which is
+    // exactly the option rejected above.
+    //
+    // Thin on purpose either way. Five graded listings scores "medium" where
+    // the derived tag scored "high", and that high was high on a sample of two
+    // different cards. A small honest tier beats a large mixed one.
+    //
+    // No `jp`: this ref's Japanese identity is itself the wrong product (note
+    // 1 above), so there is nothing yet to write Japanese eBay tags against.
+    ebayVariantTags: { en: ["PRB", "alt"] },
+    franchise: "one-piece",
+    tcg: "one-piece",
+    slug: "monkey-d-luffy-op05-119",
+    displayName: "Monkey D. Luffy",
+    character: "Monkey D. Luffy",
+    lookup: { by: "code", code: "OP05-119", variantTags: ["(OP05-119) (Alternate Art)"] },
+    // No berryWalletSetCode in either language: the prefix guess is right on
+    // both sides for once (OP05 / OP05-JP both exist and both resolve), which
+    // is the ordinary case this field exists to cover the exceptions to.
+    berryWalletEnabled: true,
+  },
+  {
+    // The PRB-01 Alternate Art — the same shape as monkey-d-luffy-op05-119
+    // above, one set earlier. Read that ref's comment for the reasoning; only
+    // what DIFFERS is recorded here.
+    //
+    // Five rows on 2026-09-05, and the naming convention is the same: the
+    // origin set calls this card "(024)", every reprint set calls it
+    // "(OP01-024)", so the parenthesised code is again the whole
+    // disambiguation.
+    //
+    //   The-Best/-V2             "(OP01-024) (Alternate Art)"  USD  73.23  <- this ref
+    //   Romance-Dawn/-V1         "(024)"                       USD   2.16
+    //   Romance-Dawn/-V2         "(024) (Parallel)"            USD 240.03
+    //   Romance-Dawn-Japanese/-V1  "(OP01-024) (V.1)"          USD   2.16
+    //   Romance-Dawn-Japanese/-V2  "(OP01-024) (V.2)"          USD 240.03
+    //
+    // No excludeTags needed, unlike OP05-119: this family has no name that is
+    // a strict prefix of another ("Parallel" shadows nothing), so the positive
+    // tag alone is unambiguous.
+    //
+    // THE CONTAMINANT HERE IS THE EXPENSIVE ONE, which inverts the risk. On
+    // OP05-119 the wrong prints were cheaper or level, so a mixed tier merely
+    // blurred. Here Romance-Dawn Parallel is USD 240.03 against this card's
+    // USD 73.23, so anything that fails to pin the tier to PRB overstates the
+    // card ~3x — and an overstated card reads as a find rather than a bug.
+    //
+    // Same Japanese absence as its OP05-119 sibling: PRB-01 holds exactly one
+    // OP01-024 row (this Western one) and there is no The-Best-Non-English row
+    // for this code at all, so no Japanese PRB product exists to derive or
+    // pin. The JP toggle is inert, which is the honest state — it used to
+    // align on the V.2 index and land on Romance-Dawn-Japanese, USD 240.03
+    // against this card's USD 73.23, 3.3x out. Refused at the resolver now
+    // (see pickVariantForJapanese), so this ref needs nothing for it.
+    franchise: "one-piece",
+    tcg: "one-piece",
+    slug: "monkey-d-luffy-op01-024",
+    displayName: "Monkey D. Luffy",
+    character: "Monkey D. Luffy",
+    lookup: { by: "code", code: "OP01-024", variantTags: ["(OP01-024) (Alternate Art)"] },
+    // NO ebayVariantTags, measured rather than assumed on 2026-09-05:
+    //
+    //   (none) -> derived "Alternate Art"   raw 80/12  PSA10 325/8  4.0x  medium
+    //             every listing a real PRB01 alt art, zero Parallels.
+    //   ["PRB","alt"]                       raw 80/5   PSA10 0
+    //
+    // The override that this card's OP05-119 sibling NEEDS is actively harmful
+    // here, and the reason is seller vocabulary, not logic: OP05-119's sellers
+    // write "Alt Art", OP01-024's write "Alternate Art". eBay tokenises the
+    // query, so the term "alt" does not match "Alternate" and the search
+    // starves before any filter runs.
+    //
+    // Which is why the derived default is right here and wrong there. The
+    // Romance-Dawn Parallel — the expensive contaminant this card had to fear
+    // — is titled "Parallel" by its sellers and never "Alternate Art", so the
+    // derived tag excludes it for free.
+    //
+    // Do not copy an ebayVariantTags value between cards on the grounds that
+    // they are the same print family. Measure it on the card.
+    berryWalletEnabled: true,
   },
 ];
