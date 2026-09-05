@@ -1,0 +1,340 @@
+{
+  "crawledAt": "2026-09-05T20:01:04.921Z",
+  "source": "https://api.tcgdex.net/v2/en",
+  "set": {
+    "id": "ru1",
+    "name": "Pokémon Rumble",
+    "serie": {
+      "id": "pl",
+      "name": "Platinum"
+    },
+    "releaseDate": "2009-12-02",
+    "abbreviation": {
+      "official": "RM"
+    },
+    "cardCount": {
+      "firstEd": 0,
+      "holo": 0,
+      "normal": 16,
+      "official": 16,
+      "reverse": 0,
+      "total": 16
+    },
+    "logo": "https://assets.tcgdex.net/en/pl/ru1/logo",
+    "symbol": "https://assets.tcgdex.net/univ/pl/ru1/symbol"
+  },
+  "cards": [
+    {
+      "tcgdexId": "ru1-1",
+      "localId": "1",
+      "name": "Venusaur",
+      "rarity": "None",
+      "category": "Pokemon",
+      "image": "https://assets.tcgdex.net/en/pl/ru1/1",
+      "cardmarketProductId": 278842,
+      "tcgplayerProductId": 90320,
+      "sourceUpdated": "2026-07-25T23:31:50+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278842,
+          "tcgplayerProductId": 90320
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ru1-2",
+      "localId": "2",
+      "name": "Cherrim",
+      "rarity": "None",
+      "category": "Pokemon",
+      "image": "https://assets.tcgdex.net/en/pl/ru1/2",
+      "cardmarketProductId": 278843,
+      "tcgplayerProductId": 84256,
+      "sourceUpdated": "2026-07-25T23:31:50+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278843,
+          "tcgplayerProductId": 84256
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ru1-3",
+      "localId": "3",
+      "name": "Ninetales",
+      "rarity": "None",
+      "category": "Pokemon",
+      "image": "https://assets.tcgdex.net/en/pl/ru1/3",
+      "sourceUpdated": "2026-07-25T23:31:50+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ru1-4",
+      "localId": "4",
+      "name": "Heatran",
+      "rarity": "None",
+      "category": "Pokemon",
+      "image": "https://assets.tcgdex.net/en/pl/ru1/4",
+      "sourceUpdated": "2026-07-25T23:31:50+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ru1-5",
+      "localId": "5",
+      "name": "Starmie",
+      "rarity": "None",
+      "category": "Pokemon",
+      "image": "https://assets.tcgdex.net/en/pl/ru1/5",
+      "cardmarketProductId": 278846,
+      "tcgplayerProductId": 87775,
+      "sourceUpdated": "2026-07-25T23:31:50+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278846,
+          "tcgplayerProductId": 87775
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ru1-6",
+      "localId": "6",
+      "name": "Gyarados",
+      "rarity": "None",
+      "category": "Pokemon",
+      "image": "https://assets.tcgdex.net/en/pl/ru1/6",
+      "cardmarketProductId": 278847,
+      "tcgplayerProductId": 87775,
+      "sourceUpdated": "2026-07-25T23:31:50+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278847,
+          "tcgplayerProductId": 87775
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ru1-7",
+      "localId": "7",
+      "name": "Pikachu",
+      "rarity": "None",
+      "category": "Pokemon",
+      "image": "https://assets.tcgdex.net/en/pl/ru1/7",
+      "cardmarketProductId": 278848,
+      "tcgplayerProductId": 88096,
+      "sourceUpdated": "2026-07-25T23:31:50+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278848,
+          "tcgplayerProductId": 88096
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ru1-8",
+      "localId": "8",
+      "name": "Zapdos",
+      "rarity": "None",
+      "category": "Pokemon",
+      "image": "https://assets.tcgdex.net/en/pl/ru1/8",
+      "cardmarketProductId": 278849,
+      "tcgplayerProductId": 90720,
+      "sourceUpdated": "2026-07-25T23:31:50+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278849,
+          "tcgplayerProductId": 90720
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ru1-9",
+      "localId": "9",
+      "name": "Mewtwo",
+      "rarity": "None",
+      "category": "Pokemon",
+      "image": "https://assets.tcgdex.net/en/pl/ru1/9",
+      "cardmarketProductId": 278850,
+      "tcgplayerProductId": 87423,
+      "sourceUpdated": "2026-07-25T23:31:50+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278850,
+          "tcgplayerProductId": 87423
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ru1-10",
+      "localId": "10",
+      "name": "Mew",
+      "rarity": "None",
+      "category": "Pokemon",
+      "image": "https://assets.tcgdex.net/en/pl/ru1/10",
+      "cardmarketProductId": 278850,
+      "tcgplayerProductId": 87404,
+      "sourceUpdated": "2026-07-25T23:31:50+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278850,
+          "tcgplayerProductId": 87404
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ru1-11",
+      "localId": "11",
+      "name": "Diglett",
+      "rarity": "None",
+      "category": "Pokemon",
+      "image": "https://assets.tcgdex.net/en/pl/ru1/11",
+      "cardmarketProductId": 278852,
+      "tcgplayerProductId": 84825,
+      "sourceUpdated": "2026-07-25T23:31:50+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278852,
+          "tcgplayerProductId": 84825
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ru1-12",
+      "localId": "12",
+      "name": "Lucario",
+      "rarity": "None",
+      "category": "Pokemon",
+      "image": "https://assets.tcgdex.net/en/pl/ru1/12",
+      "cardmarketProductId": 278853,
+      "tcgplayerProductId": 86879,
+      "sourceUpdated": "2026-07-25T23:31:50+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278853,
+          "tcgplayerProductId": 86879
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ru1-13",
+      "localId": "13",
+      "name": "Skuntank",
+      "rarity": "None",
+      "category": "Pokemon",
+      "image": "https://assets.tcgdex.net/en/pl/ru1/13",
+      "cardmarketProductId": 278854,
+      "tcgplayerProductId": 89281,
+      "sourceUpdated": "2026-07-25T23:31:50+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278854,
+          "tcgplayerProductId": 89281
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ru1-14",
+      "localId": "14",
+      "name": "Bastiodon",
+      "rarity": "None",
+      "category": "Pokemon",
+      "image": "https://assets.tcgdex.net/en/pl/ru1/14",
+      "cardmarketProductId": 278855,
+      "tcgplayerProductId": 83737,
+      "sourceUpdated": "2026-07-25T23:31:50+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278855,
+          "tcgplayerProductId": 83737
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ru1-15",
+      "localId": "15",
+      "name": "Rattata",
+      "rarity": "None",
+      "category": "Pokemon",
+      "image": "https://assets.tcgdex.net/en/pl/ru1/15",
+      "cardmarketProductId": 278856,
+      "tcgplayerProductId": 88620,
+      "sourceUpdated": "2026-07-25T23:31:50+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278856,
+          "tcgplayerProductId": 88620
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ru1-16",
+      "localId": "16",
+      "name": "Bibarel",
+      "rarity": "None",
+      "category": "Pokemon",
+      "image": "https://assets.tcgdex.net/en/pl/ru1/16",
+      "cardmarketProductId": 278857,
+      "tcgplayerProductId": 83820,
+      "sourceUpdated": "2026-07-25T23:31:50+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278857,
+          "tcgplayerProductId": 83820
+        }
+      ]
+    }
+  ]
+}

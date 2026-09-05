@@ -1,0 +1,587 @@
+{
+  "crawledAt": "2026-09-05T20:01:05.642Z",
+  "source": "https://api.tcgdex.net/v2/en",
+  "set": {
+    "id": "hgssp",
+    "name": "HGSS Black Star Promos",
+    "serie": {
+      "id": "hgss",
+      "name": "HeartGold & SoulSilver"
+    },
+    "releaseDate": "2010-02-11",
+    "cardCount": {
+      "firstEd": 0,
+      "holo": 26,
+      "normal": 7,
+      "official": 25,
+      "reverse": 0,
+      "total": 25
+    },
+    "logo": "https://assets.tcgdex.net/en/hgss/hgssp/logo",
+    "symbol": "https://assets.tcgdex.net/univ/hgss/hgssp/symbol"
+  },
+  "cards": [
+    {
+      "tcgdexId": "hgssp-HGSS01",
+      "localId": "HGSS01",
+      "name": "Ho-Oh",
+      "rarity": "Promo",
+      "category": "Pokemon",
+      "illustrator": "Takashi Yamaguchi",
+      "image": "https://assets.tcgdex.net/en/hgss/hgssp/HGSS01",
+      "cardmarketProductId": 275618,
+      "tcgplayerProductId": 86125,
+      "sourceUpdated": "2026-08-03T19:24:27+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275618,
+          "tcgplayerProductId": 86125
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgssp-HGSS02",
+      "localId": "HGSS02",
+      "name": "Lugia",
+      "rarity": "Promo",
+      "category": "Pokemon",
+      "illustrator": "Takashi Yamaguchi",
+      "image": "https://assets.tcgdex.net/en/hgss/hgssp/HGSS02",
+      "cardmarketProductId": 275611,
+      "tcgplayerProductId": 86909,
+      "sourceUpdated": "2026-08-03T19:24:27+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275611,
+          "tcgplayerProductId": 86909
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgssp-HGSS03",
+      "localId": "HGSS03",
+      "name": "Pikachu",
+      "rarity": "Promo",
+      "category": "Pokemon",
+      "illustrator": "Kanako Eo",
+      "image": "https://assets.tcgdex.net/en/hgss/hgssp/HGSS03",
+      "cardmarketProductId": 275610,
+      "tcgplayerProductId": 88098,
+      "sourceUpdated": "2026-08-03T19:24:27+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275610,
+          "tcgplayerProductId": 88098
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgssp-HGSS04",
+      "localId": "HGSS04",
+      "name": "Wobbuffet",
+      "rarity": "Promo",
+      "category": "Pokemon",
+      "illustrator": "match",
+      "image": "https://assets.tcgdex.net/en/hgss/hgssp/HGSS04",
+      "cardmarketProductId": 275609,
+      "tcgplayerProductId": 90622,
+      "sourceUpdated": "2026-08-19T20:52:03Z",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275609,
+          "tcgplayerProductId": 90622
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgssp-HGSS05",
+      "localId": "HGSS05",
+      "name": "Hoothoot",
+      "rarity": "Promo",
+      "category": "Pokemon",
+      "illustrator": "Masakazu Fukuda",
+      "image": "https://assets.tcgdex.net/en/hgss/hgssp/HGSS05",
+      "cardmarketProductId": 275607,
+      "tcgplayerProductId": 86174,
+      "sourceUpdated": "2026-08-03T19:24:27+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275607,
+          "tcgplayerProductId": 86174
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgssp-HGSS06",
+      "localId": "HGSS06",
+      "name": "Noctowl",
+      "rarity": "Promo",
+      "category": "Pokemon",
+      "illustrator": "Masakazu Fukuda",
+      "image": "https://assets.tcgdex.net/en/hgss/hgssp/HGSS06",
+      "cardmarketProductId": 275608,
+      "tcgplayerProductId": 87795,
+      "sourceUpdated": "2026-08-03T19:24:27+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275608,
+          "tcgplayerProductId": 87795
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgssp-HGSS07",
+      "localId": "HGSS07",
+      "name": "Feraligatr",
+      "rarity": "Promo",
+      "category": "Pokemon",
+      "illustrator": "Kent Kanetsuna",
+      "image": "https://assets.tcgdex.net/en/hgss/hgssp/HGSS07",
+      "cardmarketProductId": 275612,
+      "tcgplayerProductId": 85421,
+      "sourceUpdated": "2026-08-03T19:24:27+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275612,
+          "tcgplayerProductId": 85421
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgssp-HGSS08",
+      "localId": "HGSS08",
+      "name": "Meganium",
+      "rarity": "Promo",
+      "category": "Pokemon",
+      "illustrator": "Noriko Hotta",
+      "image": "https://assets.tcgdex.net/en/hgss/hgssp/HGSS08",
+      "cardmarketProductId": 275613,
+      "tcgplayerProductId": 87295,
+      "sourceUpdated": "2026-08-19T20:52:03Z",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275613,
+          "tcgplayerProductId": 87295
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgssp-HGSS09",
+      "localId": "HGSS09",
+      "name": "Typhlosion",
+      "rarity": "Promo",
+      "category": "Pokemon",
+      "illustrator": "Wataru Kawahara",
+      "image": "https://assets.tcgdex.net/en/hgss/hgssp/HGSS09",
+      "cardmarketProductId": 275617,
+      "tcgplayerProductId": 90108,
+      "sourceUpdated": "2026-08-03T19:24:27+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275617,
+          "tcgplayerProductId": 90108
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgssp-HGSS10",
+      "localId": "HGSS10",
+      "name": "Latias",
+      "rarity": "Promo",
+      "category": "Pokemon",
+      "illustrator": "Wataru Kawahara",
+      "image": "https://assets.tcgdex.net/en/hgss/hgssp/HGSS10",
+      "cardmarketProductId": 275616,
+      "tcgplayerProductId": 97705,
+      "sourceUpdated": "2026-08-03T19:24:27+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "2u8sopmue8qbejpv32t9ow7ic",
+          "cardmarketProductId": 275616,
+          "tcgplayerProductId": 97705
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "5zs5af49g93yryvw1ftj",
+          "tcgplayerProductId": 86653
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgssp-HGSS11",
+      "localId": "HGSS11",
+      "name": "Latios",
+      "rarity": "Promo",
+      "category": "Pokemon",
+      "illustrator": "Wataru Kawahara",
+      "image": "https://assets.tcgdex.net/en/hgss/hgssp/HGSS11",
+      "cardmarketProductId": 275615,
+      "tcgplayerProductId": 97706,
+      "sourceUpdated": "2026-08-03T19:24:27+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "2u8sopmue8qbejpv32t9ow7ic",
+          "cardmarketProductId": 275615,
+          "tcgplayerProductId": 97706
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "5zs5af49g93yryvw1ftj",
+          "tcgplayerProductId": 86667
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgssp-HGSS12",
+      "localId": "HGSS12",
+      "name": "Cleffa",
+      "rarity": "Promo",
+      "category": "Pokemon",
+      "illustrator": "Masakazu Fukuda",
+      "image": "https://assets.tcgdex.net/en/hgss/hgssp/HGSS12",
+      "cardmarketProductId": 275614,
+      "tcgplayerProductId": 84368,
+      "sourceUpdated": "2026-08-19T20:52:03Z",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275614,
+          "tcgplayerProductId": 84368
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgssp-HGSS13",
+      "localId": "HGSS13",
+      "name": "Smoochum",
+      "rarity": "Promo",
+      "category": "Pokemon",
+      "illustrator": "Midori Harada",
+      "image": "https://assets.tcgdex.net/en/hgss/hgssp/HGSS13",
+      "cardmarketProductId": 275606,
+      "tcgplayerProductId": 89364,
+      "sourceUpdated": "2026-08-03T19:24:27+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275606,
+          "tcgplayerProductId": 89364
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgssp-HGSS14",
+      "localId": "HGSS14",
+      "name": "Lapras",
+      "rarity": "Promo",
+      "category": "Pokemon",
+      "illustrator": "Masakazu Fukuda",
+      "image": "https://assets.tcgdex.net/en/hgss/hgssp/HGSS14",
+      "cardmarketProductId": 275605,
+      "tcgplayerProductId": 86621,
+      "sourceUpdated": "2026-08-03T19:24:27+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275605,
+          "tcgplayerProductId": 86621
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgssp-HGSS15",
+      "localId": "HGSS15",
+      "name": "Shuckle",
+      "rarity": "Promo",
+      "category": "Pokemon",
+      "illustrator": "match",
+      "image": "https://assets.tcgdex.net/en/hgss/hgssp/HGSS15",
+      "cardmarketProductId": 275598,
+      "tcgplayerProductId": 89193,
+      "sourceUpdated": "2026-08-03T19:24:27+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275598,
+          "tcgplayerProductId": 89193
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgssp-HGSS16",
+      "localId": "HGSS16",
+      "name": "Plusle",
+      "rarity": "Promo",
+      "category": "Pokemon",
+      "illustrator": "Kouki Saitou",
+      "image": "https://assets.tcgdex.net/en/hgss/hgssp/HGSS16",
+      "cardmarketProductId": 275597,
+      "tcgplayerProductId": 88172,
+      "sourceUpdated": "2026-08-03T19:24:27+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275597,
+          "tcgplayerProductId": 88172
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgssp-HGSS17",
+      "localId": "HGSS17",
+      "name": "Minun",
+      "rarity": "Promo",
+      "category": "Pokemon",
+      "illustrator": "Kouki Saitou",
+      "cardmarketProductId": 275596,
+      "tcgplayerProductId": 87492,
+      "sourceUpdated": "2026-08-19T20:52:03Z",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275596,
+          "tcgplayerProductId": 87492
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgssp-HGSS18",
+      "localId": "HGSS18",
+      "name": "Tropical Tidal Wave",
+      "rarity": "Promo",
+      "category": "Trainer",
+      "illustrator": "Sumiyoshi Kizuki",
+      "cardmarketProductId": 275594,
+      "sourceUpdated": "2026-08-03T19:24:27+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g538et3q356al094mt5nd",
+          "cardmarketProductId": 275594,
+          "tcgplayerProductId": 90052
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "15i9grynje65aa1e83ryxy8ize5tmacb",
+          "tcgplayerProductId": 97703
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "qi4g3e7u0mc9fnp7kl6nachts7ttk3fk8d"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "80gdqxre91cmg2fih26kzh9dhkxgmyfbgb2vztyoz2",
+          "tcgplayerProductId": 97701
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "cjr38ywaj8xwi0ydrwvrslxpbsutcinst1q4e8e",
+          "tcgplayerProductId": 97702
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "gx8bq2hegwv129n5tu9ke7s7kgk9m4cwgxncv",
+          "tcgplayerProductId": 97700
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "at0bsq1t2l5u5t9hxbggz3u52zobmg2fzn8l11v6",
+          "tcgplayerProductId": 97699
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgssp-HGSS19",
+      "localId": "HGSS19",
+      "name": "Raikou",
+      "rarity": "Promo",
+      "category": "Pokemon",
+      "illustrator": "Noriko Hotta",
+      "cardmarketProductId": 275595,
+      "tcgplayerProductId": 88535,
+      "sourceUpdated": "2026-08-03T19:24:27+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275595,
+          "tcgplayerProductId": 88535
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgssp-HGSS20",
+      "localId": "HGSS20",
+      "name": "Entei",
+      "rarity": "Promo",
+      "category": "Pokemon",
+      "illustrator": "Yuri Umemura",
+      "cardmarketProductId": 275599,
+      "tcgplayerProductId": 85273,
+      "sourceUpdated": "2026-08-03T19:24:27+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275599,
+          "tcgplayerProductId": 85273
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgssp-HGSS21",
+      "localId": "HGSS21",
+      "name": "Suicune",
+      "rarity": "Promo",
+      "category": "Pokemon",
+      "illustrator": "Hideaki Hakozaki",
+      "cardmarketProductId": 275600,
+      "tcgplayerProductId": 89605,
+      "sourceUpdated": "2026-08-03T19:24:27+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275600,
+          "tcgplayerProductId": 89605
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgssp-HGSS22",
+      "localId": "HGSS22",
+      "name": "Porygon",
+      "rarity": "Promo",
+      "category": "Pokemon",
+      "illustrator": "TOKIYA",
+      "cardmarketProductId": 275604,
+      "tcgplayerProductId": 88313,
+      "sourceUpdated": "2026-08-03T19:24:27+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275604,
+          "tcgplayerProductId": 88313
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgssp-HGSS23",
+      "localId": "HGSS23",
+      "name": "Porygon2",
+      "rarity": "Promo",
+      "category": "Pokemon",
+      "illustrator": "TOKIYA",
+      "cardmarketProductId": 275603,
+      "tcgplayerProductId": 88328,
+      "sourceUpdated": "2026-08-03T19:24:27+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275603,
+          "tcgplayerProductId": 88328
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgssp-HGSS24",
+      "localId": "HGSS24",
+      "name": "Hitmonchan",
+      "rarity": "Promo",
+      "category": "Pokemon",
+      "illustrator": "Kouki Saitou",
+      "cardmarketProductId": 275602,
+      "tcgplayerProductId": 86097,
+      "sourceUpdated": "2026-08-03T19:24:27+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275602,
+          "tcgplayerProductId": 86097
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgssp-HGSS25",
+      "localId": "HGSS25",
+      "name": "Hitmonlee",
+      "rarity": "Promo",
+      "category": "Pokemon",
+      "illustrator": "Kouki Saitou",
+      "cardmarketProductId": 275601,
+      "tcgplayerProductId": 86109,
+      "sourceUpdated": "2026-08-03T19:24:27+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275601,
+          "tcgplayerProductId": 86109
+        }
+      ]
+    }
+  ]
+}

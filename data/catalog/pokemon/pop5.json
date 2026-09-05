@@ -1,0 +1,423 @@
+{
+  "crawledAt": "2026-09-05T20:00:58.343Z",
+  "source": "https://api.tcgdex.net/v2/en",
+  "set": {
+    "id": "pop5",
+    "name": "POP Series 5",
+    "serie": {
+      "id": "pop",
+      "name": "POP"
+    },
+    "releaseDate": "2007-03-01",
+    "abbreviation": {
+      "official": "P5"
+    },
+    "cardCount": {
+      "firstEd": 0,
+      "holo": 7,
+      "normal": 17,
+      "official": 17,
+      "reverse": 0,
+      "total": 17
+    },
+    "logo": "https://assets.tcgdex.net/en/pop/pop5/logo",
+    "symbol": "https://assets.tcgdex.net/univ/pop/pop5/symbol"
+  },
+  "cards": [
+    {
+      "tcgdexId": "pop5-1",
+      "localId": "1",
+      "name": "Ho-Oh",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Mitsuhiro Arita",
+      "image": "https://assets.tcgdex.net/en/pop/pop5/1",
+      "cardmarketProductId": 277483,
+      "tcgplayerProductId": 86123,
+      "sourceUpdated": "2026-07-24T18:42:52+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 277483,
+          "tcgplayerProductId": 86123
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 277483,
+          "tcgplayerProductId": 86123
+        }
+      ]
+    },
+    {
+      "tcgdexId": "pop5-2",
+      "localId": "2",
+      "name": "Lugia",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Mitsuhiro Arita",
+      "image": "https://assets.tcgdex.net/en/pop/pop5/2",
+      "cardmarketProductId": 277484,
+      "tcgplayerProductId": 86907,
+      "sourceUpdated": "2026-07-24T18:42:52+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 277484,
+          "tcgplayerProductId": 86907
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 277484,
+          "tcgplayerProductId": 86907
+        }
+      ]
+    },
+    {
+      "tcgdexId": "pop5-3",
+      "localId": "3",
+      "name": "Mew δ",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Masakazu Fukuda",
+      "image": "https://assets.tcgdex.net/en/pop/pop5/3",
+      "cardmarketProductId": 277485,
+      "tcgplayerProductId": 87407,
+      "sourceUpdated": "2026-07-24T18:42:52+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 277485,
+          "tcgplayerProductId": 87407
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 277485,
+          "tcgplayerProductId": 87407
+        }
+      ]
+    },
+    {
+      "tcgdexId": "pop5-4",
+      "localId": "4",
+      "name": "Double Rainbow Energy",
+      "rarity": "Rare",
+      "category": "Energy",
+      "illustrator": "Takumi Akabane",
+      "image": "https://assets.tcgdex.net/en/pop/pop5/4",
+      "cardmarketProductId": 277486,
+      "tcgplayerProductId": 84894,
+      "sourceUpdated": "2026-08-20T01:02:25Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 277486,
+          "tcgplayerProductId": 84894
+        }
+      ]
+    },
+    {
+      "tcgdexId": "pop5-5",
+      "localId": "5",
+      "name": "Charmeleon δ",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Mitsuhiro Arita",
+      "image": "https://assets.tcgdex.net/en/pop/pop5/5",
+      "cardmarketProductId": 277487,
+      "tcgplayerProductId": 84237,
+      "sourceUpdated": "2026-08-20T01:02:25Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 277487,
+          "tcgplayerProductId": 84237
+        }
+      ]
+    },
+    {
+      "tcgdexId": "pop5-6",
+      "localId": "6",
+      "name": "Bill's Maintenance",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/pop/pop5/6",
+      "tcgplayerProductId": 83840,
+      "sourceUpdated": "2026-08-20T01:02:25Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83840
+        }
+      ]
+    },
+    {
+      "tcgdexId": "pop5-7",
+      "localId": "7",
+      "name": "Rare Candy",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Ryo Ueda",
+      "image": "https://assets.tcgdex.net/en/pop/pop5/7",
+      "cardmarketProductId": 277489,
+      "tcgplayerProductId": 88592,
+      "sourceUpdated": "2026-08-20T01:02:25Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 277489,
+          "tcgplayerProductId": 88592
+        }
+      ]
+    },
+    {
+      "tcgdexId": "pop5-8",
+      "localId": "8",
+      "name": "Boost Energy",
+      "rarity": "Uncommon",
+      "category": "Energy",
+      "illustrator": "Shin-ichi Yoshikawa",
+      "image": "https://assets.tcgdex.net/en/pop/pop5/8",
+      "cardmarketProductId": 277490,
+      "tcgplayerProductId": 83941,
+      "sourceUpdated": "2026-08-20T01:02:25Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 277490,
+          "tcgplayerProductId": 83941
+        }
+      ]
+    },
+    {
+      "tcgdexId": "pop5-9",
+      "localId": "9",
+      "name": "δ Rainbow Energy",
+      "rarity": "Uncommon",
+      "category": "Energy",
+      "illustrator": "Takumi Akabane",
+      "image": "https://assets.tcgdex.net/en/pop/pop5/9",
+      "tcgplayerProductId": 84756,
+      "sourceUpdated": "2026-08-20T01:02:25Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 84756
+        }
+      ]
+    },
+    {
+      "tcgdexId": "pop5-10",
+      "localId": "10",
+      "name": "Charmander δ",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Mitsuhiro Arita",
+      "image": "https://assets.tcgdex.net/en/pop/pop5/10",
+      "cardmarketProductId": 277492,
+      "tcgplayerProductId": 84221,
+      "sourceUpdated": "2026-08-20T01:02:25Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 277492,
+          "tcgplayerProductId": 84221
+        }
+      ]
+    },
+    {
+      "tcgdexId": "pop5-11",
+      "localId": "11",
+      "name": "Meowth δ",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Mitsuhiro Arita",
+      "image": "https://assets.tcgdex.net/en/pop/pop5/11",
+      "cardmarketProductId": 277493,
+      "tcgplayerProductId": 87330,
+      "sourceUpdated": "2026-08-20T01:02:25Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 277493,
+          "tcgplayerProductId": 87330
+        }
+      ]
+    },
+    {
+      "tcgdexId": "pop5-12",
+      "localId": "12",
+      "name": "Pikachu",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Naoyo Kimura",
+      "image": "https://assets.tcgdex.net/en/pop/pop5/12",
+      "cardmarketProductId": 277494,
+      "tcgplayerProductId": 88085,
+      "sourceUpdated": "2026-07-24T18:42:52+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 277494,
+          "tcgplayerProductId": 88085
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 277494,
+          "tcgplayerProductId": 88085
+        }
+      ]
+    },
+    {
+      "tcgdexId": "pop5-13",
+      "localId": "13",
+      "name": "Pikachu δ",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ryo Ueda",
+      "image": "https://assets.tcgdex.net/en/pop/pop5/13",
+      "cardmarketProductId": 277495,
+      "tcgplayerProductId": 88110,
+      "sourceUpdated": "2026-07-24T18:42:52+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 277495,
+          "tcgplayerProductId": 88110
+        }
+      ]
+    },
+    {
+      "tcgdexId": "pop5-14",
+      "localId": "14",
+      "name": "Pelipper δ",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Mitsuhiro Arita",
+      "image": "https://assets.tcgdex.net/en/pop/pop5/14",
+      "cardmarketProductId": 277496,
+      "tcgplayerProductId": 87981,
+      "sourceUpdated": "2026-08-20T01:02:25Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 277496,
+          "tcgplayerProductId": 87981
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 277496,
+          "tcgplayerProductId": 87981
+        }
+      ]
+    },
+    {
+      "tcgdexId": "pop5-15",
+      "localId": "15",
+      "name": "Zangoose δ",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Kouki Saitou",
+      "image": "https://assets.tcgdex.net/en/pop/pop5/15",
+      "cardmarketProductId": 277497,
+      "tcgplayerProductId": 90709,
+      "sourceUpdated": "2026-07-24T18:42:52+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 277497,
+          "tcgplayerProductId": 90709
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 277497,
+          "tcgplayerProductId": 90709
+        }
+      ]
+    },
+    {
+      "tcgdexId": "pop5-16",
+      "localId": "16",
+      "name": "Espeon ★",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Masakazu Fukuda",
+      "image": "https://assets.tcgdex.net/en/pop/pop5/16",
+      "sourceUpdated": "2026-07-24T18:42:52+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 85329
+        }
+      ]
+    },
+    {
+      "tcgdexId": "pop5-17",
+      "localId": "17",
+      "name": "Umbreon ★",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Masakazu Fukuda",
+      "image": "https://assets.tcgdex.net/en/pop/pop5/17",
+      "sourceUpdated": "2026-07-24T18:42:52+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 90153
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "tcgplayerProductId": 90153
+        }
+      ]
+    }
+  ]
+}

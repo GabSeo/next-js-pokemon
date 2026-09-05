@@ -157,18 +157,36 @@ export type TcgdexTcgplayerVariantPrice = {
  * "reverseHolofoil", "1stEditionHolofoil", ...) alongside two fixed
  * metadata fields (`unit`, `updated`) — which variant keys exist depends on
  * how the card was actually printed, so this is a dynamic index rather than
- * a fixed set of named fields. `pricing.cardmarket` (EUR-denominated) is
- * deliberately left untyped/unused here: this site is USD-only throughout
- * (see Card["currency"] in lib/types.ts), and converting EUR to USD would
- * mean showing a number derived from a floating exchange rate as if it were
- * a real market price — not worth the accuracy risk apitcg.ts's own
- * comments are so careful about elsewhere.
+ * a fixed set of named fields.
+ *
+ * `pricing.cardmarket` was previously left untyped and unused, on the
+ * reasoning that this site was USD-only and converting EUR would mean showing
+ * a figure derived from a floating exchange rate as if it were a real market
+ * price. The second half of that still stands and is now enforced site-wide
+ * ("NO CONVERSION, EVER", lib/market-views.ts) — but the first half no longer
+ * holds: the EU tab renders Cardmarket's own EUR natively beside the USD tabs,
+ * and each view carries its own currency. So the block is typed now, and read
+ * by lib/catalog-prices.ts.
+ *
+ * Its shape is a flat bag of stats rather than named fields for a measured
+ * reason: each of `avg` / `low` / `trend` / `avg1` / `avg7` / `avg30` has a
+ * `-holo`-suffixed twin carrying the REVERSE-HOLO printing's figure, and which
+ * of the two a caller wants depends on the card's own variant list. See
+ * `cardmarketPriceFields` (lib/catalog.ts) for that rule and the measurement
+ * behind it — the suffix does not mean what it looks like it means.
  */
 export type TcgdexPricing = {
   tcgplayer?: {
     unit?: string;
     updated?: string;
     [variant: string]: TcgdexTcgplayerVariantPrice | string | undefined;
+  };
+  cardmarket?: {
+    unit?: string;
+    updated?: string;
+    idProduct?: number;
+    /** Explicit `null` is sent for a stat Cardmarket has no data for yet — normalise before use. */
+    [stat: string]: number | string | null | undefined;
   };
 };
 

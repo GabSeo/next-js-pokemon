@@ -1,0 +1,615 @@
+{
+  "crawledAt": "2026-09-05T20:01:05.766Z",
+  "source": "https://api.tcgdex.net/v2/en",
+  "set": {
+    "id": "tk-hs-r",
+    "name": "HS trainer Kit (Raichu)",
+    "serie": {
+      "id": "tk",
+      "name": "Trainer kits"
+    },
+    "releaseDate": "2010-05-01",
+    "abbreviation": {
+      "official": "TK4R"
+    },
+    "cardCount": {
+      "firstEd": 0,
+      "holo": 1,
+      "normal": 29,
+      "official": 30,
+      "reverse": 0,
+      "total": 30
+    },
+    "symbol": "https://assets.tcgdex.net/univ/tk/tk-hs-r/symbol"
+  },
+  "cards": [
+    {
+      "tcgdexId": "tk-hs-r-1",
+      "localId": "1",
+      "name": "Moomoo Milk",
+      "rarity": "None",
+      "category": "Trainer",
+      "illustrator": "Noriko Hotta",
+      "cardmarketProductId": 279125,
+      "tcgplayerProductId": 87577,
+      "sourceUpdated": "2026-08-27T17:17:00+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279125,
+          "tcgplayerProductId": 87577
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-hs-r-2",
+      "localId": "2",
+      "name": "Pikachu",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "match",
+      "cardmarketProductId": 279098,
+      "tcgplayerProductId": 88099,
+      "sourceUpdated": "2026-08-27T17:17:00+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279098,
+          "tcgplayerProductId": 88099
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-hs-r-3",
+      "localId": "3",
+      "name": "Flaaffy",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Masakazu Fukuda",
+      "cardmarketProductId": 279119,
+      "tcgplayerProductId": 85483,
+      "sourceUpdated": "2026-08-27T17:17:00+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279119,
+          "tcgplayerProductId": 85483
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-hs-r-4",
+      "localId": "4",
+      "name": "Meowth",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Kagemaru Himeno",
+      "cardmarketProductId": 279113,
+      "tcgplayerProductId": 87323,
+      "sourceUpdated": "2026-08-27T17:17:00+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279113,
+          "tcgplayerProductId": 87323
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-hs-r-5",
+      "localId": "5",
+      "name": "Lightning Energy",
+      "rarity": "None",
+      "category": "Energy",
+      "cardmarketProductId": 279112,
+      "tcgplayerProductId": 86769,
+      "sourceUpdated": "2026-08-27T17:17:00+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279112,
+          "tcgplayerProductId": 86769
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-hs-r-6",
+      "localId": "6",
+      "name": "Lightning Energy",
+      "rarity": "None",
+      "category": "Energy",
+      "cardmarketProductId": 279114,
+      "tcgplayerProductId": 86770,
+      "sourceUpdated": "2026-08-27T17:17:00+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279114,
+          "tcgplayerProductId": 86770
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-hs-r-7",
+      "localId": "7",
+      "name": "Lightning Energy",
+      "rarity": "None",
+      "category": "Energy",
+      "cardmarketProductId": 279115,
+      "tcgplayerProductId": 86771,
+      "sourceUpdated": "2026-08-27T17:17:00+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279115,
+          "tcgplayerProductId": 86771
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-hs-r-8",
+      "localId": "8",
+      "name": "Lightning Energy",
+      "rarity": "None",
+      "category": "Energy",
+      "cardmarketProductId": 279117,
+      "tcgplayerProductId": 86772,
+      "sourceUpdated": "2026-08-27T17:17:00+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279117,
+          "tcgplayerProductId": 86772
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-hs-r-9",
+      "localId": "9",
+      "name": "Lightning Energy",
+      "rarity": "None",
+      "category": "Energy",
+      "cardmarketProductId": 279116,
+      "tcgplayerProductId": 86773,
+      "sourceUpdated": "2026-08-27T17:17:00+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279116,
+          "tcgplayerProductId": 86773
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-hs-r-10",
+      "localId": "10",
+      "name": "Lightning Energy",
+      "rarity": "None",
+      "category": "Energy",
+      "cardmarketProductId": 279105,
+      "tcgplayerProductId": 86774,
+      "sourceUpdated": "2026-08-27T17:17:00+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279105,
+          "tcgplayerProductId": 86774
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-hs-r-11",
+      "localId": "11",
+      "name": "Lightning Energy",
+      "rarity": "None",
+      "category": "Energy",
+      "cardmarketProductId": 279104,
+      "tcgplayerProductId": 86775,
+      "sourceUpdated": "2026-08-27T17:17:00+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279104,
+          "tcgplayerProductId": 86775
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-hs-r-12",
+      "localId": "12",
+      "name": "Meowth",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Kagemaru Himeno",
+      "cardmarketProductId": 279106,
+      "tcgplayerProductId": 87324,
+      "sourceUpdated": "2026-08-27T17:17:00+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279106,
+          "tcgplayerProductId": 87324
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-hs-r-13",
+      "localId": "13",
+      "name": "Mareep",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Masakazu Fukuda",
+      "cardmarketProductId": 279107,
+      "tcgplayerProductId": 87205,
+      "sourceUpdated": "2026-08-27T17:17:00+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279107,
+          "tcgplayerProductId": 87205
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-hs-r-14",
+      "localId": "14",
+      "name": "Lightning Energy",
+      "rarity": "None",
+      "category": "Energy",
+      "cardmarketProductId": 279109,
+      "tcgplayerProductId": 86776,
+      "sourceUpdated": "2026-08-27T17:17:00+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279109,
+          "tcgplayerProductId": 86776
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-hs-r-15",
+      "localId": "15",
+      "name": "Lightning Energy",
+      "rarity": "None",
+      "category": "Energy",
+      "cardmarketProductId": 279108,
+      "tcgplayerProductId": 86777,
+      "sourceUpdated": "2026-08-27T17:17:00+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279108,
+          "tcgplayerProductId": 86777
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-hs-r-16",
+      "localId": "16",
+      "name": "Pikachu",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "match",
+      "cardmarketProductId": 279103,
+      "tcgplayerProductId": 88100,
+      "sourceUpdated": "2026-08-27T17:17:00+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279103,
+          "tcgplayerProductId": 88100
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-hs-r-17",
+      "localId": "17",
+      "name": "Flaaffy",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Masakazu Fukuda",
+      "cardmarketProductId": 279102,
+      "tcgplayerProductId": 85484,
+      "sourceUpdated": "2026-08-27T17:17:00+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279102,
+          "tcgplayerProductId": 85484
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-hs-r-18",
+      "localId": "18",
+      "name": "Lightning Energy",
+      "rarity": "None",
+      "category": "Energy",
+      "cardmarketProductId": 279097,
+      "tcgplayerProductId": 86778,
+      "sourceUpdated": "2026-08-27T17:17:00+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279097,
+          "tcgplayerProductId": 86778
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-hs-r-19",
+      "localId": "19",
+      "name": "Raichu",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "match",
+      "cardmarketProductId": 279096,
+      "tcgplayerProductId": 88520,
+      "sourceUpdated": "2026-08-27T17:17:00+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279096,
+          "tcgplayerProductId": 88520
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-hs-r-20",
+      "localId": "20",
+      "name": "Mareep",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Masakazu Fukuda",
+      "cardmarketProductId": 279099,
+      "tcgplayerProductId": 87206,
+      "sourceUpdated": "2026-08-27T17:17:00+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279099,
+          "tcgplayerProductId": 87206
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-hs-r-21",
+      "localId": "21",
+      "name": "Copycat",
+      "rarity": "None",
+      "category": "Trainer",
+      "illustrator": "Kanako Eo",
+      "cardmarketProductId": 279101,
+      "tcgplayerProductId": 84427,
+      "sourceUpdated": "2026-08-27T17:17:00+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279101,
+          "tcgplayerProductId": 84427
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-hs-r-22",
+      "localId": "22",
+      "name": "Pokémon Collector",
+      "rarity": "None",
+      "category": "Trainer",
+      "illustrator": "Masakazu Fukuda",
+      "cardmarketProductId": 279100,
+      "tcgplayerProductId": 88218,
+      "sourceUpdated": "2026-08-27T17:17:00+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279100,
+          "tcgplayerProductId": 88218
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-hs-r-23",
+      "localId": "23",
+      "name": "Lightning Energy",
+      "rarity": "None",
+      "category": "Energy",
+      "cardmarketProductId": 279110,
+      "tcgplayerProductId": 86779,
+      "sourceUpdated": "2026-08-27T17:17:00+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279110,
+          "tcgplayerProductId": 86779
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-hs-r-24",
+      "localId": "24",
+      "name": "Switch",
+      "rarity": "None",
+      "category": "Trainer",
+      "illustrator": "Hideaki Hakozaki",
+      "cardmarketProductId": 279111,
+      "tcgplayerProductId": 89720,
+      "sourceUpdated": "2026-08-27T17:17:00+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279111,
+          "tcgplayerProductId": 89720
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-hs-r-25",
+      "localId": "25",
+      "name": "Poké Ball",
+      "rarity": "None",
+      "category": "Trainer",
+      "illustrator": "Hideaki Hakozaki",
+      "cardmarketProductId": 279121,
+      "tcgplayerProductId": 88191,
+      "sourceUpdated": "2026-08-27T17:17:00+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279121,
+          "tcgplayerProductId": 88191
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-hs-r-26",
+      "localId": "26",
+      "name": "Moomoo Milk",
+      "rarity": "None",
+      "category": "Trainer",
+      "illustrator": "Noriko Hotta",
+      "cardmarketProductId": 279120,
+      "tcgplayerProductId": 87578,
+      "sourceUpdated": "2026-08-27T17:17:00+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279120,
+          "tcgplayerProductId": 87578
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-hs-r-27",
+      "localId": "27",
+      "name": "Pokémon Collector",
+      "rarity": "None",
+      "category": "Trainer",
+      "illustrator": "Masakazu Fukuda",
+      "cardmarketProductId": 279122,
+      "tcgplayerProductId": 88219,
+      "sourceUpdated": "2026-08-27T17:17:00+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279122,
+          "tcgplayerProductId": 88219
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-hs-r-28",
+      "localId": "28",
+      "name": "Lightning Energy",
+      "rarity": "None",
+      "category": "Energy",
+      "cardmarketProductId": 279123,
+      "tcgplayerProductId": 86780,
+      "sourceUpdated": "2026-08-27T17:17:00+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279123,
+          "tcgplayerProductId": 86780
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-hs-r-29",
+      "localId": "29",
+      "name": "Energy Switch",
+      "rarity": "None",
+      "category": "Trainer",
+      "illustrator": "Wataru Kawahara",
+      "cardmarketProductId": 279124,
+      "tcgplayerProductId": 85261,
+      "sourceUpdated": "2026-08-27T17:17:00+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279124,
+          "tcgplayerProductId": 85261
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-hs-r-30",
+      "localId": "30",
+      "name": "Raichu",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "match",
+      "cardmarketProductId": 279118,
+      "tcgplayerProductId": 88521,
+      "sourceUpdated": "2026-08-27T17:17:00+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 279118,
+          "tcgplayerProductId": 88521
+        }
+      ]
+    }
+  ]
+}

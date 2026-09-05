@@ -1,0 +1,119 @@
+{
+  "crawledAt": "2026-09-05T18:58:55.424Z",
+  "source": "https://api.tcgdex.net/v2/en",
+  "set": {
+    "id": "xya",
+    "name": "Yellow A Alternate",
+    "serie": {
+      "id": "xy",
+      "name": "XY"
+    },
+    "releaseDate": "2014-02-05",
+    "cardCount": {
+      "firstEd": 0,
+      "holo": 0,
+      "normal": 0,
+      "official": 6,
+      "reverse": 0,
+      "total": 6
+    }
+  },
+  "cards": [
+    {
+      "tcgdexId": "xya-24a",
+      "localId": "24a",
+      "name": "M Manectric-EX",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "5ban Graphics",
+      "sourceUpdated": "2026-03-10T13:44:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "xya-28a",
+      "localId": "28a",
+      "name": "Jolteon-EX",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Ryo Ueda",
+      "sourceUpdated": "2026-03-10T13:44:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "xya-54a",
+      "localId": "54a",
+      "name": "Zygarde-EX",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "5ban Graphics",
+      "sourceUpdated": "2026-03-10T13:44:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "xya-55a",
+      "localId": "55a",
+      "name": "M Lucario-EX",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "5ban Graphics",
+      "sourceUpdated": "2026-03-10T13:44:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "xya-92a",
+      "localId": "92a",
+      "name": "Trainers’ Mail",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Toyste Beach",
+      "sourceUpdated": "2026-03-10T13:44:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "xya-107a",
+      "localId": "107a",
+      "name": "Professor Sycamore",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Naoki Saito",
+      "sourceUpdated": "2026-03-10T13:44:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    }
+  ]
+}

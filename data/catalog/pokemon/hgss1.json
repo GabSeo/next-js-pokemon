@@ -1,0 +1,3846 @@
+{
+  "crawledAt": "2026-09-05T20:01:05.436Z",
+  "source": "https://api.tcgdex.net/v2/en",
+  "set": {
+    "id": "hgss1",
+    "name": "HeartGold SoulSilver",
+    "serie": {
+      "id": "hgss",
+      "name": "HeartGold & SoulSilver"
+    },
+    "releaseDate": "2010-02-10",
+    "abbreviation": {
+      "official": "HS"
+    },
+    "cardCount": {
+      "firstEd": 0,
+      "holo": 38,
+      "normal": 156,
+      "official": 123,
+      "reverse": 113,
+      "total": 124
+    },
+    "logo": "https://assets.tcgdex.net/en/hgss/hgss1/logo",
+    "symbol": "https://assets.tcgdex.net/univ/hgss/hgss1/symbol"
+  },
+  "cards": [
+    {
+      "tcgdexId": "hgss1-1",
+      "localId": "1",
+      "name": "Arcanine",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Naoki Saito",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/1",
+      "cardmarketProductId": 278973,
+      "tcgplayerProductId": 83586,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 278973,
+          "tcgplayerProductId": 83586
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 278973,
+          "tcgplayerProductId": 83586
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 125039
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-2",
+      "localId": "2",
+      "name": "Azumarill",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Kouki Saitou",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/2",
+      "cardmarketProductId": 278974,
+      "tcgplayerProductId": 83685,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 278974,
+          "tcgplayerProductId": 83685
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 278974,
+          "tcgplayerProductId": 83685
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-3",
+      "localId": "3",
+      "name": "Clefable",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Masakazu Fukuda",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/3",
+      "cardmarketProductId": 278975,
+      "tcgplayerProductId": 84346,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 278975,
+          "tcgplayerProductId": 84346
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 278975,
+          "tcgplayerProductId": 84346
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-4",
+      "localId": "4",
+      "name": "Gyarados",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Mitsuhiro Arita",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/4",
+      "cardmarketProductId": 278976,
+      "tcgplayerProductId": 85992,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 278976,
+          "tcgplayerProductId": 85992
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 278976,
+          "tcgplayerProductId": 85992
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "2u8sopmue8qbejpv32t9ow7ic",
+          "cardmarketProductId": 278976,
+          "tcgplayerProductId": 226912
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-5",
+      "localId": "5",
+      "name": "Hitmontop",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/5",
+      "cardmarketProductId": 278977,
+      "tcgplayerProductId": 86115,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 278977,
+          "tcgplayerProductId": 86115
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 278977,
+          "tcgplayerProductId": 86115
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-6",
+      "localId": "6",
+      "name": "Jumpluff",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "sui",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/6",
+      "cardmarketProductId": 278978,
+      "tcgplayerProductId": 86367,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 278978,
+          "tcgplayerProductId": 86367
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 278978,
+          "tcgplayerProductId": 86367
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "2fnyg4g538l02bee7gswewk5fz4",
+          "cardmarketProductId": 868725,
+          "tcgplayerProductId": 480062
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-7",
+      "localId": "7",
+      "name": "Ninetales",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "TOKIYA",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/7",
+      "cardmarketProductId": 278979,
+      "tcgplayerProductId": 87774,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 278979,
+          "tcgplayerProductId": 87774
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 278979,
+          "tcgplayerProductId": 87774
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "2u8sopmue8qbejpv32t9ow7ic",
+          "cardmarketProductId": 278979,
+          "tcgplayerProductId": 264837
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-8",
+      "localId": "8",
+      "name": "Noctowl",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Suwama Chiaki",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/8",
+      "cardmarketProductId": 278980,
+      "tcgplayerProductId": 87794,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 278980,
+          "tcgplayerProductId": 87794
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 278980,
+          "tcgplayerProductId": 87794
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 125037
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-9",
+      "localId": "9",
+      "name": "Quagsire",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "match",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/9",
+      "cardmarketProductId": 278981,
+      "tcgplayerProductId": 88473,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 278981,
+          "tcgplayerProductId": 88473
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 278981,
+          "tcgplayerProductId": 88473
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-10",
+      "localId": "10",
+      "name": "Raichu",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "match",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/10",
+      "cardmarketProductId": 278982,
+      "tcgplayerProductId": 88517,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 278982,
+          "tcgplayerProductId": 88517
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 278982,
+          "tcgplayerProductId": 88517
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "2u8sopmue8qbejpv32t9ow7ic",
+          "cardmarketProductId": 278982,
+          "tcgplayerProductId": 213011
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-11",
+      "localId": "11",
+      "name": "Shuckle",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Sumiyoshi Kizuki",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/11",
+      "cardmarketProductId": 278983,
+      "tcgplayerProductId": 89192,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 278983,
+          "tcgplayerProductId": 89192
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 278983,
+          "tcgplayerProductId": 89192
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-12",
+      "localId": "12",
+      "name": "Slowking",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Sumiyoshi Kizuki",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/12",
+      "cardmarketProductId": 278984,
+      "tcgplayerProductId": 89317,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 278984,
+          "tcgplayerProductId": 89317
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 278984,
+          "tcgplayerProductId": 89317
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-13",
+      "localId": "13",
+      "name": "Wobbuffet",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Yuka Morii",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/13",
+      "cardmarketProductId": 278985,
+      "tcgplayerProductId": 90621,
+      "sourceUpdated": "2026-08-19T20:52:03Z",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 278985,
+          "tcgplayerProductId": 90621
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 278985,
+          "tcgplayerProductId": 90621
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-14",
+      "localId": "14",
+      "name": "Ampharos",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Masakazu Fukuda",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/14",
+      "cardmarketProductId": 278986,
+      "tcgplayerProductId": 83544,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278986,
+          "tcgplayerProductId": 83544
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 278986,
+          "tcgplayerProductId": 83544
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-15",
+      "localId": "15",
+      "name": "Ariados",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/15",
+      "cardmarketProductId": 278987,
+      "tcgplayerProductId": 83618,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278987,
+          "tcgplayerProductId": 83618
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 278987,
+          "tcgplayerProductId": 83618
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-16",
+      "localId": "16",
+      "name": "Butterfree",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Tomokazu Komiya",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/16",
+      "cardmarketProductId": 278988,
+      "tcgplayerProductId": 84067,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278988,
+          "tcgplayerProductId": 84067
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 278988,
+          "tcgplayerProductId": 84067
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-17",
+      "localId": "17",
+      "name": "Cleffa",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Masakazu Fukuda",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/17",
+      "cardmarketProductId": 278989,
+      "tcgplayerProductId": 84367,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278989,
+          "tcgplayerProductId": 84367
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 278989,
+          "tcgplayerProductId": 84367
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g536vpehaob2c9byebqba",
+          "cardmarketProductId": 868144,
+          "tcgplayerProductId": 480361
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-18",
+      "localId": "18",
+      "name": "Exeggutor",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Miki Tanaka",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/18",
+      "cardmarketProductId": 278990,
+      "tcgplayerProductId": 85362,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278990,
+          "tcgplayerProductId": 85362
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 278990,
+          "tcgplayerProductId": 85362
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-19",
+      "localId": "19",
+      "name": "Farfetch'd",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Aya Kusube",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/19",
+      "tcgplayerProductId": 85388,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 85388
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "tcgplayerProductId": 85388
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-20",
+      "localId": "20",
+      "name": "Feraligatr",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "kawayoo",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/20",
+      "cardmarketProductId": 278992,
+      "tcgplayerProductId": 85419,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278992,
+          "tcgplayerProductId": 85419
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 278992,
+          "tcgplayerProductId": 85419
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "2u8sopmue8qbejpv32t9ow7ic",
+          "cardmarketProductId": 278992,
+          "tcgplayerProductId": 153258
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "5zs5af49g93yryvw1ftj",
+          "cardmarketProductId": 278992,
+          "tcgplayerProductId": 125040
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-21",
+      "localId": "21",
+      "name": "Furret",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "MAHOU",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/21",
+      "cardmarketProductId": 278993,
+      "tcgplayerProductId": 85594,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278993,
+          "tcgplayerProductId": 85594
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 278993,
+          "tcgplayerProductId": 85594
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-22",
+      "localId": "22",
+      "name": "Granbull",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/22",
+      "cardmarketProductId": 278994,
+      "tcgplayerProductId": 85865,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278994,
+          "tcgplayerProductId": 85865
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 278994,
+          "tcgplayerProductId": 85865
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-23",
+      "localId": "23",
+      "name": "Hypno",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Masakazu Fukuda",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/23",
+      "cardmarketProductId": 278995,
+      "tcgplayerProductId": 86255,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278995,
+          "tcgplayerProductId": 86255
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 278995,
+          "tcgplayerProductId": 86255
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-24",
+      "localId": "24",
+      "name": "Lapras",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Suwama Chiaki",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/24",
+      "cardmarketProductId": 278996,
+      "tcgplayerProductId": 86620,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278996,
+          "tcgplayerProductId": 86620
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 278996,
+          "tcgplayerProductId": 86620
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-25",
+      "localId": "25",
+      "name": "Ledian",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Yuka Morii",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/25",
+      "cardmarketProductId": 278997,
+      "tcgplayerProductId": 86695,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278997,
+          "tcgplayerProductId": 86695
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 278997,
+          "tcgplayerProductId": 86695
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-26",
+      "localId": "26",
+      "name": "Meganium",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Shin Nagasawa",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/26",
+      "tcgplayerProductId": 87293,
+      "sourceUpdated": "2026-08-19T20:52:03Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 87293
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "tcgplayerProductId": 87293
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "2u8sopmue8qbejpv32t9ow7ic",
+          "tcgplayerProductId": 153261
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "5zs5af49g93yryvw1ftj",
+          "tcgplayerProductId": 125041
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-27",
+      "localId": "27",
+      "name": "Persian",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Kagemaru Himeno",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/27",
+      "cardmarketProductId": 278999,
+      "tcgplayerProductId": 87987,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278999,
+          "tcgplayerProductId": 87987
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 278999,
+          "tcgplayerProductId": 87987
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-28",
+      "localId": "28",
+      "name": "Pichu",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "match",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/28",
+      "cardmarketProductId": 279000,
+      "tcgplayerProductId": 88022,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279000,
+          "tcgplayerProductId": 88022
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279000,
+          "tcgplayerProductId": 88022
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50typ2p5qsrlm6y3f8o",
+          "cardmarketProductId": 882912,
+          "tcgplayerProductId": 213013
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "1jz5lzkp5fmezlk45c3cdds7rcu684",
+          "cardmarketProductId": 279000,
+          "tcgplayerProductId": 213014
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1t06ikeqvv117p1arn46513bjip1w",
+          "cardmarketProductId": 868170,
+          "tcgplayerProductId": 480432
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-29",
+      "localId": "29",
+      "name": "Sandslash",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Yukiko Baba",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/29",
+      "cardmarketProductId": 279001,
+      "tcgplayerProductId": 88934,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279001,
+          "tcgplayerProductId": 88934
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279001,
+          "tcgplayerProductId": 88934
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-30",
+      "localId": "30",
+      "name": "Smoochum",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Midori Harada",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/30",
+      "cardmarketProductId": 279002,
+      "tcgplayerProductId": 89363,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279002,
+          "tcgplayerProductId": 89363
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279002,
+          "tcgplayerProductId": 89363
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-31",
+      "localId": "31",
+      "name": "Sunflora",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Yuka Morii",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/31",
+      "cardmarketProductId": 279003,
+      "tcgplayerProductId": 89616,
+      "sourceUpdated": "2026-08-19T20:52:03Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279003,
+          "tcgplayerProductId": 89616
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279003,
+          "tcgplayerProductId": 89616
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-32",
+      "localId": "32",
+      "name": "Typhlosion",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Kagemaru Himeno",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/32",
+      "cardmarketProductId": 279004,
+      "tcgplayerProductId": 90106,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279004,
+          "tcgplayerProductId": 90106
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279004,
+          "tcgplayerProductId": 90106
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "2u8sopmue8qbejpv32t9ow7ic",
+          "cardmarketProductId": 279004,
+          "tcgplayerProductId": 153262
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "5zs5af49g93yryvw1ftj",
+          "cardmarketProductId": 279004,
+          "tcgplayerProductId": 125038
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-33",
+      "localId": "33",
+      "name": "Tyrogue",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/33",
+      "cardmarketProductId": 279005,
+      "tcgplayerProductId": 90131,
+      "sourceUpdated": "2026-08-19T20:52:03Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279005,
+          "tcgplayerProductId": 90131
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279005,
+          "tcgplayerProductId": 90131
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "23hmnvtwdr66t23n035zcq2hu1gb",
+          "cardmarketProductId": 868153,
+          "tcgplayerProductId": 480515
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-34",
+      "localId": "34",
+      "name": "Weezing",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Hajime Kusajima",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/34",
+      "cardmarketProductId": 279006,
+      "tcgplayerProductId": 90564,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279006,
+          "tcgplayerProductId": 90564
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279006,
+          "tcgplayerProductId": 90564
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-35",
+      "localId": "35",
+      "name": "Bayleef",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Shin Nagasawa",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/35",
+      "cardmarketProductId": 279007,
+      "tcgplayerProductId": 83748,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279007,
+          "tcgplayerProductId": 83748
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279007,
+          "tcgplayerProductId": 83748
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-36",
+      "localId": "36",
+      "name": "Blissey",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Kanako Eo",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/36",
+      "cardmarketProductId": 279008,
+      "tcgplayerProductId": 83923,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279008,
+          "tcgplayerProductId": 83923
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279008,
+          "tcgplayerProductId": 83923
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-37",
+      "localId": "37",
+      "name": "Corsola",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "TOKIYA",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/37",
+      "cardmarketProductId": 279009,
+      "tcgplayerProductId": 84443,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279009,
+          "tcgplayerProductId": 84443
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279009,
+          "tcgplayerProductId": 84443
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-38",
+      "localId": "38",
+      "name": "Croconaw",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "kawayoo",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/38",
+      "cardmarketProductId": 279010,
+      "tcgplayerProductId": 84500,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279010,
+          "tcgplayerProductId": 84500
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279010,
+          "tcgplayerProductId": 84500
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-39",
+      "localId": "39",
+      "name": "Delibird",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "sui",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/39",
+      "cardmarketProductId": 279011,
+      "tcgplayerProductId": 84750,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279011,
+          "tcgplayerProductId": 84750
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279011,
+          "tcgplayerProductId": 84750
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "45ebhkvqepm13r49vjlrg0g",
+          "cardmarketProductId": 371563,
+          "tcgplayerProductId": 177131
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz03efzvidn9umu5s"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-40",
+      "localId": "40",
+      "name": "Donphan",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Midori Harada",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/40",
+      "cardmarketProductId": 279012,
+      "tcgplayerProductId": 84877,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279012,
+          "tcgplayerProductId": 84877
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279012,
+          "tcgplayerProductId": 84877
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "45ebhkvqepm13r49vjlrg0g",
+          "cardmarketProductId": 279012,
+          "tcgplayerProductId": 186826
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-41",
+      "localId": "41",
+      "name": "Dunsparce",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/41",
+      "cardmarketProductId": 279013,
+      "tcgplayerProductId": 85012,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279013,
+          "tcgplayerProductId": 85012
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279013,
+          "tcgplayerProductId": 85012
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-42",
+      "localId": "42",
+      "name": "Flaaffy",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Masakazu Fukuda",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/42",
+      "cardmarketProductId": 279014,
+      "tcgplayerProductId": 85482,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279014,
+          "tcgplayerProductId": 85482
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279014,
+          "tcgplayerProductId": 85482
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-43",
+      "localId": "43",
+      "name": "Heracross",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Sachiko Adachi",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/43",
+      "cardmarketProductId": 279015,
+      "tcgplayerProductId": 86065,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279015,
+          "tcgplayerProductId": 86065
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279015,
+          "tcgplayerProductId": 86065
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-44",
+      "localId": "44",
+      "name": "Igglybuff",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Nishida",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/44",
+      "cardmarketProductId": 279016,
+      "tcgplayerProductId": 86263,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279016,
+          "tcgplayerProductId": 86263
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279016,
+          "tcgplayerProductId": 86263
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-45",
+      "localId": "45",
+      "name": "Mantine",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Naoyo Kimura",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/45",
+      "cardmarketProductId": 279017,
+      "tcgplayerProductId": 87184,
+      "sourceUpdated": "2026-08-19T20:52:03Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279017,
+          "tcgplayerProductId": 87184
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279017,
+          "tcgplayerProductId": 87184
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-46",
+      "localId": "46",
+      "name": "Metapod",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Tomokazu Komiya",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/46",
+      "cardmarketProductId": 279018,
+      "tcgplayerProductId": 87391,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279018,
+          "tcgplayerProductId": 87391
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279018,
+          "tcgplayerProductId": 87391
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-47",
+      "localId": "47",
+      "name": "Miltank",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Miki Tanaka",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/47",
+      "cardmarketProductId": 279019,
+      "tcgplayerProductId": 87466,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279019,
+          "tcgplayerProductId": 87466
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279019,
+          "tcgplayerProductId": 87466
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz03efzvidn9umu5s"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-48",
+      "localId": "48",
+      "name": "Parasect",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Midori Harada",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/48",
+      "cardmarketProductId": 279020,
+      "tcgplayerProductId": 87960,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279020,
+          "tcgplayerProductId": 87960
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279020,
+          "tcgplayerProductId": 87960
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-49",
+      "localId": "49",
+      "name": "Quilava",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Kagemaru Himeno",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/49",
+      "cardmarketProductId": 279021,
+      "tcgplayerProductId": 88486,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279021,
+          "tcgplayerProductId": 88486
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279021,
+          "tcgplayerProductId": 88486
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-50",
+      "localId": "50",
+      "name": "Qwilfish",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/50",
+      "cardmarketProductId": 279022,
+      "tcgplayerProductId": 88495,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279022,
+          "tcgplayerProductId": 88495
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279022,
+          "tcgplayerProductId": 88495
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-51",
+      "localId": "51",
+      "name": "Skiploom",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "sui",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/51",
+      "cardmarketProductId": 279023,
+      "tcgplayerProductId": 89257,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279023,
+          "tcgplayerProductId": 89257
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279023,
+          "tcgplayerProductId": 89257
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-52",
+      "localId": "52",
+      "name": "Slowbro",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Sumiyoshi Kizuki",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/52",
+      "cardmarketProductId": 279024,
+      "tcgplayerProductId": 89307,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279024,
+          "tcgplayerProductId": 89307
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279024,
+          "tcgplayerProductId": 89307
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-53",
+      "localId": "53",
+      "name": "Starmie",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Kagemaru Himeno",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/53",
+      "cardmarketProductId": 279025,
+      "tcgplayerProductId": 89536,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279025,
+          "tcgplayerProductId": 89536
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279025,
+          "tcgplayerProductId": 89536
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-54",
+      "localId": "54",
+      "name": "Unown",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Hideaki Hakozaki",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/54",
+      "cardmarketProductId": 279026,
+      "tcgplayerProductId": 90162,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279026,
+          "tcgplayerProductId": 90162
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279026,
+          "tcgplayerProductId": 90162
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-55",
+      "localId": "55",
+      "name": "Unown",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Hideaki Hakozaki",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/55",
+      "cardmarketProductId": 279026,
+      "tcgplayerProductId": 90163,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279026,
+          "tcgplayerProductId": 90163
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279026,
+          "tcgplayerProductId": 90163
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-56",
+      "localId": "56",
+      "name": "Wigglytuff",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Nishida",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/56",
+      "cardmarketProductId": 279028,
+      "tcgplayerProductId": 90599,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279028,
+          "tcgplayerProductId": 90599
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279028,
+          "tcgplayerProductId": 90599
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-57",
+      "localId": "57",
+      "name": "Caterpie",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Tomokazu Komiya",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/57",
+      "cardmarketProductId": 279029,
+      "tcgplayerProductId": 84138,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279029,
+          "tcgplayerProductId": 84138
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279029,
+          "tcgplayerProductId": 84138
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-58",
+      "localId": "58",
+      "name": "Chansey",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Kanako Eo",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/58",
+      "cardmarketProductId": 279030,
+      "tcgplayerProductId": 84177,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279030,
+          "tcgplayerProductId": 84177
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279030,
+          "tcgplayerProductId": 84177
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1t06ikeqvv117p1arn46513bjip1w",
+          "cardmarketProductId": 279030,
+          "tcgplayerProductId": 480359
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-59",
+      "localId": "59",
+      "name": "Chikorita",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Shin Nagasawa",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/59",
+      "cardmarketProductId": 279031,
+      "tcgplayerProductId": 84279,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279031,
+          "tcgplayerProductId": 84279
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279031,
+          "tcgplayerProductId": 84279
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-60",
+      "localId": "60",
+      "name": "Clefairy",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Masakazu Fukuda",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/60",
+      "cardmarketProductId": 279032,
+      "tcgplayerProductId": 84358,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279032,
+          "tcgplayerProductId": 84358
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279032,
+          "tcgplayerProductId": 84358
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-61",
+      "localId": "61",
+      "name": "Cyndaquil",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Kagemaru Himeno",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/61",
+      "cardmarketProductId": 279033,
+      "tcgplayerProductId": 84552,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279033,
+          "tcgplayerProductId": 84552
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279033,
+          "tcgplayerProductId": 84552
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1c79txmtnnvkkv5adir09hc3lrug7k0",
+          "cardmarketProductId": 279033,
+          "tcgplayerProductId": 480370
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-62",
+      "localId": "62",
+      "name": "Drowzee",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Masakazu Fukuda",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/62",
+      "cardmarketProductId": 279034,
+      "tcgplayerProductId": 84977,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279034,
+          "tcgplayerProductId": 84977
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279034,
+          "tcgplayerProductId": 84977
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-63",
+      "localId": "63",
+      "name": "Exeggcute",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Miki Tanaka",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/63",
+      "cardmarketProductId": 279035,
+      "tcgplayerProductId": 85349,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279035,
+          "tcgplayerProductId": 85349
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279035,
+          "tcgplayerProductId": 85349
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-64",
+      "localId": "64",
+      "name": "Girafarig",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Miki Tanaka",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/64",
+      "cardmarketProductId": 279036,
+      "tcgplayerProductId": 85732,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279036,
+          "tcgplayerProductId": 85732
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279036,
+          "tcgplayerProductId": 85732
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-65",
+      "localId": "65",
+      "name": "Growlithe",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Naoki Saito",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/65",
+      "cardmarketProductId": 279037,
+      "tcgplayerProductId": 85960,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279037,
+          "tcgplayerProductId": 85960
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279037,
+          "tcgplayerProductId": 85960
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz03efzvidn9umu5s"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-66",
+      "localId": "66",
+      "name": "Hoothoot",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Suwama Chiaki",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/66",
+      "cardmarketProductId": 279038,
+      "tcgplayerProductId": 86173,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279038,
+          "tcgplayerProductId": 86173
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279038,
+          "tcgplayerProductId": 86173
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz03efzvidn9umu5s"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-67",
+      "localId": "67",
+      "name": "Hoppip",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "sui",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/67",
+      "cardmarketProductId": 279039,
+      "tcgplayerProductId": 86182,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279039,
+          "tcgplayerProductId": 86182
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279039,
+          "tcgplayerProductId": 86182
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1t06ikeqvvg4mpub99bjh9v8rp1h9",
+          "cardmarketProductId": 279039,
+          "tcgplayerProductId": 480053
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-68",
+      "localId": "68",
+      "name": "Jigglypuff",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Nishida",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/68",
+      "cardmarketProductId": 279040,
+      "tcgplayerProductId": 86319,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279040,
+          "tcgplayerProductId": 86319
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279040,
+          "tcgplayerProductId": 86319
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-69",
+      "localId": "69",
+      "name": "Jynx",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Midori Harada",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/69",
+      "cardmarketProductId": 279041,
+      "tcgplayerProductId": 86377,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279041,
+          "tcgplayerProductId": 86377
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279041,
+          "tcgplayerProductId": 86377
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-70",
+      "localId": "70",
+      "name": "Koffing",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Hajime Kusajima",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/70",
+      "cardmarketProductId": 279042,
+      "tcgplayerProductId": 86498,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279042,
+          "tcgplayerProductId": 86498
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279042,
+          "tcgplayerProductId": 86498
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz03efzvidn9umu5s"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-71",
+      "localId": "71",
+      "name": "Ledyba",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Yuka Morii",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/71",
+      "cardmarketProductId": 279043,
+      "tcgplayerProductId": 86705,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279043,
+          "tcgplayerProductId": 86705
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279043,
+          "tcgplayerProductId": 86705
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-72",
+      "localId": "72",
+      "name": "Magikarp",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Mitsuhiro Arita",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/72",
+      "cardmarketProductId": 279044,
+      "tcgplayerProductId": 87032,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279044,
+          "tcgplayerProductId": 87032
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279044,
+          "tcgplayerProductId": 87032
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz03efzvidn9umu5s"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-73",
+      "localId": "73",
+      "name": "Mareep",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Masakazu Fukuda",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/73",
+      "cardmarketProductId": 279045,
+      "tcgplayerProductId": 87204,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279045,
+          "tcgplayerProductId": 87204
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279045,
+          "tcgplayerProductId": 87204
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz03efzvidn9umu5s"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-74",
+      "localId": "74",
+      "name": "Marill",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Kouki Saitou",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/74",
+      "cardmarketProductId": 279046,
+      "tcgplayerProductId": 87219,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279046,
+          "tcgplayerProductId": 87219
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279046,
+          "tcgplayerProductId": 87219
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz03efzvidn9umu5s"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-75",
+      "localId": "75",
+      "name": "Meowth",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Kagemaru Himeno",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/75",
+      "cardmarketProductId": 279047,
+      "tcgplayerProductId": 87322,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279047,
+          "tcgplayerProductId": 87322
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279047,
+          "tcgplayerProductId": 87322
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz03efzvidn9umu5s"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-76",
+      "localId": "76",
+      "name": "Paras",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Midori Harada",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/76",
+      "cardmarketProductId": 279048,
+      "tcgplayerProductId": 87953,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279048,
+          "tcgplayerProductId": 87953
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279048,
+          "tcgplayerProductId": 87953
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz03efzvidn9umu5s"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-77",
+      "localId": "77",
+      "name": "Phanpy",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Midori Harada",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/77",
+      "cardmarketProductId": 279049,
+      "tcgplayerProductId": 88003,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279049,
+          "tcgplayerProductId": 88003
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279049,
+          "tcgplayerProductId": 88003
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1t06ikeqvv117p1arn46513bjip1w",
+          "cardmarketProductId": 279049,
+          "tcgplayerProductId": 480431
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-78",
+      "localId": "78",
+      "name": "Pikachu",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "match",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/78",
+      "cardmarketProductId": 279050,
+      "tcgplayerProductId": 88095,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279050,
+          "tcgplayerProductId": 88095
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279050,
+          "tcgplayerProductId": 88095
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz03efzvidn9umu5s"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-79",
+      "localId": "79",
+      "name": "Sandshrew",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Yukiko Baba",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/79",
+      "cardmarketProductId": 279051,
+      "tcgplayerProductId": 88926,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279051,
+          "tcgplayerProductId": 88926
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279051,
+          "tcgplayerProductId": 88926
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-80",
+      "localId": "80",
+      "name": "Sentret",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "MAHOU",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/80",
+      "cardmarketProductId": 279052,
+      "tcgplayerProductId": 89068,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279052,
+          "tcgplayerProductId": 89068
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279052,
+          "tcgplayerProductId": 89068
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-81",
+      "localId": "81",
+      "name": "Slowpoke",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Sumiyoshi Kizuki",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/81",
+      "cardmarketProductId": 279053,
+      "tcgplayerProductId": 89332,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279053,
+          "tcgplayerProductId": 89332
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279053,
+          "tcgplayerProductId": 89332
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-82",
+      "localId": "82",
+      "name": "Snubbull",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/82",
+      "cardmarketProductId": 279054,
+      "tcgplayerProductId": 89416,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279054,
+          "tcgplayerProductId": 89416
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279054,
+          "tcgplayerProductId": 89416
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-83",
+      "localId": "83",
+      "name": "Spinarak",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/83",
+      "cardmarketProductId": 279055,
+      "tcgplayerProductId": 89458,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279055,
+          "tcgplayerProductId": 89458
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279055,
+          "tcgplayerProductId": 89458
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-84",
+      "localId": "84",
+      "name": "Staryu",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Kagemaru Himeno",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/84",
+      "cardmarketProductId": 279056,
+      "tcgplayerProductId": 89552,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279056,
+          "tcgplayerProductId": 89552
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279056,
+          "tcgplayerProductId": 89552
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz03efzvidn9umu5s"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-85",
+      "localId": "85",
+      "name": "Sunkern",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Yuka Morii",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/85",
+      "cardmarketProductId": 279057,
+      "tcgplayerProductId": 89622,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279057,
+          "tcgplayerProductId": 89622
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279057,
+          "tcgplayerProductId": 89622
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-86",
+      "localId": "86",
+      "name": "Totodile",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "kawayoo",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/86",
+      "cardmarketProductId": 279058,
+      "tcgplayerProductId": 90000,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279058,
+          "tcgplayerProductId": 90000
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279058,
+          "tcgplayerProductId": 90000
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz03efzvidn9umu5s"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-87",
+      "localId": "87",
+      "name": "Vulpix",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "TOKIYA",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/87",
+      "cardmarketProductId": 279059,
+      "tcgplayerProductId": 90444,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279059,
+          "tcgplayerProductId": 90444
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279059,
+          "tcgplayerProductId": 90444
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-88",
+      "localId": "88",
+      "name": "Wooper",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "match",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/88",
+      "cardmarketProductId": 279060,
+      "tcgplayerProductId": 90637,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279060,
+          "tcgplayerProductId": 90637
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279060,
+          "tcgplayerProductId": 90637
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-89",
+      "localId": "89",
+      "name": "Bill",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/89",
+      "cardmarketProductId": 279061,
+      "tcgplayerProductId": 83832,
+      "sourceUpdated": "2026-08-19T20:52:03Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279061,
+          "tcgplayerProductId": 83832
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279061,
+          "tcgplayerProductId": 83832
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-90",
+      "localId": "90",
+      "name": "Copycat",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Kanako Eo",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/90",
+      "cardmarketProductId": 279062,
+      "tcgplayerProductId": 84426,
+      "sourceUpdated": "2026-07-28T21:08:27+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279062,
+          "tcgplayerProductId": 84426
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279062,
+          "tcgplayerProductId": 84426
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "45ebhkvqepm13r49vjlrg0g",
+          "cardmarketProductId": 371572,
+          "tcgplayerProductId": 123191
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "23hmnvtwdr66t23n035zcq2hu1gb",
+          "cardmarketProductId": 868205
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1t06ikeqvv117p1arn46513bjip1w",
+          "cardmarketProductId": 868206
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-91",
+      "localId": "91",
+      "name": "Energy Switch",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Wataru Kawahara",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/91",
+      "cardmarketProductId": 279063,
+      "tcgplayerProductId": 85259,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279063,
+          "tcgplayerProductId": 85259
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279063,
+          "tcgplayerProductId": 85259
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-92",
+      "localId": "92",
+      "name": "Fisherman",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Kanako Eo",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/92",
+      "cardmarketProductId": 279064,
+      "tcgplayerProductId": 85472,
+      "sourceUpdated": "2026-07-28T21:08:27+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279064,
+          "tcgplayerProductId": 85472
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279064,
+          "tcgplayerProductId": 85472
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g536vpehaob2c9byebqba",
+          "cardmarketProductId": 279064,
+          "tcgplayerProductId": 480404
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-93",
+      "localId": "93",
+      "name": "Full Heal",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Takashi Yamaguchi",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/93",
+      "cardmarketProductId": 279065,
+      "tcgplayerProductId": 85583,
+      "sourceUpdated": "2026-07-28T21:08:27+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279065,
+          "tcgplayerProductId": 85583
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279065,
+          "tcgplayerProductId": 85583
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-94",
+      "localId": "94",
+      "name": "Moomoo Milk",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Noriko Hotta",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/94",
+      "cardmarketProductId": 279066,
+      "tcgplayerProductId": 87576,
+      "sourceUpdated": "2026-07-28T21:08:27+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279066,
+          "tcgplayerProductId": 87576
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279066,
+          "tcgplayerProductId": 87576
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-95",
+      "localId": "95",
+      "name": "Poké Ball",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Hideaki Hakozaki",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/95",
+      "cardmarketProductId": 279067,
+      "tcgplayerProductId": 88189,
+      "sourceUpdated": "2026-07-28T21:08:27+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279067,
+          "tcgplayerProductId": 88189
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279067,
+          "tcgplayerProductId": 88189
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-96",
+      "localId": "96",
+      "name": "Pokégear 3.0",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Noriko Hotta",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/96",
+      "tcgplayerProductId": 88205,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 88205
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "tcgplayerProductId": 88205
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1c79txmtnnvkkv5adir09hc3lrug7k0",
+          "cardmarketProductId": 868183,
+          "tcgplayerProductId": 480437
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-97",
+      "localId": "97",
+      "name": "Pokémon Collector",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Masakazu Fukuda",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/97",
+      "cardmarketProductId": 279069,
+      "tcgplayerProductId": 88217,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279069,
+          "tcgplayerProductId": 88217
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279069,
+          "tcgplayerProductId": 88217
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "45ebhkvqepm13r49vjlrg0g",
+          "cardmarketProductId": 450098,
+          "tcgplayerProductId": 220369
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1t06ikeqvur65clgawx2cud6izjvm",
+          "tcgplayerProductId": 480093
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1jz5lzkp5g2wlisc90d1ppobsst71p",
+          "tcgplayerProductId": 480094
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1t06ikeqvvg4mpub99bjh9v8rp1h9",
+          "tcgplayerProductId": 480095
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "23hmnvtwdr66t23n035zcq2hu1gb",
+          "tcgplayerProductId": 480438
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1c79txmtnnvkkv5adir09hc3lrug7k0",
+          "tcgplayerProductId": 480440
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1t06ikeqvv117p1arn46513bjip1w",
+          "tcgplayerProductId": 480441
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g536vpehaob2c9byebqba",
+          "tcgplayerProductId": 480442
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-98",
+      "localId": "98",
+      "name": "Pokémon Communication",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Takashi Yamaguchi",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/98",
+      "cardmarketProductId": 279070,
+      "tcgplayerProductId": 88220,
+      "sourceUpdated": "2026-07-28T21:08:27+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279070,
+          "tcgplayerProductId": 88220
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279070,
+          "tcgplayerProductId": 88220
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "45ebhkvqepm13r49vjlrg0g",
+          "cardmarketProductId": 450103,
+          "tcgplayerProductId": 123184
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1jz5lzkp5g2wlisc90d1ppobsst71p",
+          "cardmarketProductId": 868807,
+          "tcgplayerProductId": 480096
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1t06ikeqvvg4mpub99bjh9v8rp1h9",
+          "cardmarketProductId": 868808,
+          "tcgplayerProductId": 480097
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-99",
+      "localId": "99",
+      "name": "Pokémon Reversal",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Wataru Kawahara",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/99",
+      "cardmarketProductId": 279071,
+      "tcgplayerProductId": 88236,
+      "sourceUpdated": "2026-07-28T21:08:27+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279071,
+          "tcgplayerProductId": 88236
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279071,
+          "tcgplayerProductId": 88236
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "23hmnvtwdr66t23n035zcq2hu1gb",
+          "cardmarketProductId": 868207,
+          "tcgplayerProductId": 480448
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-100",
+      "localId": "100",
+      "name": "Professor Elm's Training Method",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/100",
+      "cardmarketProductId": 279072,
+      "tcgplayerProductId": 88392,
+      "sourceUpdated": "2026-07-28T21:08:27+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279072,
+          "tcgplayerProductId": 88392
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279072,
+          "tcgplayerProductId": 88392
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "tzkrwud90qmqjpwfnc26uo7x4jyisd5fd",
+          "tcgplayerProductId": 123187
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1c79txmtnnvkkv5adir09hc3lrug7k0",
+          "cardmarketProductId": 868197,
+          "tcgplayerProductId": 480449
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-101",
+      "localId": "101",
+      "name": "Professor Oak's New Theory",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/101",
+      "cardmarketProductId": 279073,
+      "tcgplayerProductId": 88400,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279073,
+          "tcgplayerProductId": 88400
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279073,
+          "tcgplayerProductId": 88400
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "tzkrwud90qmqjpwfnc26uo7x4jyisd5fd",
+          "tcgplayerProductId": 480613
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1jz5lzkp5g2wlisc90d1ppobsst71p",
+          "cardmarketProductId": 868811,
+          "tcgplayerProductId": 480099
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "23hmnvtwdr66t23n035zcq2hu1gb",
+          "cardmarketProductId": 868180,
+          "tcgplayerProductId": 480455
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1c79txmtnnvkkv5adir09hc3lrug7k0",
+          "cardmarketProductId": 868179,
+          "tcgplayerProductId": 480458
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2tszcx1bps7flv4ly1px525g58",
+          "cardmarketProductId": 868011,
+          "tcgplayerProductId": 123185
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1t06ikeqvu506gk95ks9hpxha9wuc",
+          "cardmarketProductId": 868009
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1t06ikeqvv117p1arn46513bjip1w",
+          "cardmarketProductId": 868182
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g536vpehaob2c9byebqba",
+          "cardmarketProductId": 868181
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1t06ikeqvv2nxp3etxbz0j9mzuzuu",
+          "cardmarketProductId": 868012
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1c79txmtnov0zuhtq9c4ugju1035iw5",
+          "cardmarketProductId": 868013
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-102",
+      "localId": "102",
+      "name": "Switch",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Hideaki Hakozaki",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/102",
+      "cardmarketProductId": 279074,
+      "tcgplayerProductId": 89718,
+      "sourceUpdated": "2026-07-28T21:08:27+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279074,
+          "tcgplayerProductId": 89718
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279074,
+          "tcgplayerProductId": 89718
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-103",
+      "localId": "103",
+      "name": "Double Colorless Energy",
+      "rarity": "Uncommon",
+      "category": "Energy",
+      "illustrator": "Kent Kanetsuna",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/103",
+      "cardmarketProductId": 279075,
+      "tcgplayerProductId": 84883,
+      "sourceUpdated": "2026-07-28T21:08:27+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279075,
+          "tcgplayerProductId": 84883
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279075,
+          "tcgplayerProductId": 84883
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "45ebhkvqepm13r49vjlrg0g",
+          "cardmarketProductId": 371574,
+          "tcgplayerProductId": 137281
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "15i9grynjdxmh831xcgacx0nh2len9qf",
+          "cardmarketProductId": 868816,
+          "tcgplayerProductId": 480028
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1jz5lzkp5g2wlisc90d1ppobsst71p",
+          "cardmarketProductId": 868817,
+          "tcgplayerProductId": 480029
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1t06ikeqvv117p1arn46513bjip1w",
+          "cardmarketProductId": 868220,
+          "tcgplayerProductId": 480376
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1t06ikeqvu506gk95ks9hpxha9wuc",
+          "cardmarketProductId": 868073
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2tszcx1bps7flv4ly1px525g58",
+          "cardmarketProductId": 868074
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1t06ikeqvv2nxp3etxbz0j9mzuzuu",
+          "cardmarketProductId": 868075
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1c79txmtnov0zuhtq9c4ugju1035iw5",
+          "cardmarketProductId": 868077
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-104",
+      "localId": "104",
+      "name": "Rainbow Energy",
+      "rarity": "Uncommon",
+      "category": "Energy",
+      "illustrator": "Kent Kanetsuna",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/104",
+      "cardmarketProductId": 279076,
+      "tcgplayerProductId": 88548,
+      "sourceUpdated": "2026-07-28T21:08:27+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279076,
+          "tcgplayerProductId": 88548
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279076,
+          "tcgplayerProductId": 88548
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "mtltux8quqoc7vwp24c9zzhgmzduu8xcik8",
+          "cardmarketProductId": 450228,
+          "tcgplayerProductId": 193683
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1t06ikeqvv117p1arn46513bjip1w",
+          "cardmarketProductId": 868219,
+          "tcgplayerProductId": 480466
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-105",
+      "localId": "105",
+      "name": "Ampharos",
+      "rarity": "Rare PRIME",
+      "category": "Pokemon",
+      "illustrator": "Kent Kanetsuna",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/105",
+      "cardmarketProductId": 278986,
+      "tcgplayerProductId": 83545,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 278986,
+          "tcgplayerProductId": 83545
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-106",
+      "localId": "106",
+      "name": "Blissey",
+      "rarity": "Rare PRIME",
+      "category": "Pokemon",
+      "illustrator": "Noriko Hotta",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/106",
+      "cardmarketProductId": 279008,
+      "tcgplayerProductId": 83924,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 279008,
+          "tcgplayerProductId": 83924
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1t06ikeqvv117p1arn46513bjip1w",
+          "cardmarketProductId": 868165,
+          "tcgplayerProductId": 480357
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-107",
+      "localId": "107",
+      "name": "Donphan",
+      "rarity": "Rare PRIME",
+      "category": "Pokemon",
+      "illustrator": "Kent Kanetsuna",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/107",
+      "cardmarketProductId": 279079,
+      "tcgplayerProductId": 84878,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 279079,
+          "tcgplayerProductId": 84878
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1t06ikeqvv117p1arn46513bjip1w",
+          "cardmarketProductId": 868163,
+          "tcgplayerProductId": 480374
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-108",
+      "localId": "108",
+      "name": "Feraligatr",
+      "rarity": "Rare PRIME",
+      "category": "Pokemon",
+      "illustrator": "Kent Kanetsuna",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/108",
+      "cardmarketProductId": 278992,
+      "tcgplayerProductId": 85420,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 278992,
+          "tcgplayerProductId": 85420
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-109",
+      "localId": "109",
+      "name": "Meganium",
+      "rarity": "Rare PRIME",
+      "category": "Pokemon",
+      "illustrator": "Takashi Yamaguchi",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/109",
+      "cardmarketProductId": 278998,
+      "tcgplayerProductId": 87294,
+      "sourceUpdated": "2026-08-19T20:52:03Z",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 278998,
+          "tcgplayerProductId": 87294
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-110",
+      "localId": "110",
+      "name": "Typhlosion",
+      "rarity": "Rare PRIME",
+      "category": "Pokemon",
+      "illustrator": "Wataru Kawahara",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/110",
+      "cardmarketProductId": 279004,
+      "tcgplayerProductId": 90107,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 279004,
+          "tcgplayerProductId": 90107
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1c79txmtnnvkkv5adir09hc3lrug7k0",
+          "cardmarketProductId": 868132,
+          "tcgplayerProductId": 480514
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-111",
+      "localId": "111",
+      "name": "Ho-Oh LEGEND",
+      "rarity": "LEGEND",
+      "category": "Pokemon",
+      "illustrator": "Shinji Higuchi",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/111",
+      "cardmarketProductId": 279083,
+      "tcgplayerProductId": 86133,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 279083,
+          "tcgplayerProductId": 86133
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-112",
+      "localId": "112",
+      "name": "Ho-Oh LEGEND",
+      "rarity": "LEGEND",
+      "category": "Pokemon",
+      "illustrator": "Shinji Higuchi",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/112",
+      "cardmarketProductId": 279083,
+      "tcgplayerProductId": 86132,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 279083,
+          "tcgplayerProductId": 86132
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-113",
+      "localId": "113",
+      "name": "Lugia LEGEND",
+      "rarity": "LEGEND",
+      "category": "Pokemon",
+      "illustrator": "Shinji Higuchi",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/113",
+      "cardmarketProductId": 279085,
+      "tcgplayerProductId": 86918,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 279085,
+          "tcgplayerProductId": 86918
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-114",
+      "localId": "114",
+      "name": "Lugia LEGEND",
+      "rarity": "LEGEND",
+      "category": "Pokemon",
+      "illustrator": "Shinji Higuchi",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/114",
+      "cardmarketProductId": 279085,
+      "tcgplayerProductId": 86917,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 279085,
+          "tcgplayerProductId": 86917
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-115",
+      "localId": "115",
+      "name": "Grass Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/115",
+      "cardmarketProductId": 279087,
+      "tcgplayerProductId": 85879,
+      "sourceUpdated": "2026-07-28T21:08:27+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279087,
+          "tcgplayerProductId": 85879
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-116",
+      "localId": "116",
+      "name": "Fire Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/116",
+      "cardmarketProductId": 279088,
+      "tcgplayerProductId": 85464,
+      "sourceUpdated": "2026-07-28T21:08:27+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279088,
+          "tcgplayerProductId": 85464
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-117",
+      "localId": "117",
+      "name": "Water Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/117",
+      "cardmarketProductId": 279089,
+      "tcgplayerProductId": 90512,
+      "sourceUpdated": "2026-07-28T21:08:27+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279089,
+          "tcgplayerProductId": 90512
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-118",
+      "localId": "118",
+      "name": "Lightning Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/118",
+      "cardmarketProductId": 279090,
+      "tcgplayerProductId": 86768,
+      "sourceUpdated": "2026-07-28T21:08:27+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279090,
+          "tcgplayerProductId": 86768
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-119",
+      "localId": "119",
+      "name": "Psychic Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/119",
+      "cardmarketProductId": 279091,
+      "tcgplayerProductId": 88424,
+      "sourceUpdated": "2026-07-28T21:08:27+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279091,
+          "tcgplayerProductId": 88424
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-120",
+      "localId": "120",
+      "name": "Fighting Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/120",
+      "cardmarketProductId": 279092,
+      "tcgplayerProductId": 85444,
+      "sourceUpdated": "2026-07-28T21:08:27+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279092,
+          "tcgplayerProductId": 85444
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-121",
+      "localId": "121",
+      "name": "Darkness Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/121",
+      "cardmarketProductId": 279093,
+      "tcgplayerProductId": 84677,
+      "sourceUpdated": "2026-07-28T21:08:27+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279093,
+          "tcgplayerProductId": 84677
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-122",
+      "localId": "122",
+      "name": "Metal Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/122",
+      "cardmarketProductId": 279094,
+      "tcgplayerProductId": 87350,
+      "sourceUpdated": "2026-07-28T21:08:27+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 279094,
+          "tcgplayerProductId": 87350
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-123",
+      "localId": "123",
+      "name": "Gyarados",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Wataru Kawahara",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/123",
+      "cardmarketProductId": 278976,
+      "tcgplayerProductId": 85995,
+      "sourceUpdated": "2026-08-15T22:57:06+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 278976,
+          "tcgplayerProductId": 85995
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 279095,
+          "tcgplayerProductId": 85995
+        }
+      ]
+    },
+    {
+      "tcgdexId": "hgss1-ONE",
+      "localId": "ONE",
+      "name": "Alph Lithograph",
+      "rarity": "Ultra Rare",
+      "category": "Trainer",
+      "illustrator": "Milky Isobe",
+      "image": "https://assets.tcgdex.net/en/hgss/hgss1/ONE",
+      "cardmarketProductId": 278972,
+      "tcgplayerProductId": 83509,
+      "sourceUpdated": "2026-07-28T21:08:27+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 278972,
+          "tcgplayerProductId": 83509
+        }
+      ]
+    }
+  ]
+}

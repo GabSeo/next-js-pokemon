@@ -1,0 +1,3480 @@
+{
+  "crawledAt": "2026-09-05T20:00:44.663Z",
+  "source": "https://api.tcgdex.net/v2/en",
+  "set": {
+    "id": "gym1",
+    "name": "Gym Heroes",
+    "serie": {
+      "id": "gym",
+      "name": "Gym"
+    },
+    "releaseDate": "2000-08-14",
+    "abbreviation": {
+      "official": "G1"
+    },
+    "cardCount": {
+      "firstEd": 132,
+      "holo": 40,
+      "normal": 227,
+      "official": 132,
+      "reverse": 0,
+      "total": 132
+    },
+    "logo": "https://assets.tcgdex.net/en/gym/gym1/logo",
+    "symbol": "https://assets.tcgdex.net/univ/gym/gym1/symbol"
+  },
+  "cards": [
+    {
+      "tcgdexId": "gym1-1",
+      "localId": "1",
+      "name": "Blaine's Moltres",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/1",
+      "tcgplayerProductId": 83875,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "tcgplayerProductId": 83875
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50ts0izj268xwv3crwi",
+          "cardmarketProductId": 274137,
+          "tcgplayerProductId": 83875
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-2",
+      "localId": "2",
+      "name": "Brock's Rhydon",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/2",
+      "tcgplayerProductId": 83978,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "tcgplayerProductId": 83978
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50ts0izj268xwv3crwi",
+          "cardmarketProductId": 274138,
+          "tcgplayerProductId": 83978
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-3",
+      "localId": "3",
+      "name": "Erika's Clefable",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Nishida",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/3",
+      "tcgplayerProductId": 85287,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "tcgplayerProductId": 85287
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50ts0izj268xwv3crwi",
+          "cardmarketProductId": 274139,
+          "tcgplayerProductId": 85287
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-4",
+      "localId": "4",
+      "name": "Erika's Dragonair",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Nishida",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/4",
+      "tcgplayerProductId": 85290,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "tcgplayerProductId": 85290
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50ts0izj268xwv3crwi",
+          "cardmarketProductId": 274140,
+          "tcgplayerProductId": 85290
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-5",
+      "localId": "5",
+      "name": "Erika's Vileplume",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/5",
+      "tcgplayerProductId": 85309,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "tcgplayerProductId": 85309
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50ts0izj268xwv3crwi",
+          "cardmarketProductId": 274141,
+          "tcgplayerProductId": 85309
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-6",
+      "localId": "6",
+      "name": "Lt. Surge's Electabuzz",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/6",
+      "tcgplayerProductId": 86851,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "tcgplayerProductId": 86851
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50ts0izj268xwv3crwi",
+          "cardmarketProductId": 274142,
+          "tcgplayerProductId": 86851
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-7",
+      "localId": "7",
+      "name": "Lt. Surge's Fearow",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/7",
+      "tcgplayerProductId": 86854,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "tcgplayerProductId": 86854
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50ts0izj268xwv3crwi",
+          "cardmarketProductId": 274143,
+          "tcgplayerProductId": 86854
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-8",
+      "localId": "8",
+      "name": "Lt. Surge's Magneton",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/8",
+      "tcgplayerProductId": 86858,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "tcgplayerProductId": 86858
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50ts0izj268xwv3crwi",
+          "cardmarketProductId": 274144,
+          "tcgplayerProductId": 86858
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-9",
+      "localId": "9",
+      "name": "Misty's Seadra",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Nishida",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/9",
+      "tcgplayerProductId": 87541,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "tcgplayerProductId": 87541
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50ts0izj268xwv3crwi",
+          "cardmarketProductId": 274145,
+          "tcgplayerProductId": 87541
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50typ2p5qsrlm6y3f8o",
+          "cardmarketProductId": 274145,
+          "tcgplayerProductId": 87541
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-10",
+      "localId": "10",
+      "name": "Misty's Tentacruel",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/10",
+      "tcgplayerProductId": 87552,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "tcgplayerProductId": 87552
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50ts0izj268xwv3crwi",
+          "cardmarketProductId": 274146,
+          "tcgplayerProductId": 87552
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-11",
+      "localId": "11",
+      "name": "Rocket's Hitmonchan",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/11",
+      "tcgplayerProductId": 88773,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "tcgplayerProductId": 88773
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50ts0izj268xwv3crwi",
+          "cardmarketProductId": 274147,
+          "tcgplayerProductId": 88773
+        },
+        {
+          "type": "holo",
+          "size": "jumbo",
+          "variantId": "a1l3pfhefmneigzlm",
+          "tcgplayerProductId": 211506
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-12",
+      "localId": "12",
+      "name": "Rocket's Moltres",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/12",
+      "tcgplayerProductId": 88781,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "tcgplayerProductId": 88781
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50ts0izj268xwv3crwi",
+          "cardmarketProductId": 274148,
+          "tcgplayerProductId": 88781
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-13",
+      "localId": "13",
+      "name": "Rocket's Scyther",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/13",
+      "tcgplayerProductId": 88788,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "tcgplayerProductId": 88788
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50ts0izj268xwv3crwi",
+          "cardmarketProductId": 274149,
+          "tcgplayerProductId": 88788
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-14",
+      "localId": "14",
+      "name": "Sabrina's Gengar",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/14",
+      "tcgplayerProductId": 88874,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "tcgplayerProductId": 88874
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50ts0izj268xwv3crwi",
+          "cardmarketProductId": 274150,
+          "tcgplayerProductId": 88874
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-15",
+      "localId": "15",
+      "name": "Brock",
+      "rarity": "Holo Rare",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/15",
+      "tcgplayerProductId": 83959,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "tcgplayerProductId": 83959
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50ts0izj268xwv3crwi",
+          "cardmarketProductId": 274151,
+          "tcgplayerProductId": 83959
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-16",
+      "localId": "16",
+      "name": "Erika",
+      "rarity": "Holo Rare",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/16",
+      "tcgplayerProductId": 85281,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "tcgplayerProductId": 85281
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50ts0izj268xwv3crwi",
+          "cardmarketProductId": 274152,
+          "tcgplayerProductId": 85281
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-17",
+      "localId": "17",
+      "name": "Lt. Surge",
+      "rarity": "Holo Rare",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/17",
+      "tcgplayerProductId": 86848,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "tcgplayerProductId": 86848
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50ts0izj268xwv3crwi",
+          "cardmarketProductId": 274153,
+          "tcgplayerProductId": 86848
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-18",
+      "localId": "18",
+      "name": "Misty",
+      "rarity": "Holo Rare",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/18",
+      "tcgplayerProductId": 87523,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "tcgplayerProductId": 87523
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50ts0izj268xwv3crwi",
+          "cardmarketProductId": 274154,
+          "tcgplayerProductId": 87523
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-19",
+      "localId": "19",
+      "name": "The Rocket's Trap",
+      "rarity": "Holo Rare",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/19",
+      "tcgplayerProductId": 89897,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "tcgplayerProductId": 89897
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50ts0izj268xwv3crwi",
+          "cardmarketProductId": 274155,
+          "tcgplayerProductId": 89897
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-20",
+      "localId": "20",
+      "name": "Brock's Golem",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/20",
+      "tcgplayerProductId": 83967,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83967
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274156,
+          "tcgplayerProductId": 83967
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-21",
+      "localId": "21",
+      "name": "Brock's Onix",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Benimaru Itoh",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/21",
+      "tcgplayerProductId": 83974,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83974
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274157,
+          "tcgplayerProductId": 83974
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-22",
+      "localId": "22",
+      "name": "Brock's Rhyhorn",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/22",
+      "tcgplayerProductId": 83979,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83979
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274158,
+          "tcgplayerProductId": 83979
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-23",
+      "localId": "23",
+      "name": "Brock's Sandslash",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/23",
+      "tcgplayerProductId": 83983,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83983
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274159,
+          "tcgplayerProductId": 83983
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-24",
+      "localId": "24",
+      "name": "Brock's Zubat",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/24",
+      "tcgplayerProductId": 83988,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83988
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274160,
+          "tcgplayerProductId": 83988
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-25",
+      "localId": "25",
+      "name": "Erika's Clefairy",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/25",
+      "tcgplayerProductId": 85288,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 85288
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274161,
+          "tcgplayerProductId": 85288
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-26",
+      "localId": "26",
+      "name": "Erika's Victreebel",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/26",
+      "tcgplayerProductId": 85308,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 85308
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274162,
+          "tcgplayerProductId": 85308
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-27",
+      "localId": "27",
+      "name": "Lt. Surge's Electabuzz",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/27",
+      "tcgplayerProductId": 86852,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 86852
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274142,
+          "tcgplayerProductId": 86852
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-28",
+      "localId": "28",
+      "name": "Lt. Surge's Raichu",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/28",
+      "tcgplayerProductId": 86862,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 86862
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274164,
+          "tcgplayerProductId": 86862
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-29",
+      "localId": "29",
+      "name": "Misty's Cloyster",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/29",
+      "tcgplayerProductId": 87525,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 87525
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274165,
+          "tcgplayerProductId": 87525
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-30",
+      "localId": "30",
+      "name": "Misty's Goldeen",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/30",
+      "tcgplayerProductId": 87528,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 87528
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274166,
+          "tcgplayerProductId": 87528
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-31",
+      "localId": "31",
+      "name": "Misty's Poliwrath",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/31",
+      "tcgplayerProductId": 87538,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 87538
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274167,
+          "tcgplayerProductId": 87538
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-32",
+      "localId": "32",
+      "name": "Misty's Tentacool",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/32",
+      "tcgplayerProductId": 87550,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 87550
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274168,
+          "tcgplayerProductId": 87550
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-33",
+      "localId": "33",
+      "name": "Rocket's Snorlax",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Shin-ichi Yoshida",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/33",
+      "tcgplayerProductId": 88795,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 88795
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274169,
+          "tcgplayerProductId": 88795
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-34",
+      "localId": "34",
+      "name": "Sabrina's Venomoth",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/34",
+      "tcgplayerProductId": 88890,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 88890
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274170,
+          "tcgplayerProductId": 88890
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-35",
+      "localId": "35",
+      "name": "Blaine's Growlithe",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/35",
+      "tcgplayerProductId": 83868,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83868
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274171,
+          "tcgplayerProductId": 83868
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-36",
+      "localId": "36",
+      "name": "Blaine's Kangaskhan",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/36",
+      "tcgplayerProductId": 83871,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83871
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274172,
+          "tcgplayerProductId": 83871
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-37",
+      "localId": "37",
+      "name": "Blaine's Magmar",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/37",
+      "tcgplayerProductId": 83873,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83873
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274173,
+          "tcgplayerProductId": 83873
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-38",
+      "localId": "38",
+      "name": "Brock's Geodude",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Nishida",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/38",
+      "tcgplayerProductId": 83963,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83963
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274174,
+          "tcgplayerProductId": 83963
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-39",
+      "localId": "39",
+      "name": "Brock's Golbat",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/39",
+      "tcgplayerProductId": 83966,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83966
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274175,
+          "tcgplayerProductId": 83966
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-40",
+      "localId": "40",
+      "name": "Brock's Graveler",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/40",
+      "tcgplayerProductId": 83969,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83969
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274176,
+          "tcgplayerProductId": 83969
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-41",
+      "localId": "41",
+      "name": "Brock's Lickitung",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/41",
+      "tcgplayerProductId": 83970,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83970
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274177,
+          "tcgplayerProductId": 83970
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-42",
+      "localId": "42",
+      "name": "Erika's Dratini",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/42",
+      "tcgplayerProductId": 85291,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 85291
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274178,
+          "tcgplayerProductId": 85291
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-43",
+      "localId": "43",
+      "name": "Erika's Exeggcute",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Nishida",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/43",
+      "tcgplayerProductId": 85292,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 85292
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274179,
+          "tcgplayerProductId": 85292
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-44",
+      "localId": "44",
+      "name": "Erika's Exeggutor",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/44",
+      "tcgplayerProductId": 85294,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 85294
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274180,
+          "tcgplayerProductId": 85294
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-45",
+      "localId": "45",
+      "name": "Erika's Gloom",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/45",
+      "tcgplayerProductId": 85295,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 85295
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274181,
+          "tcgplayerProductId": 85295
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-46",
+      "localId": "46",
+      "name": "Erika's Gloom",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/46",
+      "tcgplayerProductId": 85296,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 85296
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274152,
+          "tcgplayerProductId": 85296
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-47",
+      "localId": "47",
+      "name": "Erika's Oddish",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Nishida",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/47",
+      "tcgplayerProductId": 85301,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 85301
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274183,
+          "tcgplayerProductId": 85301
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-48",
+      "localId": "48",
+      "name": "Erika's Weepinbell",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Nishida",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/48",
+      "tcgplayerProductId": 85310,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 85310
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274184,
+          "tcgplayerProductId": 85310
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-49",
+      "localId": "49",
+      "name": "Erika's Weepinbell",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/49",
+      "tcgplayerProductId": 85311,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 85311
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274152,
+          "tcgplayerProductId": 85311
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-50",
+      "localId": "50",
+      "name": "Lt. Surge's Magnemite",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Nishida",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/50",
+      "tcgplayerProductId": 86856,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 86856
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274186,
+          "tcgplayerProductId": 86856
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-51",
+      "localId": "51",
+      "name": "Lt. Surge's Raticate",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/51",
+      "tcgplayerProductId": 86863,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 86863
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274187,
+          "tcgplayerProductId": 86863
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-52",
+      "localId": "52",
+      "name": "Lt. Surge's Spearow",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/52",
+      "tcgplayerProductId": 86868,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 86868
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274188,
+          "tcgplayerProductId": 86868
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-53",
+      "localId": "53",
+      "name": "Misty's Poliwhirl",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/53",
+      "tcgplayerProductId": 87537,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 87537
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274189,
+          "tcgplayerProductId": 87537
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-54",
+      "localId": "54",
+      "name": "Misty's Psyduck",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Nishida",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/54",
+      "tcgplayerProductId": 87539,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 87539
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274190,
+          "tcgplayerProductId": 87539
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "6xp3yys30vhxy35fte9p",
+          "cardmarketProductId": 274190,
+          "tcgplayerProductId": 87539
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-55",
+      "localId": "55",
+      "name": "Misty's Seaking",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/55",
+      "tcgplayerProductId": 87542,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 87542
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274191,
+          "tcgplayerProductId": 87542
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-56",
+      "localId": "56",
+      "name": "Misty's Starmie",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/56",
+      "tcgplayerProductId": 87546,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 87546
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274192,
+          "tcgplayerProductId": 87546
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-57",
+      "localId": "57",
+      "name": "Misty's Tentacool",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/57",
+      "tcgplayerProductId": 87551,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 87551
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274154,
+          "tcgplayerProductId": 87551
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-58",
+      "localId": "58",
+      "name": "Sabrina's Haunter",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Nishida",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/58",
+      "tcgplayerProductId": 88878,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 88878
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274194,
+          "tcgplayerProductId": 88878
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-59",
+      "localId": "59",
+      "name": "Sabrina's Jynx",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/59",
+      "tcgplayerProductId": 88881,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 88881
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274195,
+          "tcgplayerProductId": 88881
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-60",
+      "localId": "60",
+      "name": "Sabrina's Slowbro",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/60",
+      "tcgplayerProductId": 88888,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 88888
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274196,
+          "tcgplayerProductId": 88888
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-61",
+      "localId": "61",
+      "name": "Blaine's Charmander",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/61",
+      "tcgplayerProductId": 83862,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83862
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274197,
+          "tcgplayerProductId": 83862
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-62",
+      "localId": "62",
+      "name": "Blaine's Growlithe",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Nishida",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/62",
+      "tcgplayerProductId": 83869,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83869
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274171,
+          "tcgplayerProductId": 83869
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-63",
+      "localId": "63",
+      "name": "Blaine's Ponyta",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/63",
+      "tcgplayerProductId": 83877,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83877
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274199,
+          "tcgplayerProductId": 83877
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-64",
+      "localId": "64",
+      "name": "Blaine's Tauros",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/64",
+      "tcgplayerProductId": 83884,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83884
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274200,
+          "tcgplayerProductId": 83884
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-65",
+      "localId": "65",
+      "name": "Blaine's Vulpix",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/65",
+      "tcgplayerProductId": 83885,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83885
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274201,
+          "tcgplayerProductId": 83885
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-66",
+      "localId": "66",
+      "name": "Brock's Geodude",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/66",
+      "tcgplayerProductId": 83964,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83964
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274151,
+          "tcgplayerProductId": 83964
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-67",
+      "localId": "67",
+      "name": "Brock's Mankey",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Nishida",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/67",
+      "tcgplayerProductId": 83971,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83971
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274203,
+          "tcgplayerProductId": 83971
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-68",
+      "localId": "68",
+      "name": "Brock's Mankey",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/68",
+      "tcgplayerProductId": 83972,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83972
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274151,
+          "tcgplayerProductId": 83972
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-69",
+      "localId": "69",
+      "name": "Brock's Onix",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/69",
+      "tcgplayerProductId": 83975,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83975
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274151,
+          "tcgplayerProductId": 83975
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-70",
+      "localId": "70",
+      "name": "Brock's Rhyhorn",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/70",
+      "tcgplayerProductId": 83980,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83980
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274151,
+          "tcgplayerProductId": 83980
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-71",
+      "localId": "71",
+      "name": "Brock's Sandshrew",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/71",
+      "tcgplayerProductId": 83981,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83981
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274207,
+          "tcgplayerProductId": 83981
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-72",
+      "localId": "72",
+      "name": "Brock's Sandshrew",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/72",
+      "tcgplayerProductId": 83982,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83982
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274151,
+          "tcgplayerProductId": 83982
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-73",
+      "localId": "73",
+      "name": "Brock's Vulpix",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/73",
+      "tcgplayerProductId": 83987,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83987
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274209,
+          "tcgplayerProductId": 83987
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-74",
+      "localId": "74",
+      "name": "Brock's Zubat",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Nishida",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/74",
+      "tcgplayerProductId": 83989,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83989
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274151,
+          "tcgplayerProductId": 83989
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-75",
+      "localId": "75",
+      "name": "Erika's Bellsprout",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Nishida",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/75",
+      "tcgplayerProductId": 85284,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 85284
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274211,
+          "tcgplayerProductId": 85284
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-76",
+      "localId": "76",
+      "name": "Erika's Bellsprout",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/76",
+      "tcgplayerProductId": 85285,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 85285
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274152,
+          "tcgplayerProductId": 85285
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-77",
+      "localId": "77",
+      "name": "Erika's Exeggcute",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/77",
+      "tcgplayerProductId": 85293,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 85293
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274152,
+          "tcgplayerProductId": 85293
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-78",
+      "localId": "78",
+      "name": "Erika's Oddish",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/78",
+      "tcgplayerProductId": 85303,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 85303
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274152,
+          "tcgplayerProductId": 85303
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-79",
+      "localId": "79",
+      "name": "Erika's Tangela",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/79",
+      "tcgplayerProductId": 85306,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 85306
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274215,
+          "tcgplayerProductId": 85306
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-80",
+      "localId": "80",
+      "name": "Lt. Surge's Magnemite",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/80",
+      "tcgplayerProductId": 86857,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 86857
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274153,
+          "tcgplayerProductId": 86857
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-81",
+      "localId": "81",
+      "name": "Lt. Surge's Pikachu",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/81",
+      "tcgplayerProductId": 86859,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 86859
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274217,
+          "tcgplayerProductId": 86859
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-82",
+      "localId": "82",
+      "name": "Lt. Surge's Rattata",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/82",
+      "tcgplayerProductId": 86865,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 86865
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274218,
+          "tcgplayerProductId": 86865
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-83",
+      "localId": "83",
+      "name": "Lt. Surge's Spearow",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Nishida",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/83",
+      "tcgplayerProductId": 86869,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 86869
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274153,
+          "tcgplayerProductId": 86869
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-84",
+      "localId": "84",
+      "name": "Lt. Surge's Voltorb",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/84",
+      "tcgplayerProductId": 86871,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 86871
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274220,
+          "tcgplayerProductId": 86871
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-85",
+      "localId": "85",
+      "name": "Misty's Goldeen",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Nishida",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/85",
+      "tcgplayerProductId": 87529,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 87529
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274154,
+          "tcgplayerProductId": 87529
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-86",
+      "localId": "86",
+      "name": "Misty's Horsea",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/86",
+      "tcgplayerProductId": 87532,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 87532
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274222,
+          "tcgplayerProductId": 87532
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-87",
+      "localId": "87",
+      "name": "Misty's Poliwag",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/87",
+      "tcgplayerProductId": 87535,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 87535
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274223,
+          "tcgplayerProductId": 87535
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-88",
+      "localId": "88",
+      "name": "Misty's Seel",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Nishida",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/88",
+      "tcgplayerProductId": 87543,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 87543
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274224,
+          "tcgplayerProductId": 87543
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-89",
+      "localId": "89",
+      "name": "Misty's Shellder",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/89",
+      "tcgplayerProductId": 87545,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 87545
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274225,
+          "tcgplayerProductId": 87545
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-90",
+      "localId": "90",
+      "name": "Misty's Staryu",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/90",
+      "tcgplayerProductId": 87547,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 87547
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274226,
+          "tcgplayerProductId": 87547
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-91",
+      "localId": "91",
+      "name": "Sabrina's Abra",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/91",
+      "tcgplayerProductId": 88863,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 88863
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274227,
+          "tcgplayerProductId": 88863
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-92",
+      "localId": "92",
+      "name": "Sabrina's Drowzee",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Nishida",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/92",
+      "tcgplayerProductId": 88867,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 88867
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274228,
+          "tcgplayerProductId": 88867
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-93",
+      "localId": "93",
+      "name": "Sabrina's Gastly",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/93",
+      "tcgplayerProductId": 88870,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 88870
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274229,
+          "tcgplayerProductId": 88870
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-94",
+      "localId": "94",
+      "name": "Sabrina's Mr. Mime",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/94",
+      "tcgplayerProductId": 88884,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 88884
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274230,
+          "tcgplayerProductId": 88884
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-95",
+      "localId": "95",
+      "name": "Sabrina's Slowpoke",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/95",
+      "tcgplayerProductId": 88889,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 88889
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274231,
+          "tcgplayerProductId": 88889
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-96",
+      "localId": "96",
+      "name": "Sabrina's Venonat",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/96",
+      "tcgplayerProductId": 88891,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 88891
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274232,
+          "tcgplayerProductId": 88891
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-97",
+      "localId": "97",
+      "name": "Blaine's Quiz #1",
+      "rarity": "Rare",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/97",
+      "tcgplayerProductId": 83879,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83879
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274233,
+          "tcgplayerProductId": 83879
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-98",
+      "localId": "98",
+      "name": "Brock",
+      "rarity": "Rare",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/98",
+      "tcgplayerProductId": 83960,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83960
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274151,
+          "tcgplayerProductId": 83960
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-99",
+      "localId": "99",
+      "name": "Charity",
+      "rarity": "Rare",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/99",
+      "tcgplayerProductId": 84182,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 84182
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274235,
+          "tcgplayerProductId": 84182
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-100",
+      "localId": "100",
+      "name": "Erika",
+      "rarity": "Rare",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/100",
+      "tcgplayerProductId": 85282,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 85282
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274152,
+          "tcgplayerProductId": 85282
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-101",
+      "localId": "101",
+      "name": "Lt. Surge",
+      "rarity": "Rare",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/101",
+      "tcgplayerProductId": 86849,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 86849
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274153,
+          "tcgplayerProductId": 86849
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-102",
+      "localId": "102",
+      "name": "Misty",
+      "rarity": "Rare",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/102",
+      "tcgplayerProductId": 87524,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 87524
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274154,
+          "tcgplayerProductId": 87524
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-103",
+      "localId": "103",
+      "name": "No Removal Gym",
+      "rarity": "Rare",
+      "category": "Trainer",
+      "illustrator": "Keiji Kinebuchi",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/103",
+      "tcgplayerProductId": 87789,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 87789
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274239,
+          "tcgplayerProductId": 87789
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-104",
+      "localId": "104",
+      "name": "The Rocket's Training Gym",
+      "rarity": "Rare",
+      "category": "Trainer",
+      "illustrator": "Keiji Kinebuchi",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/104",
+      "tcgplayerProductId": 89896,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 89896
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274240,
+          "tcgplayerProductId": 89896
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-105",
+      "localId": "105",
+      "name": "Blaine's Last Resort",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/105",
+      "tcgplayerProductId": 83872,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83872
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274241,
+          "tcgplayerProductId": 83872
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-106",
+      "localId": "106",
+      "name": "Brock's Training Method",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/106",
+      "tcgplayerProductId": 83985,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83985
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274242,
+          "tcgplayerProductId": 83985
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-107",
+      "localId": "107",
+      "name": "Celadon City Gym",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Keiji Kinebuchi",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/107",
+      "tcgplayerProductId": 84140,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 84140
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274243,
+          "tcgplayerProductId": 84140
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-108",
+      "localId": "108",
+      "name": "Cerulean City Gym",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Keiji Kinebuchi",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/108",
+      "tcgplayerProductId": 84157,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 84157
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274244,
+          "tcgplayerProductId": 84157
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-109",
+      "localId": "109",
+      "name": "Erika's Maids",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/109",
+      "tcgplayerProductId": 85300,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 85300
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274245,
+          "tcgplayerProductId": 85300
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-110",
+      "localId": "110",
+      "name": "Erika's Perfume",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/110",
+      "tcgplayerProductId": 85305,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 85305
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274246,
+          "tcgplayerProductId": 85305
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-111",
+      "localId": "111",
+      "name": "Good Manners",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/111",
+      "tcgplayerProductId": 85839,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 85839
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274247,
+          "tcgplayerProductId": 85839
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-112",
+      "localId": "112",
+      "name": "Lt. Surge's Treaty",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/112",
+      "tcgplayerProductId": 86870,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 86870
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274248,
+          "tcgplayerProductId": 86870
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-113",
+      "localId": "113",
+      "name": "Minion of Team Rocket",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/113",
+      "tcgplayerProductId": 87480,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 87480
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274249,
+          "tcgplayerProductId": 87480
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-114",
+      "localId": "114",
+      "name": "Misty's Wrath",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/114",
+      "tcgplayerProductId": 87554,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 87554
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274250,
+          "tcgplayerProductId": 87554
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-115",
+      "localId": "115",
+      "name": "Pewter City Gym",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Keiji Kinebuchi",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/115",
+      "tcgplayerProductId": 87994,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 87994
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274251,
+          "tcgplayerProductId": 87994
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-116",
+      "localId": "116",
+      "name": "Recall",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Sumiyoshi Kizuki",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/116",
+      "tcgplayerProductId": 88650,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 88650
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274252,
+          "tcgplayerProductId": 88650
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-117",
+      "localId": "117",
+      "name": "Sabrina's ESP",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/117",
+      "tcgplayerProductId": 88869,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 88869
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274253,
+          "tcgplayerProductId": 88869
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-118",
+      "localId": "118",
+      "name": "Secret Mission",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/118",
+      "tcgplayerProductId": 89035,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 89035
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274254,
+          "tcgplayerProductId": 89035
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-119",
+      "localId": "119",
+      "name": "Tickling Machine",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Sumiyoshi Kizuki",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/119",
+      "tcgplayerProductId": 89910,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 89910
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274255,
+          "tcgplayerProductId": 89910
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-120",
+      "localId": "120",
+      "name": "Vermilion City Gym",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Keiji Kinebuchi",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/120",
+      "tcgplayerProductId": 90326,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 90326
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274256,
+          "tcgplayerProductId": 90326
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-121",
+      "localId": "121",
+      "name": "Blaine's Gamble",
+      "rarity": "Common",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/121",
+      "tcgplayerProductId": 83867,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83867
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274257,
+          "tcgplayerProductId": 83867
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-122",
+      "localId": "122",
+      "name": "Energy Flow",
+      "rarity": "Common",
+      "category": "Trainer",
+      "illustrator": "Keiji Kinebuchi",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/122",
+      "tcgplayerProductId": 85213,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 85213
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274258,
+          "tcgplayerProductId": 85213
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-123",
+      "localId": "123",
+      "name": "Misty's Duel",
+      "rarity": "Common",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/123",
+      "tcgplayerProductId": 87527,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 87527
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274259,
+          "tcgplayerProductId": 87527
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-124",
+      "localId": "124",
+      "name": "Narrow Gym",
+      "rarity": "Common",
+      "category": "Trainer",
+      "illustrator": "Keiji Kinebuchi",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/124",
+      "tcgplayerProductId": 87679,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 87679
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274260,
+          "tcgplayerProductId": 87679
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-125",
+      "localId": "125",
+      "name": "Sabrina's Gaze",
+      "rarity": "Common",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/125",
+      "tcgplayerProductId": 88873,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 88873
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274261,
+          "tcgplayerProductId": 88873
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-126",
+      "localId": "126",
+      "name": "Trash Exchange",
+      "rarity": "Common",
+      "category": "Trainer",
+      "illustrator": "Keiji Kinebuchi",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/126",
+      "tcgplayerProductId": 90029,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 90029
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274262,
+          "tcgplayerProductId": 90029
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-127",
+      "localId": "127",
+      "name": "Fighting Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "illustrator": "Keiji Kinebuchi",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/127",
+      "tcgplayerProductId": 85435,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 85435
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274263,
+          "tcgplayerProductId": 85435
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-128",
+      "localId": "128",
+      "name": "Fire Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "illustrator": "Keiji Kinebuchi",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/128",
+      "tcgplayerProductId": 85454,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 85454
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274264,
+          "tcgplayerProductId": 85454
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-129",
+      "localId": "129",
+      "name": "Grass Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "illustrator": "Keiji Kinebuchi",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/129",
+      "tcgplayerProductId": 85871,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 85871
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274265,
+          "tcgplayerProductId": 85871
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-130",
+      "localId": "130",
+      "name": "Lightning Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "illustrator": "Keiji Kinebuchi",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/130",
+      "tcgplayerProductId": 86757,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 86757
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274266,
+          "tcgplayerProductId": 86757
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-131",
+      "localId": "131",
+      "name": "Psychic Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "illustrator": "Keiji Kinebuchi",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/131",
+      "tcgplayerProductId": 88415,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 88415
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274267,
+          "tcgplayerProductId": 88415
+        }
+      ]
+    },
+    {
+      "tcgdexId": "gym1-132",
+      "localId": "132",
+      "name": "Water Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "illustrator": "Keiji Kinebuchi",
+      "image": "https://assets.tcgdex.net/en/gym/gym1/132",
+      "tcgplayerProductId": 90503,
+      "sourceUpdated": "2026-07-25T23:48:29+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 90503
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu2uft0spaa3eefrz",
+          "cardmarketProductId": 274268,
+          "tcgplayerProductId": 90503
+        }
+      ]
+    }
+  ]
+}

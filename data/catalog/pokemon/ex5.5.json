@@ -1,0 +1,118 @@
+{
+  "crawledAt": "2026-09-05T20:00:52.847Z",
+  "source": "https://api.tcgdex.net/v2/en",
+  "set": {
+    "id": "ex5.5",
+    "name": "Poké Card Creator Pack",
+    "serie": {
+      "id": "ex",
+      "name": "EX"
+    },
+    "releaseDate": "2004-07-01",
+    "cardCount": {
+      "firstEd": 0,
+      "holo": 0,
+      "normal": 5,
+      "official": 5,
+      "reverse": 0,
+      "total": 5
+    }
+  },
+  "cards": [
+    {
+      "tcgdexId": "ex5.5-1",
+      "localId": "1",
+      "name": "Treecko",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Mark Kraus",
+      "cardmarketProductId": 605992,
+      "sourceUpdated": "2026-07-10T13:32:18+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 605992,
+          "tcgplayerProductId": 162268
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex5.5-2",
+      "localId": "2",
+      "name": "Wurmple",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Katie Gross",
+      "cardmarketProductId": 605993,
+      "sourceUpdated": "2026-07-10T13:32:18+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 605993,
+          "tcgplayerProductId": 162269
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex5.5-3",
+      "localId": "3",
+      "name": "Torchic",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "May Do",
+      "cardmarketProductId": 605994,
+      "sourceUpdated": "2026-07-10T13:32:18+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 605994,
+          "tcgplayerProductId": 162270
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex5.5-4",
+      "localId": "4",
+      "name": "Mudkip",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Rowan Laidlaw",
+      "cardmarketProductId": 605995,
+      "sourceUpdated": "2026-07-10T13:32:18+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 605995,
+          "tcgplayerProductId": 162271
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex5.5-5",
+      "localId": "5",
+      "name": "Pikachu",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Sylvia Forrest",
+      "cardmarketProductId": 605996,
+      "sourceUpdated": "2026-07-10T13:32:18+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 605996,
+          "tcgplayerProductId": 162272
+        }
+      ]
+    }
+  ]
+}

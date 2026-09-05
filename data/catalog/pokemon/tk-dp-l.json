@@ -1,0 +1,236 @@
+{
+  "crawledAt": "2026-09-05T20:00:59.687Z",
+  "source": "https://api.tcgdex.net/v2/en",
+  "set": {
+    "id": "tk-dp-l",
+    "name": "DP trainer Kit (Lucario)",
+    "serie": {
+      "id": "tk",
+      "name": "Trainer kits"
+    },
+    "releaseDate": "2007-09-01",
+    "abbreviation": {
+      "official": "TK3L"
+    },
+    "cardCount": {
+      "firstEd": 0,
+      "holo": 1,
+      "normal": 10,
+      "official": 11,
+      "reverse": 0,
+      "total": 11
+    },
+    "symbol": "https://assets.tcgdex.net/univ/tk/tk-dp-l/symbol"
+  },
+  "cards": [
+    {
+      "tcgdexId": "tk-dp-l-1",
+      "localId": "1",
+      "name": "Geodude",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "cardmarketProductId": 278010,
+      "sourceUpdated": "2026-07-26T10:09:48+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278010,
+          "tcgplayerProductId": 85691
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-dp-l-2",
+      "localId": "2",
+      "name": "Graveler",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Mitsuhiro Arita",
+      "cardmarketProductId": 278012,
+      "sourceUpdated": "2026-07-26T10:09:48+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278012,
+          "tcgplayerProductId": 85893
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-dp-l-3",
+      "localId": "3",
+      "name": "Lucario",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Kent Kanetsuna",
+      "cardmarketProductId": 278013,
+      "sourceUpdated": "2026-07-26T10:09:48+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 278013,
+          "tcgplayerProductId": 86875
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-dp-l-4",
+      "localId": "4",
+      "name": "Machoke",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Kouki Saitou",
+      "cardmarketProductId": 278016,
+      "sourceUpdated": "2026-07-26T10:09:48+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278016,
+          "tcgplayerProductId": 86982
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-dp-l-5",
+      "localId": "5",
+      "name": "Machop",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Nishida",
+      "cardmarketProductId": 278017,
+      "sourceUpdated": "2026-07-26T10:09:48+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278017,
+          "tcgplayerProductId": 86996
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-dp-l-6",
+      "localId": "6",
+      "name": "Riolu",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "cardmarketProductId": 278020,
+      "sourceUpdated": "2026-07-26T10:09:48+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278020,
+          "tcgplayerProductId": 88753
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-dp-l-7",
+      "localId": "7",
+      "name": "Starly",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "cardmarketProductId": 278022,
+      "sourceUpdated": "2026-07-26T10:09:48+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278022,
+          "tcgplayerProductId": 89522
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-dp-l-8",
+      "localId": "8",
+      "name": "Energy Search",
+      "rarity": "None",
+      "category": "Trainer",
+      "illustrator": "Kai Ishikawa",
+      "cardmarketProductId": 278023,
+      "sourceUpdated": "2026-07-26T10:09:48+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278023,
+          "tcgplayerProductId": 85247
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-dp-l-9",
+      "localId": "9",
+      "name": "Potion",
+      "rarity": "None",
+      "category": "Trainer",
+      "illustrator": "Shin-ichi Yoshikawa",
+      "cardmarketProductId": 278026,
+      "sourceUpdated": "2026-07-26T10:09:48+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278026,
+          "tcgplayerProductId": 88345
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-dp-l-10",
+      "localId": "10",
+      "name": "Quick Ball",
+      "rarity": "None",
+      "category": "Trainer",
+      "illustrator": "Ryo Ueda",
+      "cardmarketProductId": 278028,
+      "sourceUpdated": "2026-07-26T10:09:48+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278028,
+          "tcgplayerProductId": 88478
+        }
+      ]
+    },
+    {
+      "tcgdexId": "tk-dp-l-11",
+      "localId": "11",
+      "name": "Fighting Energy",
+      "rarity": "None",
+      "category": "Energy",
+      "illustrator": "",
+      "cardmarketProductId": 278029,
+      "sourceUpdated": "2026-07-26T10:09:48+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 278029,
+          "tcgplayerProductId": 85443
+        }
+      ]
+    }
+  ]
+}

@@ -27,6 +27,7 @@ import { buildCached } from "@/lib/build-cache";
 import { cardmarketUrl } from "@/lib/cardmarket-search";
 import { absoluteUrl, freshness } from "@/lib/site";
 import { describeUpstreamError, logUpstreamOnce } from "@/lib/upstream";
+import { findCatalogCardByNameAndSet } from "@/lib/catalog";
 import { findCardByNameAndSet, getCard, cardImageUrl, tcgplayerSnapshot, type TcgdexCard } from "@/lib/tcgdex";
 import type {
   AlertBand,
@@ -195,10 +196,51 @@ function berryWalletPrice(card: BerryWalletCard): { price: number; currency: "US
  * in TCGdex at all, so this is only ever attempted for `tcg === "pokemon"`,
  * and only for the "nameSet" lookup shape every current Pokémon ref uses
  * (TCGdex has no equivalent to One Piece's terse set-code lookup).
+ *
+ * RESOLVES THE ID OFFLINE FIRST. The ref names a card by name + set + number,
+ * and turning that into TCGdex's own id used to be a live SEARCH: one
+ * `/cards?name=` request returning every same-named card, then one `getCard`
+ * per candidate sharing the number until a set name matched — 2+ requests, and
+ * a match that hinges on a set-name substring.
+ *
+ * The crawled catalogue (lib/catalog.ts, `data/catalog/pokemon/`) already
+ * holds that mapping, so the id is looked up in memory and only the card
+ * itself is fetched: exactly ONE request, and the fragile half of the match
+ * happens against a corpus we can inspect rather than against a live response
+ * we cannot. `findCatalogCardByNameAndSet` deliberately mirrors the live
+ * function's matching rules character for character — see its own comment on
+ * why an "improved" match here would be a bug.
+ *
+ * THE LIVE SEARCH REMAINS THE FALLBACK, and that is the whole safety of this
+ * change: a corpus that is missing (fresh checkout, crawl not run), stale, or
+ * simply has no row for this card degrades to exactly the behaviour that
+ * shipped before it existed. Strictly additive — a card cannot lose data it
+ * already had by passing through here.
+ *
+ * What this does NOT do is skip the network. TCGdex carries the live price
+ * block this card's US tab reads (tcgplayerSnapshot), so identity and price
+ * arrive together in that one request and the corpus is an accelerator, not a
+ * replacement. Serving identity from the corpus while TCGdex is DOWN is a
+ * real and separate win — it is what would have kept card art and the French
+ * toggle alive through both documented outages — but it needs the price path
+ * to have its own answer for that case first, so it is deliberately not
+ * attempted here.
  */
 async function resolveTcgdexCard(ref: CardRef): Promise<TcgdexCard | undefined> {
   if (ref.tcg !== "pokemon" || ref.lookup.by !== "nameSet") return undefined;
   try {
+    const known = findCatalogCardByNameAndSet(ref.lookup.name, ref.lookup.setName, ref.lookup.number);
+    if (known) {
+      const byId = await getCard(known.card.tcgdexId, "en");
+      if (byId) return byId;
+      // The corpus named an id TCGdex would not serve — stale row, or a card
+      // withdrawn upstream. Fall through rather than reporting "no match", so
+      // the live search still gets its say.
+      logUpstreamOnce(
+        `tcgdex-catalog:${ref.slug}`,
+        `[cards] catalogue id ${known.card.tcgdexId} for ${ref.slug} returned nothing from TCGdex — falling back to live search`
+      );
+    }
     return await findCardByNameAndSet(ref.lookup.name, ref.lookup.setName, ref.lookup.number);
   } catch (err) {
     logUpstreamOnce(`tcgdex:${ref.slug}`, `[cards] TCGdex lookup failed for ${ref.slug} — ${describeUpstreamError(err)}`);

@@ -1,0 +1,1773 @@
+{
+  "crawledAt": "2026-09-05T18:59:37.555Z",
+  "source": "https://api.tcgdex.net/v2/en",
+  "set": {
+    "id": "B1a",
+    "name": "Crimson Blaze",
+    "serie": {
+      "id": "tcgp",
+      "name": "Pokémon TCG Pocket"
+    },
+    "releaseDate": "2025-12-17",
+    "cardCount": {
+      "firstEd": 0,
+      "holo": 0,
+      "normal": 0,
+      "official": 69,
+      "reverse": 0,
+      "total": 103
+    }
+  },
+  "cards": [
+    {
+      "tcgdexId": "B1a-001",
+      "localId": "001",
+      "name": "Bulbasaur",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "Sumiyoshi Kizuki",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/001",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-002",
+      "localId": "002",
+      "name": "Ivysaur",
+      "rarity": "Two Diamond",
+      "category": "Pokemon",
+      "illustrator": "Kanako Eo",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/002",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-003",
+      "localId": "003",
+      "name": "Venusaur",
+      "rarity": "Three Diamond",
+      "category": "Pokemon",
+      "illustrator": "Eske Yoshinob",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/003",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-004",
+      "localId": "004",
+      "name": "Mega Venusaur ex",
+      "rarity": "Four Diamond",
+      "category": "Pokemon",
+      "illustrator": "PLANETA CG Works",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/004",
+      "sourceUpdated": "2026-08-15T22:50:22+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-005",
+      "localId": "005",
+      "name": "Spinarak",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "kodama",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/005",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-006",
+      "localId": "006",
+      "name": "Ariados",
+      "rarity": "Two Diamond",
+      "category": "Pokemon",
+      "illustrator": "Tika Matsuno",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/006",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-007",
+      "localId": "007",
+      "name": "Sunkern",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "Saboteri",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/007",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-008",
+      "localId": "008",
+      "name": "Sunflora",
+      "rarity": "Two Diamond",
+      "category": "Pokemon",
+      "illustrator": "Saboteri",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/008",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-009",
+      "localId": "009",
+      "name": "Burmy",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "Miki Tanaka",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/009",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-010",
+      "localId": "010",
+      "name": "Mothim",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "saino misaki",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/010",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-011",
+      "localId": "011",
+      "name": "Charmander",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "DOM",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/011",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-012",
+      "localId": "012",
+      "name": "Charmeleon",
+      "rarity": "Two Diamond",
+      "category": "Pokemon",
+      "illustrator": "DOM",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/012",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-013",
+      "localId": "013",
+      "name": "Charizard",
+      "rarity": "Three Diamond",
+      "category": "Pokemon",
+      "illustrator": "DOM",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/013",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-014",
+      "localId": "014",
+      "name": "Mega Charizard Y ex",
+      "rarity": "Four Diamond",
+      "category": "Pokemon",
+      "illustrator": "PLANETA Igarashi",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/014",
+      "sourceUpdated": "2026-08-15T22:50:22+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-015",
+      "localId": "015",
+      "name": "Houndour",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "Naoyo Kimura",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/015",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-016",
+      "localId": "016",
+      "name": "Houndoom",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "Midori Harada",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/016",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-017",
+      "localId": "017",
+      "name": "Squirtle",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "Naoki Saito",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/017",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-018",
+      "localId": "018",
+      "name": "Wartortle",
+      "rarity": "Two Diamond",
+      "category": "Pokemon",
+      "illustrator": "Taiga Kasai",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/018",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-019",
+      "localId": "019",
+      "name": "Blastoise",
+      "rarity": "Three Diamond",
+      "category": "Pokemon",
+      "illustrator": "Hitoshi Ariga",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/019",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-020",
+      "localId": "020",
+      "name": "Mega Blastoise ex",
+      "rarity": "Four Diamond",
+      "category": "Pokemon",
+      "illustrator": "PLANETA CG Works",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/020",
+      "sourceUpdated": "2026-08-15T22:50:22+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-021",
+      "localId": "021",
+      "name": "Basculin",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "Naoyo Kimura",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/021",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-022",
+      "localId": "022",
+      "name": "Clauncher",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "Krgc",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/022",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-023",
+      "localId": "023",
+      "name": "Clawitzer",
+      "rarity": "Two Diamond",
+      "category": "Pokemon",
+      "illustrator": "tetsuya koizumi",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/023",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-024",
+      "localId": "024",
+      "name": "Magnemite",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "Hajime Kusajima",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/024",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-025",
+      "localId": "025",
+      "name": "Magneton",
+      "rarity": "Two Diamond",
+      "category": "Pokemon",
+      "illustrator": "Tomokazu Komiya",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/025",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-026",
+      "localId": "026",
+      "name": "Magnezone",
+      "rarity": "Three Diamond",
+      "category": "Pokemon",
+      "illustrator": "Kagemaru Himeno",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/026",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-027",
+      "localId": "027",
+      "name": "Emolga",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "Megumi Mizutani",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/027",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-028",
+      "localId": "028",
+      "name": "Helioptile",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "Miki Tanaka",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/028",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-029",
+      "localId": "029",
+      "name": "Heliolisk",
+      "rarity": "Two Diamond",
+      "category": "Pokemon",
+      "illustrator": "kawayoo",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/029",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-030",
+      "localId": "030",
+      "name": "Misdreavus",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "sui",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/030",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-031",
+      "localId": "031",
+      "name": "Mismagius",
+      "rarity": "Two Diamond",
+      "category": "Pokemon",
+      "illustrator": "Ligton",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/031",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-032",
+      "localId": "032",
+      "name": "Solosis",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "osare",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/032",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-033",
+      "localId": "033",
+      "name": "Duosion",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "Pani Kobayashi",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/033",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-034",
+      "localId": "034",
+      "name": "Reuniclus",
+      "rarity": "Three Diamond",
+      "category": "Pokemon",
+      "illustrator": "Kagemaru Himeno",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/034",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-035",
+      "localId": "035",
+      "name": "Spritzee",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "Tika Matsuno",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/035",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-036",
+      "localId": "036",
+      "name": "Aromatisse",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "Mizue",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/036",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-037",
+      "localId": "037",
+      "name": "Xerneas",
+      "rarity": "Three Diamond",
+      "category": "Pokemon",
+      "illustrator": "sui",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/037",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-038",
+      "localId": "038",
+      "name": "Onix",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "Naoyo Kimura",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/038",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-039",
+      "localId": "039",
+      "name": "Makuhita",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "Tomokazu Komiya",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/039",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-040",
+      "localId": "040",
+      "name": "Hariyama",
+      "rarity": "Two Diamond",
+      "category": "Pokemon",
+      "illustrator": "Naoyo Kimura",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/040",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-041",
+      "localId": "041",
+      "name": "Nosepass",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "Miki Tanaka",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/041",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-042",
+      "localId": "042",
+      "name": "Mega Lopunny ex",
+      "rarity": "Four Diamond",
+      "category": "Pokemon",
+      "illustrator": "PLANETA Yamashita",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/042",
+      "sourceUpdated": "2026-08-15T22:50:22+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-043",
+      "localId": "043",
+      "name": "Mienfoo",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "yuu",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/043",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-044",
+      "localId": "044",
+      "name": "Mienshao",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "Suwama Chiaki",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/044",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-045",
+      "localId": "045",
+      "name": "Grimer",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "Kagemaru Himeno",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/045",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-046",
+      "localId": "046",
+      "name": "Muk",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "Scav",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/046",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-047",
+      "localId": "047",
+      "name": "Purrloin",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "Sumiyoshi Kizuki",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/047",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-048",
+      "localId": "048",
+      "name": "Liepard",
+      "rarity": "Two Diamond",
+      "category": "Pokemon",
+      "illustrator": "AKIRA EGAWA",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/048",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-049",
+      "localId": "049",
+      "name": "Trubbish",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "Shibuzoh.",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/049",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-050",
+      "localId": "050",
+      "name": "Garbodor",
+      "rarity": "Two Diamond",
+      "category": "Pokemon",
+      "illustrator": "Aya Kusube",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/050",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-051",
+      "localId": "051",
+      "name": "Steelix",
+      "rarity": "Two Diamond",
+      "category": "Pokemon",
+      "illustrator": "NC Empire",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/051",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-052",
+      "localId": "052",
+      "name": "Mega Steelix ex",
+      "rarity": "Four Diamond",
+      "category": "Pokemon",
+      "illustrator": "PLANETA Yamashita",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/052",
+      "sourceUpdated": "2026-08-15T22:50:22+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-053",
+      "localId": "053",
+      "name": "Probopass",
+      "rarity": "Two Diamond",
+      "category": "Pokemon",
+      "illustrator": "Anesaki Dynamic",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/053",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-054",
+      "localId": "054",
+      "name": "Genesect",
+      "rarity": "Three Diamond",
+      "category": "Pokemon",
+      "illustrator": "kawayoo",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/054",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-055",
+      "localId": "055",
+      "name": "Ditto",
+      "rarity": "Two Diamond",
+      "category": "Pokemon",
+      "illustrator": "Yuka Morii",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/055",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-056",
+      "localId": "056",
+      "name": "Porygon",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "Hisao Nakamura",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/056",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-057",
+      "localId": "057",
+      "name": "Porygon2",
+      "rarity": "Two Diamond",
+      "category": "Pokemon",
+      "illustrator": "Kent Kanetsuna",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/057",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-058",
+      "localId": "058",
+      "name": "Porygon-Z",
+      "rarity": "Three Diamond",
+      "category": "Pokemon",
+      "illustrator": "Shibuzoh.",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/058",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-059",
+      "localId": "059",
+      "name": "Starly",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "Kyoko Umemoto",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/059",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-060",
+      "localId": "060",
+      "name": "Staravia",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "Suwama Chiaki",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/060",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-061",
+      "localId": "061",
+      "name": "Staraptor",
+      "rarity": "Two Diamond",
+      "category": "Pokemon",
+      "illustrator": "AKIRA EGAWA",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/061",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-062",
+      "localId": "062",
+      "name": "Buneary",
+      "rarity": "One Diamond",
+      "category": "Pokemon",
+      "illustrator": "Kouki Saitou",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/062",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-063",
+      "localId": "063",
+      "name": "Lopunny",
+      "rarity": "Two Diamond",
+      "category": "Pokemon",
+      "illustrator": "Ryuta Fuse",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/063",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-064",
+      "localId": "064",
+      "name": "Bouffalant",
+      "rarity": "Two Diamond",
+      "category": "Pokemon",
+      "illustrator": "Sanosuke Sakuma",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/064",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-065",
+      "localId": "065",
+      "name": "Furfrou",
+      "rarity": "Two Diamond",
+      "category": "Pokemon",
+      "illustrator": "Kazumasa Yasukuni",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/065",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-066",
+      "localId": "066",
+      "name": "Clemont's Backpack",
+      "rarity": "Two Diamond",
+      "category": "Trainer",
+      "illustrator": "AYUMI ODASHIMA",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/066",
+      "sourceUpdated": "2025-12-22T19:27:06Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-067",
+      "localId": "067",
+      "name": "Quick-Grow Extract",
+      "rarity": "Two Diamond",
+      "category": "Trainer",
+      "illustrator": "Studio Bora Inc.",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/067",
+      "sourceUpdated": "2025-12-22T19:27:06Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-068",
+      "localId": "068",
+      "name": "Clemont",
+      "rarity": "Two Diamond",
+      "category": "Trainer",
+      "illustrator": "Teeziro",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/068",
+      "sourceUpdated": "2025-12-22T19:27:06Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-069",
+      "localId": "069",
+      "name": "Serena",
+      "rarity": "Two Diamond",
+      "category": "Trainer",
+      "illustrator": "En Morikura",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/069",
+      "sourceUpdated": "2025-12-22T19:27:06Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-070",
+      "localId": "070",
+      "name": "Ariados",
+      "rarity": "One Star",
+      "category": "Pokemon",
+      "illustrator": "KEIICHIRO ITO",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/070",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-071",
+      "localId": "071",
+      "name": "Sunflora",
+      "rarity": "One Star",
+      "category": "Pokemon",
+      "illustrator": "OKACHEKE",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/071",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-072",
+      "localId": "072",
+      "name": "Reuniclus",
+      "rarity": "One Star",
+      "category": "Pokemon",
+      "illustrator": "chibi",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/072",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-073",
+      "localId": "073",
+      "name": "Xerneas",
+      "rarity": "One Star",
+      "category": "Pokemon",
+      "illustrator": "mashu",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/073",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-074",
+      "localId": "074",
+      "name": "Trubbish",
+      "rarity": "One Star",
+      "category": "Pokemon",
+      "illustrator": "Saboteri",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/074",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-075",
+      "localId": "075",
+      "name": "Buneary",
+      "rarity": "One Star",
+      "category": "Pokemon",
+      "illustrator": "Terada Tera",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/075",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-076",
+      "localId": "076",
+      "name": "Mega Venusaur ex",
+      "rarity": "Two Star",
+      "category": "Pokemon",
+      "illustrator": "PLANETA CG Works",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/076",
+      "sourceUpdated": "2026-08-15T22:50:22+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-077",
+      "localId": "077",
+      "name": "Mega Charizard Y ex",
+      "rarity": "Two Star",
+      "category": "Pokemon",
+      "illustrator": "PLANETA Igarashi",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/077",
+      "sourceUpdated": "2026-08-15T22:50:22+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-078",
+      "localId": "078",
+      "name": "Mega Blastoise ex",
+      "rarity": "Two Star",
+      "category": "Pokemon",
+      "illustrator": "PLANETA CG Works",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/078",
+      "sourceUpdated": "2026-08-15T22:50:22+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-079",
+      "localId": "079",
+      "name": "Mega Lopunny ex",
+      "rarity": "Two Star",
+      "category": "Pokemon",
+      "illustrator": "PLANETA Yamashita",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/079",
+      "sourceUpdated": "2026-08-15T22:50:22+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-080",
+      "localId": "080",
+      "name": "Mega Steelix ex",
+      "rarity": "Two Star",
+      "category": "Pokemon",
+      "illustrator": "PLANETA CG Works",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/080",
+      "sourceUpdated": "2026-08-15T22:50:22+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-081",
+      "localId": "081",
+      "name": "Clemont",
+      "rarity": "Two Star",
+      "category": "Trainer",
+      "illustrator": "Teeziro",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/081",
+      "sourceUpdated": "2025-12-22T19:27:06Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-082",
+      "localId": "082",
+      "name": "Serena",
+      "rarity": "Two Star",
+      "category": "Trainer",
+      "illustrator": "En Morikura",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/082",
+      "sourceUpdated": "2025-12-22T19:27:06Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-083",
+      "localId": "083",
+      "name": "Mega Venusaur ex",
+      "rarity": "Two Star",
+      "category": "Pokemon",
+      "illustrator": "Mori Yuu",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/083",
+      "sourceUpdated": "2026-08-15T22:50:22+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-084",
+      "localId": "084",
+      "name": "Mega Blastoise ex",
+      "rarity": "Two Star",
+      "category": "Pokemon",
+      "illustrator": "Kazumasa Yasukuni",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/084",
+      "sourceUpdated": "2026-08-15T22:50:22+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-085",
+      "localId": "085",
+      "name": "Mega Lopunny ex",
+      "rarity": "Two Star",
+      "category": "Pokemon",
+      "illustrator": "DOM",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/085",
+      "sourceUpdated": "2026-08-15T22:50:22+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-086",
+      "localId": "086",
+      "name": "Mega Steelix ex",
+      "rarity": "Two Star",
+      "category": "Pokemon",
+      "illustrator": "matazo",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/086",
+      "sourceUpdated": "2026-08-15T22:50:22+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-087",
+      "localId": "087",
+      "name": "Mega Charizard Y ex",
+      "rarity": "Three Star",
+      "category": "Pokemon",
+      "illustrator": "Nurikabe",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/087",
+      "sourceUpdated": "2026-08-15T22:50:22+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-088",
+      "localId": "088",
+      "name": "Oddish",
+      "rarity": "One Shiny",
+      "category": "Pokemon",
+      "illustrator": "Souichirou Gunjima",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-089",
+      "localId": "089",
+      "name": "Gloom",
+      "rarity": "One Shiny",
+      "category": "Pokemon",
+      "illustrator": "Souichirou Gunjima",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/089",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-090",
+      "localId": "090",
+      "name": "Vileplume",
+      "rarity": "One Shiny",
+      "category": "Pokemon",
+      "illustrator": "Souichirou Gunjima",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/090",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-091",
+      "localId": "091",
+      "name": "Charizard",
+      "rarity": "One Shiny",
+      "category": "Pokemon",
+      "illustrator": "Taiga Kasai",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/091",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-092",
+      "localId": "092",
+      "name": "Shellder",
+      "rarity": "One Shiny",
+      "category": "Pokemon",
+      "illustrator": "whomor Inc.",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/092",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-093",
+      "localId": "093",
+      "name": "Cloyster",
+      "rarity": "One Shiny",
+      "category": "Pokemon",
+      "illustrator": "whomor Inc.",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/093",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-094",
+      "localId": "094",
+      "name": "Sandshrew",
+      "rarity": "One Shiny",
+      "category": "Pokemon",
+      "illustrator": "MAHOU",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/094",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-095",
+      "localId": "095",
+      "name": "Sandslash",
+      "rarity": "One Shiny",
+      "category": "Pokemon",
+      "illustrator": "MAHOU",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/095",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-096",
+      "localId": "096",
+      "name": "Type: Null",
+      "rarity": "One Shiny",
+      "category": "Pokemon",
+      "illustrator": "Taiga Kasai",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/096",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-097",
+      "localId": "097",
+      "name": "Silvally",
+      "rarity": "One Shiny",
+      "category": "Pokemon",
+      "illustrator": "Taiga Kasai",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/097",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-098",
+      "localId": "098",
+      "name": "Buzzwole ex",
+      "rarity": "Two Shiny",
+      "category": "Pokemon",
+      "illustrator": "PLANETA Mochizuki",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/098",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-099",
+      "localId": "099",
+      "name": "Lunala ex",
+      "rarity": "Two Shiny",
+      "category": "Pokemon",
+      "illustrator": "PLANETA CG Works",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/099",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-100",
+      "localId": "100",
+      "name": "Guzzlord ex",
+      "rarity": "Two Shiny",
+      "category": "Pokemon",
+      "illustrator": "PLANETA Yamashita",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/100",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-101",
+      "localId": "101",
+      "name": "Solgaleo ex",
+      "rarity": "Two Shiny",
+      "category": "Pokemon",
+      "illustrator": "PLANETA CG Works",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/101",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-102",
+      "localId": "102",
+      "name": "Aegislash",
+      "rarity": "Crown",
+      "category": "Pokemon",
+      "illustrator": "PLANETA CG Works",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/102",
+      "sourceUpdated": "2026-04-03T13:38:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "B1a-103",
+      "localId": "103",
+      "name": "Quick-Grow Extract",
+      "rarity": "Crown",
+      "category": "Trainer",
+      "illustrator": "Studio Bora Inc.",
+      "image": "https://assets.tcgdex.net/en/tcgp/B1a/103",
+      "sourceUpdated": "2025-12-22T19:27:06Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    }
+  ]
+}

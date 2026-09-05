@@ -1,0 +1,2821 @@
+{
+  "crawledAt": "2026-09-05T20:00:52.417Z",
+  "source": "https://api.tcgdex.net/v2/en",
+  "set": {
+    "id": "ex4",
+    "name": "Team Magma vs Team Aqua",
+    "serie": {
+      "id": "ex",
+      "name": "EX"
+    },
+    "releaseDate": "2004-03-01",
+    "abbreviation": {
+      "official": "MA"
+    },
+    "cardCount": {
+      "firstEd": 0,
+      "holo": 27,
+      "normal": 91,
+      "official": 95,
+      "reverse": 88,
+      "total": 97
+    },
+    "logo": "https://assets.tcgdex.net/en/ex/ex4/logo",
+    "symbol": "https://assets.tcgdex.net/univ/ex/ex4/symbol"
+  },
+  "cards": [
+    {
+      "tcgdexId": "ex4-1",
+      "localId": "1",
+      "name": "Team Aqua's Cacturne",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "K. Utsunomiya",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/1",
+      "cardmarketProductId": 275778,
+      "tcgplayerProductId": 89775,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275778,
+          "tcgplayerProductId": 89775
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275778,
+          "tcgplayerProductId": 89775
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-2",
+      "localId": "2",
+      "name": "Team Aqua's Crawdaunt",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Nakaoka",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/2",
+      "cardmarketProductId": 275779,
+      "tcgplayerProductId": 89783,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275779,
+          "tcgplayerProductId": 89783
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275779,
+          "tcgplayerProductId": 89783
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-3",
+      "localId": "3",
+      "name": "Team Aqua's Kyogre",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "K. Hoshiba",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/3",
+      "cardmarketProductId": 275780,
+      "tcgplayerProductId": 89788,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275780,
+          "tcgplayerProductId": 89788
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275780,
+          "tcgplayerProductId": 89788
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 125256
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-4",
+      "localId": "4",
+      "name": "Team Aqua's Manectric",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "K. Utsunomiya",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/4",
+      "cardmarketProductId": 275781,
+      "tcgplayerProductId": 89790,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275781,
+          "tcgplayerProductId": 89790
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275781,
+          "tcgplayerProductId": 89790
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50txa86ghhmctno8m65",
+          "cardmarketProductId": 871807,
+          "tcgplayerProductId": 477445
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-5",
+      "localId": "5",
+      "name": "Team Aqua's Sharpedo",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Katsura Tabata",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/5",
+      "cardmarketProductId": 275782,
+      "tcgplayerProductId": 89799,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275782,
+          "tcgplayerProductId": 89799
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275782,
+          "tcgplayerProductId": 89799
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-6",
+      "localId": "6",
+      "name": "Team Aqua's Walrein",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Ikuji",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/6",
+      "cardmarketProductId": 275783,
+      "tcgplayerProductId": 89803,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275783,
+          "tcgplayerProductId": 89803
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275783,
+          "tcgplayerProductId": 89803
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-7",
+      "localId": "7",
+      "name": "Team Magma's Aggron",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Hiromichi Sugiyama",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/7",
+      "cardmarketProductId": 275784,
+      "tcgplayerProductId": 89818,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275784,
+          "tcgplayerProductId": 89818
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275784,
+          "tcgplayerProductId": 89818
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-8",
+      "localId": "8",
+      "name": "Team Magma's Claydol",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Zu-Ka",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/8",
+      "cardmarketProductId": 275785,
+      "tcgplayerProductId": 89825,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275785,
+          "tcgplayerProductId": 89825
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275785,
+          "tcgplayerProductId": 89825
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "1c79txmtnomm3lsp7lx4jpb4979fa0r",
+          "tcgplayerProductId": 477450
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-9",
+      "localId": "9",
+      "name": "Team Magma's Groudon",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Kazuo Yazawa",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/9",
+      "cardmarketProductId": 275786,
+      "tcgplayerProductId": 89827,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275786,
+          "tcgplayerProductId": 89827
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275786,
+          "tcgplayerProductId": 89827
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "1c79txmtnomm3lsp7lx4jpb4979fa0r",
+          "tcgplayerProductId": 477451
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 125255
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-10",
+      "localId": "10",
+      "name": "Team Magma's Houndoom",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Ikuji",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/10",
+      "cardmarketProductId": 275787,
+      "tcgplayerProductId": 89828,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275787,
+          "tcgplayerProductId": 89828
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275787,
+          "tcgplayerProductId": 89828
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-11",
+      "localId": "11",
+      "name": "Team Magma's Rhydon",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "T. Honda",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/11",
+      "cardmarketProductId": 275788,
+      "tcgplayerProductId": 89840,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275788,
+          "tcgplayerProductId": 89840
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275788,
+          "tcgplayerProductId": 89840
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-12",
+      "localId": "12",
+      "name": "Team Magma's Torkoal",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "K. Hoshiba",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/12",
+      "cardmarketProductId": 275789,
+      "tcgplayerProductId": 89845,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275789,
+          "tcgplayerProductId": 89845
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275789,
+          "tcgplayerProductId": 89845
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-13",
+      "localId": "13",
+      "name": "Raichu",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/13",
+      "cardmarketProductId": 275790,
+      "tcgplayerProductId": 88506,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275790,
+          "tcgplayerProductId": 88506
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275790,
+          "tcgplayerProductId": 88506
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-14",
+      "localId": "14",
+      "name": "Team Aqua's Crawdaunt",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Nakaoka",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/14",
+      "cardmarketProductId": 275791,
+      "tcgplayerProductId": 89784,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275791,
+          "tcgplayerProductId": 89784
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275791,
+          "tcgplayerProductId": 89784
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-15",
+      "localId": "15",
+      "name": "Team Aqua's Mightyena",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Shin-ichi Yoshikawa",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/15",
+      "cardmarketProductId": 275792,
+      "tcgplayerProductId": 89792,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275792,
+          "tcgplayerProductId": 89792
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275792,
+          "tcgplayerProductId": 89792
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-16",
+      "localId": "16",
+      "name": "Team Aqua's Sealeo",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "T. Honda",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/16",
+      "cardmarketProductId": 275793,
+      "tcgplayerProductId": 89796,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275793,
+          "tcgplayerProductId": 89796
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275793,
+          "tcgplayerProductId": 89796
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-17",
+      "localId": "17",
+      "name": "Team Aqua's Seviper",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Jungo Suzuki",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/17",
+      "cardmarketProductId": 275794,
+      "tcgplayerProductId": 89798,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275794,
+          "tcgplayerProductId": 89798
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275794,
+          "tcgplayerProductId": 89798
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-18",
+      "localId": "18",
+      "name": "Team Aqua's Sharpedo",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Katsura Tabata",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/18",
+      "cardmarketProductId": 275795,
+      "tcgplayerProductId": 89800,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275795,
+          "tcgplayerProductId": 89800
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275795,
+          "tcgplayerProductId": 89800
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-19",
+      "localId": "19",
+      "name": "Team Magma's Camerupt",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Katsura Tabata",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/19",
+      "cardmarketProductId": 275796,
+      "tcgplayerProductId": 89824,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275796,
+          "tcgplayerProductId": 89824
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275796,
+          "tcgplayerProductId": 89824
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "zqq5g2u9p8fny8v5045adylslmxf8388",
+          "cardmarketProductId": 871831,
+          "tcgplayerProductId": 477449
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-20",
+      "localId": "20",
+      "name": "Team Magma's Lairon",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Hiromichi Sugiyama",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/20",
+      "cardmarketProductId": 275797,
+      "tcgplayerProductId": 89833,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275797,
+          "tcgplayerProductId": 89833
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275797,
+          "tcgplayerProductId": 89833
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-21",
+      "localId": "21",
+      "name": "Team Magma's Mightyena",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Shin-ichi Yoshikawa",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/21",
+      "cardmarketProductId": 275798,
+      "tcgplayerProductId": 89835,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275798,
+          "tcgplayerProductId": 89835
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275798,
+          "tcgplayerProductId": 89835
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-22",
+      "localId": "22",
+      "name": "Team Magma's Rhydon",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "T. Honda",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/22",
+      "cardmarketProductId": 275799,
+      "tcgplayerProductId": 89841,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275799,
+          "tcgplayerProductId": 89841
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275799,
+          "tcgplayerProductId": 89841
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-23",
+      "localId": "23",
+      "name": "Team Magma's Zangoose",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Zu-Ka",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/23",
+      "cardmarketProductId": 275800,
+      "tcgplayerProductId": 89846,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275800,
+          "tcgplayerProductId": 89846
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275800,
+          "tcgplayerProductId": 89846
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "zqq5g2u9p8fny8v5045adylslmxf8388",
+          "cardmarketProductId": 871828,
+          "tcgplayerProductId": 477453
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-24",
+      "localId": "24",
+      "name": "Team Aqua's Cacnea",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "K. Utsunomiya",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/24",
+      "cardmarketProductId": 275801,
+      "tcgplayerProductId": 89774,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275801,
+          "tcgplayerProductId": 89774
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275801,
+          "tcgplayerProductId": 89774
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g537v7d1mcdws1fizrfk5",
+          "cardmarketProductId": 881780,
+          "tcgplayerProductId": 282798
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-25",
+      "localId": "25",
+      "name": "Team Aqua's Carvanha",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Mt. TBT",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/25",
+      "cardmarketProductId": 275802,
+      "tcgplayerProductId": 89776,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275802,
+          "tcgplayerProductId": 89776
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275802,
+          "tcgplayerProductId": 89776
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-26",
+      "localId": "26",
+      "name": "Team Aqua's Corphish",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Jungo Suzuki",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/26",
+      "cardmarketProductId": 275803,
+      "tcgplayerProductId": 89780,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275803,
+          "tcgplayerProductId": 89780
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275803,
+          "tcgplayerProductId": 89780
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-27",
+      "localId": "27",
+      "name": "Team Aqua's Electrike",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "M. Akiyama",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/27",
+      "cardmarketProductId": 275804,
+      "tcgplayerProductId": 89785,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275804,
+          "tcgplayerProductId": 89785
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275804,
+          "tcgplayerProductId": 89785
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g536ti0ce2vdsbp0wdf2y",
+          "tcgplayerProductId": 477444
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-28",
+      "localId": "28",
+      "name": "Team Aqua's Lanturn",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Jungo Suzuki",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/28",
+      "cardmarketProductId": 275805,
+      "tcgplayerProductId": 89789,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275805,
+          "tcgplayerProductId": 89789
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275805,
+          "tcgplayerProductId": 89789
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-29",
+      "localId": "29",
+      "name": "Team Aqua's Manectric",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "K. Utsunomiya",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/29",
+      "cardmarketProductId": 275806,
+      "tcgplayerProductId": 89791,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275806,
+          "tcgplayerProductId": 89791
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275806,
+          "tcgplayerProductId": 89791
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-30",
+      "localId": "30",
+      "name": "Team Aqua's Mightyena",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Shin-ichi Yoshikawa",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/30",
+      "cardmarketProductId": 275807,
+      "tcgplayerProductId": 89793,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275807,
+          "tcgplayerProductId": 89793
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275807,
+          "tcgplayerProductId": 89793
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-31",
+      "localId": "31",
+      "name": "Team Aqua's Sealeo",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "T. Honda",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/31",
+      "cardmarketProductId": 275808,
+      "tcgplayerProductId": 89797,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275808,
+          "tcgplayerProductId": 89797
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275808,
+          "tcgplayerProductId": 89797
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-32",
+      "localId": "32",
+      "name": "Team Magma's Baltoy",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Ujiie",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/32",
+      "cardmarketProductId": 275809,
+      "tcgplayerProductId": 89821,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275809,
+          "tcgplayerProductId": 89821
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275809,
+          "tcgplayerProductId": 89821
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-33",
+      "localId": "33",
+      "name": "Team Magma's Claydol",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Zu-Ka",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/33",
+      "cardmarketProductId": 275810,
+      "tcgplayerProductId": 89826,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275810,
+          "tcgplayerProductId": 89826
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275810,
+          "tcgplayerProductId": 89826
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-34",
+      "localId": "34",
+      "name": "Team Magma's Houndoom",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Ken Ikuji",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/34",
+      "cardmarketProductId": 275811,
+      "tcgplayerProductId": 89829,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275811,
+          "tcgplayerProductId": 89829
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275811,
+          "tcgplayerProductId": 89829
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-35",
+      "localId": "35",
+      "name": "Team Magma's Houndour",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Ujiie",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/35",
+      "cardmarketProductId": 275812,
+      "tcgplayerProductId": 89830,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275812,
+          "tcgplayerProductId": 89830
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275812,
+          "tcgplayerProductId": 89830
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-36",
+      "localId": "36",
+      "name": "Team Magma's Lairon",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Hiromichi Sugiyama",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/36",
+      "cardmarketProductId": 275813,
+      "tcgplayerProductId": 89834,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275813,
+          "tcgplayerProductId": 89834
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275813,
+          "tcgplayerProductId": 89834
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-37",
+      "localId": "37",
+      "name": "Team Magma's Mightyena",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Shin-ichi Yoshikawa",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/37",
+      "cardmarketProductId": 275814,
+      "tcgplayerProductId": 89836,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275814,
+          "tcgplayerProductId": 89836
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275814,
+          "tcgplayerProductId": 89836
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-38",
+      "localId": "38",
+      "name": "Team Magma's Rhyhorn",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Mt. TBT",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/38",
+      "cardmarketProductId": 275815,
+      "tcgplayerProductId": 89842,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275815,
+          "tcgplayerProductId": 89842
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275815,
+          "tcgplayerProductId": 89842
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-39",
+      "localId": "39",
+      "name": "Bulbasaur",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/39",
+      "cardmarketProductId": 275816,
+      "tcgplayerProductId": 84028,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275816,
+          "tcgplayerProductId": 84028
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275816,
+          "tcgplayerProductId": 84028
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-40",
+      "localId": "40",
+      "name": "Cubone",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/40",
+      "cardmarketProductId": 275817,
+      "tcgplayerProductId": 84530,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275817,
+          "tcgplayerProductId": 84530
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275817,
+          "tcgplayerProductId": 84530
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-41",
+      "localId": "41",
+      "name": "Jigglypuff",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/41",
+      "cardmarketProductId": 275818,
+      "tcgplayerProductId": 86314,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275818,
+          "tcgplayerProductId": 86314
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275818,
+          "tcgplayerProductId": 86314
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-42",
+      "localId": "42",
+      "name": "Meowth",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/42",
+      "cardmarketProductId": 275819,
+      "tcgplayerProductId": 87316,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275819,
+          "tcgplayerProductId": 87316
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275819,
+          "tcgplayerProductId": 87316
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-43",
+      "localId": "43",
+      "name": "Pikachu",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/43",
+      "cardmarketProductId": 275820,
+      "tcgplayerProductId": 88077,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275820,
+          "tcgplayerProductId": 88077
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275820,
+          "tcgplayerProductId": 88077
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-44",
+      "localId": "44",
+      "name": "Psyduck",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/44",
+      "cardmarketProductId": 275821,
+      "tcgplayerProductId": 88436,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275821,
+          "tcgplayerProductId": 88436
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275821,
+          "tcgplayerProductId": 88436
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-45",
+      "localId": "45",
+      "name": "Slowpoke",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/45",
+      "cardmarketProductId": 275822,
+      "tcgplayerProductId": 89326,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275822,
+          "tcgplayerProductId": 89326
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275822,
+          "tcgplayerProductId": 89326
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-46",
+      "localId": "46",
+      "name": "Squirtle",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/46",
+      "cardmarketProductId": 275823,
+      "tcgplayerProductId": 89488,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275823,
+          "tcgplayerProductId": 89488
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275823,
+          "tcgplayerProductId": 89488
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-47",
+      "localId": "47",
+      "name": "Team Aqua's Carvanha",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Yosuke Da Silva",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/47",
+      "cardmarketProductId": 275824,
+      "tcgplayerProductId": 89777,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275824,
+          "tcgplayerProductId": 89777
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275824,
+          "tcgplayerProductId": 89777
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-48",
+      "localId": "48",
+      "name": "Team Aqua's Carvanha",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Hiromichi Sugiyama",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/48",
+      "cardmarketProductId": 275825,
+      "tcgplayerProductId": 89778,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275825,
+          "tcgplayerProductId": 89778
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275825,
+          "tcgplayerProductId": 89778
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-49",
+      "localId": "49",
+      "name": "Team Aqua's Chinchou",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Kazuo Yazawa",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/49",
+      "cardmarketProductId": 275826,
+      "tcgplayerProductId": 89779,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275826,
+          "tcgplayerProductId": 89779
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275826,
+          "tcgplayerProductId": 89779
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-50",
+      "localId": "50",
+      "name": "Team Aqua's Corphish",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Jungo Suzuki",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/50",
+      "cardmarketProductId": 275827,
+      "tcgplayerProductId": 89781,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275827,
+          "tcgplayerProductId": 89781
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275827,
+          "tcgplayerProductId": 89781
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-51",
+      "localId": "51",
+      "name": "Team Aqua's Corphish",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Jungo Suzuki",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/51",
+      "cardmarketProductId": 275828,
+      "tcgplayerProductId": 89782,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275828,
+          "tcgplayerProductId": 89782
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275828,
+          "tcgplayerProductId": 89782
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-52",
+      "localId": "52",
+      "name": "Team Aqua's Electrike",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "M. Akiyama",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/52",
+      "cardmarketProductId": 275829,
+      "tcgplayerProductId": 89786,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275829,
+          "tcgplayerProductId": 89786
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275829,
+          "tcgplayerProductId": 89786
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-53",
+      "localId": "53",
+      "name": "Team Aqua's Electrike",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "M. Akiyama",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/53",
+      "cardmarketProductId": 275830,
+      "tcgplayerProductId": 89787,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275830,
+          "tcgplayerProductId": 89787
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275830,
+          "tcgplayerProductId": 89787
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g536ti0ce2vdsbp0wdf2y"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-54",
+      "localId": "54",
+      "name": "Team Aqua's Poochyena",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Shin-ichi Yoshikawa",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/54",
+      "cardmarketProductId": 275831,
+      "tcgplayerProductId": 89794,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275831,
+          "tcgplayerProductId": 89794
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275831,
+          "tcgplayerProductId": 89794
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-55",
+      "localId": "55",
+      "name": "Team Aqua's Poochyena",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Shin-ichi Yoshikawa",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/55",
+      "cardmarketProductId": 275832,
+      "tcgplayerProductId": 89795,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275832,
+          "tcgplayerProductId": 89795
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275832,
+          "tcgplayerProductId": 89795
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-56",
+      "localId": "56",
+      "name": "Team Aqua's Spheal",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Nakaoka",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/56",
+      "cardmarketProductId": 275833,
+      "tcgplayerProductId": 89801,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275833,
+          "tcgplayerProductId": 89801
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275833,
+          "tcgplayerProductId": 89801
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-57",
+      "localId": "57",
+      "name": "Team Aqua's Spheal",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Nakaoka",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/57",
+      "cardmarketProductId": 275834,
+      "tcgplayerProductId": 89802,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275834,
+          "tcgplayerProductId": 89802
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275834,
+          "tcgplayerProductId": 89802
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-58",
+      "localId": "58",
+      "name": "Team Magma's Aron",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Katsura Tabata",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/58",
+      "cardmarketProductId": 275835,
+      "tcgplayerProductId": 89819,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275835,
+          "tcgplayerProductId": 89819
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275835,
+          "tcgplayerProductId": 89819
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-59",
+      "localId": "59",
+      "name": "Team Magma's Aron",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Katsura Tabata",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/59",
+      "cardmarketProductId": 275836,
+      "tcgplayerProductId": 89820,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275836,
+          "tcgplayerProductId": 89820
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275836,
+          "tcgplayerProductId": 89820
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-60",
+      "localId": "60",
+      "name": "Team Magma's Baltoy",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Ujiie",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/60",
+      "cardmarketProductId": 275837,
+      "tcgplayerProductId": 89822,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275837,
+          "tcgplayerProductId": 89822
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275837,
+          "tcgplayerProductId": 89822
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "zqq5g2u9p8fny8v5045adylslmxf8388",
+          "cardmarketProductId": 871830,
+          "tcgplayerProductId": 477448
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-61",
+      "localId": "61",
+      "name": "Team Magma's Baltoy",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Ujiie",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/61",
+      "cardmarketProductId": 275838,
+      "tcgplayerProductId": 89823,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275838,
+          "tcgplayerProductId": 89823
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275838,
+          "tcgplayerProductId": 89823
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-62",
+      "localId": "62",
+      "name": "Team Magma's Houndour",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Ujiie",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/62",
+      "cardmarketProductId": 275839,
+      "tcgplayerProductId": 89831,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275839,
+          "tcgplayerProductId": 89831
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275839,
+          "tcgplayerProductId": 89831
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-63",
+      "localId": "63",
+      "name": "Team Magma's Houndour",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Ujiie",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/63",
+      "cardmarketProductId": 275840,
+      "tcgplayerProductId": 89832,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275840,
+          "tcgplayerProductId": 89832
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275840,
+          "tcgplayerProductId": 89832
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-64",
+      "localId": "64",
+      "name": "Team Magma's Numel",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Katsura Tabata",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/64",
+      "cardmarketProductId": 275841,
+      "tcgplayerProductId": 89837,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275841,
+          "tcgplayerProductId": 89837
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275841,
+          "tcgplayerProductId": 89837
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "zqq5g2u9p8fny8v5045adylslmxf8388",
+          "cardmarketProductId": 871832,
+          "tcgplayerProductId": 477452
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-65",
+      "localId": "65",
+      "name": "Team Magma's Poochyena",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Shin-ichi Yoshikawa",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/65",
+      "cardmarketProductId": 275842,
+      "tcgplayerProductId": 89838,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275842,
+          "tcgplayerProductId": 89838
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275842,
+          "tcgplayerProductId": 89838
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-66",
+      "localId": "66",
+      "name": "Team Magma's Poochyena",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Shin-ichi Yoshikawa",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/66",
+      "cardmarketProductId": 275843,
+      "tcgplayerProductId": 89839,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275843,
+          "tcgplayerProductId": 89839
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275843,
+          "tcgplayerProductId": 89839
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-67",
+      "localId": "67",
+      "name": "Team Magma's Rhyhorn",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Yosuke Da Silva",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/67",
+      "cardmarketProductId": 275844,
+      "tcgplayerProductId": 89843,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275844,
+          "tcgplayerProductId": 89843
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275844,
+          "tcgplayerProductId": 89843
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-68",
+      "localId": "68",
+      "name": "Team Magma's Rhyhorn",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Yosuke Da Silva",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/68",
+      "cardmarketProductId": 275845,
+      "tcgplayerProductId": 89844,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275845,
+          "tcgplayerProductId": 89844
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275845,
+          "tcgplayerProductId": 89844
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-69",
+      "localId": "69",
+      "name": "Team Aqua Schemer",
+      "rarity": "Common",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/69",
+      "cardmarketProductId": 275846,
+      "tcgplayerProductId": 89772,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275846,
+          "tcgplayerProductId": 89772
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275846,
+          "tcgplayerProductId": 89772
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-70",
+      "localId": "70",
+      "name": "Team Magma Schemer",
+      "rarity": "Common",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/70",
+      "cardmarketProductId": 275847,
+      "tcgplayerProductId": 89816,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275847,
+          "tcgplayerProductId": 89816
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275847,
+          "tcgplayerProductId": 89816
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-71",
+      "localId": "71",
+      "name": "Archie",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/71",
+      "cardmarketProductId": 275848,
+      "tcgplayerProductId": 83612,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275848,
+          "tcgplayerProductId": 83612
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275848,
+          "tcgplayerProductId": 83612
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-72",
+      "localId": "72",
+      "name": "Dual Ball",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "\"Big Mama\" Tagawa",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/72",
+      "cardmarketProductId": 275849,
+      "tcgplayerProductId": 84985,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275849,
+          "tcgplayerProductId": 84985
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275849,
+          "tcgplayerProductId": 84985
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-73",
+      "localId": "73",
+      "name": "Maxie",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/73",
+      "cardmarketProductId": 275850,
+      "tcgplayerProductId": 87270,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275850,
+          "tcgplayerProductId": 87270
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275850,
+          "tcgplayerProductId": 87270
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "zqq5g2u9p8fny8v5045adylslmxf8388",
+          "cardmarketProductId": 871873,
+          "tcgplayerProductId": 477404
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-74",
+      "localId": "74",
+      "name": "Strength Charm",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Keiji Kinebuchi",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/74",
+      "cardmarketProductId": 275851,
+      "tcgplayerProductId": 89578,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275851,
+          "tcgplayerProductId": 89578
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275851,
+          "tcgplayerProductId": 89578
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-75",
+      "localId": "75",
+      "name": "Team Aqua Ball",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Ryo Ueda",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/75",
+      "cardmarketProductId": 275852,
+      "tcgplayerProductId": 89768,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275852,
+          "tcgplayerProductId": 89768
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275852,
+          "tcgplayerProductId": 89768
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-76",
+      "localId": "76",
+      "name": "Team Aqua Belt",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Mitsuhiro Arita",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/76",
+      "cardmarketProductId": 275853,
+      "tcgplayerProductId": 89769,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275853,
+          "tcgplayerProductId": 89769
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275853,
+          "tcgplayerProductId": 89769
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-77",
+      "localId": "77",
+      "name": "Team Aqua Conspirator",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/77",
+      "cardmarketProductId": 275854,
+      "tcgplayerProductId": 89770,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275854,
+          "tcgplayerProductId": 89770
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275854,
+          "tcgplayerProductId": 89770
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-78",
+      "localId": "78",
+      "name": "Team Aqua Hideout",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Hiromichi Sugiyama",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/78",
+      "cardmarketProductId": 275855,
+      "tcgplayerProductId": 89771,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275855,
+          "tcgplayerProductId": 89771
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275855,
+          "tcgplayerProductId": 89771
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g536uotatdsb5tgaz3mib",
+          "cardmarketProductId": 871557,
+          "tcgplayerProductId": 477593
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-79",
+      "localId": "79",
+      "name": "Team Aqua Technical Machine 01",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Mitsuhiro Arita",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/79",
+      "cardmarketProductId": 275856,
+      "tcgplayerProductId": 89773,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275856,
+          "tcgplayerProductId": 89773
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275856,
+          "tcgplayerProductId": 89773
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-80",
+      "localId": "80",
+      "name": "Team Magma Ball",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Ryo Ueda",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/80",
+      "cardmarketProductId": 275857,
+      "tcgplayerProductId": 89812,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275857,
+          "tcgplayerProductId": 89812
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275857,
+          "tcgplayerProductId": 89812
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "zqq5g2u9p8fny8v5045adylslmxf8388",
+          "cardmarketProductId": 871875,
+          "tcgplayerProductId": 477446
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-81",
+      "localId": "81",
+      "name": "Team Magma Belt",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Mitsuhiro Arita",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/81",
+      "cardmarketProductId": 275858,
+      "tcgplayerProductId": 89813,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275858,
+          "tcgplayerProductId": 89813
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275858,
+          "tcgplayerProductId": 89813
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-82",
+      "localId": "82",
+      "name": "Team Magma Conspirator",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/82",
+      "cardmarketProductId": 275859,
+      "tcgplayerProductId": 89814,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275859,
+          "tcgplayerProductId": 89814
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275859,
+          "tcgplayerProductId": 89814
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "zqq5g2u9p8fny8v5045adylslmxf8388",
+          "cardmarketProductId": 871871,
+          "tcgplayerProductId": 477447
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-83",
+      "localId": "83",
+      "name": "Team Magma Hideout",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Ken Ikuji",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/83",
+      "cardmarketProductId": 275860,
+      "tcgplayerProductId": 89815,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275860,
+          "tcgplayerProductId": 89815
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275860,
+          "tcgplayerProductId": 89815
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-84",
+      "localId": "84",
+      "name": "Team Magma Technical Machine 01",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Mitsuhiro Arita",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/84",
+      "cardmarketProductId": 275861,
+      "tcgplayerProductId": 89817,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275861,
+          "tcgplayerProductId": 89817
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275861,
+          "tcgplayerProductId": 89817
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-85",
+      "localId": "85",
+      "name": "Warp Point",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Keiji Kinebuchi",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/85",
+      "cardmarketProductId": 275862,
+      "tcgplayerProductId": 90478,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275862,
+          "tcgplayerProductId": 90478
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275862,
+          "tcgplayerProductId": 90478
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "23hmnvtwdrep22w3ym6a4tb2ritu",
+          "cardmarketProductId": 871860,
+          "tcgplayerProductId": 477461
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-86",
+      "localId": "86",
+      "name": "Aqua Energy",
+      "rarity": "Uncommon",
+      "category": "Energy",
+      "illustrator": "Takumi Akabane",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/86",
+      "cardmarketProductId": 275863,
+      "tcgplayerProductId": 83565,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275863,
+          "tcgplayerProductId": 83565
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275863,
+          "tcgplayerProductId": 83565
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-87",
+      "localId": "87",
+      "name": "Magma Energy",
+      "rarity": "Uncommon",
+      "category": "Energy",
+      "illustrator": "Takumi Akabane",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/87",
+      "cardmarketProductId": 275864,
+      "tcgplayerProductId": 87039,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275864,
+          "tcgplayerProductId": 87039
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275864,
+          "tcgplayerProductId": 87039
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "zqq5g2u9p8fny8v5045adylslmxf8388",
+          "cardmarketProductId": 871881,
+          "tcgplayerProductId": 477394
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-88",
+      "localId": "88",
+      "name": "Double Rainbow Energy",
+      "rarity": "Rare",
+      "category": "Energy",
+      "illustrator": "Takumi Akabane",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/88",
+      "cardmarketProductId": 275865,
+      "tcgplayerProductId": 84895,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275865,
+          "tcgplayerProductId": 84895
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275865,
+          "tcgplayerProductId": 84895
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-89",
+      "localId": "89",
+      "name": "Blaziken ex",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Hikaru Koike",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/89",
+      "cardmarketProductId": 275866,
+      "tcgplayerProductId": 83912,
+      "sourceUpdated": "2026-08-15T23:34:34+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275866,
+          "tcgplayerProductId": 83912
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50txa86ghhmctno8m65",
+          "cardmarketProductId": 871796,
+          "tcgplayerProductId": 477368
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-90",
+      "localId": "90",
+      "name": "Cradily ex",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Ryo Ueda",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/90",
+      "cardmarketProductId": 276067,
+      "tcgplayerProductId": 84457,
+      "sourceUpdated": "2026-08-15T23:34:34+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 276067,
+          "tcgplayerProductId": 84457
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-91",
+      "localId": "91",
+      "name": "Entei ex",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Ryo Ueda",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/91",
+      "cardmarketProductId": 276068,
+      "tcgplayerProductId": 85278,
+      "sourceUpdated": "2026-08-15T23:34:34+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 276068,
+          "tcgplayerProductId": 85278
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-92",
+      "localId": "92",
+      "name": "Raikou ex",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Ryo Ueda",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/92",
+      "cardmarketProductId": 276069,
+      "tcgplayerProductId": 88540,
+      "sourceUpdated": "2026-08-15T23:34:34+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 276069,
+          "tcgplayerProductId": 88540
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-93",
+      "localId": "93",
+      "name": "Sceptile ex",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Hikaru Koike",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/93",
+      "cardmarketProductId": 276070,
+      "tcgplayerProductId": 88954,
+      "sourceUpdated": "2026-08-15T23:34:34+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 276070,
+          "tcgplayerProductId": 88954
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-94",
+      "localId": "94",
+      "name": "Suicune ex",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Ryo Ueda",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/94",
+      "cardmarketProductId": 275871,
+      "tcgplayerProductId": 89611,
+      "sourceUpdated": "2026-08-15T23:34:34+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275871,
+          "tcgplayerProductId": 89611
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "2fnyg4g537zortvj1798r9hjj75",
+          "cardmarketProductId": 871825,
+          "tcgplayerProductId": 477437
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-95",
+      "localId": "95",
+      "name": "Swampert ex",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Hikaru Koike",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/95",
+      "cardmarketProductId": 275872,
+      "tcgplayerProductId": 89682,
+      "sourceUpdated": "2026-08-15T23:34:34+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 275872,
+          "tcgplayerProductId": 89682
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "2fnyg4g537zortvj1798r9hjj75",
+          "cardmarketProductId": 871824,
+          "tcgplayerProductId": 477439
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-96",
+      "localId": "96",
+      "name": "Absol",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Mitsuhiro Arita",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/96",
+      "cardmarketProductId": 276073,
+      "tcgplayerProductId": 83450,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 276073,
+          "tcgplayerProductId": 83450
+        }
+      ]
+    },
+    {
+      "tcgdexId": "ex4-97",
+      "localId": "97",
+      "name": "Jirachi",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Mitsuhiro Arita",
+      "image": "https://assets.tcgdex.net/en/ex/ex4/97",
+      "cardmarketProductId": 276074,
+      "tcgplayerProductId": 86324,
+      "sourceUpdated": "2026-08-13T21:00:11+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 276074,
+          "tcgplayerProductId": 86324
+        }
+      ]
+    }
+  ]
+}

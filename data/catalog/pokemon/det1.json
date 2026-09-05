@@ -1,0 +1,370 @@
+{
+  "crawledAt": "2026-09-05T20:01:34.391Z",
+  "source": "https://api.tcgdex.net/v2/en",
+  "set": {
+    "id": "det1",
+    "name": "Detective Pikachu",
+    "serie": {
+      "id": "sm",
+      "name": "Sun & Moon"
+    },
+    "releaseDate": "2019-03-29",
+    "abbreviation": {
+      "official": "DET"
+    },
+    "cardCount": {
+      "firstEd": 0,
+      "holo": 0,
+      "normal": 0,
+      "official": 18,
+      "reverse": 0,
+      "total": 18
+    },
+    "logo": "https://assets.tcgdex.net/en/sm/det1/logo",
+    "symbol": "https://assets.tcgdex.net/univ/sm/det1/symbol"
+  },
+  "cards": [
+    {
+      "tcgdexId": "det1-1",
+      "localId": "1",
+      "name": "Bulbasaur",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "MPC Film",
+      "image": "https://assets.tcgdex.net/en/sm/det1/1",
+      "cardmarketProductId": 370766,
+      "tcgplayerProductId": 186001,
+      "sourceUpdated": "2026-08-14T19:34:28+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "det1-2",
+      "localId": "2",
+      "name": "Ludicolo",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Framestore",
+      "image": "https://assets.tcgdex.net/en/sm/det1/2",
+      "cardmarketProductId": 370767,
+      "tcgplayerProductId": 186003,
+      "sourceUpdated": "2026-08-14T19:34:28+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "det1-3",
+      "localId": "3",
+      "name": "Morelull",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "MPC Film",
+      "image": "https://assets.tcgdex.net/en/sm/det1/3",
+      "cardmarketProductId": 370768,
+      "tcgplayerProductId": 186004,
+      "sourceUpdated": "2026-08-14T19:34:28+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "det1-4",
+      "localId": "4",
+      "name": "Charmander",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "MPC Film",
+      "image": "https://assets.tcgdex.net/en/sm/det1/4",
+      "cardmarketProductId": 370769,
+      "tcgplayerProductId": 186005,
+      "sourceUpdated": "2026-08-14T19:34:28+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "det1-5",
+      "localId": "5",
+      "name": "Charizard",
+      "rarity": "Ultra Rare",
+      "category": "Pokemon",
+      "illustrator": "Framestore",
+      "image": "https://assets.tcgdex.net/en/sm/det1/5",
+      "cardmarketProductId": 370770,
+      "tcgplayerProductId": 186007,
+      "sourceUpdated": "2026-08-14T19:34:28+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "det1-6",
+      "localId": "6",
+      "name": "Arcanine",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "MPC Film",
+      "image": "https://assets.tcgdex.net/en/sm/det1/6",
+      "cardmarketProductId": 370771,
+      "tcgplayerProductId": 186009,
+      "sourceUpdated": "2026-08-14T19:34:28+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "det1-7",
+      "localId": "7",
+      "name": "Psyduck",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Framestore",
+      "image": "https://assets.tcgdex.net/en/sm/det1/7",
+      "cardmarketProductId": 370626,
+      "tcgplayerProductId": 186010,
+      "sourceUpdated": "2026-08-14T19:34:28+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "det1-8",
+      "localId": "8",
+      "name": "Magikarp",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Framestore",
+      "image": "https://assets.tcgdex.net/en/sm/det1/8",
+      "cardmarketProductId": 370772,
+      "tcgplayerProductId": 186012,
+      "sourceUpdated": "2026-08-14T19:34:28+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "det1-9",
+      "localId": "9",
+      "name": "Greninja",
+      "rarity": "Ultra Rare",
+      "category": "Pokemon",
+      "illustrator": "MPC Film",
+      "image": "https://assets.tcgdex.net/en/sm/det1/9",
+      "cardmarketProductId": 370773,
+      "tcgplayerProductId": 186013,
+      "sourceUpdated": "2026-08-14T19:34:28+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "det1-10",
+      "localId": "10",
+      "name": "Detective Pikachu",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "MPC Film",
+      "image": "https://assets.tcgdex.net/en/sm/det1/10",
+      "cardmarketProductId": 370774,
+      "tcgplayerProductId": 186015,
+      "sourceUpdated": "2026-08-14T19:34:28+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "det1-11",
+      "localId": "11",
+      "name": "Mr. Mime",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "MPC Film",
+      "image": "https://assets.tcgdex.net/en/sm/det1/11",
+      "cardmarketProductId": 370628,
+      "tcgplayerProductId": 186019,
+      "sourceUpdated": "2026-08-14T19:34:28+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "det1-12",
+      "localId": "12",
+      "name": "Mewtwo",
+      "rarity": "Ultra Rare",
+      "category": "Pokemon",
+      "illustrator": "MPC Film",
+      "image": "https://assets.tcgdex.net/en/sm/det1/12",
+      "cardmarketProductId": 370775,
+      "tcgplayerProductId": 186020,
+      "sourceUpdated": "2026-08-14T19:34:28+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "det1-13",
+      "localId": "13",
+      "name": "Machamp",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "MPC Film",
+      "image": "https://assets.tcgdex.net/en/sm/det1/13",
+      "cardmarketProductId": 370776,
+      "tcgplayerProductId": 186021,
+      "sourceUpdated": "2026-08-14T19:34:28+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "det1-14",
+      "localId": "14",
+      "name": "Jigglypuff",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Framestore",
+      "image": "https://assets.tcgdex.net/en/sm/det1/14",
+      "cardmarketProductId": 370627,
+      "tcgplayerProductId": 186022,
+      "sourceUpdated": "2026-08-14T19:34:28+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "det1-15",
+      "localId": "15",
+      "name": "Snubbull",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Framestore",
+      "image": "https://assets.tcgdex.net/en/sm/det1/15",
+      "cardmarketProductId": 370777,
+      "tcgplayerProductId": 186023,
+      "sourceUpdated": "2026-08-14T19:34:28+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "det1-16",
+      "localId": "16",
+      "name": "Lickitung",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "MPC Film",
+      "image": "https://assets.tcgdex.net/en/sm/det1/16",
+      "cardmarketProductId": 370778,
+      "tcgplayerProductId": 186024,
+      "sourceUpdated": "2026-08-14T19:34:28+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "det1-17",
+      "localId": "17",
+      "name": "Ditto",
+      "rarity": "Ultra Rare",
+      "category": "Pokemon",
+      "illustrator": "MPC Film",
+      "image": "https://assets.tcgdex.net/en/sm/det1/17",
+      "cardmarketProductId": 370779,
+      "tcgplayerProductId": 186025,
+      "sourceUpdated": "2026-08-14T19:34:28+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "det1-18",
+      "localId": "18",
+      "name": "Slaking",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Framestore",
+      "image": "https://assets.tcgdex.net/en/sm/det1/18",
+      "cardmarketProductId": 370780,
+      "tcgplayerProductId": 186026,
+      "sourceUpdated": "2026-08-14T19:34:28+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    }
+  ]
+}

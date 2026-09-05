@@ -1,0 +1,596 @@
+{
+  "crawledAt": "2026-09-05T20:01:56.484Z",
+  "source": "https://api.tcgdex.net/v2/en",
+  "set": {
+    "id": "swsh11tg",
+    "name": "Lost Origin Trainer Gallery",
+    "serie": {
+      "id": "swsh",
+      "name": "Sword & Shield"
+    },
+    "releaseDate": "2022-09-09",
+    "abbreviation": {
+      "official": "LOR:TG"
+    },
+    "cardCount": {
+      "firstEd": 0,
+      "holo": 30,
+      "normal": 0,
+      "official": 30,
+      "reverse": 0,
+      "total": 30
+    }
+  },
+  "cards": [
+    {
+      "tcgdexId": "swsh11tg-TG01",
+      "localId": "TG01",
+      "name": "Parasect",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Oswaldo KATO",
+      "cardmarketProductId": 670826,
+      "sourceUpdated": "2026-07-05T10:54:50+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 670826,
+          "tcgplayerProductId": 284253
+        }
+      ]
+    },
+    {
+      "tcgdexId": "swsh11tg-TG02",
+      "localId": "TG02",
+      "name": "Roserade",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "saino misaki",
+      "cardmarketProductId": 674224,
+      "sourceUpdated": "2026-07-05T10:54:50+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 674224,
+          "tcgplayerProductId": 284254
+        }
+      ]
+    },
+    {
+      "tcgdexId": "swsh11tg-TG03",
+      "localId": "TG03",
+      "name": "Charizard",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "GIDORA",
+      "cardmarketProductId": 670827,
+      "sourceUpdated": "2026-07-05T10:54:50+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 670827,
+          "tcgplayerProductId": 284251
+        }
+      ]
+    },
+    {
+      "tcgdexId": "swsh11tg-TG04",
+      "localId": "TG04",
+      "name": "Chandelure",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "chibi",
+      "cardmarketProductId": 670828,
+      "sourceUpdated": "2026-07-05T10:54:50+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 670828,
+          "tcgplayerProductId": 284255
+        }
+      ]
+    },
+    {
+      "tcgdexId": "swsh11tg-TG05",
+      "localId": "TG05",
+      "name": "Pikachu",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Atsushi Furusawa",
+      "cardmarketProductId": 674225,
+      "sourceUpdated": "2026-07-05T10:54:50+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 674225,
+          "tcgplayerProductId": 284258
+        }
+      ]
+    },
+    {
+      "tcgdexId": "swsh11tg-TG06",
+      "localId": "TG06",
+      "name": "Gengar",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Akira Komayama",
+      "cardmarketProductId": 674226,
+      "sourceUpdated": "2026-07-05T10:54:50+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 674226,
+          "tcgplayerProductId": 284266
+        }
+      ]
+    },
+    {
+      "tcgdexId": "swsh11tg-TG07",
+      "localId": "TG07",
+      "name": "Banette",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Tomomi Kaneko",
+      "cardmarketProductId": 674227,
+      "sourceUpdated": "2026-07-05T10:54:50+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 674227,
+          "tcgplayerProductId": 284267
+        }
+      ]
+    },
+    {
+      "tcgdexId": "swsh11tg-TG08",
+      "localId": "TG08",
+      "name": "Hisuian Arcanine",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "You Iribi",
+      "cardmarketProductId": 674228,
+      "sourceUpdated": "2026-07-05T10:54:50+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 674228,
+          "tcgplayerProductId": 284268
+        }
+      ]
+    },
+    {
+      "tcgdexId": "swsh11tg-TG09",
+      "localId": "TG09",
+      "name": "Spiritomb",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Hitoshi Ariga",
+      "cardmarketProductId": 674229,
+      "sourceUpdated": "2026-07-05T10:54:50+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 674229,
+          "tcgplayerProductId": 284269
+        }
+      ]
+    },
+    {
+      "tcgdexId": "swsh11tg-TG10",
+      "localId": "TG10",
+      "name": "Snorlax",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Kouki Saitou",
+      "cardmarketProductId": 670829,
+      "sourceUpdated": "2026-07-05T10:54:50+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 670829,
+          "tcgplayerProductId": 284270
+        }
+      ]
+    },
+    {
+      "tcgdexId": "swsh11tg-TG11",
+      "localId": "TG11",
+      "name": "Castform",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Atsushi Furusawa",
+      "cardmarketProductId": 674230,
+      "sourceUpdated": "2026-07-05T10:54:50+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 674230,
+          "tcgplayerProductId": 284271
+        }
+      ]
+    },
+    {
+      "tcgdexId": "swsh11tg-TG12",
+      "localId": "TG12",
+      "name": "Orbeetle V",
+      "rarity": "Ultra Rare",
+      "category": "Pokemon",
+      "illustrator": "Nisota Niso",
+      "cardmarketProductId": 674231,
+      "sourceUpdated": "2026-07-05T10:54:50+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 674231,
+          "tcgplayerProductId": 284272
+        }
+      ]
+    },
+    {
+      "tcgdexId": "swsh11tg-TG13",
+      "localId": "TG13",
+      "name": "Orbeetle VMAX",
+      "rarity": "Ultra Rare",
+      "category": "Pokemon",
+      "illustrator": "Teeziro",
+      "cardmarketProductId": 674232,
+      "sourceUpdated": "2026-07-05T10:54:50+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 674232,
+          "tcgplayerProductId": 284273
+        }
+      ]
+    },
+    {
+      "tcgdexId": "swsh11tg-TG14",
+      "localId": "TG14",
+      "name": "Centiskorch V",
+      "rarity": "Ultra Rare",
+      "category": "Pokemon",
+      "illustrator": "Yuya Oka",
+      "cardmarketProductId": 670830,
+      "sourceUpdated": "2026-07-05T10:54:50+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 670830,
+          "tcgplayerProductId": 284275
+        }
+      ]
+    },
+    {
+      "tcgdexId": "swsh11tg-TG15",
+      "localId": "TG15",
+      "name": "Centiskorch VMAX",
+      "rarity": "Ultra Rare",
+      "category": "Pokemon",
+      "illustrator": "Oswaldo KATO",
+      "cardmarketProductId": 674233,
+      "sourceUpdated": "2026-08-20T01:42:04+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 674233,
+          "tcgplayerProductId": 284276
+        }
+      ]
+    },
+    {
+      "tcgdexId": "swsh11tg-TG16",
+      "localId": "TG16",
+      "name": "Pikachu V",
+      "rarity": "Ultra Rare",
+      "category": "Pokemon",
+      "illustrator": "Ryota Murayama",
+      "cardmarketProductId": 674234,
+      "sourceUpdated": "2026-08-20T01:42:04+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 674234,
+          "tcgplayerProductId": 284278
+        }
+      ]
+    },
+    {
+      "tcgdexId": "swsh11tg-TG17",
+      "localId": "TG17",
+      "name": "Pikachu VMAX",
+      "rarity": "Ultra Rare",
+      "category": "Pokemon",
+      "illustrator": "Souichirou Gunjima",
+      "cardmarketProductId": 674235,
+      "sourceUpdated": "2026-07-05T10:54:50+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 674235,
+          "tcgplayerProductId": 284283
+        }
+      ]
+    },
+    {
+      "tcgdexId": "swsh11tg-TG18",
+      "localId": "TG18",
+      "name": "Enamorus V",
+      "rarity": "Ultra Rare",
+      "category": "Pokemon",
+      "illustrator": "AKIRA EGAWA",
+      "cardmarketProductId": 674236,
+      "sourceUpdated": "2026-08-20T01:42:04+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 674236,
+          "tcgplayerProductId": 284284
+        }
+      ]
+    },
+    {
+      "tcgdexId": "swsh11tg-TG19",
+      "localId": "TG19",
+      "name": "Gallade V",
+      "rarity": "Ultra Rare",
+      "category": "Pokemon",
+      "illustrator": "Souichirou Gunjima",
+      "cardmarketProductId": 670831,
+      "sourceUpdated": "2026-07-05T10:54:50+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 670831,
+          "tcgplayerProductId": 284286
+        }
+      ]
+    },
+    {
+      "tcgdexId": "swsh11tg-TG20",
+      "localId": "TG20",
+      "name": "Crobat V",
+      "rarity": "Ultra Rare",
+      "category": "Pokemon",
+      "illustrator": "GOSSAN",
+      "cardmarketProductId": 674237,
+      "sourceUpdated": "2026-07-05T10:54:50+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 674237,
+          "tcgplayerProductId": 284290
+        }
+      ]
+    },
+    {
+      "tcgdexId": "swsh11tg-TG21",
+      "localId": "TG21",
+      "name": "Eternatus V",
+      "rarity": "Ultra Rare",
+      "category": "Pokemon",
+      "illustrator": "kodama",
+      "cardmarketProductId": 674238,
+      "sourceUpdated": "2026-08-20T01:42:04+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 674238,
+          "tcgplayerProductId": 284294
+        }
+      ]
+    },
+    {
+      "tcgdexId": "swsh11tg-TG22",
+      "localId": "TG22",
+      "name": "Eternatus VMAX",
+      "rarity": "Ultra Rare",
+      "category": "Pokemon",
+      "illustrator": "Mitsuhiro Arita",
+      "cardmarketProductId": 674239,
+      "sourceUpdated": "2026-08-20T01:42:04+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 674239,
+          "tcgplayerProductId": 284295
+        }
+      ]
+    },
+    {
+      "tcgdexId": "swsh11tg-TG23",
+      "localId": "TG23",
+      "name": "Adventurer's Discovery",
+      "rarity": "Ultra Rare",
+      "category": "Trainer",
+      "illustrator": "Taira Akitsu",
+      "cardmarketProductId": 674240,
+      "sourceUpdated": "2026-08-20T01:42:04+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 674240,
+          "tcgplayerProductId": 284296
+        }
+      ]
+    },
+    {
+      "tcgdexId": "swsh11tg-TG24",
+      "localId": "TG24",
+      "name": "Boss's Orders",
+      "rarity": "Ultra Rare",
+      "category": "Trainer",
+      "illustrator": "NC Empire",
+      "cardmarketProductId": 674241,
+      "sourceUpdated": "2026-08-20T01:42:04+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 674241,
+          "tcgplayerProductId": 284297
+        }
+      ]
+    },
+    {
+      "tcgdexId": "swsh11tg-TG25",
+      "localId": "TG25",
+      "name": "Cook",
+      "rarity": "Ultra Rare",
+      "category": "Trainer",
+      "illustrator": "Sanosuke Sakuma",
+      "cardmarketProductId": 670832,
+      "sourceUpdated": "2026-08-20T01:42:04+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 670832,
+          "tcgplayerProductId": 284298
+        }
+      ]
+    },
+    {
+      "tcgdexId": "swsh11tg-TG26",
+      "localId": "TG26",
+      "name": "Kabu",
+      "rarity": "Ultra Rare",
+      "category": "Trainer",
+      "illustrator": "Hideki Ishikawa",
+      "cardmarketProductId": 674242,
+      "sourceUpdated": "2026-08-20T01:42:04+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 674242,
+          "tcgplayerProductId": 284299
+        }
+      ]
+    },
+    {
+      "tcgdexId": "swsh11tg-TG27",
+      "localId": "TG27",
+      "name": "Nessa",
+      "rarity": "Ultra Rare",
+      "category": "Trainer",
+      "illustrator": "saino misaki",
+      "cardmarketProductId": 670833,
+      "sourceUpdated": "2026-08-20T01:42:04+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 670833,
+          "tcgplayerProductId": 284300
+        }
+      ]
+    },
+    {
+      "tcgdexId": "swsh11tg-TG28",
+      "localId": "TG28",
+      "name": "Opal",
+      "rarity": "Ultra Rare",
+      "category": "Trainer",
+      "illustrator": "Taira Akitsu",
+      "cardmarketProductId": 674243,
+      "sourceUpdated": "2026-07-05T10:54:50+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 674243,
+          "tcgplayerProductId": 284301
+        }
+      ]
+    },
+    {
+      "tcgdexId": "swsh11tg-TG29",
+      "localId": "TG29",
+      "name": "Pikachu VMAX",
+      "rarity": "Secret Rare",
+      "category": "Pokemon",
+      "illustrator": "aky CG Works",
+      "cardmarketProductId": 674244,
+      "sourceUpdated": "2026-07-05T10:54:50+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "8ebbnojbbdlcw08zyl",
+          "cardmarketProductId": 674244,
+          "tcgplayerProductId": 284302
+        }
+      ]
+    },
+    {
+      "tcgdexId": "swsh11tg-TG30",
+      "localId": "TG30",
+      "name": "Mew VMAX",
+      "rarity": "Secret Rare",
+      "category": "Pokemon",
+      "illustrator": "5ban Graphics",
+      "cardmarketProductId": 674245,
+      "sourceUpdated": "2026-08-20T01:42:04+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "8ebbnojbbdlcw08zyl",
+          "cardmarketProductId": 674245,
+          "tcgplayerProductId": 284303
+        }
+      ]
+    }
+  ]
+}

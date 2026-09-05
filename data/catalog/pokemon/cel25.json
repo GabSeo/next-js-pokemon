@@ -1,0 +1,552 @@
+{
+  "crawledAt": "2026-09-05T20:01:51.051Z",
+  "source": "https://api.tcgdex.net/v2/en",
+  "set": {
+    "id": "cel25",
+    "name": "Celebrations",
+    "serie": {
+      "id": "swsh",
+      "name": "Sword & Shield"
+    },
+    "releaseDate": "2021-10-08",
+    "abbreviation": {
+      "official": "CEL"
+    },
+    "cardCount": {
+      "firstEd": 0,
+      "holo": 25,
+      "normal": 0,
+      "official": 25,
+      "reverse": 0,
+      "total": 25
+    },
+    "logo": "https://assets.tcgdex.net/en/swsh/cel25/logo",
+    "symbol": "https://assets.tcgdex.net/univ/swsh/cel25/symbol"
+  },
+  "cards": [
+    {
+      "tcgdexId": "cel25-1",
+      "localId": "1",
+      "name": "Ho-Oh",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Kouki Saitou",
+      "image": "https://assets.tcgdex.net/en/swsh/cel25/1",
+      "cardmarketProductId": 576746,
+      "tcgplayerProductId": 250300,
+      "sourceUpdated": "2026-07-11T09:55:22+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 576746,
+          "tcgplayerProductId": 250300
+        }
+      ]
+    },
+    {
+      "tcgdexId": "cel25-2",
+      "localId": "2",
+      "name": "Reshiram",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Aya Kusube",
+      "image": "https://assets.tcgdex.net/en/swsh/cel25/2",
+      "cardmarketProductId": 576747,
+      "tcgplayerProductId": 250301,
+      "sourceUpdated": "2026-07-11T09:55:22+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 576747,
+          "tcgplayerProductId": 250301
+        }
+      ]
+    },
+    {
+      "tcgdexId": "cel25-3",
+      "localId": "3",
+      "name": "Kyogre",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Ryuta Fuse",
+      "image": "https://assets.tcgdex.net/en/swsh/cel25/3",
+      "cardmarketProductId": 576748,
+      "tcgplayerProductId": 250298,
+      "sourceUpdated": "2026-07-11T09:55:22+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 576748,
+          "tcgplayerProductId": 250298
+        }
+      ]
+    },
+    {
+      "tcgdexId": "cel25-4",
+      "localId": "4",
+      "name": "Palkia",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "5ban Graphics",
+      "image": "https://assets.tcgdex.net/en/swsh/cel25/4",
+      "cardmarketProductId": 576749,
+      "tcgplayerProductId": 250302,
+      "sourceUpdated": "2026-07-11T09:55:22+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 576749,
+          "tcgplayerProductId": 250302
+        }
+      ]
+    },
+    {
+      "tcgdexId": "cel25-5",
+      "localId": "5",
+      "name": "Pikachu",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Mitsuhiro Arita",
+      "image": "https://assets.tcgdex.net/en/swsh/cel25/5",
+      "cardmarketProductId": 576750,
+      "tcgplayerProductId": 250303,
+      "sourceUpdated": "2026-07-11T09:55:22+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 576750,
+          "tcgplayerProductId": 250303
+        }
+      ]
+    },
+    {
+      "tcgdexId": "cel25-6",
+      "localId": "6",
+      "name": "Flying Pikachu V",
+      "rarity": "Holo Rare V",
+      "category": "Pokemon",
+      "illustrator": "aky CG Works",
+      "image": "https://assets.tcgdex.net/en/swsh/cel25/6",
+      "cardmarketProductId": 576751,
+      "tcgplayerProductId": 250304,
+      "sourceUpdated": "2026-07-11T09:55:22+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 576751,
+          "tcgplayerProductId": 250304
+        }
+      ]
+    },
+    {
+      "tcgdexId": "cel25-7",
+      "localId": "7",
+      "name": "Flying Pikachu VMAX",
+      "rarity": "Holo Rare VMAX",
+      "category": "Pokemon",
+      "illustrator": "aky CG Works",
+      "image": "https://assets.tcgdex.net/en/swsh/cel25/7",
+      "cardmarketProductId": 576752,
+      "tcgplayerProductId": 250305,
+      "sourceUpdated": "2026-07-11T09:55:22+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 576752,
+          "tcgplayerProductId": 250305
+        }
+      ]
+    },
+    {
+      "tcgdexId": "cel25-8",
+      "localId": "8",
+      "name": "Surfing Pikachu V",
+      "rarity": "Holo Rare V",
+      "category": "Pokemon",
+      "illustrator": "aky CG Works",
+      "image": "https://assets.tcgdex.net/en/swsh/cel25/8",
+      "cardmarketProductId": 576753,
+      "tcgplayerProductId": 250306,
+      "sourceUpdated": "2026-07-11T09:55:22+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 576753,
+          "tcgplayerProductId": 250306
+        }
+      ]
+    },
+    {
+      "tcgdexId": "cel25-9",
+      "localId": "9",
+      "name": "Surfing Pikachu VMAX",
+      "rarity": "Holo Rare VMAX",
+      "category": "Pokemon",
+      "illustrator": "aky CG Works",
+      "image": "https://assets.tcgdex.net/en/swsh/cel25/9",
+      "cardmarketProductId": 576754,
+      "tcgplayerProductId": 250307,
+      "sourceUpdated": "2026-07-11T09:55:22+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 576754,
+          "tcgplayerProductId": 250307
+        }
+      ]
+    },
+    {
+      "tcgdexId": "cel25-10",
+      "localId": "10",
+      "name": "Zekrom",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Aya Kusube",
+      "image": "https://assets.tcgdex.net/en/swsh/cel25/10",
+      "cardmarketProductId": 576755,
+      "tcgplayerProductId": 250308,
+      "sourceUpdated": "2026-07-11T09:55:22+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 576755,
+          "tcgplayerProductId": 250308
+        }
+      ]
+    },
+    {
+      "tcgdexId": "cel25-11",
+      "localId": "11",
+      "name": "Mew",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "Yuu Nishida",
+      "image": "https://assets.tcgdex.net/en/swsh/cel25/11",
+      "cardmarketProductId": 576756,
+      "tcgplayerProductId": 250309,
+      "sourceUpdated": "2026-07-11T09:55:22+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 576756,
+          "tcgplayerProductId": 250309
+        }
+      ]
+    },
+    {
+      "tcgdexId": "cel25-12",
+      "localId": "12",
+      "name": "Xerneas",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "AKIRA EGAWA",
+      "image": "https://assets.tcgdex.net/en/swsh/cel25/12",
+      "cardmarketProductId": 576757,
+      "tcgplayerProductId": 250310,
+      "sourceUpdated": "2026-07-11T09:55:22+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 576757,
+          "tcgplayerProductId": 250310
+        }
+      ]
+    },
+    {
+      "tcgdexId": "cel25-13",
+      "localId": "13",
+      "name": "Cosmog",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "kirisAki",
+      "image": "https://assets.tcgdex.net/en/swsh/cel25/13",
+      "cardmarketProductId": 576758,
+      "tcgplayerProductId": 250311,
+      "sourceUpdated": "2026-07-11T09:55:22+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 576758,
+          "tcgplayerProductId": 250311
+        }
+      ]
+    },
+    {
+      "tcgdexId": "cel25-14",
+      "localId": "14",
+      "name": "Cosmoem",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "kirisAki",
+      "image": "https://assets.tcgdex.net/en/swsh/cel25/14",
+      "cardmarketProductId": 576759,
+      "tcgplayerProductId": 250297,
+      "sourceUpdated": "2026-07-11T09:55:22+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 576759,
+          "tcgplayerProductId": 250297
+        }
+      ]
+    },
+    {
+      "tcgdexId": "cel25-15",
+      "localId": "15",
+      "name": "Lunala",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "kirisAki",
+      "image": "https://assets.tcgdex.net/en/swsh/cel25/15",
+      "cardmarketProductId": 576760,
+      "tcgplayerProductId": 250312,
+      "sourceUpdated": "2026-07-11T09:55:22+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 576760,
+          "tcgplayerProductId": 250312
+        }
+      ]
+    },
+    {
+      "tcgdexId": "cel25-16",
+      "localId": "16",
+      "name": "Zacian V",
+      "rarity": "Holo Rare V",
+      "category": "Pokemon",
+      "illustrator": "Mitsuhiro Arita",
+      "image": "https://assets.tcgdex.net/en/swsh/cel25/16",
+      "cardmarketProductId": 576761,
+      "tcgplayerProductId": 250313,
+      "sourceUpdated": "2026-07-11T09:55:22+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 576761,
+          "tcgplayerProductId": 250313
+        }
+      ]
+    },
+    {
+      "tcgdexId": "cel25-17",
+      "localId": "17",
+      "name": "Groudon",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Ryuta Fuse",
+      "image": "https://assets.tcgdex.net/en/swsh/cel25/17",
+      "cardmarketProductId": 576762,
+      "tcgplayerProductId": 250314,
+      "sourceUpdated": "2026-08-16T22:09:59+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 576762,
+          "tcgplayerProductId": 250314
+        }
+      ]
+    },
+    {
+      "tcgdexId": "cel25-18",
+      "localId": "18",
+      "name": "Zamazenta V",
+      "rarity": "Holo Rare V",
+      "category": "Pokemon",
+      "illustrator": "Mitsuhiro Arita",
+      "image": "https://assets.tcgdex.net/en/swsh/cel25/18",
+      "cardmarketProductId": 576763,
+      "tcgplayerProductId": 250299,
+      "sourceUpdated": "2026-07-11T09:55:22+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 576763,
+          "tcgplayerProductId": 250299
+        }
+      ]
+    },
+    {
+      "tcgdexId": "cel25-19",
+      "localId": "19",
+      "name": "Yveltal",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "AKIRA EGAWA",
+      "image": "https://assets.tcgdex.net/en/swsh/cel25/19",
+      "cardmarketProductId": 576764,
+      "tcgplayerProductId": 250315,
+      "sourceUpdated": "2026-07-11T09:55:22+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 576764,
+          "tcgplayerProductId": 250315
+        }
+      ]
+    },
+    {
+      "tcgdexId": "cel25-20",
+      "localId": "20",
+      "name": "Dialga",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "5ban Graphics",
+      "image": "https://assets.tcgdex.net/en/swsh/cel25/20",
+      "cardmarketProductId": 576765,
+      "tcgplayerProductId": 250296,
+      "sourceUpdated": "2026-07-11T09:55:22+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 576765,
+          "tcgplayerProductId": 250296
+        }
+      ]
+    },
+    {
+      "tcgdexId": "cel25-21",
+      "localId": "21",
+      "name": "Solgaleo",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "illustrator": "kirisAki",
+      "image": "https://assets.tcgdex.net/en/swsh/cel25/21",
+      "cardmarketProductId": 576766,
+      "tcgplayerProductId": 250316,
+      "sourceUpdated": "2026-07-11T09:55:22+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 576766,
+          "tcgplayerProductId": 250316
+        }
+      ]
+    },
+    {
+      "tcgdexId": "cel25-22",
+      "localId": "22",
+      "name": "Lugia",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Kouki Saitou",
+      "image": "https://assets.tcgdex.net/en/swsh/cel25/22",
+      "cardmarketProductId": 576767,
+      "tcgplayerProductId": 250317,
+      "sourceUpdated": "2026-07-11T09:55:22+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 576767,
+          "tcgplayerProductId": 250317
+        }
+      ]
+    },
+    {
+      "tcgdexId": "cel25-23",
+      "localId": "23",
+      "name": "Professor's Research (Professor Oak)",
+      "rarity": "Holo Rare",
+      "category": "Trainer",
+      "illustrator": "KIYOTAKA OSHIYAMA",
+      "image": "https://assets.tcgdex.net/en/swsh/cel25/23",
+      "cardmarketProductId": 576768,
+      "tcgplayerProductId": 250318,
+      "sourceUpdated": "2026-07-11T09:55:22+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 576768,
+          "tcgplayerProductId": 250318
+        }
+      ]
+    },
+    {
+      "tcgdexId": "cel25-24",
+      "localId": "24",
+      "name": "Professor's Research (Professor Oak)",
+      "rarity": "Ultra Rare",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/swsh/cel25/24",
+      "cardmarketProductId": 576769,
+      "tcgplayerProductId": 250293,
+      "sourceUpdated": "2026-07-11T09:55:22+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 576769,
+          "tcgplayerProductId": 250293
+        }
+      ]
+    },
+    {
+      "tcgdexId": "cel25-25",
+      "localId": "25",
+      "name": "Mew",
+      "rarity": "Secret Rare",
+      "category": "Pokemon",
+      "illustrator": "Saki Hayashiro",
+      "cardmarketProductId": 576770,
+      "tcgplayerProductId": 250295,
+      "sourceUpdated": "2026-07-11T09:55:22+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 576770,
+          "tcgplayerProductId": 250295
+        }
+      ]
+    }
+  ]
+}

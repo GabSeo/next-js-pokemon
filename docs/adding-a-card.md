@@ -8,6 +8,19 @@ Most cards need nothing but the entry. This document is about the ones that
 don't, and about the order to try things in, so a card that resists doesn't
 turn into a pile of per-card special cases.
 
+**For Pokémon specifically**, `docs/pokemon-catalogue.md` covers the crawled
+catalogue that now resolves a `nameSet` lookup offline, the tier-1/tier-2 split
+that keeps metered quota a function of tracked cards rather than catalogue size,
+and the measured finding that TCGdex and PokéWallet return identical Cardmarket
+figures.
+
+**For the map rather than the procedure** — which API answers which field, per
+franchise, and why One Piece needs six mechanisms Pokémon does not — see
+`docs/pipeline-by-franchise.md` and the two spreadsheets beside it
+(`docs/pipeline-pokemon.xlsx`, `docs/pipeline-one-piece.xlsx`). Its "Case
+studies" sheet traces `monkey-d-luffy-op09-061`, `-st21-014` and `-op01-024`
+side by side, which is the fastest way to see what a gap actually looks like.
+
 The rule the whole process is built around:
 
 > **Pointers may be stored by hand. Content may not.**

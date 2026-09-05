@@ -1,0 +1,128 @@
+{
+  "crawledAt": "2026-09-05T20:01:43.220Z",
+  "source": "https://api.tcgdex.net/v2/en",
+  "set": {
+    "id": "fut2020",
+    "name": "Pokémon Futsal 2020",
+    "serie": {
+      "id": "swsh",
+      "name": "Sword & Shield"
+    },
+    "releaseDate": "2020-09-11",
+    "abbreviation": {
+      "official": "FUT20"
+    },
+    "cardCount": {
+      "firstEd": 0,
+      "holo": 5,
+      "normal": 0,
+      "official": 5,
+      "reverse": 0,
+      "total": 5
+    },
+    "logo": "https://assets.tcgdex.net/en/swsh/fut2020/logo",
+    "symbol": "https://assets.tcgdex.net/univ/swsh/fut2020/symbol"
+  },
+  "cards": [
+    {
+      "tcgdexId": "fut2020-1",
+      "localId": "1",
+      "name": "Pikachu on the Ball",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Illus. & Direc. The Pokémon Company Art Team",
+      "image": "https://assets.tcgdex.net/en/swsh/fut2020/1",
+      "cardmarketProductId": 506930,
+      "sourceUpdated": "2026-07-02T11:27:22+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 506930,
+          "tcgplayerProductId": 223761
+        }
+      ]
+    },
+    {
+      "tcgdexId": "fut2020-2",
+      "localId": "2",
+      "name": "Eevee on the Ball",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Illus. & Direc. The Pokémon Company Art Team",
+      "image": "https://assets.tcgdex.net/en/swsh/fut2020/2",
+      "cardmarketProductId": 506935,
+      "sourceUpdated": "2026-07-02T11:27:22+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 506935,
+          "tcgplayerProductId": 223760
+        }
+      ]
+    },
+    {
+      "tcgdexId": "fut2020-3",
+      "localId": "3",
+      "name": "Grookey on the Ball",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Illus. & Direc. The Pokémon Company Art Team",
+      "image": "https://assets.tcgdex.net/en/swsh/fut2020/3",
+      "cardmarketProductId": 506940,
+      "sourceUpdated": "2026-07-02T11:27:22+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 506940,
+          "tcgplayerProductId": 227413
+        }
+      ]
+    },
+    {
+      "tcgdexId": "fut2020-4",
+      "localId": "4",
+      "name": "Scorbunny on the Ball",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Illus. & Direc. The Pokémon Company Art Team",
+      "image": "https://assets.tcgdex.net/en/swsh/fut2020/4",
+      "cardmarketProductId": 569468,
+      "sourceUpdated": "2026-07-02T11:27:22+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 569468,
+          "tcgplayerProductId": 248016
+        }
+      ]
+    },
+    {
+      "tcgdexId": "fut2020-5",
+      "localId": "5",
+      "name": "Sobble on the Ball",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Illus. & Direc. The Pokémon Company Art Team",
+      "image": "https://assets.tcgdex.net/en/swsh/fut2020/5",
+      "cardmarketProductId": 574871,
+      "sourceUpdated": "2026-07-02T11:27:22+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 574871,
+          "tcgplayerProductId": 248015
+        }
+      ]
+    }
+  ]
+}

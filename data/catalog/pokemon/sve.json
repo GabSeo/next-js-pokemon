@@ -1,0 +1,994 @@
+{
+  "crawledAt": "2026-09-05T20:01:59.469Z",
+  "source": "https://api.tcgdex.net/v2/en",
+  "set": {
+    "id": "sve",
+    "name": "Scarlet & Violet Energy",
+    "serie": {
+      "id": "sv",
+      "name": "Scarlet & Violet"
+    },
+    "releaseDate": "2023-03-31",
+    "abbreviation": {
+      "official": "SVE"
+    },
+    "cardCount": {
+      "firstEd": 0,
+      "holo": 0,
+      "normal": 40,
+      "official": 24,
+      "reverse": 72,
+      "total": 24
+    }
+  },
+  "cards": [
+    {
+      "tcgdexId": "sve-001",
+      "localId": "001",
+      "name": "Grass Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "cardmarketProductId": 689750,
+      "sourceUpdated": "2026-06-18T14:32:08+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 689750,
+          "tcgplayerProductId": 475425
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "gx8bq2hegum3q6irsxlvqxm955ikw9gd1h311",
+          "tcgplayerProductId": 515640
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "3ts5hd5swdcuwzv63t639rp",
+          "cardmarketProductId": 735364,
+          "tcgplayerProductId": 517177
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "4f6221d6q70q1pd5gz5mpleqajtabtd6nalq8mg91zztu",
+          "tcgplayerProductId": 622935
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "3739bbtj3i910y5ynn9xc6ryf",
+          "cardmarketProductId": 780803,
+          "tcgplayerProductId": 562155
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "9c65uu02o61jw39cfwj25zehzm7vtmrthwuo6xen",
+          "tcgplayerProductId": 599455
+        }
+      ]
+    },
+    {
+      "tcgdexId": "sve-002",
+      "localId": "002",
+      "name": "Fire Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "cardmarketProductId": 689751,
+      "sourceUpdated": "2026-06-18T14:32:08+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 689751,
+          "tcgplayerProductId": 475426
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "gx8bq2hegum3q6irsxlvqxm955ikw9gd1h311",
+          "tcgplayerProductId": 515639
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "3ts5hd5swdcuwzv63t639rp",
+          "cardmarketProductId": 735366,
+          "tcgplayerProductId": 517178
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "4f6221d6q70q1pd5gz5mpleqajtabtd6nalq8mg91zztu",
+          "tcgplayerProductId": 651037
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "3739bbtj3i910y5ynn9xc6ryf",
+          "cardmarketProductId": 780804,
+          "tcgplayerProductId": 562160
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "9c65uu02o61jw39cfwj25zehzm7vtmrthwuo6xen",
+          "tcgplayerProductId": 599454
+        }
+      ]
+    },
+    {
+      "tcgdexId": "sve-003",
+      "localId": "003",
+      "name": "Water Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "cardmarketProductId": 689753,
+      "sourceUpdated": "2026-06-18T14:32:08+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 689753,
+          "tcgplayerProductId": 475427
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "3ts5hd5swdcuwzv63t639rp",
+          "cardmarketProductId": 735367,
+          "tcgplayerProductId": 517179
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "gx8bq2hegum3q6irsxlvqxm955ikw9gd1h311",
+          "tcgplayerProductId": 515644
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "4f6221d6q70q1pd5gz5mpleqajtabtd6nalq8mg91zztu",
+          "tcgplayerProductId": 622937
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "3739bbtj3i910y5ynn9xc6ryf",
+          "cardmarketProductId": 780805,
+          "tcgplayerProductId": 563014
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "9c65uu02o61jw39cfwj25zehzm7vtmrthwuo6xen",
+          "tcgplayerProductId": 599458
+        }
+      ]
+    },
+    {
+      "tcgdexId": "sve-004",
+      "localId": "004",
+      "name": "Lightning Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "cardmarketProductId": 689755,
+      "sourceUpdated": "2026-06-18T14:32:08+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 689755,
+          "tcgplayerProductId": 475428
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "3ts5hd5swdcuwzv63t639rp",
+          "cardmarketProductId": 735368,
+          "tcgplayerProductId": 517180
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "gx8bq2hegum3q6irsxlvqxm955ikw9gd1h311",
+          "tcgplayerProductId": 515641
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "4f6221d6q70q1pd5gz5mpleqajtabtd6nalq8mg91zztu",
+          "tcgplayerProductId": 622938
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "3739bbtj3i910y5ynn9xc6ryf",
+          "cardmarketProductId": 780808,
+          "tcgplayerProductId": 562152
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "9c65uu02o61jw39cfwj25zehzm7vtmrthwuo6xen",
+          "tcgplayerProductId": 599456
+        }
+      ]
+    },
+    {
+      "tcgdexId": "sve-005",
+      "localId": "005",
+      "name": "Psychic Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "cardmarketProductId": 689757,
+      "sourceUpdated": "2026-06-18T14:32:08+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 689757,
+          "tcgplayerProductId": 475429
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "3ts5hd5swdcuwzv63t639rp",
+          "cardmarketProductId": 735370,
+          "tcgplayerProductId": 517181
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "gx8bq2hegum3q6irsxlvqxm955ikw9gd1h311",
+          "tcgplayerProductId": 515643
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "4f6221d6q70q1pd5gz5mpleqajtabtd6nalq8mg91zztu",
+          "tcgplayerProductId": 622939
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "3739bbtj3i910y5ynn9xc6ryf",
+          "cardmarketProductId": 780806,
+          "tcgplayerProductId": 562157
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "9c65uu02o61jw39cfwj25zehzm7vtmrthwuo6xen",
+          "tcgplayerProductId": 599457
+        }
+      ]
+    },
+    {
+      "tcgdexId": "sve-006",
+      "localId": "006",
+      "name": "Fighting Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "cardmarketProductId": 689758,
+      "sourceUpdated": "2026-06-18T14:32:08+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 689758,
+          "tcgplayerProductId": 475430
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "3ts5hd5swdcuwzv63t639rp",
+          "cardmarketProductId": 735371,
+          "tcgplayerProductId": 517182
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "gx8bq2hegum3q6irsxlvqxm955ikw9gd1h311",
+          "tcgplayerProductId": 515638
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "4f6221d6q70q1pd5gz5mpleqajtabtd6nalq8mg91zztu",
+          "tcgplayerProductId": 622940
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "3739bbtj3i910y5ynn9xc6ryf",
+          "cardmarketProductId": 780807,
+          "tcgplayerProductId": 562158
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "9c65uu02o61jw39cfwj25zehzm7vtmrthwuo6xen",
+          "tcgplayerProductId": 599453
+        }
+      ]
+    },
+    {
+      "tcgdexId": "sve-007",
+      "localId": "007",
+      "name": "Darkness Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "cardmarketProductId": 689760,
+      "sourceUpdated": "2026-06-18T14:32:08+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 689760,
+          "tcgplayerProductId": 475431
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "3ts5hd5swdcuwzv63t639rp",
+          "cardmarketProductId": 735372,
+          "tcgplayerProductId": 517183
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "gx8bq2hegum3q6irsxlvqxm955ikw9gd1h311",
+          "tcgplayerProductId": 515635
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "4f6221d6q70q1pd5gz5mpleqajtabtd6nalq8mg91zztu",
+          "tcgplayerProductId": 622941
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "3739bbtj3i910y5ynn9xc6ryf",
+          "cardmarketProductId": 780809,
+          "tcgplayerProductId": 562154
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "9c65uu02o61jw39cfwj25zehzm7vtmrthwuo6xen",
+          "tcgplayerProductId": 599460
+        }
+      ]
+    },
+    {
+      "tcgdexId": "sve-008",
+      "localId": "008",
+      "name": "Metal Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "cardmarketProductId": 689762,
+      "sourceUpdated": "2026-06-18T14:32:08+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 689762,
+          "tcgplayerProductId": 475432
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "3ts5hd5swdcuwzv63t639rp",
+          "cardmarketProductId": 735373,
+          "tcgplayerProductId": 517184
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "gx8bq2hegum3q6irsxlvqxm955ikw9gd1h311",
+          "tcgplayerProductId": 515642
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "4f6221d6q70q1pd5gz5mpleqajtabtd6nalq8mg91zztu",
+          "tcgplayerProductId": 622942
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "3739bbtj3i910y5ynn9xc6ryf",
+          "cardmarketProductId": 780810,
+          "tcgplayerProductId": 562159
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "9c65uu02o61jw39cfwj25zehzm7vtmrthwuo6xen",
+          "tcgplayerProductId": 599459
+        }
+      ]
+    },
+    {
+      "tcgdexId": "sve-009",
+      "localId": "009",
+      "name": "Grass Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "cardmarketProductId": 786113,
+      "sourceUpdated": "2026-06-18T14:32:08+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 786113,
+          "tcgplayerProductId": 578864
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f"
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "1taa1mtxbb835v7njr48v6y8eq20",
+          "cardmarketProductId": 809704,
+          "tcgplayerProductId": 599740
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "gx8bq2hegum3q6irsxlvqxm955ikw9gd1h311",
+          "tcgplayerProductId": 623649
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "4f6221d6q70q1pd5gz5mpleqajtabtd6nalq8mg91zztu",
+          "tcgplayerProductId": 651098
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "9c65uu02o61jw39cfwj25zehzm7vtmrthwuo6xen"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "sve-010",
+      "localId": "010",
+      "name": "Fire Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "cardmarketProductId": 786114,
+      "sourceUpdated": "2026-06-18T14:32:08+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 786114,
+          "tcgplayerProductId": 578863
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "1taa1mtxbb835v7njr48v6y8eq20",
+          "cardmarketProductId": 809705,
+          "tcgplayerProductId": 599738
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "gx8bq2hegum3q6irsxlvqxm955ikw9gd1h311",
+          "tcgplayerProductId": 623650
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "4f6221d6q70q1pd5gz5mpleqajtabtd6nalq8mg91zztu",
+          "tcgplayerProductId": 651037
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "9c65uu02o61jw39cfwj25zehzm7vtmrthwuo6xen"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "sve-011",
+      "localId": "011",
+      "name": "Water Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "cardmarketProductId": 786115,
+      "sourceUpdated": "2026-06-18T14:32:08+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 786115,
+          "tcgplayerProductId": 578862
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "1taa1mtxbb835v7njr48v6y8eq20",
+          "cardmarketProductId": 809706,
+          "tcgplayerProductId": 599745
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "gx8bq2hegum3q6irsxlvqxm955ikw9gd1h311",
+          "tcgplayerProductId": 623651
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "4f6221d6q70q1pd5gz5mpleqajtabtd6nalq8mg91zztu",
+          "tcgplayerProductId": 651115
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "9c65uu02o61jw39cfwj25zehzm7vtmrthwuo6xen"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "sve-012",
+      "localId": "012",
+      "name": "Lightning Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "cardmarketProductId": 786116,
+      "sourceUpdated": "2026-06-18T14:32:08+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 786116,
+          "tcgplayerProductId": 578866
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "1taa1mtxbb835v7njr48v6y8eq20",
+          "cardmarketProductId": 809707,
+          "tcgplayerProductId": 599741
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "gx8bq2hegum3q6irsxlvqxm955ikw9gd1h311",
+          "tcgplayerProductId": 623652
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "4f6221d6q70q1pd5gz5mpleqajtabtd6nalq8mg91zztu",
+          "tcgplayerProductId": 651100
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "9c65uu02o61jw39cfwj25zehzm7vtmrthwuo6xen"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "sve-013",
+      "localId": "013",
+      "name": "Psychic Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "cardmarketProductId": 786117,
+      "sourceUpdated": "2026-06-18T14:32:08+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 786117,
+          "tcgplayerProductId": 578865
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "1taa1mtxbb835v7njr48v6y8eq20",
+          "cardmarketProductId": 809708,
+          "tcgplayerProductId": 599743
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "gx8bq2hegum3q6irsxlvqxm955ikw9gd1h311",
+          "tcgplayerProductId": 623653
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "4f6221d6q70q1pd5gz5mpleqajtabtd6nalq8mg91zztu",
+          "tcgplayerProductId": 651109
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "9c65uu02o61jw39cfwj25zehzm7vtmrthwuo6xen"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "sve-014",
+      "localId": "014",
+      "name": "Fighting Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "cardmarketProductId": 786118,
+      "sourceUpdated": "2026-06-18T14:32:08+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 786118,
+          "tcgplayerProductId": 578867
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "1taa1mtxbb835v7njr48v6y8eq20",
+          "cardmarketProductId": 809709,
+          "tcgplayerProductId": 599746
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "gx8bq2hegum3q6irsxlvqxm955ikw9gd1h311",
+          "tcgplayerProductId": 623654
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "4f6221d6q70q1pd5gz5mpleqajtabtd6nalq8mg91zztu",
+          "tcgplayerProductId": 651096
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "9c65uu02o61jw39cfwj25zehzm7vtmrthwuo6xen"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "sve-015",
+      "localId": "015",
+      "name": "Darkness Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "cardmarketProductId": 786119,
+      "sourceUpdated": "2026-06-18T14:32:08+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 786119,
+          "tcgplayerProductId": 578868
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "1taa1mtxbb835v7njr48v6y8eq20",
+          "cardmarketProductId": 809710,
+          "tcgplayerProductId": 599747
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "gx8bq2hegum3q6irsxlvqxm955ikw9gd1h311",
+          "tcgplayerProductId": 623655
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "4f6221d6q70q1pd5gz5mpleqajtabtd6nalq8mg91zztu",
+          "tcgplayerProductId": 651036
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "9c65uu02o61jw39cfwj25zehzm7vtmrthwuo6xen"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "sve-016",
+      "localId": "016",
+      "name": "Metal Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "cardmarketProductId": 786120,
+      "sourceUpdated": "2026-06-18T14:32:08+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 786120,
+          "tcgplayerProductId": 578869
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "1taa1mtxbb835v7njr48v6y8eq20",
+          "cardmarketProductId": 809711,
+          "tcgplayerProductId": 599742
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "gx8bq2hegum3q6irsxlvqxm955ikw9gd1h311",
+          "tcgplayerProductId": 627701
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "4f6221d6q70q1pd5gz5mpleqajtabtd6nalq8mg91zztu",
+          "tcgplayerProductId": 651102
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "9c65uu02o61jw39cfwj25zehzm7vtmrthwuo6xen"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "sve-017",
+      "localId": "017",
+      "name": "Grass Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "cardmarketProductId": 836249,
+      "sourceUpdated": "2026-06-18T14:32:08+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 836249,
+          "tcgplayerProductId": 645286
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "4gbl53whsjw1y7o4q5scl5q",
+          "cardmarketProductId": 836972
+        }
+      ]
+    },
+    {
+      "tcgdexId": "sve-018",
+      "localId": "018",
+      "name": "Fire Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "cardmarketProductId": 836250,
+      "sourceUpdated": "2026-06-18T14:32:08+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 836250,
+          "tcgplayerProductId": 645287
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "4gbl53whsjw1y7o4q5scl5q",
+          "cardmarketProductId": 836973
+        }
+      ]
+    },
+    {
+      "tcgdexId": "sve-019",
+      "localId": "019",
+      "name": "Water Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "cardmarketProductId": 836251,
+      "sourceUpdated": "2026-06-18T14:32:08+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 836251,
+          "tcgplayerProductId": 645288
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "4gbl53whsjw1y7o4q5scl5q",
+          "cardmarketProductId": 836974
+        }
+      ]
+    },
+    {
+      "tcgdexId": "sve-020",
+      "localId": "020",
+      "name": "Lightning Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "cardmarketProductId": 836252,
+      "sourceUpdated": "2026-06-18T14:32:08+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 836252,
+          "tcgplayerProductId": 645289
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "4gbl53whsjw1y7o4q5scl5q",
+          "cardmarketProductId": 836975
+        }
+      ]
+    },
+    {
+      "tcgdexId": "sve-021",
+      "localId": "021",
+      "name": "Psychic Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "cardmarketProductId": 836253,
+      "sourceUpdated": "2026-06-18T14:32:08+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 836253,
+          "tcgplayerProductId": 645301
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "4gbl53whsjw1y7o4q5scl5q",
+          "cardmarketProductId": 836976
+        }
+      ]
+    },
+    {
+      "tcgdexId": "sve-022",
+      "localId": "022",
+      "name": "Fighting Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "cardmarketProductId": 836254,
+      "sourceUpdated": "2026-06-18T14:32:08+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 836254,
+          "tcgplayerProductId": 645302
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "4gbl53whsjw1y7o4q5scl5q",
+          "cardmarketProductId": 836977
+        }
+      ]
+    },
+    {
+      "tcgdexId": "sve-023",
+      "localId": "023",
+      "name": "Darkness Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "cardmarketProductId": 836255,
+      "sourceUpdated": "2026-06-18T14:32:08+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 836255,
+          "tcgplayerProductId": 645303
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "4gbl53whsjw1y7o4q5scl5q",
+          "cardmarketProductId": 836978
+        }
+      ]
+    },
+    {
+      "tcgdexId": "sve-024",
+      "localId": "024",
+      "name": "Metal Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "cardmarketProductId": 836256,
+      "sourceUpdated": "2026-06-18T14:32:08+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 836256,
+          "tcgplayerProductId": 645304
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "4gbl53whsjw1y7o4q5scl5q",
+          "cardmarketProductId": 836979
+        }
+      ]
+    }
+  ]
+}

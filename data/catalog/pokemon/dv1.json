@@ -1,0 +1,427 @@
+{
+  "crawledAt": "2026-09-05T20:01:11.226Z",
+  "source": "https://api.tcgdex.net/v2/en",
+  "set": {
+    "id": "dv1",
+    "name": "Dragon Vault",
+    "serie": {
+      "id": "bw",
+      "name": "Black & White"
+    },
+    "releaseDate": "2012-10-05",
+    "abbreviation": {
+      "official": "DRV"
+    },
+    "cardCount": {
+      "firstEd": 0,
+      "holo": 0,
+      "normal": 0,
+      "official": 20,
+      "reverse": 0,
+      "total": 21
+    },
+    "logo": "https://assets.tcgdex.net/en/bw/dv1/logo",
+    "symbol": "https://assets.tcgdex.net/univ/bw/dv1/symbol"
+  },
+  "cards": [
+    {
+      "tcgdexId": "dv1-1",
+      "localId": "1",
+      "name": "Dratini",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Masakazu Fukuda",
+      "image": "https://assets.tcgdex.net/en/bw/dv1/1",
+      "cardmarketProductId": 281001,
+      "tcgplayerProductId": 84937,
+      "sourceUpdated": "2026-05-27T21:21:38+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "dv1-2",
+      "localId": "2",
+      "name": "Dratini",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Naoki Saito",
+      "image": "https://assets.tcgdex.net/en/bw/dv1/2",
+      "cardmarketProductId": 281001,
+      "tcgplayerProductId": 84938,
+      "sourceUpdated": "2026-05-27T21:21:38+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "dv1-3",
+      "localId": "3",
+      "name": "Dragonair",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Hajime Kusajima",
+      "image": "https://assets.tcgdex.net/en/bw/dv1/3",
+      "cardmarketProductId": 281003,
+      "tcgplayerProductId": 84902,
+      "sourceUpdated": "2026-05-27T21:21:38+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "dv1-4",
+      "localId": "4",
+      "name": "Dragonair",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Kagemaru Himeno",
+      "image": "https://assets.tcgdex.net/en/bw/dv1/4",
+      "cardmarketProductId": 281003,
+      "tcgplayerProductId": 84903,
+      "sourceUpdated": "2026-05-27T21:21:38+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "dv1-5",
+      "localId": "5",
+      "name": "Dragonite",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Mitsuhiro Arita",
+      "image": "https://assets.tcgdex.net/en/bw/dv1/5",
+      "cardmarketProductId": 281005,
+      "tcgplayerProductId": 84915,
+      "sourceUpdated": "2026-05-27T21:21:38+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "dv1-6",
+      "localId": "6",
+      "name": "Bagon",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Kouki Saitou",
+      "image": "https://assets.tcgdex.net/en/bw/dv1/6",
+      "cardmarketProductId": 281006,
+      "tcgplayerProductId": 83701,
+      "sourceUpdated": "2026-05-27T21:21:38+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "dv1-7",
+      "localId": "7",
+      "name": "Shelgon",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Akira Komayama",
+      "image": "https://assets.tcgdex.net/en/bw/dv1/7",
+      "cardmarketProductId": 281007,
+      "tcgplayerProductId": 89130,
+      "sourceUpdated": "2026-05-27T21:21:38+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "dv1-8",
+      "localId": "8",
+      "name": "Salamence",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "BERUBURI",
+      "image": "https://assets.tcgdex.net/en/bw/dv1/8",
+      "cardmarketProductId": 281008,
+      "tcgplayerProductId": 88900,
+      "sourceUpdated": "2026-05-27T21:21:38+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "dv1-9",
+      "localId": "9",
+      "name": "Latias",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Hideaki Hakozaki",
+      "image": "https://assets.tcgdex.net/en/bw/dv1/9",
+      "cardmarketProductId": 281009,
+      "tcgplayerProductId": 86654,
+      "sourceUpdated": "2026-05-27T21:21:38+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "dv1-10",
+      "localId": "10",
+      "name": "Latios",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Ryo Ueda",
+      "image": "https://assets.tcgdex.net/en/bw/dv1/10",
+      "cardmarketProductId": 281010,
+      "tcgplayerProductId": 86668,
+      "sourceUpdated": "2026-05-27T21:21:38+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "dv1-11",
+      "localId": "11",
+      "name": "Rayquaza",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "5ban Graphics",
+      "image": "https://assets.tcgdex.net/en/bw/dv1/11",
+      "cardmarketProductId": 281011,
+      "tcgplayerProductId": 88631,
+      "sourceUpdated": "2026-05-27T21:21:38+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "dv1-12",
+      "localId": "12",
+      "name": "Axew",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Mizue",
+      "image": "https://assets.tcgdex.net/en/bw/dv1/12",
+      "cardmarketProductId": 281012,
+      "tcgplayerProductId": 83670,
+      "sourceUpdated": "2026-05-27T21:21:38+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "dv1-13",
+      "localId": "13",
+      "name": "Axew",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "TOKIYA",
+      "image": "https://assets.tcgdex.net/en/bw/dv1/13",
+      "cardmarketProductId": 281012,
+      "tcgplayerProductId": 83671,
+      "sourceUpdated": "2026-05-27T21:21:38+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "dv1-14",
+      "localId": "14",
+      "name": "Fraxure",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Shin Nagasawa",
+      "image": "https://assets.tcgdex.net/en/bw/dv1/14",
+      "cardmarketProductId": 281014,
+      "tcgplayerProductId": 85559,
+      "sourceUpdated": "2026-05-27T21:21:38+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "dv1-15",
+      "localId": "15",
+      "name": "Fraxure",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "match",
+      "image": "https://assets.tcgdex.net/en/bw/dv1/15",
+      "cardmarketProductId": 281014,
+      "tcgplayerProductId": 85560,
+      "sourceUpdated": "2026-05-27T21:21:38+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "dv1-16",
+      "localId": "16",
+      "name": "Haxorus",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Eske Yoshinob",
+      "image": "https://assets.tcgdex.net/en/bw/dv1/16",
+      "cardmarketProductId": 281016,
+      "tcgplayerProductId": 86034,
+      "sourceUpdated": "2026-05-27T21:21:38+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "dv1-17",
+      "localId": "17",
+      "name": "Druddigon",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "kawayoo",
+      "image": "https://assets.tcgdex.net/en/bw/dv1/17",
+      "cardmarketProductId": 281017,
+      "tcgplayerProductId": 84979,
+      "sourceUpdated": "2026-05-27T21:21:38+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "dv1-18",
+      "localId": "18",
+      "name": "Exp. Share",
+      "rarity": "Rare",
+      "category": "Trainer",
+      "illustrator": "Ryo Ueda",
+      "image": "https://assets.tcgdex.net/en/bw/dv1/18",
+      "cardmarketProductId": 281018,
+      "tcgplayerProductId": 85366,
+      "sourceUpdated": "2026-05-27T21:21:38+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "dv1-19",
+      "localId": "19",
+      "name": "First Ticket",
+      "rarity": "Rare",
+      "category": "Trainer",
+      "illustrator": "5ban Graphics",
+      "image": "https://assets.tcgdex.net/en/bw/dv1/19",
+      "cardmarketProductId": 281019,
+      "tcgplayerProductId": 85470,
+      "sourceUpdated": "2026-05-27T21:21:38+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "dv1-20",
+      "localId": "20",
+      "name": "Super Rod",
+      "rarity": "Rare",
+      "category": "Trainer",
+      "illustrator": "5ban Graphics",
+      "image": "https://assets.tcgdex.net/en/bw/dv1/20",
+      "cardmarketProductId": 281020,
+      "tcgplayerProductId": 89632,
+      "sourceUpdated": "2026-05-27T21:21:38+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "dv1-21",
+      "localId": "21",
+      "name": "Kyurem",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ryo Ueda",
+      "image": "https://assets.tcgdex.net/en/bw/dv1/21",
+      "cardmarketProductId": 281021,
+      "tcgplayerProductId": 86563,
+      "sourceUpdated": "2026-05-27T21:21:38+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    }
+  ]
+}

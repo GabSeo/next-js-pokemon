@@ -1,0 +1,276 @@
+{
+  "crawledAt": "2026-09-05T20:00:48.852Z",
+  "source": "https://api.tcgdex.net/v2/en",
+  "set": {
+    "id": "bog",
+    "name": "Best of game",
+    "serie": {
+      "id": "ecard",
+      "name": "E-Card"
+    },
+    "releaseDate": "2002-12-01",
+    "cardCount": {
+      "firstEd": 0,
+      "holo": 0,
+      "normal": 12,
+      "official": 9,
+      "reverse": 11,
+      "total": 9
+    },
+    "symbol": "https://assets.tcgdex.net/univ/ecard/bog/symbol"
+  },
+  "cards": [
+    {
+      "tcgdexId": "bog-1",
+      "localId": "1",
+      "name": "Electabuzz",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "cardmarketProductId": 275411,
+      "tcgplayerProductId": 85106,
+      "sourceUpdated": "2026-07-10T18:55:54+01:00",
+      "variants": [
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "3ts5hd5swdcuwzv63t639rp",
+          "cardmarketProductId": 275411,
+          "tcgplayerProductId": 85106
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "1cdfymyj3j50hbnn431wsqh3rkcwvm",
+          "tcgplayerProductId": 167078
+        },
+        {
+          "type": "reverse",
+          "size": "jumbo",
+          "variantId": "23rajlte6vt545an88qqbtxwttw",
+          "tcgplayerProductId": 211445
+        }
+      ]
+    },
+    {
+      "tcgdexId": "bog-2",
+      "localId": "2",
+      "name": "Hitmonchan",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "cardmarketProductId": 275412,
+      "tcgplayerProductId": 86098,
+      "sourceUpdated": "2026-07-10T18:55:54+01:00",
+      "variants": [
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "3ts5hd5swdcuwzv63t639rp",
+          "cardmarketProductId": 275412,
+          "tcgplayerProductId": 86098
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "1cdfymyj3j50hbnn431wsqh3rkcwvm",
+          "tcgplayerProductId": 117599
+        },
+        {
+          "type": "reverse",
+          "size": "jumbo",
+          "variantId": "23rajlte6vt545an88qqbtxwttw",
+          "tcgplayerProductId": 180263
+        }
+      ]
+    },
+    {
+      "tcgdexId": "bog-3",
+      "localId": "3",
+      "name": "Professor Elm",
+      "rarity": "None",
+      "category": "Trainer",
+      "illustrator": "Ken Sugimori",
+      "cardmarketProductId": 275413,
+      "tcgplayerProductId": 88387,
+      "sourceUpdated": "2026-07-10T18:55:54+01:00",
+      "variants": [
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "3ts5hd5swdcuwzv63t639rp",
+          "cardmarketProductId": 275413,
+          "tcgplayerProductId": 88387
+        }
+      ]
+    },
+    {
+      "tcgdexId": "bog-4",
+      "localId": "4",
+      "name": "Rocket’s Scizor",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "K. Hoshiba",
+      "tcgplayerProductId": 88786,
+      "sourceUpdated": "2026-07-10T18:55:54+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 88786
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "555jb0efoqbn0cltcy2wqt",
+          "tcgplayerProductId": 167081
+        },
+        {
+          "type": "normal",
+          "size": "jumbo",
+          "variantId": "7g4cbxubib7mqhxvx3r"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "bog-5",
+      "localId": "5",
+      "name": "Rocket’s Sneasel",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Katsura Tabata",
+      "tcgplayerProductId": 88793,
+      "sourceUpdated": "2026-07-10T18:55:54+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 88793
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "555jb0efoqbn0cltcy2wqt",
+          "tcgplayerProductId": 107877
+        },
+        {
+          "type": "normal",
+          "size": "jumbo",
+          "variantId": "7g4cbxubib7mqhxvx3r"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "bog-6",
+      "localId": "6",
+      "name": "Dark Ivysaur",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Shin-ichi Yoshida",
+      "cardmarketProductId": 275416,
+      "tcgplayerProductId": 84616,
+      "sourceUpdated": "2026-07-10T18:55:54+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275416,
+          "tcgplayerProductId": 84616
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "555jb0efoqbn0cltcy2wqt",
+          "tcgplayerProductId": 107876
+        },
+        {
+          "type": "normal",
+          "size": "jumbo",
+          "variantId": "7g4cbxubib7mqhxvx3r",
+          "tcgplayerProductId": 180262
+        }
+      ]
+    },
+    {
+      "tcgdexId": "bog-7",
+      "localId": "7",
+      "name": "Dark Venusaur",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Shin-ichi Yoshida",
+      "cardmarketProductId": 275417,
+      "tcgplayerProductId": 84666,
+      "sourceUpdated": "2026-07-10T18:55:54+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275417,
+          "tcgplayerProductId": 84666
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "555jb0efoqbn0cltcy2wqt",
+          "tcgplayerProductId": 167077
+        },
+        {
+          "type": "normal",
+          "size": "jumbo",
+          "variantId": "7g4cbxubib7mqhxvx3r",
+          "tcgplayerProductId": 211424
+        }
+      ]
+    },
+    {
+      "tcgdexId": "bog-8",
+      "localId": "8",
+      "name": "Rocket’s Mewtwo",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Shin-ichi Yoshida",
+      "tcgplayerProductId": 167080,
+      "sourceUpdated": "2026-07-10T18:55:54+01:00",
+      "variants": [
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "1cdfymyj3j50hbnn431wsqh3rkcwvm",
+          "tcgplayerProductId": 167080
+        },
+        {
+          "type": "reverse",
+          "size": "jumbo",
+          "variantId": "23rajlte6vt545an88qqbtxwttw"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "bog-9",
+      "localId": "9",
+      "name": "Rocket’s Hitmonchan",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "tcgplayerProductId": 167079,
+      "sourceUpdated": "2026-07-10T18:55:54+01:00",
+      "variants": [
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "1cdfymyj3j50hbnn431wsqh3rkcwvm",
+          "tcgplayerProductId": 167079
+        },
+        {
+          "type": "reverse",
+          "size": "jumbo",
+          "variantId": "23rajlte6vt545an88qqbtxwttw"
+        }
+      ]
+    }
+  ]
+}

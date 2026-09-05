@@ -1,0 +1,39 @@
+{
+  "crawledAt": "2026-09-05T18:58:32.012Z",
+  "source": "https://api.tcgdex.net/v2/en",
+  "set": {
+    "id": "miscp",
+    "name": "Miscellaneous Promos",
+    "serie": {
+      "id": "misc",
+      "name": "Miscellaneous"
+    },
+    "releaseDate": "1996-01-01",
+    "cardCount": {
+      "firstEd": 0,
+      "holo": 1,
+      "normal": 0,
+      "official": 1,
+      "reverse": 0,
+      "total": 1
+    }
+  },
+  "cards": [
+    {
+      "tcgdexId": "miscp-001",
+      "localId": "001",
+      "name": "Ancient Mew",
+      "rarity": "Promo",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-07-11T09:41:56Z",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "5zs5af49g93yryvw1ftj",
+          "tcgplayerProductId": 108589
+        }
+      ]
+    }
+  ]
+}

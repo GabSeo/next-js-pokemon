@@ -1,0 +1,1099 @@
+{
+  "crawledAt": "2026-09-05T20:00:42.319Z",
+  "source": "https://api.tcgdex.net/v2/en",
+  "set": {
+    "id": "basep",
+    "name": "Wizards Black Star Promos",
+    "serie": {
+      "id": "base",
+      "name": "Base"
+    },
+    "releaseDate": "1999-07-01",
+    "cardCount": {
+      "firstEd": 0,
+      "holo": 8,
+      "normal": 63,
+      "official": 53,
+      "reverse": 3,
+      "total": 53
+    },
+    "logo": "https://assets.tcgdex.net/en/base/basep/logo",
+    "symbol": "https://assets.tcgdex.net/univ/base/basep/symbol"
+  },
+  "cards": [
+    {
+      "tcgdexId": "basep-1",
+      "localId": "1",
+      "name": "Pikachu",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Keiji Kinebuchi",
+      "image": "https://assets.tcgdex.net/en/base/basep/1",
+      "sourceUpdated": "2026-08-11T23:52:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 121772
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "zqq5g2u9n315kaa1q7ordzv42kgf7pxg",
+          "tcgplayerProductId": 88065
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "23hmnvtwdrr6jf51awzjk0vcmfgo",
+          "tcgplayerProductId": 161750
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50txqozws4btmootyde",
+          "tcgplayerProductId": 696103
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-2",
+      "localId": "2",
+      "name": "Electabuzz",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/base/basep/2",
+      "sourceUpdated": "2026-08-20T01:02:25Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "us0ioug2avlzsvzo3l1p89ztq94zgllrr"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50ts0izkobrpvrjbdwt",
+          "tcgplayerProductId": 85107
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-3",
+      "localId": "3",
+      "name": "Mewtwo",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/base/basep/3",
+      "sourceUpdated": "2026-08-11T23:52:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "us0ioug2avlzsvzo3l1p89ztq94zgllrr"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50ts0izkobrpvrjbdwt",
+          "tcgplayerProductId": 87414
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-4",
+      "localId": "4",
+      "name": "Pikachu",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/base/basep/4",
+      "sourceUpdated": "2026-08-11T23:52:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "us0ioug2avlzsvzo3l1p89ztq94zgllrr"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50ts0izkobrpvrjbdwt",
+          "tcgplayerProductId": 88066
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "23hmnvtwdrr6jf51awzjk0vcmfgo",
+          "tcgplayerProductId": 161752
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-5",
+      "localId": "5",
+      "name": "Dragonite",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Toshinao Aoki",
+      "image": "https://assets.tcgdex.net/en/base/basep/5",
+      "sourceUpdated": "2026-08-20T01:02:25Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "us0ioug2avlzsvzo3l1p89ztq94zgllrr"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50ts0izkobrpvrjbdwt",
+          "tcgplayerProductId": 84909
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-6",
+      "localId": "6",
+      "name": "Arcanine",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/base/basep/6",
+      "sourceUpdated": "2026-08-11T23:52:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83578
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-7",
+      "localId": "7",
+      "name": "Jigglypuff",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Keiji Kinebuchi",
+      "image": "https://assets.tcgdex.net/en/base/basep/7",
+      "sourceUpdated": "2026-07-10T13:27:19+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 86309
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-8",
+      "localId": "8",
+      "name": "Mew",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/base/basep/8",
+      "sourceUpdated": "2026-07-10T13:27:19+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 87394
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "555jb0efonoh63hxg1oxjp",
+          "tcgplayerProductId": 607818
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-9",
+      "localId": "9",
+      "name": "Mew",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/base/basep/9",
+      "sourceUpdated": "2026-08-11T23:52:57+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "tcgplayerProductId": 87395
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-10",
+      "localId": "10",
+      "name": "Meowth",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Kagemaru Himeno",
+      "image": "https://assets.tcgdex.net/en/base/basep/10",
+      "sourceUpdated": "2026-07-10T13:27:19+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "tcgplayerProductId": 87309
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-11",
+      "localId": "11",
+      "name": "Eevee",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Kagemaru Himeno",
+      "image": "https://assets.tcgdex.net/en/base/basep/11",
+      "sourceUpdated": "2026-07-10T13:27:19+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "5zs5af49g93yryvw1ftj",
+          "tcgplayerProductId": 85074
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1jz5lzkp5fbgk5bflsg6atpk0cp0yx",
+          "tcgplayerProductId": 618732
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-12",
+      "localId": "12",
+      "name": "Mewtwo",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Christopher Rush",
+      "image": "https://assets.tcgdex.net/en/base/basep/12",
+      "sourceUpdated": "2026-07-10T13:27:19+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 87416
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-13",
+      "localId": "13",
+      "name": "Venusaur",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/base/basep/13",
+      "sourceUpdated": "2026-07-10T13:27:19+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 90311
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-14",
+      "localId": "14",
+      "name": "Mewtwo",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Benimaru Itoh",
+      "image": "https://assets.tcgdex.net/en/base/basep/14",
+      "sourceUpdated": "2026-08-11T23:52:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 87417
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-15",
+      "localId": "15",
+      "name": "Cool Porygon",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Hiromichi Sugiyama",
+      "image": "https://assets.tcgdex.net/en/base/basep/15",
+      "sourceUpdated": "2026-07-10T13:27:19+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 84422
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-16",
+      "localId": "16",
+      "name": "Computer Error",
+      "rarity": "Common",
+      "category": "Trainer",
+      "illustrator": "Sumiyoshi Kizuki",
+      "image": "https://assets.tcgdex.net/en/base/basep/16",
+      "sourceUpdated": "2026-07-10T13:27:19+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 84414
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-17",
+      "localId": "17",
+      "name": "Dark Persian",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/base/basep/17",
+      "sourceUpdated": "2026-07-10T13:27:19+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "5zs5af49g93yryvw1ftj",
+          "tcgplayerProductId": 84638
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3takscxpcpyc339v4xlghuvs"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-18",
+      "localId": "18",
+      "name": "Team Rocket's Meowth",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Kunihiko Yuyama",
+      "image": "https://assets.tcgdex.net/en/base/basep/18",
+      "sourceUpdated": "2026-07-10T13:27:19+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "tcgplayerProductId": 89851
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-19",
+      "localId": "19",
+      "name": "Sabrina's Abra",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Nishida",
+      "image": "https://assets.tcgdex.net/en/base/basep/19",
+      "sourceUpdated": "2026-07-10T13:27:19+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 88862
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-20",
+      "localId": "20",
+      "name": "Psyduck",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Kagemaru Himeno",
+      "image": "https://assets.tcgdex.net/en/base/basep/20",
+      "sourceUpdated": "2026-07-10T13:27:19+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 88429
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-21",
+      "localId": "21",
+      "name": "Moltres",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Naoyo Kimura",
+      "image": "https://assets.tcgdex.net/en/base/basep/21",
+      "sourceUpdated": "2026-08-11T23:52:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 87557
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2tszcx1bprhy0ddf1mgjqggi65"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-22",
+      "localId": "22",
+      "name": "Articuno",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Naoyo Kimura",
+      "image": "https://assets.tcgdex.net/en/base/basep/22",
+      "sourceUpdated": "2026-08-11T23:52:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83647
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2tszcx1bprhy0ddf1mgjqggi65"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-23",
+      "localId": "23",
+      "name": "Zapdos",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Naoyo Kimura",
+      "image": "https://assets.tcgdex.net/en/base/basep/23",
+      "sourceUpdated": "2026-08-11T23:52:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 90713
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2tszcx1bprhy0ddf1mgjqggi65"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-24",
+      "localId": "24",
+      "name": "___________'s Pikachu",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Kagemaru Himeno",
+      "image": "https://assets.tcgdex.net/en/base/basep/24",
+      "sourceUpdated": "2026-08-11T23:52:57+01:00",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "2tszcx1bpsunvmeibcluzbg06j",
+          "tcgplayerProductId": 159115
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "5zs5af49g93yryvw1ftj",
+          "tcgplayerProductId": 90784
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-25",
+      "localId": "25",
+      "name": "Flying Pikachu",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Toshinao Aoki",
+      "image": "https://assets.tcgdex.net/en/base/basep/25",
+      "sourceUpdated": "2026-08-11T23:52:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "23hmnvtwdrr6jf51awzjk0vcmfgo",
+          "tcgplayerProductId": 161749
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 85534
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-26",
+      "localId": "26",
+      "name": "Pikachu",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Gakuji Nomoto",
+      "image": "https://assets.tcgdex.net/en/base/basep/26",
+      "sourceUpdated": "2026-08-11T23:52:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "23hmnvtwdrr6jf51awzjk0vcmfgo",
+          "tcgplayerProductId": 161753
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 88068
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-27",
+      "localId": "27",
+      "name": "Pikachu",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Nishida",
+      "image": "https://assets.tcgdex.net/en/base/basep/27",
+      "sourceUpdated": "2026-07-10T13:27:19+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "23hmnvtwdrr6jf51awzjk0vcmfgo",
+          "tcgplayerProductId": 161747
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 88069
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-28",
+      "localId": "28",
+      "name": "Surfing Pikachu",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Toshinao Aoki",
+      "image": "https://assets.tcgdex.net/en/base/basep/28",
+      "sourceUpdated": "2026-07-10T13:27:19+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "23hmnvtwdrr6jf51awzjk0vcmfgo",
+          "tcgplayerProductId": 161754
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 89643
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-29",
+      "localId": "29",
+      "name": "Marill",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/base/basep/29",
+      "sourceUpdated": "2026-08-11T23:52:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 87211
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-30",
+      "localId": "30",
+      "name": "Togepi",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/base/basep/30",
+      "sourceUpdated": "2026-08-11T23:52:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 89928
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-31",
+      "localId": "31",
+      "name": "Cleffa",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/base/basep/31",
+      "sourceUpdated": "2026-08-11T23:52:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 84363
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-32",
+      "localId": "32",
+      "name": "Smeargle",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Tomokazu Komiya",
+      "image": "https://assets.tcgdex.net/en/base/basep/32",
+      "sourceUpdated": "2026-08-11T23:52:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 89353
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-33",
+      "localId": "33",
+      "name": "Scizor",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Hironobu Yoshida",
+      "image": "https://assets.tcgdex.net/en/base/basep/33",
+      "sourceUpdated": "2026-08-11T23:52:57+01:00",
+      "variants": [
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "tcgplayerProductId": 88960
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-34",
+      "localId": "34",
+      "name": "Entei",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/base/basep/34",
+      "sourceUpdated": "2026-07-10T13:27:19+01:00",
+      "variants": [
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "tcgplayerProductId": 85270
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-35",
+      "localId": "35",
+      "name": "Pichu",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/base/basep/35",
+      "sourceUpdated": "2026-08-11T23:52:57+01:00",
+      "variants": [
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "tcgplayerProductId": 88014
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-36",
+      "localId": "36",
+      "name": "Igglybuff",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Kagemaru Himeno",
+      "image": "https://assets.tcgdex.net/en/base/basep/36",
+      "sourceUpdated": "2026-08-11T23:52:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 86259
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-37",
+      "localId": "37",
+      "name": "Hitmontop",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Nishida",
+      "image": "https://assets.tcgdex.net/en/base/basep/37",
+      "sourceUpdated": "2026-08-11T23:52:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 86112
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-38",
+      "localId": "38",
+      "name": "Unown [J]",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Hideki Kazama",
+      "image": "https://assets.tcgdex.net/en/base/basep/38",
+      "sourceUpdated": "2026-08-11T23:52:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 90215
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-39",
+      "localId": "39",
+      "name": "Misdreavus",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Shin-ichi Yoshida",
+      "image": "https://assets.tcgdex.net/en/base/basep/39",
+      "sourceUpdated": "2026-08-11T23:52:57+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 87503
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-40",
+      "localId": "40",
+      "name": "Pokémon Center",
+      "rarity": "Common",
+      "category": "Trainer",
+      "illustrator": "\"Big Mama\" Tagawa",
+      "image": "https://assets.tcgdex.net/en/base/basep/40",
+      "sourceUpdated": "2026-07-10T13:27:19+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 88213
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-41",
+      "localId": "41",
+      "name": "Lucky Stadium",
+      "rarity": "Common",
+      "category": "Trainer",
+      "illustrator": "\"Big Mama\" Tagawa",
+      "image": "https://assets.tcgdex.net/en/base/basep/41",
+      "sourceUpdated": "2026-07-10T13:27:19+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 86894
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-42",
+      "localId": "42",
+      "name": "Pokémon Tower",
+      "rarity": "Common",
+      "category": "Trainer",
+      "illustrator": "Keiji Kinebuchi",
+      "image": "https://assets.tcgdex.net/en/base/basep/42",
+      "sourceUpdated": "2026-07-10T13:27:19+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 88240
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-43",
+      "localId": "43",
+      "name": "Machamp",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Tomokazu Komiya",
+      "image": "https://assets.tcgdex.net/en/base/basep/43",
+      "sourceUpdated": "2026-07-10T13:27:19+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 86961
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-44",
+      "localId": "44",
+      "name": "Magmar",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Nishida",
+      "image": "https://assets.tcgdex.net/en/base/basep/44",
+      "cardmarketProductId": 275463,
+      "sourceUpdated": "2026-07-10T13:27:19+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275463,
+          "tcgplayerProductId": 87043
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-45",
+      "localId": "45",
+      "name": "Scyther",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Hironobu Yoshida",
+      "image": "https://assets.tcgdex.net/en/base/basep/45",
+      "sourceUpdated": "2026-07-10T13:27:19+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 88993
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-46",
+      "localId": "46",
+      "name": "Electabuzz",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Miki Tanaka",
+      "image": "https://assets.tcgdex.net/en/base/basep/46",
+      "sourceUpdated": "2026-07-10T13:27:19+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 85111
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-47",
+      "localId": "47",
+      "name": "Mew",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ken Sugimori",
+      "image": "https://assets.tcgdex.net/en/base/basep/47",
+      "sourceUpdated": "2026-07-10T13:27:19+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 87397
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-48",
+      "localId": "48",
+      "name": "Articuno",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Nishida",
+      "image": "https://assets.tcgdex.net/en/base/basep/48",
+      "sourceUpdated": "2026-07-10T13:27:19+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 83648
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-49",
+      "localId": "49",
+      "name": "Snorlax",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Craig Turvey",
+      "image": "https://assets.tcgdex.net/en/base/basep/49",
+      "sourceUpdated": "2026-07-10T13:27:19+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 89385
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-50",
+      "localId": "50",
+      "name": "Celebi",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Hajime Kusajima",
+      "image": "https://assets.tcgdex.net/en/base/basep/50",
+      "sourceUpdated": "2026-07-10T13:27:19+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1jz5lzkp5fm97q3tz0xbvkydsroicz",
+          "tcgplayerProductId": 84143
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-51",
+      "localId": "51",
+      "name": "Rapidash",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Mitsuhiro Arita",
+      "image": "https://assets.tcgdex.net/en/base/basep/51",
+      "sourceUpdated": "2026-07-10T13:27:19+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 88575
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "zqq5g2u9p3nifbstpma98wv552q484wp",
+          "tcgplayerProductId": 244347
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-52",
+      "localId": "52",
+      "name": "Ho-oh",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Mitsuhiro Arita",
+      "image": "https://assets.tcgdex.net/en/base/basep/52",
+      "sourceUpdated": "2026-07-10T13:27:19+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 86120
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "zqq5g2u9p3nifbstpma98wv552q484wp",
+          "tcgplayerProductId": 244348
+        }
+      ]
+    },
+    {
+      "tcgdexId": "basep-53",
+      "localId": "53",
+      "name": "Suicune",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Atsuko Nishida",
+      "image": "https://assets.tcgdex.net/en/base/basep/53",
+      "sourceUpdated": "2026-07-10T13:27:19+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "1jz5lzkp5fm97q3tz0xbvkydsroicz",
+          "tcgplayerProductId": 89601
+        }
+      ]
+    }
+  ]
+}

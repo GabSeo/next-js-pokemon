@@ -1,0 +1,202 @@
+{
+  "crawledAt": "2026-09-05T18:59:34.535Z",
+  "source": "https://api.tcgdex.net/v2/en",
+  "set": {
+    "id": "mee",
+    "name": "Mega Evolution Energy",
+    "serie": {
+      "id": "me",
+      "name": "Mega Evolution"
+    },
+    "releaseDate": "2025-09-25",
+    "abbreviation": {
+      "official": "MEE"
+    },
+    "cardCount": {
+      "firstEd": 0,
+      "holo": 0,
+      "normal": 8,
+      "official": 8,
+      "reverse": 8,
+      "total": 8
+    }
+  },
+  "cards": [
+    {
+      "tcgdexId": "mee-001",
+      "localId": "001",
+      "name": "Grass Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "sourceUpdated": "2026-05-27T22:28:36+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 656263
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "tcgplayerProductId": 656263
+        }
+      ]
+    },
+    {
+      "tcgdexId": "mee-002",
+      "localId": "002",
+      "name": "Fire Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "sourceUpdated": "2026-05-27T22:28:36+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 656264
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "tcgplayerProductId": 656264
+        }
+      ]
+    },
+    {
+      "tcgdexId": "mee-003",
+      "localId": "003",
+      "name": "Water Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "sourceUpdated": "2026-05-27T22:28:36+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 656265
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "tcgplayerProductId": 656265
+        }
+      ]
+    },
+    {
+      "tcgdexId": "mee-004",
+      "localId": "004",
+      "name": "Lightning Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "sourceUpdated": "2026-05-27T22:28:36+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 656266
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "tcgplayerProductId": 656266
+        }
+      ]
+    },
+    {
+      "tcgdexId": "mee-005",
+      "localId": "005",
+      "name": "Psychic Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "sourceUpdated": "2026-05-27T22:28:36+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 656267
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "tcgplayerProductId": 656267
+        }
+      ]
+    },
+    {
+      "tcgdexId": "mee-006",
+      "localId": "006",
+      "name": "Fighting Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "sourceUpdated": "2026-05-27T22:28:36+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 656268
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "tcgplayerProductId": 656268
+        }
+      ]
+    },
+    {
+      "tcgdexId": "mee-007",
+      "localId": "007",
+      "name": "Darkness Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "sourceUpdated": "2026-05-27T22:28:36+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 656269
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "tcgplayerProductId": 656269
+        }
+      ]
+    },
+    {
+      "tcgdexId": "mee-008",
+      "localId": "008",
+      "name": "Metal Energy",
+      "rarity": "Common",
+      "category": "Energy",
+      "sourceUpdated": "2026-05-27T22:28:36+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "tcgplayerProductId": 656270
+        },
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "tcgplayerProductId": 656270
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,406 @@
+{
+  "crawledAt": "2026-09-05T20:00:46.860Z",
+  "source": "https://api.tcgdex.net/v2/en",
+  "set": {
+    "id": "si1",
+    "name": "Southern Islands",
+    "serie": {
+      "id": "neo",
+      "name": "Neo"
+    },
+    "releaseDate": "2001-07-31",
+    "abbreviation": {
+      "official": "SI"
+    },
+    "cardCount": {
+      "firstEd": 0,
+      "holo": 0,
+      "normal": 12,
+      "official": 18,
+      "reverse": 6,
+      "total": 18
+    },
+    "logo": "https://assets.tcgdex.net/en/neo/si1/logo",
+    "symbol": "https://assets.tcgdex.net/univ/neo/si1/symbol"
+  },
+  "cards": [
+    {
+      "tcgdexId": "si1-1",
+      "localId": "1",
+      "name": "Mew",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Keiko Fukuyama",
+      "image": "https://assets.tcgdex.net/en/neo/si1/1",
+      "cardmarketProductId": 275631,
+      "tcgplayerProductId": 46466,
+      "sourceUpdated": "2026-07-24T18:28:58+01:00",
+      "variants": [
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275631,
+          "tcgplayerProductId": 46466
+        }
+      ]
+    },
+    {
+      "tcgdexId": "si1-2",
+      "localId": "2",
+      "name": "Pidgeot",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Keiko Fukuyama",
+      "image": "https://assets.tcgdex.net/en/neo/si1/2",
+      "cardmarketProductId": 275632,
+      "tcgplayerProductId": 46476,
+      "sourceUpdated": "2026-07-24T18:28:58+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275632,
+          "tcgplayerProductId": 46476
+        }
+      ]
+    },
+    {
+      "tcgdexId": "si1-3",
+      "localId": "3",
+      "name": "Onix",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Keiko Fukuyama",
+      "image": "https://assets.tcgdex.net/en/neo/si1/3",
+      "cardmarketProductId": 275633,
+      "tcgplayerProductId": 46477,
+      "sourceUpdated": "2026-07-24T18:28:58+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275633,
+          "tcgplayerProductId": 46477
+        }
+      ]
+    },
+    {
+      "tcgdexId": "si1-4",
+      "localId": "4",
+      "name": "Togepi",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Keiko Fukuyama",
+      "image": "https://assets.tcgdex.net/en/neo/si1/4",
+      "cardmarketProductId": 275634,
+      "tcgplayerProductId": 46478,
+      "sourceUpdated": "2026-07-24T18:28:58+01:00",
+      "variants": [
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275634,
+          "tcgplayerProductId": 46478
+        }
+      ]
+    },
+    {
+      "tcgdexId": "si1-5",
+      "localId": "5",
+      "name": "Ivysaur",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Keiko Fukuyama",
+      "image": "https://assets.tcgdex.net/en/neo/si1/5",
+      "cardmarketProductId": 275635,
+      "tcgplayerProductId": 46479,
+      "sourceUpdated": "2026-07-24T18:28:58+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275635,
+          "tcgplayerProductId": 46479
+        }
+      ]
+    },
+    {
+      "tcgdexId": "si1-6",
+      "localId": "6",
+      "name": "Raticate",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Keiko Fukuyama",
+      "image": "https://assets.tcgdex.net/en/neo/si1/6",
+      "cardmarketProductId": 275636,
+      "tcgplayerProductId": 46480,
+      "sourceUpdated": "2026-07-24T18:28:58+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275636,
+          "tcgplayerProductId": 46480
+        }
+      ]
+    },
+    {
+      "tcgdexId": "si1-7",
+      "localId": "7",
+      "name": "Ledyba",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Keiko Fukuyama",
+      "image": "https://assets.tcgdex.net/en/neo/si1/7",
+      "cardmarketProductId": 275637,
+      "tcgplayerProductId": 46481,
+      "sourceUpdated": "2026-07-24T18:28:58+01:00",
+      "variants": [
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275637,
+          "tcgplayerProductId": 46481
+        }
+      ]
+    },
+    {
+      "tcgdexId": "si1-8",
+      "localId": "8",
+      "name": "Jigglypuff",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Keiko Fukuyama",
+      "image": "https://assets.tcgdex.net/en/neo/si1/8",
+      "cardmarketProductId": 275638,
+      "tcgplayerProductId": 46482,
+      "sourceUpdated": "2026-07-24T18:28:58+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275638,
+          "tcgplayerProductId": 46482
+        }
+      ]
+    },
+    {
+      "tcgdexId": "si1-9",
+      "localId": "9",
+      "name": "Butterfree",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Keiko Fukuyama",
+      "image": "https://assets.tcgdex.net/en/neo/si1/9",
+      "cardmarketProductId": 275639,
+      "tcgplayerProductId": 46483,
+      "sourceUpdated": "2026-07-24T18:28:58+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275639,
+          "tcgplayerProductId": 46483
+        }
+      ]
+    },
+    {
+      "tcgdexId": "si1-10",
+      "localId": "10",
+      "name": "Tentacruel",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Naoyo Kimura",
+      "image": "https://assets.tcgdex.net/en/neo/si1/10",
+      "cardmarketProductId": 275640,
+      "tcgplayerProductId": 46467,
+      "sourceUpdated": "2026-07-24T18:28:58+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275640,
+          "tcgplayerProductId": 46467
+        }
+      ]
+    },
+    {
+      "tcgdexId": "si1-11",
+      "localId": "11",
+      "name": "Marill",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Naoyo Kimura",
+      "image": "https://assets.tcgdex.net/en/neo/si1/11",
+      "cardmarketProductId": 275641,
+      "tcgplayerProductId": 46468,
+      "sourceUpdated": "2026-07-24T18:28:58+01:00",
+      "variants": [
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275641,
+          "tcgplayerProductId": 46468
+        }
+      ]
+    },
+    {
+      "tcgdexId": "si1-12",
+      "localId": "12",
+      "name": "Lapras",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Naoyo Kimura",
+      "image": "https://assets.tcgdex.net/en/neo/si1/12",
+      "cardmarketProductId": 275642,
+      "tcgplayerProductId": 46469,
+      "sourceUpdated": "2026-07-24T18:28:58+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275642,
+          "tcgplayerProductId": 46469
+        }
+      ]
+    },
+    {
+      "tcgdexId": "si1-13",
+      "localId": "13",
+      "name": "Exeggutor",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Naoyo Kimura",
+      "image": "https://assets.tcgdex.net/en/neo/si1/13",
+      "cardmarketProductId": 275643,
+      "tcgplayerProductId": 46470,
+      "sourceUpdated": "2026-07-24T18:28:58+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275643,
+          "tcgplayerProductId": 46470
+        }
+      ]
+    },
+    {
+      "tcgdexId": "si1-14",
+      "localId": "14",
+      "name": "Slowking",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Naoyo Kimura",
+      "image": "https://assets.tcgdex.net/en/neo/si1/14",
+      "cardmarketProductId": 275644,
+      "tcgplayerProductId": 46471,
+      "sourceUpdated": "2026-07-24T18:28:58+01:00",
+      "variants": [
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275644,
+          "tcgplayerProductId": 46471
+        }
+      ]
+    },
+    {
+      "tcgdexId": "si1-15",
+      "localId": "15",
+      "name": "Wartortle",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Naoyo Kimura",
+      "image": "https://assets.tcgdex.net/en/neo/si1/15",
+      "cardmarketProductId": 275645,
+      "tcgplayerProductId": 46472,
+      "sourceUpdated": "2026-07-24T18:28:58+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275645,
+          "tcgplayerProductId": 46472
+        }
+      ]
+    },
+    {
+      "tcgdexId": "si1-16",
+      "localId": "16",
+      "name": "Lickitung",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Naoyo Kimura",
+      "image": "https://assets.tcgdex.net/en/neo/si1/16",
+      "cardmarketProductId": 275646,
+      "tcgplayerProductId": 46473,
+      "sourceUpdated": "2026-07-24T18:28:58+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275646,
+          "tcgplayerProductId": 46473
+        }
+      ]
+    },
+    {
+      "tcgdexId": "si1-17",
+      "localId": "17",
+      "name": "Vileplume",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Naoyo Kimura",
+      "image": "https://assets.tcgdex.net/en/neo/si1/17",
+      "cardmarketProductId": 275647,
+      "tcgplayerProductId": 46474,
+      "sourceUpdated": "2026-07-24T18:28:58+01:00",
+      "variants": [
+        {
+          "type": "reverse",
+          "size": "standard",
+          "variantId": "cm4kqul3x1bwlz1f",
+          "cardmarketProductId": 275647,
+          "tcgplayerProductId": 46474
+        }
+      ]
+    },
+    {
+      "tcgdexId": "si1-18",
+      "localId": "18",
+      "name": "Primeape",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Naoyo Kimura",
+      "image": "https://assets.tcgdex.net/en/neo/si1/18",
+      "cardmarketProductId": 275648,
+      "tcgplayerProductId": 46475,
+      "sourceUpdated": "2026-07-24T18:28:58+01:00",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 275648,
+          "tcgplayerProductId": 46475
+        }
+      ]
+    }
+  ]
+}
