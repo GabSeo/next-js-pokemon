@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EyebrowTitle } from "@/components/retro/eyebrow-title";
 import { CatalogCardTile } from "@/components/catalog-card-tile";
-import { getCatalogSet, getCatalogSetCards, getCatalogSets } from "@/lib/catalog";
+import { getCatalogSet, getCatalogSetCards, getCatalogSets, isDigitalOnlySet } from "@/lib/catalog";
 import { getCatalogPrices, priceSnapshotDate } from "@/lib/catalog-prices";
 import { absoluteUrl } from "@/lib/site";
 
@@ -45,9 +45,27 @@ export function generateStaticParams() {
 
 type PageProps = { params: Promise<{ setId: string }> };
 
+/**
+ * The set this URL names, or undefined when it is not a set this site serves.
+ *
+ * Digital-only Pokémon TCG Pocket sets resolve in the corpus — identity
+ * lookups are deliberately unfiltered (see isDigitalOnlySet) — but they are not
+ * browsable here: nothing links to them, none are prerendered, and none of
+ * their cards can be owned, graded or priced. A page that renders 286 tiles all
+ * reading "No price" is worse than an honest 404, so this is the one place the
+ * browse opinion is applied to a direct URL as well as to a listing.
+ *
+ * Shared by generateMetadata and the page so the two cannot disagree about
+ * whether a URL exists.
+ */
+function servableSet(setId: string) {
+  const set = getCatalogSet(decodeURIComponent(setId));
+  return set && !isDigitalOnlySet(set) ? set : undefined;
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { setId } = await params;
-  const set = getCatalogSet(decodeURIComponent(setId));
+  const set = servableSet(setId);
   if (!set) return {};
   return {
     title: `${set.name} — card list and prices`,
@@ -58,7 +76,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function SetPage({ params }: PageProps) {
   const { setId } = await params;
-  const set = getCatalogSet(decodeURIComponent(setId));
+  const set = servableSet(setId);
   if (!set) notFound();
 
   const entries = getCatalogSetCards(set.id);
