@@ -388,27 +388,88 @@ fallback: 21,066 live reads is the exact failure this removes.
 
 ---
 
-## 8. Operating it
+## 8. Why catalogue tiles do not link anywhere
+
+They are not meant to yet, and the reason is a product decision rather than an
+oversight: **the catalogue is the free view, and the tracked cards are the
+premium one.**
+
+That split is not arbitrary — it falls straight out of what each tier costs.
+
+| | catalogue card (21,066) | tracked card (11) |
+|---|---|---|
+| identity, art, set | corpus, free | yes |
+| Cardmarket / TCGplayer price | snapshot, free | yes |
+| price history chart | — | apitcg, **1,000/month** |
+| eBay graded market, ROI | — | eBay, **8 searches per card** |
+| Vinted, PSA population | — | yes |
+| JP / FR prints | — | PokéWallet, **100/hour** |
+
+The free tier is affordable because every source behind it is unmetered and
+local. The premium tier cannot be given to 21,066 cards at any price: 8 eBay
+searches each is 168,000 searches against a 5,000/day ceiling, and the history
+chart exists for 11 cards precisely because apitcg allows 1,000 calls a month.
+
+So a catalogue tile linking to a thin page would advertise the premium surface
+and then not deliver it. The destination is a real design job — what a
+non-premium card page shows, and how "track this card" promotes one into the
+metered tier — and it is deliberately not being improvised here.
+
+Until then the tiles are inert on purpose. See docs/scan-to-collection.md for
+the identity questions that decision has to answer (§5.2 in particular: a
+collection row should store a print identity, not a slug).
+
+---
+
+## 9. Operating it
+
+Two artifacts, two cadences. Neither costs metered quota.
+
+| artifact | holds | refresh with | how often |
+|---|---|---|---|
+| `data/catalog/pokemon/` | identity + pointers | `npm run catalog` | when a set drops (~2–3 months) |
+| `data/prices/pokemon.json` | current prices | `npm run prices` | **automatic on every deploy** |
 
 ```bash
 npm run prices                                       # refresh prices, ~45s
-npx tsx scripts/catalog-crawl.mts                    # full crawl, ~69s
+npm run catalog                                      # full crawl, ~69s
 npx tsx scripts/catalog-crawl.mts --sets swsh12,sv10 # a few sets
 npx tsx scripts/catalog-crawl.mts --force            # re-fetch everything
 ```
+
+### Prices refresh themselves on deploy
+
+`prebuild` in package.json runs `price-refresh.mts` before every `next build`,
+including Vercel's. **Push anything and prices regenerate** — there is nothing
+to remember. They are therefore as of the last deploy, which is what both pages
+print ("as of \<date\>") rather than implying the figures are live.
+
+Run `npm run prices` by hand when you want them fresher than your last deploy
+without shipping code; commit the result.
+
+**To refresh daily without deploying manually**, use a scheduled **Vercel Deploy
+Hook**: any cron calls the hook URL, Vercel rebuilds, `prebuild` regenerates the
+prices, the site redeploys. No script, no commit churn, nothing to maintain.
+
+A Vercel cron hitting an API route **cannot** do this — the serverless
+filesystem is read-only, so a function cannot write the snapshot. That is why
+the refresh lives in the build and not in a route.
+
+### The corpus
 
 A normal re-run **skips** every complete set. `--force` re-fetches but
 **rewrites only files whose content actually changed** — `crawledAt` is
 excluded from the comparison, so a re-crawl's diff is exactly the sets that
 moved rather than all 218.
 
-**The corpus is committed, not gitignored.** Once `resolveTcgdexCard` reads it,
-it stops being a build artifact and becomes a build *input*: Vercel builds from
-the repo with no prebuild step, so a gitignored corpus is simply absent there
-and every Pokémon card silently degrades. Crawling during the build would work
-but puts a third party on the deploy path — and per lib/tcgdex.ts's own header
-that host has already failed twice in a week, once by routing and once by
-certificate. A committed corpus means a TCGdex outage cannot break a deploy.
+**Both files are committed, not gitignored** — and the price file is committed
+even though `prebuild` regenerates it. They are build *inputs*, not artifacts:
+a missing corpus makes every Pokémon card silently degrade, and a missing price
+file makes every catalogue page render "No price". Committing them means a
+TCGdex outage during a deploy costs freshness, never correctness — the build
+falls back to the committed copy instead of failing or shipping blanks. Per
+lib/tcgdex.ts's own header that host has already failed twice in one week, once
+by routing and once by certificate, so this is not hypothetical.
 
 ---
 

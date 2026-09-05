@@ -14,12 +14,17 @@ import { primaryVariantType, type CatalogPrice } from "@/lib/catalog-prices";
  * trade at several times the normal — Venonat swsh12-001 is EUR 0.04 against
  * EUR 0.18, measured — so a bare figure would not say which object it prices.
  *
- * NOT A LINK, deliberately, and this is the honest state rather than an
- * oversight: there is no page for a catalogue card yet. Only the 11 cards in
- * data/card-refs.ts have one, because a product page needs price history
- * (apitcg, 1,000/month) and a graded market (eBay, 8 searches per card), which
- * is exactly the tier-2 spend that cannot be paid 23,546 times. Making these
- * tiles link somewhere is the next decision, not a detail.
+ * NOT A LINK, deliberately — a product decision, not an oversight. The
+ * catalogue is the FREE view and the tracked cards in data/card-refs.ts are the
+ * PREMIUM one, a split that falls out of what each costs: a product page needs
+ * price history (apitcg, 1,000/month), a graded market (eBay, 8 searches per
+ * card) and JP/FR prints (PokéWallet, 100/hour), none of which can be paid
+ * 21,066 times. Linking a tile to a thin page would advertise the premium
+ * surface and then not deliver it.
+ *
+ * What a non-premium card page shows, and how "track this card" promotes one
+ * into the metered tier, is a design job of its own — see
+ * docs/pokemon-catalogue.md §8.
  */
 export function CatalogCardTile({
   card,
