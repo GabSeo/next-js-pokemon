@@ -9,9 +9,13 @@ import { absoluteUrl } from "@/lib/site";
  *
  * COSTS NOTHING TO RENDER. Reads `data/catalog/pokemon/` off disk and makes no
  * network call at all — the whole point of the tier-1/tier-2 split (see
- * lib/catalog.ts's header). 218 sets and 23,546 cards are listed here without
- * touching a single metered quota, which is what makes browsing at catalogue
- * scale a thing this app can offer.
+ * lib/catalog.ts's header). Every set is listed here without touching a single
+ * metered quota, which is what makes browsing at catalogue scale a thing this
+ * app can offer.
+ *
+ * Digital-only Pokémon TCG Pocket sets are excluded — see isDigitalOnlySet.
+ * They stay in the corpus and are filtered at this layer, so the decision is
+ * one predicate rather than a hole in the data.
  *
  * Prices live one level down, on the set page, and are fetched live there.
  */
@@ -26,21 +30,6 @@ export const metadata: Metadata = {
   alternates: { canonical: "/sets" },
 };
 
-/**
- * Series in release order, newest first, with digital-only Pokémon TCG Pocket
- * sets last rather than removed.
- *
- * Nothing is filtered out of the corpus (see the crawler's header) and nothing
- * is filtered out here either — a Pocket set is a real thing a person may be
- * looking for, and it is labelled for what it is instead of silently dropped.
- * What it does NOT get is a false promise of prices: those sets have no
- * physical market and correspondingly no marketplace pointers, so the badge
- * says so up front rather than letting someone click into an empty grid.
- */
-function isDigitalOnly(set: CatalogSet): boolean {
-  return /pocket/i.test(set.serie?.name ?? "");
-}
-
 function releaseSortKey(set: CatalogSet): string {
   return set.releaseDate ?? "0000-00-00";
 }
@@ -49,8 +38,8 @@ export default function SetsIndexPage() {
   const sets = getCatalogSets();
   const stats = catalogStats();
 
-  const physical = sets.filter((s) => !isDigitalOnly(s)).sort((a, b) => releaseSortKey(b).localeCompare(releaseSortKey(a)));
-  const digital = sets.filter(isDigitalOnly).sort((a, b) => releaseSortKey(b).localeCompare(releaseSortKey(a)));
+  // getCatalogSets already excludes digital-only sets — see isDigitalOnlySet.
+  const physical = [...sets].sort((a, b) => releaseSortKey(b).localeCompare(releaseSortKey(a)));
 
   const itemListJsonLd = {
     "@context": "https://schema.org",
@@ -86,13 +75,6 @@ export default function SetsIndexPage() {
       </Link>
 
       <SetGrid heading="Sets" sets={physical} />
-      {digital.length > 0 && (
-        <SetGrid
-          heading="Pokémon TCG Pocket"
-          note="Digital-only. These cards have no physical market, so no prices are shown."
-          sets={digital}
-        />
-      )}
     </main>
   );
 }

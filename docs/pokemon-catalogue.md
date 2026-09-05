@@ -34,12 +34,21 @@ content may not* — applied by machine. A stored figure goes stale silently on
 a page whose whole proposition is that its numbers were read today; a stored
 id goes stale loudly.
 
-### Nothing is filtered out
+### Nothing is filtered out of the CORPUS — the views filter
 
 The corpus includes 2,480 Pokémon TCG Pocket cards (digital-only, no physical
-market), Trainer Kits and deck products. Dropping them would be a guess baked
-into the data. Every set carries `serie`, so excluding them is a query a
-consumer can state and change.
+market), Trainer Kits and deck products. Dropping them at crawl time would be a
+judgement baked into the data where nobody can see or revisit it.
+
+**The browse surfaces exclude Pocket**, because none of those cards can be
+owned, graded, sold or priced — `isDigitalOnlySet` (lib/catalog.ts) is the one
+predicate that does it, and `getCatalogSets` / `catalogStats` take
+`includeDigital` for the corpus as crawled. So `/sets` and `/cards` show
+**203 sets / 21,066 cards** while the corpus holds 218 / 23,546.
+
+Identity lookups are deliberately NOT filtered: `getCatalogCard("A1-001")` still
+resolves. "Which card is this" and "what may a visitor browse" are different
+questions, and only the second one has an opinion about Pocket.
 
 ---
 
@@ -169,9 +178,9 @@ print key — use `tcgdexId` + variant `type`.
 
 ### d. Price-pointer coverage is 95.4% of physical cards
 
-**20,092 of 21,066** cards excluding Pokémon TCG Pocket. The remaining gaps are
-small and explicable: Trainer kits 48%, POP 77%, and Pocket itself 0% — digital
-only, no physical market, correctly nothing.
+**20,092 of 21,066** cards — that is the whole browsable catalogue, since
+Pocket is excluded from it (above). The remaining gaps are small and
+explicable: Trainer kits 48%, POP 77%.
 
 **This figure was wrong once and the mistake is worth recording**, because it
 would have killed a feature. The first measurement counted
@@ -311,6 +320,8 @@ Verified against the live corpus:
 | `category=Trainer` | 3,055 |
 | `variant=reverse` | 8,193 |
 | `priced=1` | 20,092 — the same 95.4% as §4d |
+
+(Totals are over the 21,066 browsable cards, not the 23,546 in the corpus.)
 
 ### The split that the boundary forced
 

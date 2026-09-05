@@ -196,44 +196,21 @@ export function getCatalogCardByNumber(setId: string, localId: string): CatalogE
 }
 
 /**
- * Cards whose name contains `query`, case-insensitively.
- *
- * A plain substring scan over 23,546 in-memory rows, deliberately: measured
- * fast enough at this size, and a real index is the kind of thing to add when
- * a measurement asks for it rather than in advance. Exact-name matches sort
- * first so "Lugia V" does not bury itself under "Lugia VSTAR".
- */
-export function searchCatalog(query: string, limit = 25): CatalogEntry[] {
-  const needle = query.trim().toLowerCase();
-  if (!needle) return [];
-  const matches = loadCatalog().entries.filter((e) => e.card.name.toLowerCase().includes(needle));
-  matches.sort((a, b) => {
-    const aExact = a.card.name.toLowerCase() === needle ? 0 : 1;
-    const bExact = b.card.name.toLowerCase() === needle ? 0 : 1;
-    if (aExact !== bExact) return aExact - bExact;
-    return a.card.name.length - b.card.name.length;
-  });
-  return matches.slice(0, limit);
-}
-
-/**
  * The offline counterpart to tcgdex.ts's `findCardByNameAndSet` — the lookup
  * every Pokémon CardRef is written in terms of, answered from the corpus
  * instead of over the network.
  *
  * MATCHING IS DELIBERATELY IDENTICAL to the live function's, including the
  * parts that are loose: `localId` must equal `number` exactly, and the set is
- * matched by case-insensitive SUBSTRING (`"Silver Tempest"` matching
- * `"Silver Tempest"`, but also a longer real name containing it). Mirroring it
- * rather than improving it is the point — this runs BEFORE the live call as an
- * accelerator, so any difference in matching would make a card resolve to one
- * printing offline and a different one on the fallback path, which is the
- * class of bug that is invisible until it prices the wrong object.
+ * matched by case-insensitive SUBSTRING. Mirroring it rather than improving it
+ * is the point — this runs BEFORE the live call as an accelerator, so any
+ * difference in matching would make a card resolve to one printing offline and
+ * a different one on the fallback path, which is the class of bug that is
+ * invisible until it prices the wrong object.
  *
- * Returns the first match in corpus order, as the live function returns the
- * first candidate whose set matches. A ref whose name+set+number is ambiguous
- * was already ambiguous; this does not make it worse and does not pretend to
- * resolve it.
+ * Searches the WHOLE corpus including digital-only sets: this answers "which
+ * card is this ref", not "what may a visitor browse", and a ref naming a
+ * Pocket card should still resolve rather than silently missing.
  */
 export function findCatalogCardByNameAndSet(
   name: string,
@@ -283,9 +260,33 @@ export function tcgplayerProductIdFor(card: CatalogCard): number | undefined {
   return card.tcgplayerProductId ?? card.variants.find((v) => v.tcgplayerProductId !== undefined)?.tcgplayerProductId;
 }
 
-/** Every set in the corpus. Includes digital-only Pokémon TCG Pocket sets — filter on `serie` if you want physical cards only. */
-export function getCatalogSets(): CatalogSet[] {
-  return loadCatalog().sets;
+/**
+ * Pokémon TCG Pocket — a digital-only game with no physical market.
+ *
+ * 2,480 cards across 15 sets, and none of them can be owned, graded, sold or
+ * priced: they carry no Cardmarket or TCGplayer product because there is
+ * nothing to buy. On a browse surface for collectors they are noise.
+ *
+ * THEY STAY IN THE CORPUS. The crawler filters nothing, deliberately — a set
+ * dropped at crawl time is a judgement baked into the data where nobody can
+ * see or revisit it. Excluding them HERE is a query, stated in one predicate,
+ * and reversible by deleting a call. That distinction is the whole reason
+ * every set record carries `serie`.
+ */
+export function isDigitalOnlySet(set: CatalogSet): boolean {
+  return /pocket/i.test(set.serie?.name ?? "");
+}
+
+/**
+ * Every set in the corpus.
+ *
+ * Excludes digital-only sets by default, because every caller so far is a
+ * browse surface for physical cards. Pass `includeDigital` for the corpus as
+ * crawled — `catalogStats` uses it to report what is actually held.
+ */
+export function getCatalogSets(options?: { includeDigital?: boolean }): CatalogSet[] {
+  const sets = loadCatalog().sets;
+  return options?.includeDigital ? sets : sets.filter((set) => !isDigitalOnlySet(set));
 }
 
 export function getCatalogSet(setId: string): CatalogSet | undefined {
@@ -342,8 +343,15 @@ export function cardmarketPriceFields(card: CatalogCard, variantType: string | u
   return { cardmarketSuffix: "", tcgplayerKey: "holofoil" };
 }
 
-/** Corpus-wide counts, for the audit script and for answering "how much do we actually cover". */
-export function catalogStats(): {
+/**
+ * Counts for "how much do we actually cover".
+ *
+ * Excludes digital-only sets by default so the figure a browse page prints
+ * matches the number of sets it is willing to show — a header reading "23,546
+ * cards across 218 sets" above a list of 203 is its own small lie. Pass
+ * `includeDigital` for the corpus as crawled.
+ */
+export function catalogStats(options?: { includeDigital?: boolean }): {
   sets: number;
   cards: number;
   unresolved: number;
@@ -352,7 +360,11 @@ export function catalogStats(): {
   multiVariant: number;
   crawledAt?: string;
 } {
-  const { sets, entries, crawledAt } = loadCatalog();
+  const loaded = loadCatalog();
+  const crawledAt = loaded.crawledAt;
+  const sets = options?.includeDigital ? loaded.sets : loaded.sets.filter((set) => !isDigitalOnlySet(set));
+  const included = new Set(sets.map((set) => set.id));
+  const entries = loaded.entries.filter((entry) => included.has(entry.set.id));
   let unresolved = 0;
   let withCardmarketPointer = 0;
   let withTcgplayerPointer = 0;

@@ -10,7 +10,7 @@ import { SORTS, type Facet, type SortId } from "@/lib/catalog-query";
  * EVERY CONTROL WRITES THE URL, and the server does the filtering. Three
  * reasons, in order of how much they matter here:
  *
- * 1. 23,546 cards cannot be shipped to the browser to filter client-side. The
+ * 1. The corpus cannot be shipped to the browser to filter client-side. The
  *    existing CardGridFilter can hide and reorder in the DOM because it works
  *    on a handful of tracked cards; that approach does not survive two more
  *    orders of magnitude.
@@ -71,7 +71,7 @@ export function CatalogFilters({ facets, total, priceSortRefused }: Props) {
           name="q"
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
-          placeholder="Search 23,546 cards by name or number…"
+          placeholder="Search by card name or number…"
           aria-label="Search cards"
           className="min-w-0 flex-1 rounded-lg border-2 border-black bg-card-surface px-3 py-2 text-sm shadow-hard-sm outline-none focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-hard-md"
         />

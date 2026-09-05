@@ -8,7 +8,7 @@ import { getCatalogPrices } from "@/lib/catalog-prices";
 import { PAGE_SIZE, isSortId, searchCatalogCards, type CatalogQuery } from "@/lib/catalog-search";
 
 /**
- * Search the whole catalogue: 23,546 cards, filtered and sorted server-side.
+ * Search the whole physical catalogue, filtered and sorted server-side.
  *
  * REQUEST-TIME BY DEFINITION. Reading `searchParams` makes this route dynamic
  * (the same note /tools/price-checker carries), which is correct here — there
@@ -28,7 +28,7 @@ import { PAGE_SIZE, isSortId, searchCatalogCards, type CatalogQuery } from "@/li
  */
 export const metadata: Metadata = {
   title: "Search Pokémon cards",
-  description: "Search 23,546 Pokémon cards by name, set, rarity and printing, with live market prices.",
+  description: "Search every Pokémon TCG card by name, set, rarity and printing, with live market prices.",
   alternates: { canonical: "/cards" },
 };
 
