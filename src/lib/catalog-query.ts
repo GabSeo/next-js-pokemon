@@ -20,15 +20,14 @@
 export const PAGE_SIZE = 60;
 
 /**
- * The largest result set that may be sorted by price.
+ * Price sort has NO cap any more, and the reason is the price snapshot.
  *
- * Every card has to be priced before the set can be ordered, so this is a
- * request budget rather than a UI preference: 250 cards is ~2.5s against a
- * free, unmetered source. Above it the sort is refused with a reason, because
- * a "sort by price" that silently reordered only the sixty rows already on
- * screen would be a control lying about its own scope.
+ * It used to be capped at 250 results, because ordering by price meant
+ * fetching one live price per card and 21,066 requests could not answer a
+ * dropdown. Prices are now a local map (lib/catalog-prices.ts), so sorting the
+ * whole catalogue costs a lookup per row and the refusal that used to be
+ * displayed has nothing left to refuse.
  */
-export const PRICE_SORT_MAX = 250;
 
 export type SortId = "name" | "name-desc" | "newest" | "oldest" | "number" | "price-high" | "price-low";
 

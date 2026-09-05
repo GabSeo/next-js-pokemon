@@ -3,8 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EyebrowTitle } from "@/components/retro/eyebrow-title";
 import { CatalogCardTile } from "@/components/catalog-card-tile";
-import { getCatalogSet, getCatalogSetCards } from "@/lib/catalog";
-import { getCatalogPrices } from "@/lib/catalog-prices";
+import { getCatalogSet, getCatalogSetCards, getCatalogSets } from "@/lib/catalog";
+import { getCatalogPrices, priceSnapshotDate } from "@/lib/catalog-prices";
 import { absoluteUrl } from "@/lib/site";
 
 /**
@@ -21,26 +21,26 @@ import { absoluteUrl } from "@/lib/site";
  * the tracked cards live on. The same page built on apitcg or PokéWallet would
  * exhaust an hourly ceiling on a single view.
  *
- * NOT PRERENDERED AT BUILD. `generateStaticParams` returns an empty array
- * deliberately — prerendering all 218 sets would fire ~23,500 requests into
- * every `next build`. The empty array plus `revalidate` is what Next requires
- * to get on-demand ISR instead (see its generateStaticParams reference: "You
- * must return an empty array ... in order to revalidate (ISR) paths at
- * runtime"), so a set is built the first time somebody opens it and then
- * served from cache for 24h.
+ * EVERY SET IS PRERENDERED, which is only safe because the build makes no
+ * requests. An earlier attempt prerendered these while prices were still
+ * fetched live, and it was worse than the slowness it fixed: ~21,000 requests
+ * across parallel build workers tripped the circuit breaker and the empty
+ * results were frozen into static HTML for 24h (sv08 and base1 shipped with no
+ * prices at all, me05 with 1 of 120). Reading a snapshot removes the failure
+ * mode rather than tuning it — there is nothing left to fail mid-build.
  *
- * This route is deliberately NOT in scripts/check-static-routes.mjs's
- * REQUIRED_PATTERNS. That gate exists to catch routes that should be static
- * and silently stopped being; this one prerenders zero pages by design and
- * would fail it for doing the right thing.
+ * The result is a set page that is static HTML on the CDN: no serverless
+ * invocation, no corpus parse, no fetch. It stops being computed at all.
  */
 
-// 24 hours — the same window tcgdexFetch already applies to the price data
-// underneath, so the page and its figures age at the same rate.
-export const revalidate = 86400;
+// One year. These pages are built from a local snapshot, so there is nothing
+// for a revalidation to discover: the figures change when the snapshot is
+// regenerated, which happens at deploy (see package.json's prebuild). A short
+// window would spend serverless invocations rebuilding identical HTML.
+export const revalidate = 31536000;
 
 export function generateStaticParams() {
-  return [];
+  return getCatalogSets().map((set) => ({ setId: set.id }));
 }
 
 type PageProps = { params: Promise<{ setId: string }> };
@@ -64,12 +64,13 @@ export default async function SetPage({ params }: PageProps) {
   const entries = getCatalogSetCards(set.id);
   const cards = entries.map((e) => e.card);
 
-  // The one network step on this page. Bounded concurrency lives inside
-  // getCatalogPrices — see its own comment on why an unbounded fan-out here
-  // could trip a circuit breaker shared with the tracked-card path.
+  // Map lookups against the price snapshot — no network in the normal case.
+  // See lib/catalog-prices.ts for the per-card live fallback and why it is
+  // per-card rather than per-file.
   const prices = await getCatalogPrices(cards);
 
   const pricedCount = prices.size;
+  const pricedAt = priceSnapshotDate();
 
   const itemListJsonLd = {
     "@context": "https://schema.org",
@@ -114,8 +115,9 @@ export default async function SetPage({ params }: PageProps) {
           <>No marketplace prices are available for this set. Our sources carry no Cardmarket or TCGplayer product for these cards.</>
         ) : (
           <>
-            Prices for {pricedCount} of {cards.length} cards. Cardmarket figures are EUR, TCGplayer USD, and neither is
-            ever converted into the other. Refreshed at most every 24 hours.
+            Prices for {pricedCount} of {cards.length} cards
+            {pricedAt ? `, as of ${pricedAt.slice(0, 10)}` : ""}. Cardmarket figures are EUR, TCGplayer USD, and neither
+            is ever converted into the other.
           </>
         )}
       </p>

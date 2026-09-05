@@ -6,19 +6,15 @@
  * that module, never a market client. Filtering all 23,546 cards is a few
  * array passes over data already resident, so a query costs nothing but CPU.
  *
- * THE ONE PLACE THAT IS NOT FREE, and the reason it is handled explicitly
- * rather than quietly: sorting by PRICE needs prices, and prices are tier 2 —
- * one live request per card. Sorting 23,546 cards by price would mean 23,546
- * requests to answer one dropdown. So price sort is offered only when the
- * filtered result set is small enough to price in full (PRICE_SORT_MAX), and
- * the caller is told when it is not, instead of being handed a "price sort"
- * that silently reordered only the sixty cards already on screen. A control
- * that lies about its scope is worse than one that is disabled with a reason.
+ * Sorting by PRICE is the one thing this layer cannot do alone — it holds no
+ * prices — so it flags `priceSortPending` and the caller orders the set once
+ * it has them. That used to be capped at 250 results because each price was a
+ * live request; with the snapshot (lib/catalog-prices.ts) it is a map lookup
+ * and the whole catalogue can be ordered.
  */
 import { cardmarketProductIdFor, getCatalogSets, getCatalogSetCards, type CatalogEntry } from "@/lib/catalog";
 import {
   PAGE_SIZE,
-  PRICE_SORT_MAX,
   isSortId,
   sortNeedsPrices,
   type CatalogQuery,
@@ -38,13 +34,10 @@ export type CatalogSearchResult = {
   pageCount: number;
   facets: { serie: Facet[]; rarity: Facet[]; category: Facet[]; variant: Facet[] };
   /**
-   * The caller asked to sort by price and the result set is small enough — it
-   * must fetch prices for `matched` and order them itself. False means either
-   * no price sort was asked for, or it was refused.
+   * The caller asked to sort by price, so it must resolve prices for `matched`
+   * and order them itself — this layer has no prices of its own.
    */
   priceSortPending: boolean;
-  /** Set when a price sort was asked for and refused, with the reason to display. */
-  priceSortRefused?: string;
 };
 
 /** Every entry in the corpus, flattened once per call. Cheap: the underlying arrays are already built and cached. */
@@ -135,10 +128,6 @@ export function searchCatalogCards(query: CatalogQuery): CatalogSearchResult {
 
   const sort: SortId = query.sort && isSortId(query.sort) ? query.sort : "name";
   const wantsPriceSort = sortNeedsPrices(sort);
-  const priceSortRefused =
-    wantsPriceSort && matched.length > PRICE_SORT_MAX
-      ? `Sorting ${matched.length.toLocaleString("en-US")} cards by price would mean fetching ${matched.length.toLocaleString("en-US")} live prices. Narrow to ${PRICE_SORT_MAX} or fewer to sort by price.`
-      : undefined;
 
   const sorted = [...matched].sort((a, b) => compare(sort, a, b));
 
@@ -160,7 +149,6 @@ export function searchCatalogCards(query: CatalogQuery): CatalogSearchResult {
         e.card.variants.map((v) => v.type).filter((t): t is string => t !== undefined)
       ),
     },
-    priceSortPending: wantsPriceSort && !priceSortRefused,
-    priceSortRefused,
+    priceSortPending: wantsPriceSort,
   };
 }

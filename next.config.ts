@@ -172,9 +172,15 @@ const nextConfig: NextConfig = {
    * Globs resolve from the project root; keys are route globs.
    */
   outputFileTracingIncludes: {
-    "/cards": ["./data/catalog/pokemon/**"],
-    "/sets": ["./data/catalog/pokemon/**"],
-    "/sets/[setId]": ["./data/catalog/pokemon/**"],
+    // /cards is the only one that still reads either file at RUNTIME: it is
+    // request-time by definition (searchParams) so it cannot be prerendered.
+    // /sets and /sets/[setId] are prerendered at build, where the working
+    // directory really does contain data/ — they are listed anyway rather than
+    // reasoned about per deploy, since their revalidation runs in the same
+    // serverless context.
+    "/cards": ["./data/catalog/pokemon/**", "./data/prices/**"],
+    "/sets": ["./data/catalog/pokemon/**", "./data/prices/**"],
+    "/sets/[setId]": ["./data/catalog/pokemon/**", "./data/prices/**"],
   },
 };
 

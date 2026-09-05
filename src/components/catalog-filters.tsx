@@ -16,8 +16,7 @@ import { SORTS, type Facet, type SortId } from "@/lib/catalog-query";
  *    orders of magnitude.
  * 2. A filtered view is a thing people send each other. `?serie=XY&rarity=Rare`
  *    is a link; component state is not.
- * 3. Sorting by price needs prices the browser does not have — only the server
- *    can decide whether that sort is even affordable (see PRICE_SORT_MAX).
+ * 3. Sorting by price needs prices the browser does not have at all.
  *
  * Navigation runs inside a transition so the current results stay on screen,
  * dimmed, while the next page renders — rather than blanking on every click.
@@ -26,7 +25,6 @@ import { SORTS, type Facet, type SortId } from "@/lib/catalog-query";
 type Props = {
   facets: { serie: Facet[]; rarity: Facet[]; category: Facet[]; variant: Facet[] };
   total: number;
-  priceSortRefused?: string;
 };
 
 const FACET_GROUPS = [
@@ -36,7 +34,7 @@ const FACET_GROUPS = [
   { key: "variant", label: "Printing", limit: 5 },
 ] as const;
 
-export function CatalogFilters({ facets, total, priceSortRefused }: Props) {
+export function CatalogFilters({ facets, total }: Props) {
   const router = useRouter();
   const params = useSearchParams();
   const [pending, startTransition] = useTransition();
@@ -103,12 +101,6 @@ export function CatalogFilters({ facets, total, priceSortRefused }: Props) {
           );
         })}
       </div>
-
-      {/* A refused price sort explains itself rather than silently falling back
-          to name order — the control was clicked and owes an answer. */}
-      {priceSortRefused && (
-        <p className="mt-2 rounded-lg border-2 border-black bg-pokemon-yellow/30 p-2 text-xs">{priceSortRefused}</p>
-      )}
 
       <div className="mt-4 flex items-center justify-between gap-2">
         <p className="text-xs text-muted-text">

@@ -8,7 +8,10 @@
     "postbuild": "node scripts/check-static-routes.mjs && node scripts/api-budget-report.mjs",
     "start": "next start",
     "lint": "eslint",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "prebuild": "npx tsx scripts/price-refresh.mts",
+    "prices": "npx tsx scripts/price-refresh.mts",
+    "catalog": "npx tsx scripts/catalog-crawl.mts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
