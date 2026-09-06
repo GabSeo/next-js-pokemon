@@ -403,6 +403,31 @@ export const cardRefs: CardRef[] = [
     },
   },
   {
+    // THE OTHER OP09-061, and the reason it needs its own ref rather than a
+    // variantTag on the one above: same code, same character, same Leader
+    // rarity, different printing. This is the Parallel — BerryWallet's
+    // `Monkey.D.Luffy (061) (Parallel)`, V.2 in Emperors in the New World,
+    // Cardmarket `Emperors-in-the-New-World/MonkeyDLuffy-OP09-061-V2`,
+    // tcgplayer/596997. The ref above is the 2nd Anniversary Set promo, a
+    // separate product with its own marketplace listing entirely.
+    //
+    // `["(Parallel)"]` with the parentheses, matching how the corpus writes
+    // it, so it cannot also match a row that merely mentions the word.
+    //
+    // Its eBay query is where the Parallel/Alt Art vocabulary split shows up
+    // (see TREATMENTS in lib/one-piece-variants.ts): sellers title this card
+    // "Leader Alt Art OP09-061" at least as often as "Leader Parallel", so
+    // the derived query searches both and still excludes on "parallel" alone.
+    franchise: "one-piece",
+    tcg: "one-piece",
+    slug: "monkey-d-luffy-op09-061-parallel",
+    displayName: "Monkey D. Luffy",
+    character: "Monkey D. Luffy",
+    lookup: { by: "code", code: "OP09-061", variantTags: ["(Parallel)"] },
+    berryWalletSetCode: { en: "OP09" },
+    berryWalletEnabled: true,
+  },
+  {
     // A different card_number and product entirely from OP09-061 above,
     // despite being the same character — P-033 (BerryWallet's generic
     // promo-number series) has 3 real, separate products sharing that one

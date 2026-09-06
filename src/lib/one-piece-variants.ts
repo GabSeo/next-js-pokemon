@@ -89,14 +89,42 @@ import { opRowsForCode, opSetFamily, type OpEntry } from "@/lib/one-piece-catalo
  * OP09-004 four of fifteen. Bandai's naming separates these versions; seller
  * vocabulary does not, and the query has to live in seller vocabulary.
  */
-const TREATMENTS: { id: string; match: RegExp; terms: string[]; excludable?: false }[] = [
+const TREATMENTS: {
+  id: string;
+  match: RegExp;
+  terms: string[];
+  /**
+   * The subset of `terms` safe to EXCLUDE on, when that is narrower than the
+   * terms searched for. Defaults to all of them.
+   *
+   * Parallel needs this and alternate art does not, even though both are
+   * alt-art treatments, because the asymmetry lives in seller vocabulary
+   * rather than in Bandai's. A Parallel is SEARCHED for as "parallel" or as
+   * "alt art": OP09-061's Leader Parallel returns 18 listings on `(parallel)`
+   * alone and 40 once the alt-art spellings join it, with titles reading
+   * "Monkey.D.Luffy 2024 Leader Alt Art OP09-061". It must be EXCLUDED on
+   * "parallel" alone, because `-alt` is the exclusion already measured to cost
+   * OP09-093 nine of fifteen listings, and OP01-024's query depends on
+   * `-parallel` meaning the Parallel print and nothing wider.
+   */
+  excludeTerms?: string[];
+  excludable?: false;
+}[] = [
   { id: "alternate-art", match: /\balt(ernate)?\s*art\b/i, terms: ["alt", "alternate", "alternative", "altart"], excludable: false },
   { id: "manga", match: /\bmanga\b/i, terms: ["manga"] },
   // Sellers write the short form. Measured in docs/ebay-market-pipeline.md:
   // "Wanted Poster OP09-093 PSA 10" returns 3 results and 0 survive the title
   // check, while "Wanted OP09-093 PSA 10" returns 7 real matches.
   { id: "wanted-poster", match: /\bwanted\s*poster\b/i, terms: ["wanted"] },
-  { id: "parallel", match: /\bparallel\b/i, terms: ["parallel"] },
+  // Sellers call this "alt art" as readily as "parallel" — see excludeTerms
+  // on the type above for the measurement and for why the exclusion stays
+  // narrow while the search goes wide.
+  {
+    id: "parallel",
+    match: /\bparallel\b/i,
+    terms: ["parallel", "alt", "alternate", "alternative", "altart"],
+    excludeTerms: ["parallel"],
+  },
   { id: "sp", match: /\bsp\b/i, terms: ["sp"] },
   { id: "gold", match: /\bgold\b/i, terms: ["gold"] },
   { id: "silver", match: /\bsilver\b/i, terms: ["silver"] },
@@ -183,7 +211,7 @@ function termsFor(ids: string[], forExclusion = false): string[] {
         const t = TREATMENTS.find((x) => x.id === id);
         if (!t) return [];
         if (forExclusion && t.excludable === false) return [];
-        return t.terms;
+        return forExclusion ? (t.excludeTerms ?? t.terms) : t.terms;
       })
     ),
   ];
@@ -308,6 +336,18 @@ function setNamePhrase(entry: OpEntry): string | undefined {
   return segments[0];
 }
 
+/**
+ * A row's rarity as sellers write it: `DON!!` -> `don`, `SEC` -> `sec`.
+ *
+ * Undefined for the entire Japanese side — all 3,644 JP rows carry no rarity,
+ * as do 579 English promos — so this is a signal that is often simply absent,
+ * never one to infer from absence. `DON!!` in particular is an explicit value
+ * on 244 rows, so a missing rarity does NOT mean a DON card.
+ */
+function rarityOf(entry: OpEntry): string | undefined {
+  return entry.card.rarity?.replace(/[^A-Za-z]/g, "").toLowerCase() || undefined;
+}
+
 /** The treatments a row carries, as one comparable key. */
 function treatmentKey(name: string): string {
   return treatmentsOf(name)
@@ -344,6 +384,37 @@ export function deriveQuery(code: string, wanted: OpEntry): DerivedQuery {
   // The rows treatment CANNOT separate from this one: same version, different
   // product. See the product-identity comment above for why they are different
   // cards and not the same card twice.
+  /**
+   * RARITY, as an exclusion only.
+   *
+   * Required, it is destructive — most sellers do not write it, so ANDing it
+   * onto the query throws away the ones who did not. Measured PSA 10,
+   * 2026-09-06: `(sr)` took OP09-093 from 5 listings to 1, `(sec)` took
+   * OP05-119 from 6 to 5, `(l,leader)` took the OP09-061 Parallel from 40
+   * to 23.
+   *
+   * Excluded, it is free and occasionally decisive. Same measurement, the
+   * other way round: excluding every rarity the card is not cost NOTHING on
+   * all eight tracked cards, single-letter tokens included.
+   *
+   * So it is excluded, and — like every other exclusion in this file — only
+   * for what a SIBLING actually carries, never for the whole vocabulary. That
+   * is not caution for its own sake: 86 of the 2,622 codes that carry a rarity
+   * carry two, and the pattern is always the same, `PR` against the set's own
+   * rarity (OP01-120 is PR/SEC, OP01-001 is PR/L). The promo printing and the
+   * set printing of one code, which is the axis that already needed the family
+   * rule. Excluding the vocabulary at large would instead assert that a
+   * listing saying "C" anywhere is a different card, which nothing here shows.
+   *
+   * Fires on none of the tracked cards today — every OP09-061 row is L, every
+   * OP05-119 row is SEC — which is why the counts above did not move. It is a
+   * guard for the 86, not a change to the nine.
+   */
+  const wantedRarity = rarityOf(wanted);
+  const rarityReject = wantedRarity
+    ? [...new Set(rows.map(rarityOf).filter((r): r is string => r !== undefined && r !== wantedRarity))]
+    : [];
+
   const wantedKey = treatmentKey(wanted.card.name);
   const wantedFamily = familyOf(wanted);
   const rivalFamilies =
@@ -413,11 +484,17 @@ export function deriveQuery(code: string, wanted: OpEntry): DerivedQuery {
         ];
 
   return {
-    queryText: [clause(accept), clause(familyAccept), clause(reject, true), clause(familyReject, true)]
+    queryText: [
+      clause(accept),
+      clause(familyAccept),
+      clause(reject, true),
+      clause(familyReject, true),
+      clause(rarityReject, true),
+    ]
       .filter(Boolean)
       .join(" "),
     acceptGroups: [accept, familyAccept].filter((g) => g.length > 0),
-    reject: [...reject, ...familyReject],
+    reject: [...reject, ...familyReject, ...rarityReject],
     treatment: wantedIds.join(" + ") || product || "(base print)",
     competing: competingIds,
   };

@@ -132,6 +132,7 @@ repeats work can only lose listings:
 |---|---|---|
 | OP05-119 | alt art in OP05 **and** PRB | yes |
 | OP01-024 | alt art in PRB only | no |
+| OP09-061 Parallel | parallel in OP09 only | no |
 | OP05-074 | alt art + manga in OP05 only | no |
 | OP09-061, ST21-014, P-033 | base prints | no — `productOf` already does it |
 
@@ -163,6 +164,39 @@ write about condition. Both segments stay available as positive terms, where
 breadth can only add. A family code is excluded only when it is 3+ characters
 *and* not a prefix of the card's own code: `-op01` on OP01-024 would fight the
 card number itself.
+
+### Rarity: excluded, never required
+
+Required, a rarity term is destructive — most sellers do not write it, so
+ANDing it on throws away the ones who did not. Measured PSA 10, 2026-09-06:
+
+| card | without | with |
+|---|---|---|
+| OP09-093 | 5 | **1** with `(sr)` |
+| OP05-119 | 6 | 5 with `(sec)` |
+| OP09-061 Parallel | 40 | 23 with `(l,leader)` |
+
+Excluded, it is free: excluding every rarity the card is not cost **nothing**
+on all eight cards measured, single-letter tokens included. So it is excluded —
+and, like every other exclusion here, only for what a SIBLING carries, not for
+the whole vocabulary. That is where it discriminates: **86 of the 2,622 codes
+that carry a rarity carry two**, always `PR` against the set's own (OP01-120 is
+PR/SEC, OP01-001 is PR/L). The promo printing versus the set printing of one
+code.
+
+```
+OP01-120 PSA 10 ("championship 2023") -parallel -manga -sec   <- the PR promo
+OP01-120 PSA 10 (parallel,alt,...)    -manga    -pr           <- the SEC set print
+```
+
+It fires on none of the nine tracked cards, because every OP09-061 row is `L`
+and every OP05-119 row is `SEC`. It is a guard for the 86, not a change to the
+nine.
+
+Rarity is absent far more often than it is present: **all 3,644 Japanese rows
+carry none**, plus 579 English promos. `DON!!` is an explicit value on 244
+rows, so a missing rarity does **not** mean a DON card — reading absence that
+way would mislabel the entire Japanese side.
 
 Which side of the split a row sits on decides the shape. A row in its code's
 **own** family is the original and *excludes* the rivals; a row in any other
