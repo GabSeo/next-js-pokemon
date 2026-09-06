@@ -28,6 +28,7 @@ import { cardmarketUrl } from "@/lib/cardmarket-search";
 import { absoluteUrl, freshness } from "@/lib/site";
 import { describeUpstreamError, logUpstreamOnce } from "@/lib/upstream";
 import { findCatalogCardByNameAndSet } from "@/lib/catalog";
+import { opRowById } from "@/lib/one-piece-catalog";
 import { findCardByNameAndSet, getCard, cardImageUrl, tcgplayerSnapshot, type TcgdexCard } from "@/lib/tcgdex";
 import type {
   AlertBand,
@@ -349,6 +350,31 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
   const tcgdexPrice = tcgdexCard ? tcgplayerSnapshot(tcgdexCard) : undefined;
   const berryWalletPriceInfo = berryWalletMatch ? berryWalletPrice(berryWalletMatch.card) : undefined;
 
+  /**
+   * The set this printing REALLY sits in, for a cross-product match.
+   *
+   * findCardInLanguage reports the set it was searching when it found the card
+   * somewhere else (see findVariantAcrossProducts): OP05-119's PRB-01 alt art
+   * came back labelled "Awakening of the New Era", OP01-024's came back
+   * "Romance Dawn". At the time that was called the best available label,
+   * because a promo product "carries no set of its own to report". That is no
+   * longer true — the offline corpus stores every row WITH its containing set,
+   * so the real one is a map lookup on the row's own id, at zero API cost.
+   *
+   * It stopped being merely imprecise, too. The PRB-01 reprints carry
+   * DIFFERENT ART from the original print (see lib/one-piece-variants.ts), so
+   * a page headed "Awakening of the New Era" over a PRB-01 card names the
+   * wrong card, not just the wrong box it came in.
+   *
+   * Only consulted for a cross-product match. An ordinary match already
+   * reports the set it was actually found in, and the corpus has nothing to
+   * add. Falls back to the reported set whenever the corpus has not been
+   * crawled or does not hold this row — a missing corpus degrades to the old
+   * label, never to no label.
+   */
+  const crossProductSet =
+    berryWalletMatch?.crossProduct === true ? opRowById(berryWalletMatch.card.id)?.set : undefined;
+
   // BerryWallet takes precedence over apitcg for a One Piece ref that has
   // one (real English/Japanese identity beats apitcg's English-only
   // TCGPlayer catalog — the whole reason BerryWallet was wired in), then
@@ -369,8 +395,8 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
         // print name, not the curated one.
         name: ref.displayName,
         printName: berryWalletMatch.card.name,
-        set: berryWalletMatch.set.name,
-        setCode: berryWalletMatch.set.set_code,
+        set: crossProductSet?.name ?? berryWalletMatch.set.name,
+        setCode: crossProductSet?.code ?? berryWalletMatch.set.set_code,
         number: ref.lookup.by === "code" ? ref.lookup.code : berryWalletMatch.card.card_number,
         rarity: berryWalletMatch.card.rarity,
         types: undefined as string[] | undefined,

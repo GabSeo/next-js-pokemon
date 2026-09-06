@@ -149,13 +149,20 @@ import path from "node:path";
  *      spanning two different cards — and a warm cache would keep quoting a
  *      median that describes neither.
  *
+ *  13. A cross-product match now reports its REAL containing set, read from
+ *      the corpus by row id, rather than the set findCardInLanguage happened
+ *      to be searching. OP05-119 and OP01-024 both resolve to PRB-01 printings
+ *      and both cached as "Awakening of the New Era" / "Romance Dawn" — the
+ *      wrong card, now that the PRB reprints are known to carry different art.
+ *      Card.set and Card.setCode are part of every cached entry.
+ *
  * Surviving deploys is the whole point of this cache (see the header
  * comment) — it is what keeps a redeploy from re-spending quota. So the fix
  * is not to shorten its reach but to make a deliberate computation change
  * able to say so. Bumping this starts a fresh namespace; the previous one is
  * simply never read again.
  */
-const CACHE_VERSION = 12;
+const CACHE_VERSION = 13;
 
 /** Versioned so a computation change cannot silently reuse pre-change values across a deploy — see CACHE_VERSION. */
 const CACHE_DIR = path.join(process.cwd(), ".next", "cache", "resolved-cards", `v${CACHE_VERSION}`);

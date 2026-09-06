@@ -16,9 +16,11 @@
  * lookup, which is what makes deriving an eBay query affordable at all.
  *
  * It also stores each row WITH its set, which `BerryWalletCard` does not carry.
- * `findVariantAcrossProducts` reports the set of ORIGIN for a cross-product
- * match, which is why a PRB-01 reprint could not name itself "PRB" — here it
- * can.
+ * `findVariantAcrossProducts` reports the set it was SEARCHING when it found a
+ * card somewhere else, which is why a PRB-01 reprint could not name itself
+ * "PRB". Here it can, by id: `opRowById` is what lets cards.ts label OP05-119's
+ * PRB-01 printing "Premium Booster -The Best-" instead of "Awakening of the New
+ * Era", and what lets one-piece-variants.ts put `prb` in its eBay query.
  */
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
