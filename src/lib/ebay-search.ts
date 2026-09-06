@@ -174,11 +174,39 @@ export function tagFirstWord(tag: string): string {
  * gets tracked, and this is what stops that from ever needing its own fix.
  */
 function cleanQueryText(text: string): string {
+  // eBay QUERY SYNTAX is protected; everything else is scrubbed.
+  //
+  // Two constructs matter and both use quotes deliberately:
+  //   ("2nd anniversary","2 anniversary")   an OR group of phrases
+  //   -"2nd anniversary"                    a phrase exclusion
+  //
+  // Stripping their quotes does not merely lose precision, it inverts meaning.
+  // The group became `( 2nd anniversary , 2 anniversary )`, read as loose ANDed
+  // tokens — measured live at ZERO listings on a card with 31. And `-"2nd
+  // anniversary"` would become `-2nd -anniversary`, barring every anniversary
+  // print including the one being searched for.
+  //
+  // Everything outside those spans is still cleaned, so BerryWallet's
+  // `Eustass"Captain"Kid` is fixed exactly as before — the case this function
+  // was written for.
+  const protectedSpans: string[] = [];
+  const masked = text.replace(/\([^()]*\)|-"[^"]*"/g, (m) => {
+    protectedSpans.push(m);
+    return ` ${protectedSpans.length - 1} `;
+  });
+  return scrubQuotes(masked)
+    .replace(/ (\d+) /g, (_, i) => protectedSpans[Number(i)])
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function scrubQuotes(text: string): string {
   return text
     .replace(/["'‘’“”]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
+
 
 /**
  * Per-condition-tier fallback link — used by GradedMarketPanel when the real

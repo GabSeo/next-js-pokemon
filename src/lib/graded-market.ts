@@ -401,7 +401,9 @@ async function fetchActiveTier(
   numberOverride?: string,
   variantTags?: string[],
   /** Competing printings of this card's code — see lib/one-piece-variants.ts. */
-  rejectTags?: string[]
+  rejectTags?: string[],
+  /** Alternative spellings of the wanted treatment, ORed — see titleMatchesCard. */
+  acceptAnyTags?: string[]
 ): Promise<GradedMarketTypeData> {
   try {
     const { listings, total, asks } = await searchActiveListings(
@@ -412,7 +414,8 @@ async function fetchActiveTier(
       numberOverride,
       variantTags,
       marketGuardFor(card, condition, language),
-      rejectTags
+      rejectTags,
+      acceptAnyTags
     );
     if (listings.length === 0) {
       console.warn(
@@ -726,12 +729,18 @@ async function resolveGradedMarketData(card: Card): Promise<GradedMarketData | u
    */
   const oneQueryInputs = (
     language: EbayLanguage
-  ): { tags: string[] | undefined; nameOverride: string | undefined; reject: string[] | undefined } => {
-    if (card.franchise !== "one-piece") return { tags: undefined, nameOverride: undefined, reject: undefined };
+  ): {
+    tags: string[] | undefined;
+    acceptAny: string[] | undefined;
+    nameOverride: string | undefined;
+    reject: string[] | undefined;
+  } => {
+    if (card.franchise !== "one-piece")
+      return { tags: undefined, acceptAny: undefined, nameOverride: undefined, reject: undefined };
     const ref = cardRefs.find((r) => r.slug === card.slug);
     const override = language === "Japanese" ? ref?.ebayVariantTags?.jp : ref?.ebayVariantTags?.en;
     if (override && override.length > 0) {
-      return { tags: override, nameOverride: override.join(" "), reject: undefined };
+      return { tags: override, acceptAny: undefined, nameOverride: override.join(" "), reject: undefined };
     }
 
     /**
@@ -757,9 +766,14 @@ async function resolveGradedMarketData(card: Card): Promise<GradedMarketData | u
      * across 2,865 codes no EN treatment name differs from its JP one.
      */
     if (ref && ref.lookup.by === "code") {
-      const derived = deriveQueryForCard(ref.lookup.code, card.printName, ref.displayName);
+      const derived = deriveQueryForCard(ref.lookup.code, card.printName, ref.lookup.variantTags);
       if (derived && derived.acceptAny.length > 0) {
-        return { tags: derived.acceptAny, nameOverride: derived.queryText, reject: derived.reject };
+        return {
+          tags: undefined,
+          acceptAny: derived.acceptAny,
+          nameOverride: derived.queryText,
+          reject: derived.reject,
+        };
       }
     }
     // Derived from BerryWallet's own print name rather than read from
@@ -782,7 +796,7 @@ async function resolveGradedMarketData(card: Card): Promise<GradedMarketData | u
     const tags = derived ? [derived] : ref && ref.lookup.by === "code" ? ref.lookup.variantTags : undefined;
     // "" (not undefined) so cardSearchTerms reads it as "no name" rather
     // than "use the card's own name" — see its doc comment.
-    return { tags, nameOverride: tags?.map(tagFirstWord).join(" ") ?? "", reject: undefined };
+    return { tags, acceptAny: undefined, nameOverride: tags?.map(tagFirstWord).join(" ") ?? "", reject: undefined };
   };
 
   const activeResults = await Promise.all(
@@ -795,7 +809,8 @@ async function resolveGradedMarketData(card: Card): Promise<GradedMarketData | u
           oneQueryInputs(language).nameOverride,
           language === "Japanese" ? japaneseNumberOverride : undefined,
           oneQueryInputs(language).tags,
-          oneQueryInputs(language).reject
+          oneQueryInputs(language).reject,
+          oneQueryInputs(language).acceptAny
         )
       )
     )

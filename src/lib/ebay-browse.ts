@@ -303,7 +303,21 @@ function titleMatchesCard(
    * shared words too. Empty for Pokemon and for any card whose row the corpus
    * does not hold, in which case behaviour is exactly what shipped before.
    */
-  rejectTags?: string[]
+  rejectTags?: string[],
+  /**
+   * Alternatives: a title must contain at least ONE of these. Distinct from
+   * `variantTags`, which is ANDed.
+   *
+   * A derived treatment produces spellings, not requirements — "2nd
+   * anniversary" OR "2 anniversary", "alt" OR "alternate". Feeding them to the
+   * AND check asked for every spelling at once and matched nothing: measured
+   * live at ZERO listings on OP09-061, a card with 31.
+   *
+   * Quote characters are stripped before comparison. They are eBay QUERY
+   * syntax that make a group member a phrase; a listing title never contains
+   * a literal quote, so leaving them in fails every row.
+   */
+  acceptAnyTags?: string[]
 ): boolean {
   // English-tier-only: reject a title that also says "Japanese", or carries
   // a standalone "JP" language marker. precisionAspectFilter's own
@@ -370,6 +384,16 @@ function titleMatchesCard(
       return parts.length > 1 ? lower.includes(parts.join(" ")) : words.has(parts[0]);
     });
     if (disqualified) return false;
+  }
+
+  if (acceptAnyTags && acceptAnyTags.length > 0) {
+    const lower = title.toLowerCase();
+    const anyOk = acceptAnyTags.some((tag) => {
+      const clean = tag.replace(/["'‘’“”]/g, "").toLowerCase().trim();
+      if (!clean) return false;
+      return clean.includes(" ") ? lower.includes(clean) : new Set(lower.split(/[^a-z0-9]+/)).has(clean);
+    });
+    if (!anyOk) return false;
   }
 
   if (variantTags && variantTags.length > 0) {
@@ -569,7 +593,21 @@ type RunSearchResult = EbaySearchResult & {
   titlePassCount: number;
 };
 
-const FETCH_LIMIT = 20;
+/**
+ * How many results one search asks eBay for.
+ *
+ * RAISED 20 -> 100 on 2026-09-06, and the old value was costing real rows for
+ * nothing. `limit` is priced per REQUEST, not per result — 100 costs exactly
+ * the same one call as 20 — while filtering routinely discards most of a page:
+ * OP09-061's tier had 32 eBay matches, of which a 20-result window left three
+ * survivors after titleMatchesCard and the market guard. DISPLAY_LIMIT is 4, so
+ * the panel could not even fill itself.
+ *
+ * Not 200 (eBay's maximum): 100 already exceeds what any tier here needs after
+ * filtering, and a bigger page is more JSON to parse on every render for rows
+ * nobody will see.
+ */
+const FETCH_LIMIT = 100;
 /** Shown to the user (and used for the median) — the cheapest this-many survivors of titleMatchesCard, per the local sort below. */
 const DISPLAY_LIMIT = 4;
 
@@ -587,7 +625,9 @@ async function runSearch(
   variantTags?: string[],
   guard?: EbayMarketGuard,
   /** Competing printings of this card's own code — see titleMatchesCard. */
-  rejectTags?: string[]
+  rejectTags?: string[],
+  /** Alternative spellings, ORed — see titleMatchesCard. */
+  acceptAnyTags?: string[]
 ): Promise<RunSearchResult> {
   const query = conditionQuery(card, condition, nameOverride, numberOverride);
   const qs = new URLSearchParams({
@@ -666,7 +706,7 @@ async function runSearch(
   // and BEFORE the guard is the only thing that can tell those two apart
   // when a result set ends up empty.
   const titlePassed = priced.filter((listing) =>
-    titleMatchesCard(listing.title, card, condition, numberOverride, variantTags, language, rejectTags)
+    titleMatchesCard(listing.title, card, condition, numberOverride, variantTags, language, rejectTags, acceptAnyTags)
   );
 
   const survivors = titlePassed
@@ -805,15 +845,17 @@ export async function searchActiveListings(
   variantTags?: string[],
   guard?: EbayMarketGuard,
   /** Competing printings of this card's own code — see titleMatchesCard. */
-  rejectTags?: string[]
+  rejectTags?: string[],
+  /** Alternative spellings, ORed — see titleMatchesCard. */
+  acceptAnyTags?: string[]
 ): Promise<EbaySearchResult> {
-  const primary = await runSearch(card, condition, language, PRIMARY_SORT, nameOverride, numberOverride, variantTags, guard, rejectTags);
+  const primary = await runSearch(card, condition, language, PRIMARY_SORT, nameOverride, numberOverride, variantTags, guard, rejectTags, acceptAnyTags);
   if (primary.listings.length > MERGE_THRESHOLD) return primary;
 
   // Best Match is not recency-biased the way the sorted searches are, so it
   // can surface a real listing that has simply been sitting unsold — which
   // matters most on exactly the thin markets that trip MERGE_THRESHOLD.
-  const fallback = await runSearch(card, condition, language, undefined, nameOverride, numberOverride, variantTags, guard, rejectTags);
+  const fallback = await runSearch(card, condition, language, undefined, nameOverride, numberOverride, variantTags, guard, rejectTags, acceptAnyTags);
 
   // Merged rather than replaced: the point is to REACH four rows, and either
   // search alone may be short. Deduped by item URL, since the same listing

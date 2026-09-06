@@ -602,7 +602,20 @@ export const cardRefs: CardRef[] = [
     //
     // No `jp`: this ref's Japanese identity is itself the wrong product (note
     // 1 above), so there is nothing yet to write Japanese eBay tags against.
-    ebayVariantTags: { en: ["PRB", "alt"] },
+    //
+    // NO `en` EITHER, AS OF 2026-09-06 — the derivation now beats it outright.
+    // The measurements above stand and are worth keeping, but they were all
+    // taken against a query that ANDed its terms, where `PRB` + `alt` was the
+    // best of a bad set of options. eBay tokenises, so `alt` never matched a
+    // seller who wrote "Alternate", and the shipped tier was FIVE listings.
+    //
+    // lib/one-piece-variants.ts derives `(alt,alternate)` from this row's own
+    // "(OP05-119) (Alternate Art)" and rejects the competing printings by name
+    // — manga, wanted, sp, gold, reprint — which is what `PRB` was really
+    // standing in for. Measured with the app's own filters: 5 -> 56 real
+    // listings. And excluding on the PRODUCT was always slightly wrong anyway,
+    // since PRB-01 contains a Manga print too; the treatment is the axis that
+    // separates a EUR 283 card from a EUR 8,000 one.
     franchise: "one-piece",
     tcg: "one-piece",
     slug: "monkey-d-luffy-op05-119",
