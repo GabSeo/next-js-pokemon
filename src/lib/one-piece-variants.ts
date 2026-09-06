@@ -39,7 +39,7 @@
  * `luffy`, a short-but-real allowlist for "SP" — because none of those strings
  * is a treatment and none was ever eligible.
  */
-import { opRowsForCode, opSetFamily, type OpEntry } from "@/lib/one-piece-catalog";
+import { opRowsForCode, opSetFamily, opSetNames, type OpEntry } from "@/lib/one-piece-catalog";
 
 /**
  * The closed set of version types, with the words sellers actually write.
@@ -321,6 +321,71 @@ function familyAliases(entry: OpEntry): string[] {
  * phrase can silently destroy real listings — and "the best" is a phrase a
  * seller might write about condition rather than about the product.
  */
+/** How many distinct set names each word appears in. Built once, off disk. */
+let setNameDocFrequency: Map<string, number> | undefined;
+function wordFrequency(): Map<string, number> {
+  if (setNameDocFrequency) return setNameDocFrequency;
+  const df = new Map<string, number>();
+  for (const name of opSetNames()) {
+    for (const word of new Set(name.split(/[^a-z0-9]+/).filter(Boolean))) {
+      df.set(word, (df.get(word) ?? 0) + 1);
+    }
+  }
+  setNameDocFrequency = df;
+  return df;
+}
+
+/**
+ * The one WORD of a set name that identifies it, alongside the phrase.
+ *
+ * A phrase alone is not enough, and a real listing showed why: our OP01-024 is
+ * the PRB-01 print, and its Japanese tier carried
+ *
+ *   "PSA 10 GEM MINT JAPANESE ONE PIECE 2022 MONKEY LUFFY OP01-024 ROMANCE SR ALT ART"
+ *
+ * — the Romance Dawn card, written without "Dawn". `-"romance dawn"` cannot see
+ * it; `-romance` removes it and its twin and nothing else (Japanese 15 -> 13,
+ * English unchanged at 12, measured 2026-09-06).
+ *
+ * WHICH word, chosen by evidence rather than by taste. Splitting a set name and
+ * excluding every word is how this breaks: "Awakening of the New Era" would
+ * emit `-new`, and "new" is also in "Emperors in the New World" — a word that
+ * names two products names neither. So a word's document frequency across the
+ * corpus's own set names decides, lowest first, longest as the tie-break. That
+ * makes "romance" beat "dawn", "awakening" beat "era", and "promotion" beat
+ * "one" and "piece" in "One Piece Promotion Cards" — where `-one` would have
+ * excluded the entire game.
+ *
+ * Words in the WANTED row's own set name are skipped outright. Without that
+ * guard, excluding "Premium Booster -The Best-" contributes `-best`, which
+ * would be right up until we track a card printed in "Premium Card Collection
+ * -Best Selection Vol. 2-" — 59 of 100 One Piece PSA 10 titles carrying the
+ * word "best" belong to that unrelated line.
+ *
+ * Words of three letters or fewer are out: they are "new", "era", "the", "of",
+ * and none of them identifies anything.
+ */
+function setNameWord(rival: OpEntry, wantedSetName: string): string | undefined {
+  const own = new Set(wantedSetName.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
+  const df = wordFrequency();
+  const candidates = rival.set.name
+    // The language suffix is not part of the product's name, and leaving it in
+    // was briefly catastrophic: "Romance Dawn (Japanese)" offered "japanese",
+    // which opSetNames strips and therefore scores at frequency zero — the most
+    // distinctive word there is. `-japanese` on the Japanese tier rejects the
+    // entire market.
+    .replace(/\((japanese|english)\)/i, "")
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((w) => w.length > 3 && !own.has(w));
+  if (candidates.length === 0) return undefined;
+  // A word the corpus has never seen scores LAST, not first. Unknown is not the
+  // same as distinctive — it usually means the word came from somewhere other
+  // than a set name, which is exactly when excluding on it is a guess.
+  const freq = (w: string) => df.get(w) ?? Number.MAX_SAFE_INTEGER;
+  return candidates.sort((a, b) => freq(a) - freq(b) || b.length - a.length)[0];
+}
+
 function setNamePhrase(entry: OpEntry): string | undefined {
   const segments = entry.set.name
     .split(/[-–—]/)
@@ -513,9 +578,12 @@ export function deriveQuery(code: string, wanted: OpEntry): DerivedQuery {
             // Two-letter families (OP, ST, LT, CM) are out for the same reason
             // — they are prefixes of the tokens sellers write, OP05 and ST21.
             ...excludedFamilies.filter((f) => f.length >= 3 && !code.toLowerCase().startsWith(f)),
+            // Both forms of the rival's set name: the phrase a seller writes in
+            // full, and the one word they write when they abbreviate it. See
+            // setNameWord for why it is one chosen word and not every word.
             ...rows
               .filter((r) => excludedFamilies.includes(familyOf(r)))
-              .map(setNamePhrase)
+              .flatMap((r) => [setNamePhrase(r), setNameWord(r, wanted.set.name)])
               .filter((n): n is string => n !== undefined),
           ]),
         ];

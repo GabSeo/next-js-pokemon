@@ -158,6 +158,38 @@ of the reprint do not. Measured PSA 10, 2026-09-06:
 
 Two different markets either side of that cut: $505-2,000 against $148-719.
 
+**Both the phrase and one word.** A phrase alone missed this, in the Japanese
+tier of the PRB-01 card:
+
+```
+PSA 10 GEM MINT JAPANESE ONE PIECE 2022 MONKEY LUFFY OP01-024 ROMANCE SR ALT ART
+```
+
+The Romance Dawn card, written without "Dawn". `-"romance dawn"` cannot see it;
+`-romance` removes it and its twin and nothing else (Japanese 15 → 13, English
+unchanged at 12).
+
+Which word is decided by document frequency across the corpus's own set names,
+lowest first, longest as the tie-break — never by splitting the name and
+excluding everything. "Awakening of the New Era" would otherwise emit `-new`,
+and "new" is also in "Emperors in the New World": a word naming two products
+names neither. The measure picks `romance` over `dawn`, `awakening` over `era`,
+and `promotion` over `one` and `piece` in "One Piece Promotion Cards" — where
+`-one` would have excluded the entire game.
+
+Three guards, each earned:
+
+- Words in the WANTED row's own set name are skipped. Without it, excluding
+  "Premium Booster -The Best-" contributes `-best` — fine until we track a card
+  from "Premium Card Collection -Best Selection Vol. 2-", and 59 of 100 One
+  Piece PSA 10 titles carrying "best" belong to that unrelated line.
+- The language suffix is stripped first. "Romance Dawn (Japanese)" offered
+  `japanese`, a word `opSetNames` strips and therefore scores at frequency zero
+  — the most distinctive word there is. `-japanese` on the Japanese tier
+  rejects the entire market.
+- A word the corpus has never seen sorts LAST, not first. Unknown is not
+  distinctive.
+
 Exclusions take the LONGEST segment of a set name only — "Premium Booster -The
 Best-" excludes on `premium booster` and drops `the best`, which a seller might
 write about condition. Both segments stay available as positive terms, where

@@ -170,13 +170,19 @@ import path from "node:path";
  *      OP09-061 Alt Art Holo SR English 5000", raw tier), and those are in
  *      every cached entry.
  *
+ *  16. A rival set name is now excluded as a WORD as well as a phrase —
+ *      OP01-024 carries -"romance dawn" -romance. A phrase alone missed
+ *      "…OP01-024 ROMANCE SR ALT ART", the Romance Dawn card written without
+ *      "Dawn", which sat in the PRB card's Japanese tier. Cached entries hold
+ *      it.
+ *
  * Surviving deploys is the whole point of this cache (see the header
  * comment) — it is what keeps a redeploy from re-spending quota. So the fix
  * is not to shorten its reach but to make a deliberate computation change
  * able to say so. Bumping this starts a fresh namespace; the previous one is
  * simply never read again.
  */
-const CACHE_VERSION = 15;
+const CACHE_VERSION = 16;
 
 /** Versioned so a computation change cannot silently reuse pre-change values across a deploy — see CACHE_VERSION. */
 const CACHE_DIR = path.join(process.cwd(), ".next", "cache", "resolved-cards", `v${CACHE_VERSION}`);
