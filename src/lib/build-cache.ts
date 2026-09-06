@@ -213,13 +213,20 @@ import path from "node:path";
  *      card and threw away listings titled "SR Parallel Alt Art THE BEST
  *      PRB-01". Two of them on the Japanese PSA 10 tier, in every cached entry.
  *
+ *  21. A sibling's PRODUCT is now an exclusion, the last asymmetry in the query
+ *      model: treatments, product families and rarities all generated one and
+ *      the product itself did not, so the OP09-061 Parallel had nothing keeping
+ *      the 2nd Anniversary Set promo out. Inert on every tracked card measured,
+ *      but the separation stops depending on the two cards happening to name
+ *      different things.
+ *
  * Surviving deploys is the whole point of this cache (see the header
  * comment) — it is what keeps a redeploy from re-spending quota. So the fix
  * is not to shorten its reach but to make a deliberate computation change
  * able to say so. Bumping this starts a fresh namespace; the previous one is
  * simply never read again.
  */
-const CACHE_VERSION = 20;
+const CACHE_VERSION = 21;
 
 /** Versioned so a computation change cannot silently reuse pre-change values across a deploy — see CACHE_VERSION. */
 const CACHE_DIR = path.join(process.cwd(), ".next", "cache", "resolved-cards", `v${CACHE_VERSION}`);

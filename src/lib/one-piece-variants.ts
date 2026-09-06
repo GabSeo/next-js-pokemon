@@ -57,7 +57,7 @@
  * is a treatment and none was ever eligible.
  */
 import { opRowsForCode, opSetFamily, type OpEntry } from "@/lib/one-piece-catalog";
-import { opSetVocabulary } from "@/data/one-piece-sets";
+import { opProductVocabulary, opSetVocabulary } from "@/data/one-piece-sets";
 
 /**
  * The closed set of version types, with the words sellers actually write.
@@ -249,30 +249,27 @@ export function productOf(name: string): string | undefined {
 }
 
 /**
- * The searchable form of a product name: its first two words, quoted as a
- * phrase by clause().
+ * The terms sellers write for a product, from data/one-piece-sets.ts.
  *
- * Sellers write a product's HEAD and vary or drop its TAIL. Measured live on
- * 2026-09-06, PSA 10 tier, same aspect filters as production:
+ * A LOOKUP, not a derivation. This used to shorten a product name to its first
+ * two words, which broke three ways at once: 45 of the 249 products that can
+ * generate a term collided with another product ("Judge Pack Vol. 2" through
+ * "Vol. 7" all becoming `judge pack`), alternate character names came through
+ * as products because productOf returns any non-treatment parenthetical, and
+ * "2nd Anniversary Set" needs its tail dropped while "Judge Pack Vol. 2" needs
+ * its tail kept — no single rule reads both ways.
  *
- *   OP09-061  ("2nd anniversary set")        24   ("2nd anniversary")        32
- *   ST21-014  ("3rd anniversary treasure")    4   ("3rd anniversary")         5
- *   P-033     ("event pack vol. 2")           9   ("event pack")             10
- *
- * Two words, not one and not all of them. All of them keeps a tail — "Set",
- * "Cup", "Vol. 2" — that a seller need not have written, and every listing
- * missing it is lost. One word is not a product: it collapses "Event Pack" and
- * "Judge Pack" onto "Pack", "2nd Anniversary" and "3rd Anniversary" onto their
- * ordinals, and — the failure this codebase already hit once — "Luffy Deck"
- * onto a bare `luffy` that matches every Luffy card ever listed. Two words is
- * the shortest form that still names the product.
- *
- * The extra listings this admits are the SAME card in a neighbouring product —
- * ST21-014's fifth result is titled "3rd Anniversary CP Pack" — which is the
- * grouping this file already makes deliberately for the OP05/PRB-01 reprint.
+ * An unlisted product contributes nothing rather than a guess, and the crawl
+ * reports it so the gap is a line to add rather than a query that silently
+ * stopped separating a printing.
  */
-function productTerm(product: string): string {
-  return product.split(/\s+/).slice(0, 2).join(" ").toLowerCase();
+function productTerms(product: string): string[] {
+  return opProductVocabulary(product)?.terms ?? [];
+}
+
+/** The single token safe to exclude a rival product on, when it has one. */
+function productExclusion(product: string): string | undefined {
+  return opProductVocabulary(product)?.exclude ?? undefined;
 }
 
 function termsFor(ids: string[], forExclusion = false): string[] {
@@ -422,6 +419,39 @@ export function deriveQuery(code: string, wanted: OpEntry): DerivedQuery {
   ];
 
   const product = wantedIds.length === 0 ? productOf(wanted.card.name) : undefined;
+
+  /**
+   * The PRODUCTS the siblings were given out in, excluded the same way their
+   * treatments are.
+   *
+   * This was the last asymmetry in the model. A sibling's treatment became an
+   * exclusion, its product family became one, its rarity became one — but the
+   * product itself never did, so the OP09-061 Parallel had nothing keeping the
+   * 2nd Anniversary Set promo out. That only worked by accident, because the
+   * promo's own query names its product and the Parallel's names a treatment;
+   * a listing writing both would have satisfied both cards.
+   *
+   * Measured free on every tracked card that has such a sibling, PSA 10 and
+   * raw: OP09-061 Parallel 40/40 and 73/73, OP09-004 5/5 and 7/7, OP09-093 5/5
+   * and 7/7, ST21-014 5/5 and 8/8 — that last one carrying `-"luffy deck"` on a
+   * Luffy card, which is safe only because a quoted phrase demands adjacency.
+   * Inert today, then, and the point is that it stops being an accident.
+   *
+   * A term equal to this card's OWN product is skipped, or "CS 2023 Event Pack"
+   * and "CS 2023 Event Pack Finalist Ver." would exclude each other: both
+   * shorten to the same two words.
+   */
+  const ownProduct = productOf(wanted.card.name);
+  const ownExclusion = ownProduct ? productExclusion(ownProduct) : undefined;
+  const productReject = [
+    ...new Set(
+      rows
+        .map((r) => productOf(r.card.name))
+        .filter((p): p is string => p !== undefined && p !== ownProduct)
+        .map(productExclusion)
+        .filter((t): t is string => t !== undefined && t !== ownExclusion)
+    ),
+  ];
   // Only the most specific treatments generate positive terms: "(Alternate Art)
   // (Manga)" searches on `manga` alone, because every Manga Rare is an alt art
   // and naming both would OR the plain Alt Art printing back in. See `implies`.
@@ -429,7 +459,7 @@ export function deriveQuery(code: string, wanted: OpEntry): DerivedQuery {
     wantedIds.map((id) => TREATMENTS.find((t) => t.id === id)?.implies).filter((id): id is string => id !== undefined)
   );
   const specificIds = wantedIds.filter((id) => !impliedIds.has(id));
-  const accept = wantedIds.length > 0 ? termsFor(specificIds) : product ? [productTerm(product)] : [];
+  const accept = wantedIds.length > 0 ? termsFor(specificIds) : product ? productTerms(product) : [];
   const reject = termsFor(competingIds, true);
 
   // The rows treatment CANNOT separate from this one: same version, different
@@ -627,13 +657,14 @@ export function deriveQuery(code: string, wanted: OpEntry): DerivedQuery {
       clause(accept),
       clause(familyAccept),
       clause(reject, true),
+      clause(productReject, true),
       clause(familyReject, true),
       clause(rarityReject, true),
     ]
       .filter(Boolean)
       .join(" "),
     acceptGroups: [accept, familyAccept].filter((g) => g.length > 0),
-    reject: [...reject, ...familyReject, ...rarityReject],
+    reject: [...reject, ...productReject, ...familyReject, ...rarityReject],
     treatment: wantedIds.join(" + ") || product || "(base print)",
     competing: competingIds,
   };
@@ -674,7 +705,7 @@ export function deriveQueryForCard(
   if (!name) return undefined;
   const ids = treatmentsOf(name).filter((id) => !NON_SEPARATING.has(id));
   const product = ids.length === 0 ? productOf(name) : undefined;
-  const accept = ids.length > 0 ? termsFor(ids) : product ? [productTerm(product)] : [];
+  const accept = ids.length > 0 ? termsFor(ids) : product ? productTerms(product) : [];
   if (accept.length === 0) return undefined;
   return {
     queryText: clause(accept),

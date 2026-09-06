@@ -254,6 +254,49 @@ Note the direction: `implies` only strips POSITIVE terms. The broad treatment is
 still what a sibling gets excluded on, and `alternate-art` remains
 `excludable: false` for the reasons above.
 
+### A sibling's product is excluded too
+
+The last asymmetry in the model. A sibling's treatment became an exclusion, its
+product family became one, its rarity became one — but the **product** never
+did, so the OP09-061 Parallel had nothing keeping the 2nd Anniversary Set promo
+out. That only worked by accident: the promo's query names a product and the
+Parallel's names a treatment, so a listing writing both would have satisfied
+both cards.
+
+```
+OP09-061 PSA 10 (alt,alternate,alternative,altart,parallel) -jumbo -"2nd anniversary" …
+```
+
+Measured free on every tracked card that has such a sibling, PSA 10 and raw:
+OP09-061 Parallel 40/40 and 73/73, OP09-004 5/5 and 7/7, OP09-093 5/5 and 7/7,
+ST21-014 5/5 and 8/8 — that last carrying `-"luffy deck"` on a Luffy card, safe
+only because a quoted phrase demands adjacency.
+
+Products come from the same table as sets, `data/one-piece-sets.ts`, and not
+from a heuristic. Shortening a product name to its first two words broke three
+ways at once:
+
+- **collisions** — 45 of the 249 products that can generate a term collapsed
+  onto another product's, and the truncated part was the discriminator: `Judge
+  Pack Vol. 2` through `Vol. 7` all became `judge pack`; `Online Regional 2023`,
+  `2024` and `2025 Vol. 1` all became `online regional`.
+- **names** — `productOf` returns any non-treatment parenthetical, so alternate
+  character names came through as products: Daz.Bonez on 25 rows, Bentham on 23,
+  Galdino on 23. The model says names generate nothing; the heuristic couldn't
+  tell.
+- **tails** — "2nd Anniversary Set" needs its tail dropped (32 listings against
+  24) while "Judge Pack Vol. 2" needs its tail kept. No single rule reads both
+  ways.
+
+The table stays small because a product only matters when it lands on a code we
+track: 405 exist, 249 could ever generate a term, **6** touch the nine cards
+tracked today. An unlisted product contributes nothing rather than a guess, and
+`npm run crawl:one-piece` names it:
+
+```
+[one-piece] vocabulary: all 24 set families known, all products on tracked codes known
+```
+
 ### Rarity: excluded, never required
 
 Required, a rarity term is destructive — most sellers do not write it, so
