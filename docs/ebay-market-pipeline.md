@@ -107,6 +107,45 @@ Sellers write a product's head and vary or drop its tail — `Set`, `Cup`,
 product: it collapses `Event Pack` and `Judge Pack` onto `Pack`, and
 `Luffy Deck` onto a bare `luffy` that matches every Luffy card ever listed.
 
+### The product is part of the identity
+
+Treatment alone is not always enough. When another row carries the **same
+treatment in a different product**, the two are different cards — the PRB-01
+reprints carry different art from the original print — and the query names the
+product as a second group:
+
+```
+OP05-119 PSA 10 (alt,alternate,alternative,altart) (prb,"premium booster","the best") -manga -wanted -sp -gold
+```
+
+The groups are ANDed, in the query and in `titleMatchesCard`: alt art **and**
+PRB-01. Measured PSA 10, 2026-09-06 — the PRB print, 6 listings, $175-1,100;
+the OP05 print, 51 listings, $250-1,500 and mostly $600-750. A blended median
+belongs to neither, and not reliably in one direction: on the English tier the
+PRB print's own surviving asks are $400/$875/$1,100 against a blended pool
+sitting around $650, so blending *understated* it.
+
+Named **only** when treatment cannot separate the rows, because a term that
+repeats work can only lose listings:
+
+| card | same treatment elsewhere? | product named |
+|---|---|---|
+| OP05-119 | alt art in OP05 **and** PRB | yes |
+| OP01-024 | alt art in PRB only | no |
+| OP05-074 | alt art + manga in OP05 only | no |
+| OP09-061, ST21-014, P-033 | base prints | no — `productOf` already does it |
+
+OP01-024 is the card where a hand-written `["PRB","alt"]` returned **zero**
+PSA 10 listings against 19 for the plain query. That was never evidence against
+naming the product; it is evidence against naming it where nothing competes.
+
+Which side of the split a row sits on decides the shape. A row in its code's
+**own** family is the original and *excludes* the rivals; a row in any other
+family is the reprint and must *name itself*, because a listing that mentions no
+product is far likelier to be the original — that is where the volume is.
+Exclusions use the family code only, and only at 3+ characters: `OP`, `ST`,
+`LT`, `CM` are prefixes of the tokens sellers really write (`OP05`, `ST21`).
+
 A hand-written `ref.ebayVariantTags[en|jp]` still wins over all of it, and is
 rendered through the same clause builder so its shape matches everything else.
 

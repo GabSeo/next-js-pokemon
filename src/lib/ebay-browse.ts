@@ -326,8 +326,15 @@ function titleMatchesCard(
    * Quote characters are stripped before comparison. They are eBay QUERY
    * syntax that make a group member a phrase; a listing title never contains
    * a literal quote, so leaving them in fails every row.
+   *
+   * GROUPS, not one list: OR inside a group, AND between groups — the same
+   * shape the query itself has. A One Piece card can need two independent
+   * questions answered at once, "is this the alternate art?" AND "is this the
+   * PRB-01 printing of it?", and one flat list would accept a title that
+   * answers only one of them. See one-piece-variants.ts on why the product is
+   * part of the card's identity.
    */
-  acceptAnyTags?: string[]
+  acceptGroups?: string[][]
 ): boolean {
   // English-tier-only: reject a title that also says "Japanese", or carries
   // a standalone "JP" language marker. precisionAspectFilter's own
@@ -396,14 +403,19 @@ function titleMatchesCard(
     if (disqualified) return false;
   }
 
-  if (acceptAnyTags && acceptAnyTags.length > 0) {
+  if (acceptGroups && acceptGroups.length > 0) {
     const lower = title.toLowerCase();
-    const anyOk = acceptAnyTags.some((tag) => {
-      const clean = tag.replace(/["'‘’“”]/g, "").toLowerCase().trim();
-      if (!clean) return false;
-      return clean.includes(" ") ? lower.includes(clean) : new Set(lower.split(/[^a-z0-9]+/)).has(clean);
-    });
-    if (!anyOk) return false;
+    const words = new Set(lower.split(/[^a-z0-9]+/));
+    const everyGroupOk = acceptGroups.every(
+      (group) =>
+        group.length === 0 ||
+        group.some((tag) => {
+          const clean = tag.replace(/["'‘’“”]/g, "").toLowerCase().trim();
+          if (!clean) return false;
+          return clean.includes(" ") ? lower.includes(clean) : words.has(clean);
+        })
+    );
+    if (!everyGroupOk) return false;
   }
 
   if (variantTags && variantTags.length > 0) {
@@ -636,8 +648,8 @@ async function runSearch(
   guard?: EbayMarketGuard,
   /** Competing printings of this card's own code — see titleMatchesCard. */
   rejectTags?: string[],
-  /** Alternative spellings, ORed — see titleMatchesCard. */
-  acceptAnyTags?: string[],
+  /** OR within a group, AND between groups — see titleMatchesCard. */
+  acceptGroups?: string[][],
   /** The version clause, appended after the grade — see conditionQuery. */
   querySuffix?: string
 ): Promise<RunSearchResult> {
@@ -718,7 +730,7 @@ async function runSearch(
   // and BEFORE the guard is the only thing that can tell those two apart
   // when a result set ends up empty.
   const titlePassed = priced.filter((listing) =>
-    titleMatchesCard(listing.title, card, condition, numberOverride, variantTags, language, rejectTags, acceptAnyTags)
+    titleMatchesCard(listing.title, card, condition, numberOverride, variantTags, language, rejectTags, acceptGroups)
   );
 
   const survivors = titlePassed
@@ -858,18 +870,18 @@ export async function searchActiveListings(
   guard?: EbayMarketGuard,
   /** Competing printings of this card's own code — see titleMatchesCard. */
   rejectTags?: string[],
-  /** Alternative spellings, ORed — see titleMatchesCard. */
-  acceptAnyTags?: string[],
+  /** OR within a group, AND between groups — see titleMatchesCard. */
+  acceptGroups?: string[][],
   /** The version clause, appended after the grade — see conditionQuery. */
   querySuffix?: string
 ): Promise<EbaySearchResult> {
-  const primary = await runSearch(card, condition, language, PRIMARY_SORT, nameOverride, numberOverride, variantTags, guard, rejectTags, acceptAnyTags, querySuffix);
+  const primary = await runSearch(card, condition, language, PRIMARY_SORT, nameOverride, numberOverride, variantTags, guard, rejectTags, acceptGroups, querySuffix);
   if (primary.listings.length > MERGE_THRESHOLD) return primary;
 
   // Best Match is not recency-biased the way the sorted searches are, so it
   // can surface a real listing that has simply been sitting unsold — which
   // matters most on exactly the thin markets that trip MERGE_THRESHOLD.
-  const fallback = await runSearch(card, condition, language, undefined, nameOverride, numberOverride, variantTags, guard, rejectTags, acceptAnyTags, querySuffix);
+  const fallback = await runSearch(card, condition, language, undefined, nameOverride, numberOverride, variantTags, guard, rejectTags, acceptGroups, querySuffix);
 
   // Merged rather than replaced: the point is to REACH four rows, and either
   // search alone may be short. Deduped by item URL, since the same listing

@@ -21,18 +21,25 @@
  *               Daz.Bonez 33, Bentham 25, Galdino 23, Zala 15.
  *
  * TREATMENT IS THE AXIS THAT CHANGES VALUE. One code spans EUR 4.49 to EUR
- * 7,500 across its versions, so those must never be merged. PRODUCT is the axis
- * that does not: the OP05 original and the PRB-01 reprint are the same artwork
- * at USD 208.30 and 215.13, told apart only by a PSA slab label, and are
- * deliberately grouped.
+ * 7,500 across its versions, so those must never be merged.
  *
- * So only treatments generate query terms and exclusions. Products and names
- * generate neither. That single distinction removes every guard the previous
- * version needed — minimum token length, year filtering, a forbidden-word list
- * to stop "Luffy Deck" emitting `luffy`, a short-but-real allowlist for "SP" —
- * because none of those strings is a treatment and none was ever eligible.
+ * PRODUCT IS THE SECOND AXIS, and this file used to deny that. It claimed the
+ * OP05 original and the PRB-01 reprint were one artwork told apart only by a
+ * slab label. They are not — the Premium Booster reprints carry DIFFERENT ART,
+ * confirmed by the owner of the card and, in hindsight, by data already on
+ * disk: no two rows of a code share a TCGplayer or Cardmarket product. See
+ * deriveQuery's own comment for the measurements and for why the product is
+ * named only when treatment cannot do the job.
+ *
+ * NAME generates nothing, still.
+ *
+ * So treatments and products generate query terms; names do not. That
+ * distinction removes every guard an earlier version needed — minimum token
+ * length, year filtering, a forbidden-word list to stop "Luffy Deck" emitting
+ * `luffy`, a short-but-real allowlist for "SP" — because none of those strings
+ * is a treatment and none was ever eligible.
  */
-import { opRowsForCode, type OpEntry } from "@/lib/one-piece-catalog";
+import { opRowsForCode, opSetFamily, type OpEntry } from "@/lib/one-piece-catalog";
 
 /**
  * The closed set of version types, with the words sellers actually write.
@@ -103,10 +110,10 @@ const TREATMENTS: { id: string; match: RegExp; terms: string[]; excludable?: fal
 /**
  * A version label that does NOT change the artwork.
  *
- * "Reprint" is the same picture printed again — the PRB trap in label form — so
- * it is grouped with the original rather than excluded from it, the same call
- * as grouping OP05 with PRB-01. Recognised here so it can never become an
- * exclusion.
+ * "Reprint" is the row Bandai labelled as a straight re-run, so it is not a
+ * VERSION and never becomes an exclusion. It is still separated from the
+ * original when it sits in another product — that job belongs to the family
+ * rule in deriveQuery, not to this set.
  */
 const NON_SEPARATING = new Set(["reprint"]);
 
@@ -185,8 +192,8 @@ function termsFor(ids: string[], forExclusion = false): string[] {
 export type DerivedQuery = {
   /** Query text appended to the card code — positive terms plus `-` exclusions. */
   queryText: string;
-  /** A title must contain at least ONE of these. */
-  acceptAny: string[];
+  /** OR within a group, AND between groups: the treatment, then the product. */
+  acceptGroups: string[][];
   /** A title containing any of these is a different version. */
   reject: string[];
   /** The wanted version(s), or the product when the card is a base print. */
@@ -208,6 +215,81 @@ export function clause(terms: string[], negate = false): string {
   const fmt = (t: string) => (t.includes(" ") ? `"${t}"` : t);
   if (negate) return terms.map((t) => `-${fmt(t)}`).join(" ");
   return `(${terms.map(fmt).join(",")})`;
+}
+
+/**
+ * THE PRODUCT IS PART OF THE CARD, when two products print the same treatment.
+ *
+ * This file used to say the opposite — that OP05 and PRB-01 are one artwork
+ * told apart only by a slab label, so grouping them was deliberate. That was
+ * wrong, and the owner of the card caught it: PRB-01's OP05-119 SEC Alt Art is
+ * NOT the OP05 SEC Alt Art. The Premium Booster reprints carry different art.
+ *
+ * The corpus already said so and nothing was reading it. Every row for
+ * OP05-119 has its OWN TCGplayer product and its own Cardmarket product —
+ * OP05's alt art is tcgplayer/530122 under `/Awakening-of-the-New-Era/…-V2`,
+ * PRB-01's is tcgplayer/586960 under `/The-Best/…-V2`. Two marketplaces sell
+ * them as two things. So does eBay, at different money (2026-09-06, PSA 10):
+ * the PRB print, 6 listings, $175-1,100; the OP05 print, 51 listings,
+ * $250-1,500 and mostly $600-750. A blended median belongs to neither, and it
+ * is not reliably wrong in one direction — on the English tier, where our
+ * filters keep 3 PRB asks of $400/$875/$1,100, blending UNDERSTATED the card
+ * at roughly $650. The point is that it was answering about a different card,
+ * not that it leaned high.
+ *
+ * WHEN THIS FIRES, and why it is not simply "always name the set". Treatment
+ * already separates most rows, and a term that repeats work is a term that can
+ * only lose listings. The product is named ONLY when treatment cannot do the
+ * job: another row carries the SAME treatment in a DIFFERENT set family.
+ *
+ * Checked against every tracked card, and it explains a measurement that used
+ * to look like a contradiction:
+ *
+ *   OP05-119  alt art in OP05 AND PRB      -> rival, name the product
+ *   OP01-024  alt art in PRB only          -> no rival, say nothing
+ *   OP05-074  alt art + manga in OP05 only -> no rival, say nothing
+ *
+ * OP01-024 is the card where a hand-written `["PRB","alt"]` returned ZERO
+ * PSA 10 listings while the plain derived query returned 19. That was never
+ * evidence that naming the product is wrong — it is evidence that naming it
+ * where nothing competes only narrows a search that was already exact.
+ *
+ * Base prints are exempt: they carry no treatment, so productOf already gives
+ * them a product-specific phrase and this would only repeat it.
+ */
+function familyOf(entry: OpEntry): string {
+  return opSetFamily(entry.set.code).toLowerCase();
+}
+
+/**
+ * The words sellers write for a product: its family code and the segments of
+ * its set name.
+ *
+ * "Premium Booster -The Best-" splits into "premium booster" and "the best",
+ * which is how sellers actually title it — measured, `("the best")` is what
+ * finds "Monkey.D.Luffy OP05-119 Alternate Art Premium Booster -The Best-",
+ * a listing that says PRB nowhere. ORed, so breadth here only ever adds.
+ */
+function familyAliases(entry: OpEntry): string[] {
+  const segments = entry.set.name
+    .split(/[-–—]/)
+    .map((part) =>
+      part
+        .replace(/vol\.?\s*\d+/i, "")
+        .replace(/\((japanese|english)\)/i, "")
+        .trim()
+        .toLowerCase()
+    )
+    .filter((part) => part.length > 3);
+  return [...new Set([familyOf(entry), ...segments])];
+}
+
+/** The treatments a row carries, as one comparable key. */
+function treatmentKey(name: string): string {
+  return treatmentsOf(name)
+    .filter((id) => !NON_SEPARATING.has(id))
+    .sort()
+    .join("+");
 }
 
 /**
@@ -235,10 +317,42 @@ export function deriveQuery(code: string, wanted: OpEntry): DerivedQuery {
   const accept = wantedIds.length > 0 ? termsFor(wantedIds) : product ? [productTerm(product)] : [];
   const reject = termsFor(competingIds, true);
 
+  // The rows treatment CANNOT separate from this one: same version, different
+  // product. See the product-identity comment above for why they are different
+  // cards and not the same card twice.
+  const wantedKey = treatmentKey(wanted.card.name);
+  const wantedFamily = familyOf(wanted);
+  const rivalFamilies =
+    wantedIds.length === 0
+      ? []
+      : [
+          ...new Set(
+            rows
+              .filter((r) => treatmentKey(r.card.name) === wantedKey && familyOf(r) !== wantedFamily)
+              .map(familyOf)
+          ),
+        ];
+
+  // Which side of the split this row is on decides the shape. A card in its
+  // code's OWN family is the original and names the rivals to keep them out; a
+  // card in any other family is the reprint and must name itself, because a
+  // listing that mentions no product at all is far more likely to be the
+  // original — that is where the volume is (51 listings against 6).
+  const homeFamily = code.split("-")[0].toLowerCase();
+  const isHome = wantedFamily === homeFamily;
+  const familyAccept = rivalFamilies.length > 0 && !isHome ? familyAliases(wanted) : [];
+  // Exclusions stay narrow where positives go wide: only the family CODE, and
+  // only when it is long enough to stand alone. Two-letter families (OP, ST,
+  // LT, CM) are prefixes of the tokens sellers really write — OP05, ST21 — and
+  // neither eBay nor titleMatchesCard can be trusted to tell them apart.
+  const familyReject = isHome ? rivalFamilies.filter((f) => f.length >= 3) : [];
+
   return {
-    queryText: `${clause(accept)} ${clause(reject, true)}`.trim(),
-    acceptAny: accept,
-    reject,
+    queryText: [clause(accept), clause(familyAccept), clause(reject, true), clause(familyReject, true)]
+      .filter(Boolean)
+      .join(" "),
+    acceptGroups: [accept, familyAccept].filter((g) => g.length > 0),
+    reject: [...reject, ...familyReject],
     treatment: wantedIds.join(" + ") || product || "(base print)",
     competing: competingIds,
   };
@@ -283,7 +397,7 @@ export function deriveQueryForCard(
   if (accept.length === 0) return undefined;
   return {
     queryText: clause(accept),
-    acceptAny: accept,
+    acceptGroups: [accept],
     reject: [],
     treatment: ids.join(" + ") || product || "(base print)",
     competing: [],

@@ -141,13 +141,21 @@ import path from "node:path";
  *      cache serves the old query text on a page whose whole point is that
  *      the query is legible.
  *
+ *  12. The PRB-01 reprints turned out to carry DIFFERENT ART from the original
+ *      print of the same code, which this codebase had explicitly assumed they
+ *      did not. So a One Piece query now names the product when treatment
+ *      cannot separate two rows, and OP05-119 searches the PRB-01 printing
+ *      alone. Every cached entry for it holds the BLENDED market — 57 listings
+ *      spanning two different cards — and a warm cache would keep quoting a
+ *      median that describes neither.
+ *
  * Surviving deploys is the whole point of this cache (see the header
  * comment) — it is what keeps a redeploy from re-spending quota. So the fix
  * is not to shorten its reach but to make a deliberate computation change
  * able to say so. Bumping this starts a fresh namespace; the previous one is
  * simply never read again.
  */
-const CACHE_VERSION = 11;
+const CACHE_VERSION = 12;
 
 /** Versioned so a computation change cannot silently reuse pre-change values across a deploy — see CACHE_VERSION. */
 const CACHE_DIR = path.join(process.cwd(), ".next", "cache", "resolved-cards", `v${CACHE_VERSION}`);

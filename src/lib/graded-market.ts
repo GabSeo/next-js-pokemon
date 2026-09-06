@@ -402,8 +402,8 @@ async function fetchActiveTier(
   variantTags?: string[],
   /** Competing printings of this card's code — see lib/one-piece-variants.ts. */
   rejectTags?: string[],
-  /** Alternative spellings of the wanted treatment, ORed — see titleMatchesCard. */
-  acceptAnyTags?: string[],
+  /** OR within a group, AND between groups — see titleMatchesCard. */
+  acceptGroups?: string[][],
   /** The version clause, appended after the grade — see conditionQuery. */
   querySuffix?: string
 ): Promise<GradedMarketTypeData> {
@@ -417,7 +417,7 @@ async function fetchActiveTier(
       variantTags,
       marketGuardFor(card, condition, language),
       rejectTags,
-      acceptAnyTags,
+      acceptGroups,
       querySuffix
     );
     if (listings.length === 0) {
@@ -735,20 +735,20 @@ async function resolveGradedMarketData(card: Card): Promise<GradedMarketData | u
     language: EbayLanguage
   ): {
     tags: string[] | undefined;
-    acceptAny: string[] | undefined;
+    acceptGroups: string[][] | undefined;
     nameOverride: string | undefined;
     suffix: string | undefined;
     reject: string[] | undefined;
   } => {
     if (card.franchise !== "one-piece")
-      return { tags: undefined, acceptAny: undefined, nameOverride: undefined, suffix: undefined, reject: undefined };
+      return { tags: undefined, acceptGroups: undefined, nameOverride: undefined, suffix: undefined, reject: undefined };
     const ref = cardRefs.find((r) => r.slug === card.slug);
     const override = language === "Japanese" ? ref?.ebayVariantTags?.jp : ref?.ebayVariantTags?.en;
     if (override && override.length > 0) {
       // Same SHAPE as a derived query even though the content is hand-written:
       // the code identifies the card, the parenthesised group qualifies which
       // version, and both sit in the same place in every One Piece query.
-      return { tags: override, acceptAny: undefined, nameOverride: "", suffix: clause(override), reject: undefined };
+      return { tags: override, acceptGroups: undefined, nameOverride: "", suffix: clause(override), reject: undefined };
     }
 
     /**
@@ -775,10 +775,10 @@ async function resolveGradedMarketData(card: Card): Promise<GradedMarketData | u
      */
     if (ref && ref.lookup.by === "code") {
       const derived = deriveQueryForCard(ref.lookup.code, card.printName, ref.lookup.variantTags);
-      if (derived && derived.acceptAny.length > 0) {
+      if (derived && derived.acceptGroups.length > 0) {
         return {
           tags: undefined,
-          acceptAny: derived.acceptAny,
+          acceptGroups: derived.acceptGroups,
           // "" not undefined: cardSearchTerms reads "" as "no name", which is
           // what a One Piece query wants — the character name is thrown away
           // and the code identifies the card. See its own doc comment.
@@ -809,7 +809,7 @@ async function resolveGradedMarketData(card: Card): Promise<GradedMarketData | u
     // "" (not undefined) so cardSearchTerms reads it as "no name" rather
     // than "use the card's own name" — see its doc comment.
     const terms = tags?.map(tagFirstWord) ?? [];
-    return { tags, acceptAny: undefined, nameOverride: "", suffix: clause(terms) || undefined, reject: undefined };
+    return { tags, acceptGroups: undefined, nameOverride: "", suffix: clause(terms) || undefined, reject: undefined };
   };
 
   const activeResults = await Promise.all(
@@ -823,7 +823,7 @@ async function resolveGradedMarketData(card: Card): Promise<GradedMarketData | u
           language === "Japanese" ? japaneseNumberOverride : undefined,
           oneQueryInputs(language).tags,
           oneQueryInputs(language).reject,
-          oneQueryInputs(language).acceptAny,
+          oneQueryInputs(language).acceptGroups,
           oneQueryInputs(language).suffix
         )
       )

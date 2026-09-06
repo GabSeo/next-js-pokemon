@@ -328,6 +328,17 @@ product, and our `lookup` keys on the card, so expect a set name that reports a
 product the card was *reprinted into* rather than where its identity began.
 That gap is what makes guessing `berryWalletSetCode` expensive — see Budget.
 
+**But the reprint is a different card, not the same one relabelled.** Confirmed
+by the owner of an OP05-119 on 2026-09-06: PRB-01's SEC Alt Art is *not* the
+OP05 SEC Alt Art — the Premium Booster reprints carry different art. Our own
+corpus agreed all along and nothing was reading it: no two rows of a code share
+a TCGplayer or a Cardmarket product (OP05's alt art is tcgplayer/530122 under
+`/Awakening-of-the-New-Era/`, PRB-01's is tcgplayer/586960 under `/The-Best/`),
+and eBay prices them apart — PSA 10, 6 PRB listings spanning $175-1,100 against
+51 OP05 ones mostly $600-750. So `PRB-01` is the product *and* part of the card's identity whenever
+two products print the same treatment. `lib/one-piece-variants.ts` derives the
+query from that; see its `deriveQuery` comment for when the product is named.
+
 **4. One promo number, several official versions.** Promo numbering is just
 `P-` plus an identifier, and Bandai reuses it: `P-001` shipped as both a Super
 Pre-Release participation card and a Winner Card Silver Foil Version.

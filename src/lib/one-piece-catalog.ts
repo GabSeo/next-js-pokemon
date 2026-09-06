@@ -61,14 +61,26 @@ let cache: Loaded | undefined;
 /**
  * A row's card code.
  *
- * `cardNumber` is a HINT, not a key — whole sets carry null for it (all 300
- * rows of CM-UNNUMBERED-JP), holding the code only inside `name` as
- * `Monkey.D.Luffy (ST21-014) (V.1)`. So the name is parsed as a fallback, the
- * same way findCardInLanguage matches on `card_number === code || name.includes(code)`.
+ * THE NAME WINS, and `cardNumber` is only the fallback. That order is the
+ * opposite of the obvious one and it is the order the data demands.
+ *
+ * `cardNumber` is a HINT, not a key, and it fails in both directions. Whole
+ * sets carry null for it (all 300 rows of CM-UNNUMBERED-JP), holding the code
+ * only inside `name` as `Monkey.D.Luffy (ST21-014) (V.1)`. Worse, 3,758 of
+ * 10,689 rows — every JP main set, CM-UNNUMBERED, CM-PROMO, CM-JUDGE — carry
+ * only the code's numeric TAIL: `Boa Hancock (OP02-059)` with cardNumber
+ * `"59"`, and sometimes float-formatted as `"61.0"`. Trusting that field first
+ * filed 35% of the corpus under bare numbers like `59`, where no lookup by
+ * card code could ever reach them — including the whole Japanese side of every
+ * numbered set, and the English Unnumbered Promo printing of OP05-119.
+ *
+ * Safe because the two never actually disagree: across all 3,758 rows the
+ * `cardNumber` is exactly the numeric tail of the code in the name, float
+ * formatting aside (verified 2026-09-06, 0 genuine conflicts). The name
+ * carries strictly more information, so it is the key.
  */
 function codeOf(card: OpCard): string | undefined {
-  if (card.cardNumber) return card.cardNumber;
-  return card.name.match(/\b([A-Z]{1,4}\d{2}-\d{3}|P-\d{3})\b/)?.[1];
+  return card.name.match(/\b([A-Z]{1,4}\d{2}-\d{3}|P-\d{3})\b/)?.[1] ?? card.cardNumber ?? undefined;
 }
 
 function loadCatalog(): Loaded {
