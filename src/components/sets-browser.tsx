@@ -56,8 +56,17 @@ function yearOf(set: BrowseSet): string {
   return set.releaseDate?.slice(0, 4) ?? "";
 }
 
+/**
+ * The tile's second line: the release month, or nothing at all.
+ *
+ * Returning "" rather than "Release date unknown" is deliberate. The Pokémon
+ * catalogue has a date for every set; the One Piece one has none, because
+ * Bandai's card list does not publish them — so that placeholder was about to
+ * appear on all 60 tiles, saying nothing 60 times. An absent fact should take
+ * no room. The caller drops the separator when this is empty.
+ */
 function monthYear(set: BrowseSet): string {
-  if (!set.releaseDate) return "Release date unknown";
+  if (!set.releaseDate) return "";
   const d = new Date(set.releaseDate);
   return Number.isNaN(d.getTime())
     ? set.releaseDate
@@ -225,7 +234,8 @@ function SetCard({ set, index }: { set: BrowseSet; index: number }) {
 
         <span className="mb-0.5 text-base font-black tracking-[-0.3px]">{set.name}</span>
         <span className="mb-3 text-xs font-bold text-muted-text">
-          {monthYear(set)} · {set.cardCount} cards
+          {monthYear(set) ? `${monthYear(set)} · ` : ""}
+          {set.cardCount} cards
         </span>
 
         <span className="mt-auto flex items-center justify-between">

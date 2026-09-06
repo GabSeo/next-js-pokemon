@@ -12,6 +12,7 @@
     "prebuild": "npx tsx scripts/check-one-piece-vocabulary.mts && npx tsx scripts/price-refresh.mts",
     "prices": "npx tsx scripts/price-refresh.mts",
     "catalog": "npx tsx scripts/catalog-crawl.mts",
+    "catalog:one-piece": "npx tsx scripts/one-piece-official-crawl.mts",
     "check:one-piece": "npx tsx scripts/check-one-piece-vocabulary.mts",
     "docs:pipelines": "npx tsx scripts/build-pipeline-docs.mts"
   },
