@@ -94,7 +94,7 @@ export default async function CardsPage({ searchParams }: PageProps) {
       <p className="mt-2 text-sm text-muted-text">
         {stats.cards.toLocaleString("en-US")} cards across {stats.sets} sets. Identity is read from our own snapshot;
         prices are from our latest snapshot{pricedAt ? `, taken ${pricedAt.slice(0, 10)}` : ""}.{" "}
-        <Link href="/sets" className="font-bold underline underline-offset-4">
+        <Link href="/sets/pokemon" className="font-bold underline underline-offset-4">
           Browse by set
         </Link>
         .

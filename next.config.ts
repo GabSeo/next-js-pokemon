@@ -179,12 +179,14 @@ const nextConfig: NextConfig = {
     // reasoned about per deploy, since their revalidation runs in the same
     // serverless context.
     "/cards": ["./data/catalog/pokemon/**", "./data/prices/**"],
-    "/sets": ["./data/catalog/pokemon/**", "./data/prices/**"],
+    // /sets is now a chooser and counts both catalogues, so it needs both.
+    "/sets": ["./data/catalog/pokemon/**", "./data/catalog/one-piece-official/**"],
+    "/sets/pokemon": ["./data/catalog/pokemon/**", "./data/prices/**"],
     "/sets/[setId]": ["./data/catalog/pokemon/**", "./data/prices/**"],
     // The One Piece browse page reads the official catalogue and nothing else —
     // no prices exist for it, because Bandai publishes what a card is rather
     // than what it sells for.
-    "/one-piece/sets": ["./data/catalog/one-piece-official/**"],
+    "/sets/onepiece": ["./data/catalog/one-piece-official/**"],
   },
 };
 

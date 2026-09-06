@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   title: "One Piece TCG sets — every pack and how many cards it holds",
   description:
     "Every One Piece Card Game booster, starter deck, premium booster and promo set, with the number of printings in each.",
-  alternates: { canonical: "/one-piece/sets" },
+  alternates: { canonical: "/sets/onepiece" },
 };
 
 export default function OnePieceSetsPage() {
@@ -73,7 +73,7 @@ export default function OnePieceSetsPage() {
     "@context": "https://schema.org",
     "@type": "ItemList",
     name: "One Piece Card Game sets",
-    url: absoluteUrl("/one-piece/sets"),
+    url: absoluteUrl("/sets/onepiece"),
     numberOfItems: browse.length,
     itemListElement: browse.slice(0, 50).map((set, index) => ({
       "@type": "ListItem",
@@ -88,7 +88,7 @@ export default function OnePieceSetsPage() {
 
       <div className="mb-6">
         <Link href="/sets" className="text-xs font-bold text-muted-text underline underline-offset-4">
-          ← Pokémon sets
+          ← All games
         </Link>
         <h1 className="mt-3 text-[32px] font-black tracking-[-0.8px]">One Piece Sets</h1>
         <p className="mt-1 text-sm text-muted-text">
