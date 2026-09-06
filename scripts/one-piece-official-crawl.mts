@@ -49,7 +49,7 @@
  *   npx tsx scripts/one-piece-official-crawl.mts --all-languages   # + zh/th
  *   npx tsx scripts/one-piece-official-crawl.mts --force
  */
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 const REPO = "buhbbl/punk-records";
