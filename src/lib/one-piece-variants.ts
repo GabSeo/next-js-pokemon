@@ -8,14 +8,16 @@
  *
  *   TREATMENT   a VERSION of the card — "the artwork, foil and texture change;
  *               the number and the printed rarity do not". A closed, small,
- *               high-frequency set: Alternate Art 500, Parallel 176, SP 133,
- *               Pirate Foil 90, Gold 73, Jolly Roger Foil 72, Full Art 64,
- *               Manga 41, Textured Foil 22.
+ *               high-frequency set, counted across the corpus on 2026-09-06:
+ *               Alternate Art 680 (Parallel included, they are one treatment),
+ *               Reprint 258, SP 133, Pirate Foil 90, Gold 77, Jolly Roger Foil
+ *               74, Full Art 64, Manga 41, Textured Foil 23, Wanted Poster 12.
  *
  *   PRODUCT     WHERE it was distributed — "PRB-01 is the product, OP05-119 is
- *               the card". A 400-value long tail, 46% of which appear once or
- *               twice: Online Regional 2023, CS 2023 Top Players Pack, Dash
- *               Pack, Luffy Deck, Judge Pack Vol. 2, Gift Collection 2023.
+ *               the card". 405 of them, a long tail: Online Regional 2023, CS
+ *               2023 Top Players Pack, Dash Pack, Luffy Deck, Judge Pack Vol. 2,
+ *               Gift Collection 2023. Only 249 sit on a code with more than one
+ *               printing, and only those can ever generate a query term.
  *
  *   NAME        an alternate character name, not a version at all —
  *               Daz.Bonez 33, Bentham 25, Galdino 23, Zala 15.

@@ -8,12 +8,15 @@
  * prices — those live in `data/prices/one-piece.json`.
  *
  * WHY IT EXISTS AT ALL, beyond speed. One Piece's hard problem is that a card
- * CODE is an identity, not a printing: 1,084 of 2,865 codes (37.8%, measured)
- * carry more than one treatment, and OP05-119 alone spans plain / Alternate Art
- * / Manga / SP / SP Gold / Reprint / Wanted Poster across five sets at EUR 4.49
- * to EUR 7,500. Answering "what else shares this code" used to cost a metered
- * `searchCards` call per card against a 100/hour ceiling. It is now a map
- * lookup, which is what makes deriving an eBay query affordable at all.
+ * CODE is an identity, not a printing. Measured across the 2,632 codes in this
+ * corpus on 2026-09-06: 2,495 of them (94.8%) have more than one row, 346
+ * (13.1%) carry more than one TREATMENT and 219 (8.3%) span more than one
+ * PRODUCT. OP05-119 alone runs plain / Alternate Art / Manga / SP / SP Gold /
+ * Reprint / Wanted Poster across five sets at EUR 4.49 to EUR 7,500.
+ *
+ * Answering "what else shares this code" used to cost a metered `searchCards`
+ * call per card against a 100/hour ceiling. It is now a map lookup, which is
+ * what makes deriving an eBay query affordable at all.
  *
  * It also stores each row WITH its set, which `BerryWalletCard` does not carry.
  * `findVariantAcrossProducts` reports the set it was SEARCHING when it found a
