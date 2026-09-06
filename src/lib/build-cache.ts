@@ -164,13 +164,19 @@ import path from "node:path";
  *      entries hold 7 of 19 listings that belong to the other card, at three
  *      times the price.
  *
+ *  15. Every One Piece query now excludes the rarities the card is not, which
+ *      changes every tracked card's search. A Leader card was pricing itself
+ *      partly on SR-titled listings of a different card ("Monkey.D.Luffy
+ *      OP09-061 Alt Art Holo SR English 5000", raw tier), and those are in
+ *      every cached entry.
+ *
  * Surviving deploys is the whole point of this cache (see the header
  * comment) — it is what keeps a redeploy from re-spending quota. So the fix
  * is not to shorten its reach but to make a deliberate computation change
  * able to say so. Bumping this starts a fresh namespace; the previous one is
  * simply never read again.
  */
-const CACHE_VERSION = 14;
+const CACHE_VERSION = 15;
 
 /** Versioned so a computation change cannot silently reuse pre-change values across a deploy — see CACHE_VERSION. */
 const CACHE_DIR = path.join(process.cwd(), ".next", "cache", "resolved-cards", `v${CACHE_VERSION}`);

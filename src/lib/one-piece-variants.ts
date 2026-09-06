@@ -337,6 +337,25 @@ function setNamePhrase(entry: OpEntry): string | undefined {
 }
 
 /**
+ * The rarities that are MUTUALLY EXCLUSIVE — a card is exactly one of these.
+ *
+ * That is what makes them safe to exclude without a sibling to point at: a
+ * listing naming a different tier is a different card. PR is deliberately
+ * absent; it says where a card was given out, not how rare it is, so a promo
+ * printing carries one of these as well. See deriveQuery for both halves.
+ */
+const TIER_RARITIES = ["c", "uc", "r", "sr", "sec", "l", "tr", "don"];
+
+/**
+ * Tiers that may be searched for but never excluded on.
+ *
+ * "C" is the cost written in half the titles on eBay — "3000 2c" — and every
+ * tokeniser here splits that into "2" and "c". Measured: `-c` deleted a real
+ * PRB-01 listing of OP01-024, the exact card its query was built for.
+ */
+const NON_EXCLUDABLE_RARITIES = new Set(["c"]);
+
+/**
  * A row's rarity as sellers write it: `DON!!` -> `don`, `SEC` -> `sec`.
  *
  * Undefined for the entire Japanese side — all 3,644 JP rows carry no rarity,
@@ -393,27 +412,45 @@ export function deriveQuery(code: string, wanted: OpEntry): DerivedQuery {
    * OP05-119 from 6 to 5, `(l,leader)` took the OP09-061 Parallel from 40
    * to 23.
    *
-   * Excluded, it is free and occasionally decisive. Same measurement, the
-   * other way round: excluding every rarity the card is not cost NOTHING on
-   * all eight tracked cards, single-letter tokens included.
+   * Excluded, it is close to free, and it catches what nothing else does. The
+   * TIER rarities are mutually exclusive — a card is exactly one of C, UC, R,
+   * SR, SEC, L, TR or DON!! — so a listing naming a different one is a
+   * different card, whatever else its title says. This does NOT need a sibling
+   * to justify it, and scoping it to siblings was measurably too narrow:
+   * OP09-061 is a Leader and nothing sharing its code is an SR, so a sibling
+   * rule stays silent while
    *
-   * So it is excluded, and — like every other exclusion in this file — only
-   * for what a SIBLING actually carries, never for the whole vocabulary. That
-   * is not caution for its own sake: 86 of the 2,622 codes that carry a rarity
-   * carry two, and the pattern is always the same, `PR` against the set's own
-   * rarity (OP01-120 is PR/SEC, OP01-001 is PR/L). The promo printing and the
-   * set printing of one code, which is the axis that already needed the family
-   * rule. Excluding the vocabulary at large would instead assert that a
-   * listing saying "C" anywhere is a different card, which nothing here shows.
+   *   "Bandai One Piece CCG Monkey.D.Luffy OP09-061 Alt Art Holo SR English 5000"
+   *   "Bandai One Piece CCG Monkey D. Luffy OP09-061 Leader Alt Art Foil SR ENG"
    *
-   * Fires on none of the tracked cards today — every OP09-061 row is L, every
-   * OP05-119 row is SEC — which is why the counts above did not move. It is a
-   * guard for the 86, not a change to the nine.
+   * sit in the raw tier pricing a card that is not this one. `-sr` removes
+   * exactly those two and nothing else (74 -> 72, measured 2026-09-06).
+   *
+   * PR IS NOT A TIER, and is handled apart. It says WHERE a card was given out,
+   * not how rare it is, so a promo printing carries a tier as well — real
+   * titles say "SR" and "Promo" together. Excluding the tiers on a PR card
+   * would therefore throw away its own listings, and excluding `-pr` from a
+   * tiered card would throw away the promo printing only when that printing is
+   * genuinely a different card. So PR is excluded only when a SIBLING carries
+   * it, which is exactly the 86 of 2,622 codes that carry two rarities —
+   * always PR against the set's own (OP01-120 is PR/SEC, OP01-001 is PR/L).
+   *
+   * `c` is searchable but never excludable, the same asymmetry TREATMENTS uses.
+   * Cost is written in titles as "2c", "3c", and every tokeniser in this
+   * pipeline splits that into "2" and "c" — `-c` deleted "Monkey D. Luffy
+   * OP01-024 Premium Booster -The Best- SR Foil Alt Art 3000 2c", a real
+   * listing of the very card that query is for. Every other tier token was
+   * measured individually against the same result set and dropped nothing.
    */
   const wantedRarity = rarityOf(wanted);
-  const rarityReject = wantedRarity
-    ? [...new Set(rows.map(rarityOf).filter((r): r is string => r !== undefined && r !== wantedRarity))]
-    : [];
+  const rarityReject = [
+    ...new Set([
+      ...(wantedRarity && TIER_RARITIES.includes(wantedRarity)
+        ? TIER_RARITIES.filter((r) => r !== wantedRarity && !NON_EXCLUDABLE_RARITIES.has(r))
+        : []),
+      ...(wantedRarity !== "pr" && rows.some((r) => rarityOf(r) === "pr") ? ["pr"] : []),
+    ]),
+  ];
 
   const wantedKey = treatmentKey(wanted.card.name);
   const wantedFamily = familyOf(wanted);

@@ -176,27 +176,41 @@ ANDing it on throws away the ones who did not. Measured PSA 10, 2026-09-06:
 | OP05-119 | 6 | 5 with `(sec)` |
 | OP09-061 Parallel | 40 | 23 with `(l,leader)` |
 
-Excluded, it is free: excluding every rarity the card is not cost **nothing**
-on all eight cards measured, single-letter tokens included. So it is excluded —
-and, like every other exclusion here, only for what a SIBLING carries, not for
-the whole vocabulary. That is where it discriminates: **86 of the 2,622 codes
-that carry a rarity carry two**, always `PR` against the set's own (OP01-120 is
-PR/SEC, OP01-001 is PR/L). The promo printing versus the set printing of one
-code.
+Excluded, it catches what nothing else does. The **tier** rarities are mutually
+exclusive — a card is exactly one of C, UC, R, SR, SEC, L, TR, DON!! — so a
+listing naming a different one is a different card, whatever else it says. No
+sibling is needed to justify that, and requiring one was measurably too narrow.
+OP09-061 is a Leader and nothing sharing its code is an SR, so a sibling-scoped
+rule stayed silent while these sat in its raw tier:
 
 ```
-OP01-120 PSA 10 ("championship 2023") -parallel -manga -sec   <- the PR promo
-OP01-120 PSA 10 (parallel,alt,...)    -manga    -pr           <- the SEC set print
+Bandai One Piece CCG Monkey.D.Luffy OP09-061 Alt Art Holo SR English 5000
+Bandai One Piece CCG Monkey D. Luffy OP09-061 Leader Alt Art Foil SR ENG
 ```
 
-It fires on none of the nine tracked cards, because every OP09-061 row is `L`
-and every OP05-119 row is `SEC`. It is a guard for the 86, not a change to the
-nine.
+`-sr` removes exactly those two and nothing else (74 → 72).
 
-Rarity is absent far more often than it is present: **all 3,644 Japanese rows
-carry none**, plus 579 English promos. `DON!!` is an explicit value on 244
-rows, so a missing rarity does **not** mean a DON card — reading absence that
-way would mislabel the entire Japanese side.
+**PR is not a tier and is handled apart.** It says where a card was given out,
+not how rare it is, so a promo printing carries a tier as well — real titles say
+"SR" and "Promo" together. So a PR card excludes no tiers at all, and `-pr` is
+added only when a SIBLING carries PR. That is the 86 of 2,622 codes carrying two
+rarities, always PR against the set's own:
+
+```
+OP01-120 PSA 10 ("championship 2023") -parallel -manga            <- the PR promo
+OP01-120 PSA 10 (parallel,alt,…)      -manga -uc -r -sr -l -tr -don -pr
+```
+
+**`c` is searchable but never excludable**, the same asymmetry treatments use.
+Cost is written in titles as "3000 2c", and every tokeniser here splits that
+into "2" and "c" — `-c` deleted `Monkey D. Luffy OP01-024 Premium Booster -The
+Best- SR Foil Alt Art 3000 2c`, a real listing of the very card that query is
+for. Every other tier token was measured individually against the same result
+set and dropped nothing.
+
+A row with no rarity asserts nothing: all 3,644 Japanese rows carry none, plus
+579 English promos. `DON!!` is an explicit value on 244 rows, so a missing
+rarity does **not** mean a DON card.
 
 Which side of the split a row sits on decides the shape. A row in its code's
 **own** family is the original and *excludes* the rivals; a row in any other
