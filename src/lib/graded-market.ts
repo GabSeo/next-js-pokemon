@@ -6,6 +6,7 @@ import { getVintedListingsForCard, relativeTimeLabel, TRES_BON_ETAT, vintedQuery
 import { getJapaneseCardText } from "@/lib/cards";
 import { buildCached } from "@/lib/build-cache";
 import { cardRefs } from "@/data/card-refs";
+import { deriveQueryForCard } from "@/lib/one-piece-variants";
 import type { Card } from "@/lib/types";
 
 export const GRADED_MARKET_CONDITIONS: EbayCondition[] = ["PSA 10", "PSA 9", "PSA 8", "Raw"];
@@ -398,7 +399,9 @@ async function fetchActiveTier(
   language: EbayLanguage,
   nameOverride?: string,
   numberOverride?: string,
-  variantTags?: string[]
+  variantTags?: string[],
+  /** Competing printings of this card's code — see lib/one-piece-variants.ts. */
+  rejectTags?: string[]
 ): Promise<GradedMarketTypeData> {
   try {
     const { listings, total, asks } = await searchActiveListings(
@@ -408,7 +411,8 @@ async function fetchActiveTier(
       nameOverride,
       numberOverride,
       variantTags,
-      marketGuardFor(card, condition, language)
+      marketGuardFor(card, condition, language),
+      rejectTags
     );
     if (listings.length === 0) {
       console.warn(
@@ -720,12 +724,43 @@ async function resolveGradedMarketData(card: Card): Promise<GradedMarketData | u
    * promo in English, and each market's tag returns zero results in the
    * other. Pokémon passes undefined throughout and is unaffected.
    */
-  const oneQueryInputs = (language: EbayLanguage): { tags: string[] | undefined; nameOverride: string | undefined } => {
-    if (card.franchise !== "one-piece") return { tags: undefined, nameOverride: undefined };
+  const oneQueryInputs = (
+    language: EbayLanguage
+  ): { tags: string[] | undefined; nameOverride: string | undefined; reject: string[] | undefined } => {
+    if (card.franchise !== "one-piece") return { tags: undefined, nameOverride: undefined, reject: undefined };
     const ref = cardRefs.find((r) => r.slug === card.slug);
     const override = language === "Japanese" ? ref?.ebayVariantTags?.jp : ref?.ebayVariantTags?.en;
     if (override && override.length > 0) {
-      return { tags: override, nameOverride: override.join(" ") };
+      return { tags: override, nameOverride: override.join(" "), reject: undefined };
+    }
+
+    /**
+     * DERIVED FROM THE CATALOGUE, when no hand-written override exists.
+     *
+     * Two things the old path could not do, both measured on 2026-09-06:
+     *
+     * 1. A card can carry MORE THAN ONE treatment. OP05-074 is
+     *    `(Alternate Art) (Manga)`, and printDescriptor's last-parenthetical
+     *    rule sent only "Manga" — missing every seller who writes "Alt Art"
+     *    without it. Query `(alt,alternate,manga)`: 21 real listings vs 13.
+     * 2. Nothing could EXCLUDE a competing printing. OP05-074's code is also
+     *    an SP and a Reprint, and no positive term separates them because
+     *    sellers write the shared words too. The reject list does.
+     *
+     * Biggest effect is on OP05-119, where the hand-written `PRB alt` found 5
+     * listings and the derived query finds 56 — "alt" never matches a seller
+     * who writes "Alternate", because eBay tokenises the query.
+     *
+     * A hand-written override still wins, unconditionally. P-033's Japanese
+     * tier needs "Shonen Jump", which is the magazine the card shipped in and
+     * appears nowhere in either language's catalogue — proven, not assumed:
+     * across 2,865 codes no EN treatment name differs from its JP one.
+     */
+    if (ref && ref.lookup.by === "code") {
+      const derived = deriveQueryForCard(ref.lookup.code, card.printName, ref.displayName);
+      if (derived && derived.acceptAny.length > 0) {
+        return { tags: derived.acceptAny, nameOverride: derived.queryText, reject: derived.reject };
+      }
     }
     // Derived from BerryWallet's own print name rather than read from
     // ref.lookup.variantTags, so adding a One Piece card needs no eBay
@@ -747,7 +782,7 @@ async function resolveGradedMarketData(card: Card): Promise<GradedMarketData | u
     const tags = derived ? [derived] : ref && ref.lookup.by === "code" ? ref.lookup.variantTags : undefined;
     // "" (not undefined) so cardSearchTerms reads it as "no name" rather
     // than "use the card's own name" — see its doc comment.
-    return { tags, nameOverride: tags?.map(tagFirstWord).join(" ") ?? "" };
+    return { tags, nameOverride: tags?.map(tagFirstWord).join(" ") ?? "", reject: undefined };
   };
 
   const activeResults = await Promise.all(
@@ -759,7 +794,8 @@ async function resolveGradedMarketData(card: Card): Promise<GradedMarketData | u
           language,
           oneQueryInputs(language).nameOverride,
           language === "Japanese" ? japaneseNumberOverride : undefined,
-          oneQueryInputs(language).tags
+          oneQueryInputs(language).tags,
+          oneQueryInputs(language).reject
         )
       )
     )

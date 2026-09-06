@@ -86,6 +86,19 @@ function forbiddenRejectTokens(displayName: string): Set<string> {
 const MIN_REJECT_TOKEN = 4;
 
 /**
+ * A four-digit year is never evidence of the wrong print.
+ *
+ * P-033's competing row is "CS 2023 Event Pack", so `2023` became a reject
+ * token — and real listings for the WANTED card are routinely titled "Event
+ * Pack Vol 2 2023", because that is the year it was printed. Measured: it cut
+ * a 9-listing tier to 5. Sellers put the year in almost every title; it
+ * separates nothing.
+ */
+function isYear(token: string): boolean {
+  return /^(19|20)\d{2}$/.test(token);
+}
+
+/**
  * Short treatment names that are real prints and must still be rejectable.
  *
  * MIN_REJECT_TOKEN exists to stop two-character noise, but it also silently
@@ -143,7 +156,7 @@ function rejectTokensFor(treatment: string, forbidden: Set<string>): string[] {
   const source = aliased.length > 0 ? aliased : treatment.split(/\s+/);
   return source
     .map((w) => w.replace(/["']/g, "").toLowerCase().trim())
-    .filter((w) => (w.length >= MIN_REJECT_TOKEN || SHORT_BUT_REAL.has(w)) && !forbidden.has(w));
+    .filter((w) => (w.length >= MIN_REJECT_TOKEN || SHORT_BUT_REAL.has(w)) && !forbidden.has(w) && !isYear(w));
 }
 
 /**
@@ -169,7 +182,10 @@ export function deriveQuery(code: string, wanted: OpEntry, displayName: string):
   // A token that also describes the WANTED treatment cannot reject anything —
   // "Alternate Art" and "Alternate Art (Manga)" share "alternate", so rejecting
   // on it would throw away the card we are looking for.
-  const wantedTokens = new Set([...aliasesFor(treatment), ...treatment.toLowerCase().split(/\s+/)]);
+  const wantedTokens = new Set([
+    ...aliasesFor(treatment),
+    ...treatment.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean),
+  ]);
 
   const reject = [
     ...new Set(competing.flatMap((t) => rejectTokensFor(t, forbidden))),
@@ -181,4 +197,42 @@ export function deriveQuery(code: string, wanted: OpEntry, displayName: string):
   const queryText = accept.length > 1 ? `(${accept.join(",")})` : (accept[0] ?? "");
 
   return { queryText, acceptAny: accept, reject, treatment, competing };
+}
+
+/**
+ * The entry point graded-market.ts uses: derive from what a resolved Card
+ * already carries — its code and BerryWallet print name — without re-resolving
+ * anything.
+ *
+ * Finds the corpus row whose name matches the print name, so the competing
+ * treatments come from the catalogue. When the row is NOT in the corpus, the
+ * treatment is still read from the print name itself and the reject list comes
+ * back empty — a positive query with no exclusions, which is exactly the
+ * shipped behaviour and therefore never a regression.
+ *
+ * That fallback is not hypothetical: crawling all 109 sets is not a superset of
+ * the flat /op/search index, and ST21-014's Campaign Pack row lives only in the
+ * latter (see scripts/one-piece-crawl.mts).
+ */
+export function deriveQueryForCard(
+  code: string,
+  printName: string | undefined,
+  displayName: string
+): DerivedQuery | undefined {
+  if (!printName) return undefined;
+  const rows = opRowsForCode(code);
+  const match = rows.find((r) => r.card.name === printName) ?? rows.find((r) => r.card.name.includes(printName));
+  if (match) return deriveQuery(code, match, displayName);
+
+  // Not in the corpus — positive terms only, no exclusions.
+  const treatment = opTreatment(printName);
+  if (!treatment) return undefined;
+  const accept = aliasesFor(treatment);
+  return {
+    queryText: accept.length > 1 ? `(${accept.join(",")})` : (accept[0] ?? ""),
+    acceptAny: accept,
+    reject: [],
+    treatment,
+    competing: [],
+  };
 }

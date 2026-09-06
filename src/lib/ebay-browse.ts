@@ -292,7 +292,18 @@ function titleMatchesCard(
   condition: EbayCondition,
   numberOverride?: string,
   variantTags?: string[],
-  language?: EbayLanguage
+  language?: EbayLanguage,
+  /**
+   * Words that DISQUALIFY a listing — the competing printings of this card's
+   * own code, derived from the catalogue (lib/one-piece-variants.ts).
+   *
+   * A positive tag says "this looks like my card"; a reject says "this is
+   * provably a different one". OP05-074 shares its code with an SP and a
+   * Reprint, and no positive term can exclude them because sellers write the
+   * shared words too. Empty for Pokemon and for any card whose row the corpus
+   * does not hold, in which case behaviour is exactly what shipped before.
+   */
+  rejectTags?: string[]
 ): boolean {
   // English-tier-only: reject a title that also says "Japanese", or carries
   // a standalone "JP" language marker. precisionAspectFilter's own
@@ -346,6 +357,20 @@ function titleMatchesCard(
 
   const primaryNumber = (numberOverride ?? card.number)?.split("/")[0];
   if (primaryNumber && !numberMatchesTitle(primaryNumber, title)) return false;
+
+  if (rejectTags && rejectTags.length > 0) {
+    // Whole-word (or whole-phrase) matching, never substring: "sp" must not
+    // fire on "spectacular", and a two-word reject like "2nd anniversary" only
+    // counts when both words appear together.
+    const lower = title.toLowerCase();
+    const words = new Set(lower.split(/[^a-z0-9]+/).filter(Boolean));
+    const disqualified = rejectTags.some((tag) => {
+      const parts = tag.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+      if (parts.length === 0) return false;
+      return parts.length > 1 ? lower.includes(parts.join(" ")) : words.has(parts[0]);
+    });
+    if (disqualified) return false;
+  }
 
   if (variantTags && variantTags.length > 0) {
     const titleLower = title.toLowerCase();
@@ -560,7 +585,9 @@ async function runSearch(
   nameOverride?: string,
   numberOverride?: string,
   variantTags?: string[],
-  guard?: EbayMarketGuard
+  guard?: EbayMarketGuard,
+  /** Competing printings of this card's own code — see titleMatchesCard. */
+  rejectTags?: string[]
 ): Promise<RunSearchResult> {
   const query = conditionQuery(card, condition, nameOverride, numberOverride);
   const qs = new URLSearchParams({
@@ -639,7 +666,7 @@ async function runSearch(
   // and BEFORE the guard is the only thing that can tell those two apart
   // when a result set ends up empty.
   const titlePassed = priced.filter((listing) =>
-    titleMatchesCard(listing.title, card, condition, numberOverride, variantTags, language)
+    titleMatchesCard(listing.title, card, condition, numberOverride, variantTags, language, rejectTags)
   );
 
   const survivors = titlePassed
@@ -776,15 +803,17 @@ export async function searchActiveListings(
   nameOverride?: string,
   numberOverride?: string,
   variantTags?: string[],
-  guard?: EbayMarketGuard
+  guard?: EbayMarketGuard,
+  /** Competing printings of this card's own code — see titleMatchesCard. */
+  rejectTags?: string[]
 ): Promise<EbaySearchResult> {
-  const primary = await runSearch(card, condition, language, PRIMARY_SORT, nameOverride, numberOverride, variantTags, guard);
+  const primary = await runSearch(card, condition, language, PRIMARY_SORT, nameOverride, numberOverride, variantTags, guard, rejectTags);
   if (primary.listings.length > MERGE_THRESHOLD) return primary;
 
   // Best Match is not recency-biased the way the sorted searches are, so it
   // can surface a real listing that has simply been sitting unsold — which
   // matters most on exactly the thin markets that trip MERGE_THRESHOLD.
-  const fallback = await runSearch(card, condition, language, undefined, nameOverride, numberOverride, variantTags, guard);
+  const fallback = await runSearch(card, condition, language, undefined, nameOverride, numberOverride, variantTags, guard, rejectTags);
 
   // Merged rather than replaced: the point is to REACH four rows, and either
   // search alone may be short. Deduped by item URL, since the same listing

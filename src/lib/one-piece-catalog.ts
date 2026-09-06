@@ -129,18 +129,22 @@ export function opCatalogStats(): { sets: number; rows: number; codes: number; c
 }
 
 /**
- * The TREATMENT a row's name describes — "Alternate Art", "Manga", "SP",
- * "Wanted Poster" — or "" for a plain print.
+ * EVERY treatment word a row's name describes, as one string.
  *
- * The last meaningful parenthetical, matching printDescriptor's rule
- * (lib/ebay-search.ts), with two exclusions: a bare card code (`(119)`,
- * `(OP05-119)`) is not a treatment, and neither is a `(V.N)` index, which is a
- * per-set position rather than a description of the card.
+ * A treatment is NOT a single parenthetical, and taking only the last one was a
+ * measured bug. Eustass Kid's row is `(Alternate Art) (Manga)` — one card that
+ * is both. Reading only "Manga" filed "Alternate Art" as a COMPETING print, so
+ * the reject list threw away the card's own listings: 9 of 38 real results on
+ * OP05-074, every one of them titled "Manga Alternate Art".
+ *
+ * So all meaningful parentheticals are joined. Excluded from "meaningful": a
+ * bare card code (`(119)`, `(OP05-119)`), which is not a treatment, and a
+ * `(V.N)` index, which is a per-set position rather than a description.
  */
 export function opTreatment(name: string): string {
   const inner = [...name.matchAll(/\(([^)]+)\)/g)].map((m) => m[1]);
   const meaningful = inner.filter((v) => !/^[A-Z]{0,4}\d*-?\d+$/i.test(v) && !/^V\.\d+$/i.test(v));
-  return (meaningful[meaningful.length - 1] ?? "").replace(/^(english|japanese)\s+version\s+/i, "").trim();
+  return meaningful.join(" ").replace(/^(english|japanese)\s+version\s+/i, "").trim();
 }
 
 /**
