@@ -289,13 +289,41 @@ ways at once:
   ways.
 
 The table stays small because a product only matters when it lands on a code we
-track: 405 exist, 249 could ever generate a term, **6** touch the nine cards
-tracked today. An unlisted product contributes nothing rather than a guess, and
-`npm run crawl:one-piece` names it:
+track: 405 exist, 249 could ever generate a term, **7** cover the cards tracked
+today.
+
+### The vocabulary is a build gate
+
+A missing entry does not crash anything — the query just loses a term and
+quietly stops telling two printings apart, surfacing as a median that is wrong
+for no visible reason. That is invisible in review and expensive in production,
+so `npm run prebuild` runs `scripts/check-one-piece-vocabulary.mts` and the
+build fails rather than shipping a card whose query never could have worked.
 
 ```
-[one-piece] vocabulary: all 24 set families known, all products on tracked codes known
+[one-piece] vocabulary OK — 9 tracked card(s), 9 multi-printing code(s),
+            24 set families and 7 products in the table.
 ```
+
+Add a card on one of the 89 codes whose products collide and it stops you,
+naming what to add and which card needs it:
+
+```
+[one-piece] 6 vocabulary gap(s). Add them to src/data/one-piece-sets.ts.
+  MISSING PRODUCT  "Championship 2024 Finalist Card Set"
+                   needed by: TEMP-op01-077
+  MISSING PRODUCT  "Championship 2024 Top Player Pack Vol. 2"
+  ...
+```
+
+Three failures are checked, all on codes with more than one printing — a card
+with nothing to be confused with cannot be confused:
+
+| | |
+|---|---|
+| **missing product** | a printing sits in a product the table does not know |
+| **missing set** | same, for the set family |
+| **colliding terms** | two different products on one code resolve to the same term, so excluding one excludes the other |
 
 ### Rarity: excluded, never required
 

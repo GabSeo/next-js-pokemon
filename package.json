@@ -9,9 +9,10 @@
     "start": "next start",
     "lint": "eslint",
     "test:e2e": "playwright test",
-    "prebuild": "npx tsx scripts/price-refresh.mts",
+    "prebuild": "npx tsx scripts/check-one-piece-vocabulary.mts && npx tsx scripts/price-refresh.mts",
     "prices": "npx tsx scripts/price-refresh.mts",
-    "catalog": "npx tsx scripts/catalog-crawl.mts"
+    "catalog": "npx tsx scripts/catalog-crawl.mts",
+    "check:one-piece": "npx tsx scripts/check-one-piece-vocabulary.mts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
