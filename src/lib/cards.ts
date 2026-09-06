@@ -362,9 +362,10 @@ async function resolveCard(ref: CardRef): Promise<Card | undefined> {
    * so the real one is a map lookup on the row's own id, at zero API cost.
    *
    * It stopped being merely imprecise, too. The PRB-01 reprints carry
-   * DIFFERENT ART from the original print (see lib/one-piece-variants.ts), so
-   * a page headed "Awakening of the New Era" over a PRB-01 card names the
-   * wrong card, not just the wrong box it came in.
+   * a SEPARATE CARD: a Premium Booster SEC Alt Art is its own artwork, and
+   * sells for half the original (see lib/one-piece-variants.ts). So a page headed
+   * "Awakening of the New Era" over a PRB-01 card names the wrong thing, not
+   * just the wrong box it came in.
    *
    * Only consulted for a cross-product match. An ordinary match already
    * reports the set it was actually found in, and the corpus has nothing to

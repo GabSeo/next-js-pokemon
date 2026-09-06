@@ -137,28 +137,6 @@ export function opRowById(id: string): OpEntry | undefined {
   return loadCatalog().byId.get(id);
 }
 
-/**
- * Every distinct set NAME in the corpus, lowercased.
- *
- * Exists so one-piece-variants.ts can tell a word that identifies one product
- * ("romance", in one set name) from a word that spans several ("new", in both
- * Awakening of the New Era and Emperors in the New World) without anyone
- * hand-listing either. Language suffixes are stripped so a set and its
- * Japanese twin count once.
- */
-export function opSetNames(): string[] {
-  return [
-    ...new Set(
-      loadCatalog().sets.map((s) =>
-        s.name
-          .replace(/\((japanese|english)\)/i, "")
-          .trim()
-          .toLowerCase()
-      )
-    ),
-  ];
-}
-
 export function opCatalogStats(): { sets: number; rows: number; codes: number; crawledAt?: string } {
   const { sets, entries, byCode, crawledAt } = loadCatalog();
   return { sets: sets.length, rows: entries.length, codes: byCode.size, crawledAt };

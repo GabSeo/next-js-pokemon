@@ -330,7 +330,9 @@ That gap is what makes guessing `berryWalletSetCode` expensive — see Budget.
 
 **But the reprint is a different card, not the same one relabelled.** Confirmed
 by the owner of an OP05-119 on 2026-09-06: PRB-01's SEC Alt Art is *not* the
-OP05 SEC Alt Art — the Premium Booster reprints carry different art. Our own
+OP05 SEC Alt Art — a Premium Booster SEC Alt Art is its own artwork. (A Manga
+Rare's reprint is the opposite case: Bandai cannot reissue a manga panel under
+a code that already has one, so those group.) Our own
 corpus agreed all along and nothing was reading it: no two rows of a code share
 a TCGplayer or a Cardmarket product (OP05's alt art is tcgplayer/530122 under
 `/Awakening-of-the-New-Era/`, PRB-01's is tcgplayer/586960 under `/The-Best/`),

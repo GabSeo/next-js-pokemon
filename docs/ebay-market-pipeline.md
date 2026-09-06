@@ -110,9 +110,16 @@ product: it collapses `Event Pack` and `Judge Pack` onto `Pack`, and
 ### The product is part of the identity
 
 Treatment alone is not always enough. When another row carries the **same
-treatment in a different product**, the two are different cards — the PRB-01
-reprints carry different art from the original print — and the query names the
-product as a second group:
+treatment in a different product**, the two can be different *markets*, and the
+query names the product as a second group:
+
+> **Whether a reprint is the same card depends on the treatment.** A PRB-01
+> **SEC Alt Art** is its own artwork — OP05-119's Premium Booster print is a
+> different picture from the Awakening one. A PRB-01 **Manga Rare** never is:
+> Bandai cannot reissue a manga panel under a code that already has one, so a
+> new manga drawing for the same character gets a new code in a new set. See
+> "a treatment that reprints unchanged" below.
+
 
 ```
 OP05-119 PSA 10 (alt,alternate,alternative,altart) (prb,"premium booster","the best") -manga -wanted -sp -gold
@@ -243,6 +250,112 @@ set and dropped nothing.
 A row with no rarity asserts nothing: all 3,644 Japanese rows carry none, plus
 579 English promos. `DON!!` is an explicit value on 244 rows, so a missing
 rarity does **not** mean a DON card.
+
+**Every rival product is named, not just the origin.** A code can be printed in
+six products — OP05-119 is in OP-PR, OP05, OP09, OP11, PRB-01 and CM — and
+naming one leaves the rest to treatment terms that may not separate them.
+Measured free on the cards where nothing competed (OP05-119 6/6, 13/13, 9/9;
+OP09-061 40/40, 72/72), and decisive on the one where something did:
+
+| OP05-074 | before | after |
+|---|---|---|
+| PSA 10 | 22 | 18 |
+| Raw | 64 | 54 |
+
+...but OP05-074 is also where the rule needed a second half.
+
+### A treatment that reprints unchanged groups its products
+
+Not every PRB-01 reprint is a new card. A **Manga Rare** reprinted into a
+Premium Booster keeps the original artwork; what changes is production — a
+"One Piece" logo stamped into the texture, slightly different text ink, a
+smoother foil. Collectors tell them apart and price them together, and the
+market agrees. OP05-074 PSA 10, 2026-09-06:
+
+| printing | listings | range | median |
+|---|---|---|---|
+| OG, Awakening of the New Era | 10 | $1,200–2,500 | $1,475 |
+| PRB-01 reprint | 4 | $1,399–3,100 | $1,600 |
+
+Overlapping ranges, medians 8% apart: one market. So a treatment carrying
+`reprintedIdentically` suppresses the product split for the families that share
+it — OP05-074 keeps `-op07` for the SP printing and drops `-prb`.
+
+OP05-119's SEC Alt Art stays split, because a Premium Booster SEC Alt Art is
+its own artwork rather than a restamp. The market agrees, and the contrast with
+the Manga Rare above is stark:
+
+| OP05-119 SEC Alt Art | OG (Awakening) | PRB-01 |
+|---|---|---|
+| English PSA 10 | 45 listings, median **$790** | 6 listings, median **$400** |
+| Japanese PSA 10 | 28 listings, median **$542** | 13 listings, median **$211** |
+
+Half the money, consistently, on both language tiers. A Manga Rare's reprint
+sells for what the original does; a SEC Alt Art's — a different picture — does
+not.
+
+**A "Reprint" row counts as the same artwork too.** OP09-004's only PRB-01 row
+is labelled plain `(Reprint)` rather than `(Manga)`, and a reprint is by
+definition an existing artwork printed again, so it groups as well. Without
+that arm a Manga Rare whose reprint BerryWallet happened to file under
+"Reprint" would be split from itself. Safe because grouping only ever *removes*
+an exclusion — the positive `(manga)` term still gates, so admitting the family
+cannot let a base-card reprint in.
+
+Verified across the whole corpus: 9 codes carry a manga printing, 14 manga rows
+in total, and none of them excludes a family holding the same manga artwork.
+
+The default is to split, and the flag is the exception, because the two errors
+are not symmetric: splitting a printing that should be grouped narrows its
+search, while grouping printings that should be split quotes one price as
+another's. Only Manga carries the flag.
+
+**One token per rival product, from a static table.** `data/one-piece-sets.ts`
+holds what sellers actually call each product — `OP01` -> `romance`, `OP11` ->
+`divine`, `PRB` -> `prb` — keyed by the family `opSetFamily` returns, so a set
+and its pre-release, anniversary and release-event printings collapse together.
+
+That table replaced a derivation that emitted a long phrase *and* a rare word
+for every rival:
+
+```
+before  -"unnumbered promos" -"one piece promotion cards" -"awakening of the new era"
+        -awakening -"emperors in the new world" -"a fist of divine speed"
+after   -awakening -emperors -divine
+```
+
+Most of those names are **Cardmarket catalogue buckets** — "Unnumbered Promos",
+"One Piece Promotion Cards", "Judge Promos" — that no seller has ever typed into
+a title. Every one measured zero effect while making the query unreadable. They
+are marked `exclude: null` in the table, along with:
+
+- **decks** (`ST`, `LT`), named after their contents: "Starter Deck 26:
+  PURPLE/BLACK Monkey.D.Luffy", "Starter Deck 23: RED Shanks". Their
+  distinctive word is the card's own colour or character, and `-purple` was
+  measured to cost the OP09-061 Parallel two real listings.
+- **`EB` and `OP16`**, where one family covers three different Extra Boosters,
+  and where "The Time of Battle" offers only the word "battle".
+
+A token is also dropped when the card's own code contains it, so `-op01` can
+never fight `OP01-024`'s card number.
+
+**Base prints get this too.** The rule used to be gated on the card carrying a
+treatment, so the 2nd Anniversary Set promo — a base print, identified by its
+product phrase — never excluded "Emperors in the New World", the set its own
+code belongs to. That was an inconsistency, not a decision. Measured harmless:
+32, 19 and 10 listings unchanged across English PSA 10, Japanese PSA 10 and
+English raw, because no real 2nd Anniversary listing names the origin set.
+
+A base print AT home still gets nothing, and that gate stays: its same-treatment
+rivals are every other base print of the code, whose set names include things
+like "Starter Deck 26: PURPLE/BLACK Monkey.D.Luffy" — excluding on `purple`
+would fight the card's own colour, which sellers write.
+
+*Known gap:* a starter-deck code never recognises itself as at home, because
+`ST21-014` yields the prefix `ST21` while the set code `ST-21` yields the family
+`ST`. ST21-014 therefore gets no family exclusions at all. Harmless today, and
+not blindly fixable — its home set is "Starter Deck EX: Gear 5", whose most
+distinctive word is `gear`, and half the Luffy listings on eBay say "Gear 5".
 
 Which side of the split a row sits on decides the shape. A row in its code's
 **own** family is the original and *excludes* the rivals; a row in any other

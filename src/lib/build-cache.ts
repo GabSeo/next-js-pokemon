@@ -141,10 +141,11 @@ import path from "node:path";
  *      cache serves the old query text on a page whose whole point is that
  *      the query is legible.
  *
- *  12. The PRB-01 reprints turned out to carry DIFFERENT ART from the original
- *      print of the same code, which this codebase had explicitly assumed they
- *      did not. So a One Piece query now names the product when treatment
- *      cannot separate two rows, and OP05-119 searches the PRB-01 printing
+ *  12. The PRB-01 SEC Alt Art reprints turned out to carry DIFFERENT ART from
+ *      the original print of the same code, which this codebase had explicitly
+ *      assumed they did not. (Manga Rares are the opposite case — see 18.) So a
+ *      One Piece query now names the product when treatment cannot separate
+ *      two rows, and OP05-119 searches the PRB-01 printing
  *      alone. Every cached entry for it holds the BLENDED market — 57 listings
  *      spanning two different cards — and a warm cache would keep quoting a
  *      median that describes neither.
@@ -153,7 +154,7 @@ import path from "node:path";
  *      the corpus by row id, rather than the set findCardInLanguage happened
  *      to be searching. OP05-119 and OP01-024 both resolve to PRB-01 printings
  *      and both cached as "Awakening of the New Era" / "Romance Dawn" — the
- *      wrong card, now that the PRB reprints are known to carry different art.
+ *      wrong product, now that a PRB SEC Alt Art is known to be its own card.
  *      Card.set and Card.setCode are part of every cached entry.
  *
  *  14. A reprint's query now EXCLUDES the original product by set name —
@@ -176,13 +177,35 @@ import path from "node:path";
  *      "Dawn", which sat in the PRB card's Japanese tier. Cached entries hold
  *      it.
  *
+ *  17. A base print away from home now excludes its origin set name too. The
+ *      2nd Anniversary Set promo never excluded "Emperors in the New World",
+ *      the set its own code belongs to, because the family rule was gated on
+ *      the card carrying a treatment.
+ *
+ *  18. A query now names EVERY other product its code was printed in, not just
+ *      the origin, and starter-deck codes finally detect their own set. The
+ *      visible effect is on OP05-074, whose market was carrying four PSA 10
+ *      and ten raw PRB-01 listings — "Manga Alt Art PRB 01", "Premium Booster
+ *      -The Best-" — for a card printed in Awakening of the New Era.
+ *
+ *      Then partly back again, and deliberately: a Manga Rare reprinted into
+ *      PRB-01 keeps the exact manga panel, because Bandai cannot reissue one
+ *      under a code that already has it. Those printings are one card and one
+ *      market — OP05-074 PSA 10 medians $1,475 and $1,600 — so a treatment that
+ *      reprints unchanged now groups its products, including when BerryWallet
+ *      files the reprint under "(Reprint)" rather than "(Manga)".
+ *
+ *      OP05-119's SEC Alt Art stays split: a Premium Booster SEC Alt Art is its
+ *      own artwork, and sells for half the original — $790 against $400 in
+ *      English, $542 against $211 in Japanese.
+ *
  * Surviving deploys is the whole point of this cache (see the header
  * comment) — it is what keeps a redeploy from re-spending quota. So the fix
  * is not to shorten its reach but to make a deliberate computation change
  * able to say so. Bumping this starts a fresh namespace; the previous one is
  * simply never read again.
  */
-const CACHE_VERSION = 16;
+const CACHE_VERSION = 18;
 
 /** Versioned so a computation change cannot silently reuse pre-change values across a deploy — see CACHE_VERSION. */
 const CACHE_DIR = path.join(process.cwd(), ".next", "cache", "resolved-cards", `v${CACHE_VERSION}`);

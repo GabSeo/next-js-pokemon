@@ -24,12 +24,29 @@
  * 7,500 across its versions, so those must never be merged.
  *
  * PRODUCT IS THE SECOND AXIS, and this file used to deny that. It claimed the
- * OP05 original and the PRB-01 reprint were one artwork told apart only by a
- * slab label. They are not — the Premium Booster reprints carry DIFFERENT ART,
- * confirmed by the owner of the card and, in hindsight, by data already on
- * disk: no two rows of a code share a TCGplayer or Cardmarket product. See
- * deriveQuery's own comment for the measurements and for why the product is
- * named only when treatment cannot do the job.
+ * OP05 original and the PRB-01 reprint were one card told apart only by a slab
+ * label, so their listings could be merged.
+ *
+ * WHETHER A REPRINT IS THE SAME CARD DEPENDS ON THE TREATMENT, and both answers
+ * are real:
+ *
+ *   SEC Alt Art  PRB-01 gets its OWN artwork. OP05-119's Premium Booster print
+ *                is not the Awakening print redrawn or restamped, it is a
+ *                different picture — confirmed by the owner of the card.
+ *   Manga Rare   PRB-01 keeps the exact manga panel, always. Bandai cannot
+ *                reissue a manga artwork under a code that already has one; a
+ *                new manga drawing for the same character gets a NEW code in a
+ *                new set. Only production changes — a "PRB01" text watermark,
+ *                ink, foil texture.
+ *
+ * The market says the same thing, which is the useful corroboration since a
+ * price is what this file exists to produce. Measured PSA 10, 2026-09-06:
+ *
+ *   OP05-074 Manga Rare   OG median $1,475 (10)  PRB-01 $1,600  (4)   +8%
+ *   OP05-119 SEC Alt Art  OG median   $790 (45)  PRB-01   $400  (6)   -49%
+ *                     JA  OG median   $542 (28)  PRB-01   $211 (13)   -61%
+ *
+ * So the split is per TREATMENT — see reprintedIdentically below.
  *
  * NAME generates nothing, still.
  *
@@ -39,7 +56,8 @@
  * `luffy`, a short-but-real allowlist for "SP" — because none of those strings
  * is a treatment and none was ever eligible.
  */
-import { opRowsForCode, opSetFamily, opSetNames, type OpEntry } from "@/lib/one-piece-catalog";
+import { opRowsForCode, opSetFamily, type OpEntry } from "@/lib/one-piece-catalog";
+import { opSetVocabulary } from "@/data/one-piece-sets";
 
 /**
  * The closed set of version types, with the words sellers actually write.
@@ -108,10 +126,37 @@ const TREATMENTS: {
    * `-parallel` meaning the Parallel print and nothing wider.
    */
   excludeTerms?: string[];
+  /**
+   * This treatment's reprints ALWAYS carry the original artwork, so a product
+   * can never be grounds for splitting them.
+   *
+   * Manga is the case, and it is a rule rather than an observation: Bandai
+   * cannot reissue a manga panel under a code that already has one. A new manga
+   * drawing for the same character gets a NEW code in a new set. So a Manga
+   * Rare reprinted into PRB-01 is the same card, differing only by a "PRB01"
+   * text watermark, ink and foil texture.
+   *
+   * The market agrees, which is what a price cares about. OP05-074 PSA 10,
+   * 2026-09-06: the OG Awakening print ran 10 listings, $1,200-2,500, median
+   * $1,475; the PRB-01 reprint 4 listings, $1,399-3,100, median $1,600 —
+   * overlapping ranges, medians 8% apart.
+   *
+   * It does NOT generalise to other treatments, and OP05-119 is the proof. Its
+   * Premium Booster SEC Alt Art is a genuinely different picture, and the money
+   * follows: English OG median $790 across 45 listings against PRB-01's $400
+   * across 6, Japanese $542 across 28 against $211 across 13. Half the price,
+   * on both language tiers.
+   *
+   * Splitting is therefore the default and this flag is the exception, because
+   * the errors are not symmetric: splitting printings that should be grouped
+   * only narrows a search, while grouping printings that should be split quotes
+   * one card's price as another's.
+   */
+  reprintedIdentically?: true;
   excludable?: false;
 }[] = [
   { id: "alternate-art", match: /\balt(ernate)?\s*art\b/i, terms: ["alt", "alternate", "alternative", "altart"], excludable: false },
-  { id: "manga", match: /\bmanga\b/i, terms: ["manga"] },
+  { id: "manga", match: /\bmanga\b/i, terms: ["manga"], reprintedIdentically: true },
   // Sellers write the short form. Measured in docs/ebay-market-pipeline.md:
   // "Wanted Poster OP09-093 PSA 10" returns 3 results and 0 survive the title
   // check, while "Wanted OP09-093 PSA 10" returns 7 real matches.
@@ -251,7 +296,8 @@ export function clause(terms: string[], negate = false): string {
  * This file used to say the opposite — that OP05 and PRB-01 are one artwork
  * told apart only by a slab label, so grouping them was deliberate. That was
  * wrong, and the owner of the card caught it: PRB-01's OP05-119 SEC Alt Art is
- * NOT the OP05 SEC Alt Art. The Premium Booster reprints carry different art.
+ * NOT the OP05 SEC Alt Art: a Premium Booster SEC Alt Art is its own artwork.
+ * (A Manga Rare's reprint is not — see reprintedIdentically.)
  *
  * The corpus already said so and nothing was reading it. Every row for
  * OP05-119 has its OWN TCGplayer product and its own Cardmarket product —
@@ -287,118 +333,6 @@ export function clause(terms: string[], negate = false): string {
  */
 function familyOf(entry: OpEntry): string {
   return opSetFamily(entry.set.code).toLowerCase();
-}
-
-/**
- * The words sellers write for a product: its family code and the segments of
- * its set name.
- *
- * "Premium Booster -The Best-" splits into "premium booster" and "the best",
- * which is how sellers actually title it — measured, `("the best")` is what
- * finds "Monkey.D.Luffy OP05-119 Alternate Art Premium Booster -The Best-",
- * a listing that says PRB nowhere. ORed, so breadth here only ever adds.
- */
-function familyAliases(entry: OpEntry): string[] {
-  const segments = entry.set.name
-    .split(/[-–—]/)
-    .map((part) =>
-      part
-        .replace(/vol\.?\s*\d+/i, "")
-        .replace(/\((japanese|english)\)/i, "")
-        .trim()
-        .toLowerCase()
-    )
-    .filter((part) => part.length > 3);
-  return [...new Set([familyOf(entry), ...segments])];
-}
-
-/**
- * The one phrase that names a set, for use as an exclusion.
- *
- * The LONGEST segment, not every segment: "Premium Booster -The Best-" yields
- * "premium booster" and drops "the best". Both are fair game as POSITIVE terms,
- * where breadth only ever adds, but an exclusion is the one place a loose
- * phrase can silently destroy real listings — and "the best" is a phrase a
- * seller might write about condition rather than about the product.
- */
-/** How many distinct set names each word appears in. Built once, off disk. */
-let setNameDocFrequency: Map<string, number> | undefined;
-function wordFrequency(): Map<string, number> {
-  if (setNameDocFrequency) return setNameDocFrequency;
-  const df = new Map<string, number>();
-  for (const name of opSetNames()) {
-    for (const word of new Set(name.split(/[^a-z0-9]+/).filter(Boolean))) {
-      df.set(word, (df.get(word) ?? 0) + 1);
-    }
-  }
-  setNameDocFrequency = df;
-  return df;
-}
-
-/**
- * The one WORD of a set name that identifies it, alongside the phrase.
- *
- * A phrase alone is not enough, and a real listing showed why: our OP01-024 is
- * the PRB-01 print, and its Japanese tier carried
- *
- *   "PSA 10 GEM MINT JAPANESE ONE PIECE 2022 MONKEY LUFFY OP01-024 ROMANCE SR ALT ART"
- *
- * — the Romance Dawn card, written without "Dawn". `-"romance dawn"` cannot see
- * it; `-romance` removes it and its twin and nothing else (Japanese 15 -> 13,
- * English unchanged at 12, measured 2026-09-06).
- *
- * WHICH word, chosen by evidence rather than by taste. Splitting a set name and
- * excluding every word is how this breaks: "Awakening of the New Era" would
- * emit `-new`, and "new" is also in "Emperors in the New World" — a word that
- * names two products names neither. So a word's document frequency across the
- * corpus's own set names decides, lowest first, longest as the tie-break. That
- * makes "romance" beat "dawn", "awakening" beat "era", and "promotion" beat
- * "one" and "piece" in "One Piece Promotion Cards" — where `-one` would have
- * excluded the entire game.
- *
- * Words in the WANTED row's own set name are skipped outright. Without that
- * guard, excluding "Premium Booster -The Best-" contributes `-best`, which
- * would be right up until we track a card printed in "Premium Card Collection
- * -Best Selection Vol. 2-" — 59 of 100 One Piece PSA 10 titles carrying the
- * word "best" belong to that unrelated line.
- *
- * Words of three letters or fewer are out: they are "new", "era", "the", "of",
- * and none of them identifies anything.
- */
-function setNameWord(rival: OpEntry, wantedSetName: string): string | undefined {
-  const own = new Set(wantedSetName.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
-  const df = wordFrequency();
-  const candidates = rival.set.name
-    // The language suffix is not part of the product's name, and leaving it in
-    // was briefly catastrophic: "Romance Dawn (Japanese)" offered "japanese",
-    // which opSetNames strips and therefore scores at frequency zero — the most
-    // distinctive word there is. `-japanese` on the Japanese tier rejects the
-    // entire market.
-    .replace(/\((japanese|english)\)/i, "")
-    .toLowerCase()
-    .split(/[^a-z0-9]+/)
-    .filter((w) => w.length > 3 && !own.has(w));
-  if (candidates.length === 0) return undefined;
-  // A word the corpus has never seen scores LAST, not first. Unknown is not the
-  // same as distinctive — it usually means the word came from somewhere other
-  // than a set name, which is exactly when excluding on it is a guess.
-  const freq = (w: string) => df.get(w) ?? Number.MAX_SAFE_INTEGER;
-  return candidates.sort((a, b) => freq(a) - freq(b) || b.length - a.length)[0];
-}
-
-function setNamePhrase(entry: OpEntry): string | undefined {
-  const segments = entry.set.name
-    .split(/[-–—]/)
-    .map((part) =>
-      part
-        .replace(/vol\.?\s*\d+/i, "")
-        .replace(/\((japanese|english)\)/i, "")
-        .trim()
-        .toLowerCase()
-    )
-    .filter((part) => part.length > 3)
-    .sort((a, b) => b.length - a.length);
-  return segments[0];
 }
 
 /**
@@ -535,12 +469,33 @@ export function deriveQuery(code: string, wanted: OpEntry): DerivedQuery {
   // card in any other family is the reprint and must name itself, because a
   // listing that mentions no product at all is far more likely to be the
   // original — that is where the volume is (51 listings against 6).
-  const homeFamily = code.split("-")[0].toLowerCase();
+  /**
+   * The family the CODE itself names — OP09-061's own set is OP09.
+   *
+   * The fallback exists because a starter deck's code and its set code do not
+   * agree: `ST21-014` yields `ST21`, while the set `ST-21` yields the family
+   * `ST`. Without it no ST card ever recognised itself as at home, and ST cards
+   * are exactly the ones that get reprinted — Bandai puts them in Premium
+   * Booster sets, in bonus packs inside premium decks, and in the early errata
+   * revision packs, though never in a standard booster.
+   *
+   * The exact prefix wins when a row actually carries it, so OP09-061 resolves
+   * to OP09 rather than falling back to the OP promo family.
+   */
+  const codePrefix = code.split("-")[0].toLowerCase();
+  const familiesPresent = new Set(rows.map(familyOf));
+  const homeFamily = familiesPresent.has(codePrefix) ? codePrefix : codePrefix.replace(/\d+$/, "");
   const isHome = wantedFamily === homeFamily;
-  const familyAccept = rivalFamilies.length > 0 && !isHome ? familyAliases(wanted) : [];
+  // No positive product term when the card's own treatment is one that reprints
+  // unchanged: naming a product would split the very printings being grouped.
+  const reprintsUnchanged = wantedIds.some((id) => TREATMENTS.find((t) => t.id === id)?.reprintedIdentically);
+  const familyAccept =
+    rivalFamilies.length > 0 && !isHome && !reprintsUnchanged
+      ? (opSetVocabulary(wantedFamily)?.terms ?? [wantedFamily])
+      : [];
 
   /**
-   * The OTHER product, excluded BY SET NAME.
+   * EVERY other product this code was printed in, excluded by set name.
    *
    * A treatment exclusion cannot do this job, and OP01-024 is the proof.
    * BerryWallet calls the Romance Dawn printing "(Parallel)"; every seller
@@ -549,44 +504,91 @@ export function deriveQuery(code: string, wanted: OpEntry): DerivedQuery {
    * search for the PRB one. Two catalogues and a marketplace, three
    * vocabularies for one treatment.
    *
-   * A set NAME survives that. Sellers of the original write it — "PSA 10
-   * Monkey D. Luffy (Alt Art) Romance Dawn OP01-024 EN One Piece" — and
-   * sellers of the reprint do not. Measured PSA 10, 2026-09-06:
+   * A set NAME survives that. Sellers of one printing write its product and
+   * sellers of another do not. Measured PSA 10, 2026-09-06:
    *
    *   OP01-024 EN  19 -> 12 with -"romance dawn"; all 7 dropped say Romance
-   *                Dawn, none says PRB. The inverse group returns those same
-   *                7, none naming PRB. A clean cut, and two different markets
-   *                either side of it: $505-2,000 against $148-719.
+   *                Dawn, none says PRB. Two markets either side of that cut,
+   *                $505-2,000 against $148-719.
    *   OP01-024 JA  19 -> 15, same shape.
-   *   OP05-119 EN   6 -> 6. Nothing to lose where the positive PRB term has
-   *                already done the work.
+   *   OP05-119     6 -> 6, 13 -> 13, 9 -> 9 across EN PSA 10, JA PSA 10 and raw
+   *                once EVERY rival product is named, not just the origin.
    *
-   * Away from home, the home family's name is excluded unconditionally: the
-   * original is the printing that competes, and the vocabulary mismatch above
-   * means treatment terms cannot be trusted to have separated it. At home, the
-   * same-treatment rivals are excluded instead — the mirror case, and the only
-   * away rows treatment leaves ambiguous.
+   * ALL other families, not only the origin. A code can be printed in six
+   * products — OP05-119 is in OP-PR, OP05, OP09, OP11, PRB-01 and CM — and
+   * naming one of them leaves the rest to treatment terms that may not separate
+   * them.
+   *
+   * THE WORD COMES ONLY FROM THE HOME SET, and that restriction is the whole
+   * safety story. A code's own set is always a real numbered product; any other
+   * family may be a catalogue bucket whose name means nothing to a seller.
+   * "Premium Bandai Products" would contribute `-bandai`, its rarest word,
+   * against titles that overwhelmingly begin with "Bandai". Everything that is
+   * not the home set therefore contributes its full phrase only, which cannot
+   * misfire on a single common word.
+   *
+   * A DECK NEVER CONTRIBUTES A WORD EITHER, home or not. All 36 deck names in
+   * the corpus describe their contents rather than a theme — "Starter Deck 26:
+   * PURPLE/BLACK Monkey.D.Luffy", "Starter Deck 23: RED Shanks", "Starter Deck
+   * EX: Gear 5" — so their distinctive word is the card's own colour or its
+   * character. Measured: `-purple` cost the OP09-061 Parallel two real raw
+   * listings, both titled "PURPLE BLACK … Leader Alt Art", and `-gear` would hit
+   * every Gear 5 Luffy on the site. The other 53 names are themes — Romance
+   * Dawn, Paramount War, Kingdoms of Intrigue — and their words measured free.
    */
-  const excludedFamilies = isHome ? rivalFamilies : [homeFamily];
-  const familyReject =
-    wantedIds.length === 0
-      ? []
-      : [
-          ...new Set([
-            // The family CODE, but never when it is a prefix of this card's own
-            // code: `-op01` on OP01-024 would fight the card number itself.
-            // Two-letter families (OP, ST, LT, CM) are out for the same reason
-            // — they are prefixes of the tokens sellers write, OP05 and ST21.
-            ...excludedFamilies.filter((f) => f.length >= 3 && !code.toLowerCase().startsWith(f)),
-            // Both forms of the rival's set name: the phrase a seller writes in
-            // full, and the one word they write when they abbreviate it. See
-            // setNameWord for why it is one chosen word and not every word.
-            ...rows
-              .filter((r) => excludedFamilies.includes(familyOf(r)))
-              .flatMap((r) => [setNamePhrase(r), setNameWord(r, wanted.set.name)])
-              .filter((n): n is string => n !== undefined),
-          ]),
-        ];
+  /**
+   * The treatments this card carries that survive a reprint unchanged — see
+   * reprintedIdentically. A family holding one of them is the SAME card in a
+   * different wrapper, so it is grouped rather than excluded. That is what
+   * keeps OP05-074's four PRB-01 Manga listings in its own market instead of
+   * discarding a median that sits 8% from the original print's.
+   */
+  const regrouped = new Set(wantedIds.filter((id) => TREATMENTS.find((t) => t.id === id)?.reprintedIdentically));
+  /**
+   * Does this family hold a printing of the SAME artwork?
+   *
+   * Two ways it can. It carries the treatment itself — PRB-01's "(Manga)" row
+   * against OP05's "(Alternate Art) (Manga)". Or it carries a plain "Reprint",
+   * which is by definition an existing artwork printed again: OP09-004's only
+   * PRB-01 row is labelled exactly that, and without this second arm a Manga
+   * Rare whose reprint BerryWallet happened to file under "Reprint" would be
+   * split from itself.
+   *
+   * Safe because grouping only ever REMOVES an exclusion. The positive terms
+   * still gate: a PRB-01 listing has to say "manga" to be accepted at all, so
+   * admitting the family cannot let a base-card reprint in.
+   */
+  const sharesRegroupedTreatment = (family: string) =>
+    regrouped.size > 0 &&
+    rows.some((r) => {
+      if (familyOf(r) !== family) return false;
+      const ids = treatmentsOf(r.card.name);
+      return ids.some((id) => regrouped.has(id)) || ids.includes("reprint");
+    });
+
+  const excludedFamilies = [...familiesPresent].filter((f) => f !== wantedFamily && !sharesRegroupedTreatment(f));
+  /**
+   * ONE token per rival product, straight from data/one-piece-sets.ts: the
+   * short name a seller actually writes.
+   *
+   * That table replaced a derivation that emitted a long phrase AND a rare word
+   * for every rival, producing queries like `-"unnumbered promos" -"one piece
+   * promotion cards" -"awakening of the new era" -awakening -"emperors in the
+   * new world" -"a fist of divine speed"`. Most of those names are Cardmarket
+   * catalogue buckets no seller has ever typed, and every one measured zero
+   * effect. See that file's header for which products are excludable and why
+   * decks and buckets are not.
+   */
+  const familyReject = [
+    ...new Set(
+      excludedFamilies
+        .map((f) => opSetVocabulary(f)?.exclude)
+        .filter((t): t is string => typeof t === "string")
+        // Never a token the card's own code contains: `-op01` on OP01-024 would
+        // fight the card number itself.
+        .filter((t) => !code.toLowerCase().includes(t))
+    ),
+  ];
 
   return {
     queryText: [
