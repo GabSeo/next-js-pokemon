@@ -130,13 +130,24 @@ import path from "node:path";
  *      all three of the old answers, and the Japanese ones are wrong rather
  *      than merely stale.
  *
+ *  11. Every One Piece eBay query changed shape on 2026-09-06. The version
+ *      terms moved from the FRONT of the query to after the card code and
+ *      grade, the positive group is now always parenthesised, and a product
+ *      name is searched as its first two words rather than in full
+ *      ("2nd anniversary set" 24 listings -> "2nd anniversary" 32), and the
+ *      alternate-art group gained the joined "altart" spelling. Both the
+ *      listings in a cached graded-market entry and the "see all on eBay"
+ *      link stored beside them were computed by the old shape, so a warm
+ *      cache serves the old query text on a page whose whole point is that
+ *      the query is legible.
+ *
  * Surviving deploys is the whole point of this cache (see the header
  * comment) — it is what keeps a redeploy from re-spending quota. So the fix
  * is not to shorten its reach but to make a deliberate computation change
  * able to say so. Bumping this starts a fresh namespace; the previous one is
  * simply never read again.
  */
-const CACHE_VERSION = 10;
+const CACHE_VERSION = 11;
 
 /** Versioned so a computation change cannot silently reuse pre-change values across a deploy — see CACHE_VERSION. */
 const CACHE_DIR = path.join(process.cwd(), ".next", "cache", "resolved-cards", `v${CACHE_VERSION}`);

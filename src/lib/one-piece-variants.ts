@@ -47,6 +47,33 @@ import { opRowsForCode, type OpEntry } from "@/lib/one-piece-catalog";
  * write "Alt Art", OP01-024's write "Alternate Art", and a query carrying only
  * one spelling starves on the other card.
  *
+ * The four alt-art spellings are the four that EXIST, each verified against
+ * real PSA 10 listings on 2026-09-06 rather than imagined:
+ *
+ *   "Alt Art"          -> matched by `alt`         (also covers "Alt-Art":
+ *                                                   both layers split on
+ *                                                   non-alphanumerics)
+ *   "Alternate Art"    -> matched by `alternate`
+ *   "Alternative Art"  -> matched by `alternative`  43 listings
+ *   "ALTART"/"AltArt"  -> matched by `altart`
+ *
+ * No term subsumes another, because both the eBay query and titleMatchesCard
+ * work on WHOLE TOKENS: `alt` does not match "alternative", and nothing
+ * matches the joined form, whose only token is "altart". Which is why this is
+ * four listed spellings rather than a prefix rule — a prefix that caught all
+ * four would also catch "altered", "alto", "alternator".
+ *
+ * "altart" is not a typo. Some sellers write
+ * it as ONE word — "…HONESTY IMPACT ALTART PSA 10", "…Capone Gang Bege AltArt
+ * OP04-10…", both real PSA 10 listings on 2026-09-06 — and a joined spelling
+ * matches neither of the other two, because titleMatchesCard checks a
+ * single-word term against the title's WORD SET, and "alt" is not a word in
+ * "altart". No tracked card carries such a listing today, so eBay's own counts
+ * are unchanged (OP05-119 57/57, OP01-024 19/19, OP05-074 22/22) — this is
+ * about not silently discarding one the day it appears. Only alternate art is
+ * evidenced spelled this way; the other treatments got no such measurement, so
+ * they get no such term.
+ *
  * `excludable: false` marks a term that is safe to SEARCH for and unsafe to
  * EXCLUDE on, because sellers use it loosely. "Alt art" is that case: in One
  * Piece it colloquially means "any special-art version", so Manga and Wanted
@@ -56,7 +83,7 @@ import { opRowsForCode, type OpEntry } from "@/lib/one-piece-catalog";
  * vocabulary does not, and the query has to live in seller vocabulary.
  */
 const TREATMENTS: { id: string; match: RegExp; terms: string[]; excludable?: false }[] = [
-  { id: "alternate-art", match: /\balt(ernate)?\s*art\b/i, terms: ["alt", "alternate"], excludable: false },
+  { id: "alternate-art", match: /\balt(ernate)?\s*art\b/i, terms: ["alt", "alternate", "alternative", "altart"], excludable: false },
   { id: "manga", match: /\bmanga\b/i, terms: ["manga"] },
   // Sellers write the short form. Measured in docs/ebay-market-pipeline.md:
   // "Wanted Poster OP09-093 PSA 10" returns 3 results and 0 survive the title
@@ -115,6 +142,33 @@ export function productOf(name: string): string | undefined {
   return rest.length > 0 ? rest.join(" ") : undefined;
 }
 
+/**
+ * The searchable form of a product name: its first two words, quoted as a
+ * phrase by clause().
+ *
+ * Sellers write a product's HEAD and vary or drop its TAIL. Measured live on
+ * 2026-09-06, PSA 10 tier, same aspect filters as production:
+ *
+ *   OP09-061  ("2nd anniversary set")        24   ("2nd anniversary")        32
+ *   ST21-014  ("3rd anniversary treasure")    4   ("3rd anniversary")         5
+ *   P-033     ("event pack vol. 2")           9   ("event pack")             10
+ *
+ * Two words, not one and not all of them. All of them keeps a tail — "Set",
+ * "Cup", "Vol. 2" — that a seller need not have written, and every listing
+ * missing it is lost. One word is not a product: it collapses "Event Pack" and
+ * "Judge Pack" onto "Pack", "2nd Anniversary" and "3rd Anniversary" onto their
+ * ordinals, and — the failure this codebase already hit once — "Luffy Deck"
+ * onto a bare `luffy` that matches every Luffy card ever listed. Two words is
+ * the shortest form that still names the product.
+ *
+ * The extra listings this admits are the SAME card in a neighbouring product —
+ * ST21-014's fifth result is titled "3rd Anniversary CP Pack" — which is the
+ * grouping this file already makes deliberately for the OP05/PRB-01 reprint.
+ */
+function productTerm(product: string): string {
+  return product.split(/\s+/).slice(0, 2).join(" ").toLowerCase();
+}
+
 function termsFor(ids: string[], forExclusion = false): string[] {
   return [
     ...new Set(
@@ -140,11 +194,20 @@ export type DerivedQuery = {
   competing: string[];
 };
 
-function clause(terms: string[], negate = false): string {
+/**
+ * One clause of the query.
+ *
+ * The positive group is ALWAYS parenthesised, even with a single term. eBay
+ * treats `(manga)` and `manga` identically, so this costs nothing and buys the
+ * thing that matters when reading a live query: every card's search has the
+ * same shape, and the version terms are visibly separate from the card number
+ * and the grade.
+ */
+export function clause(terms: string[], negate = false): string {
   if (terms.length === 0) return "";
   const fmt = (t: string) => (t.includes(" ") ? `"${t}"` : t);
   if (negate) return terms.map((t) => `-${fmt(t)}`).join(" ");
-  return terms.length > 1 ? `(${terms.map(fmt).join(",")})` : fmt(terms[0]);
+  return `(${terms.map(fmt).join(",")})`;
 }
 
 /**
@@ -169,7 +232,7 @@ export function deriveQuery(code: string, wanted: OpEntry): DerivedQuery {
   ];
 
   const product = wantedIds.length === 0 ? productOf(wanted.card.name) : undefined;
-  const accept = wantedIds.length > 0 ? termsFor(wantedIds) : product ? [product.toLowerCase()] : [];
+  const accept = wantedIds.length > 0 ? termsFor(wantedIds) : product ? [productTerm(product)] : [];
   const reject = termsFor(competingIds, true);
 
   return {
@@ -216,7 +279,7 @@ export function deriveQueryForCard(
   if (!name) return undefined;
   const ids = treatmentsOf(name).filter((id) => !NON_SEPARATING.has(id));
   const product = ids.length === 0 ? productOf(name) : undefined;
-  const accept = ids.length > 0 ? termsFor(ids) : product ? [product.toLowerCase()] : [];
+  const accept = ids.length > 0 ? termsFor(ids) : product ? [productTerm(product)] : [];
   if (accept.length === 0) return undefined;
   return {
     queryText: clause(accept),

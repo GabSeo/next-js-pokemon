@@ -42,30 +42,73 @@ market guard → **local price sort** → first 4 (`DISPLAY_LIMIT`).
 
 Pokémon sends **name + number**: `Lugia V 186/195 PSA 10`.
 
-One Piece **throws the character name away** and sends **variant words +
-code**: `Manga OP09-004 PSA 10`, `Wanted OP09-093 PSA 10`.
+One Piece **throws the character name away** and sends **code, grade, then a
+version clause**, in that fixed order:
 
-Two measured reasons:
+```
+OP05-119 PSA 10 (alt,alternate,alternative,altart) -manga -wanted -sp -gold
+OP09-093 PSA 10 (wanted) -manga -sp -silver -gold
+OP09-061 PSA 10 ("2nd anniversary") -jumbo -parallel
+```
+
+Same shape for every card and both languages. The positive group is always
+parenthesised even when it holds one term, so the query stays readable in the
+"see all on eBay" link a visitor clicks — a person can see what was asked.
+Clause position is cosmetic to eBay and was measured to be so: the group first
+and the group last return identical counts (OP09-004 5/5, OP05-074 22/22).
+
+Two measured reasons the code alone is not enough:
 
 - A bare number returns every print sharing that `card_number`. Shanks
   OP09-004 gave 20 results with the tracked Manga print barely represented
   (1 survivor). Adding the variant word narrowed eBay's match set *before*
   its sort and limit applied: 1 → 7 real results.
-- Only the **first word** is used (`tagFirstWord`). `"Wanted Poster
-  OP09-093 PSA 10"` returns **0**; `"Wanted OP09-093 PSA 10"` returns 6
-  (EN) and 14 (JA). Sellers write the short form.
+- Sellers write the **short form**. `"Wanted Poster OP09-093 PSA 10"` returns
+  **0**; `"Wanted OP09-093 PSA 10"` returns 6 (EN) and 14 (JA).
+- Alternate art has **four** live spellings and no term subsumes another,
+  because both the query and the title check work on whole tokens:
 
-**Where the variant words come from**, in precedence order:
+  | in titles | matched by | evidence, PSA 10, 2026-09-06 |
+  |---|---|---|
+  | `Alt Art`, `Alt-Art` | `alt` | both layers split on non-alphanumerics |
+  | `Alternate Art` | `alternate` | OP01-024's own sellers |
+  | `Alternative Art` | `alternative` | 43 listings |
+  | `ALTART`, `AltArt` | `altart` | "…HONESTY IMPACT ALTART PSA 10" |
 
-1. `ref.ebayVariantTags[en|jp]` — hand-written, **used verbatim**, per
-   language.
-2. Otherwise **derived from `card.printName`** (BerryWallet's own
-   parenthetical), treated as one tag and first-worded.
+  `alt` does not match "alternative", and nothing matches the joined form
+  whose only token is `altart`. Four listed spellings rather than a prefix
+  rule — a prefix broad enough for all four also catches "altered" and "alto".
+  Only alternate art is evidenced this way; no other treatment gets extra
+  spellings on speculation.
 
-The derived value was verified character-for-character identical to the
-hand-written `lookup.variantTags` for all five tracked cards, so adding a
-card needs **no eBay tuning**. `lookup.variantTags` still exists for its real
-job: disambiguating *which* BerryWallet product to resolve.
+### Where the clause comes from
+
+`lib/one-piece-variants.ts`, from the offline corpus, with one closed
+vocabulary of **treatments** — the versions Bandai actually prints. See that
+file's header for the model and why products and alternate character names
+generate nothing. In short:
+
+- **positive terms** = the wanted row's treatments, ORed;
+- **exclusions** = the treatments its SIBLINGS under the same code carry and
+  it does not;
+- a row with no treatment at all searches on its **product**, shortened to
+  the product name's **first two words**.
+
+That last rule is measured, PSA 10 tier, 2026-09-06:
+
+| card | full product name | first two words |
+|---|---|---|
+| OP09-061 | `("2nd anniversary set")` **24** | `("2nd anniversary")` **32** |
+| ST21-014 | `("3rd anniversary treasure")` **4** | `("3rd anniversary")` **5** |
+| P-033 | `("event pack vol. 2")` **9** | `("event pack")` **10** |
+
+Sellers write a product's head and vary or drop its tail — `Set`, `Cup`,
+`Vol. 2` — so the tail only excludes real listings. One word would not be a
+product: it collapses `Event Pack` and `Judge Pack` onto `Pack`, and
+`Luffy Deck` onto a bare `luffy` that matches every Luffy card ever listed.
+
+A hand-written `ref.ebayVariantTags[en|jp]` still wins over all of it, and is
+rendered through the same clause builder so its shape matches everything else.
 
 ### Why `ebayVariantTags` is per-language
 

@@ -182,9 +182,19 @@ function conditionFilter(condition: EbayCondition): string {
  * TCGdex's French translation or BerryWallet's real One Piece print name;
  * localized number, e.g. a Japanese Pokémon print's own set number).
  */
-function conditionQuery(card: Card, condition: EbayCondition, nameOverride?: string, numberOverride?: string): string {
+function conditionQuery(
+  card: Card,
+  condition: EbayCondition,
+  nameOverride?: string,
+  numberOverride?: string,
+  querySuffix?: string
+): string {
   const base = cardSearchTerms(card, nameOverride, numberOverride);
-  return condition === "Raw" ? base : `${base} ${condition}`;
+  const graded = condition === "Raw" ? base : `${base} ${condition}`;
+  // The version clause goes LAST, after the grade, so a live query reads
+  // "OP05-119 PSA 10 (alt,alternate) -manga" — card, grade, then the terms
+  // qualifying which version. See cardSearchTerms' own note.
+  return querySuffix ? `${graded} ${querySuffix}` : graded;
 }
 
 export type EbayLanguage = "English" | "Japanese" | "French";
@@ -627,9 +637,11 @@ async function runSearch(
   /** Competing printings of this card's own code — see titleMatchesCard. */
   rejectTags?: string[],
   /** Alternative spellings, ORed — see titleMatchesCard. */
-  acceptAnyTags?: string[]
+  acceptAnyTags?: string[],
+  /** The version clause, appended after the grade — see conditionQuery. */
+  querySuffix?: string
 ): Promise<RunSearchResult> {
-  const query = conditionQuery(card, condition, nameOverride, numberOverride);
+  const query = conditionQuery(card, condition, nameOverride, numberOverride, querySuffix);
   const qs = new URLSearchParams({
     q: query,
     category_ids: CCG_INDIVIDUAL_CARDS_CATEGORY,
@@ -847,15 +859,17 @@ export async function searchActiveListings(
   /** Competing printings of this card's own code — see titleMatchesCard. */
   rejectTags?: string[],
   /** Alternative spellings, ORed — see titleMatchesCard. */
-  acceptAnyTags?: string[]
+  acceptAnyTags?: string[],
+  /** The version clause, appended after the grade — see conditionQuery. */
+  querySuffix?: string
 ): Promise<EbaySearchResult> {
-  const primary = await runSearch(card, condition, language, PRIMARY_SORT, nameOverride, numberOverride, variantTags, guard, rejectTags, acceptAnyTags);
+  const primary = await runSearch(card, condition, language, PRIMARY_SORT, nameOverride, numberOverride, variantTags, guard, rejectTags, acceptAnyTags, querySuffix);
   if (primary.listings.length > MERGE_THRESHOLD) return primary;
 
   // Best Match is not recency-biased the way the sorted searches are, so it
   // can surface a real listing that has simply been sitting unsold — which
   // matters most on exactly the thin markets that trip MERGE_THRESHOLD.
-  const fallback = await runSearch(card, condition, language, undefined, nameOverride, numberOverride, variantTags, guard, rejectTags, acceptAnyTags);
+  const fallback = await runSearch(card, condition, language, undefined, nameOverride, numberOverride, variantTags, guard, rejectTags, acceptAnyTags, querySuffix);
 
   // Merged rather than replaced: the point is to REACH four rows, and either
   // search alone may be short. Deduped by item URL, since the same listing

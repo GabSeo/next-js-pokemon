@@ -6,7 +6,7 @@ import { getVintedListingsForCard, relativeTimeLabel, TRES_BON_ETAT, vintedQuery
 import { getJapaneseCardText } from "@/lib/cards";
 import { buildCached } from "@/lib/build-cache";
 import { cardRefs } from "@/data/card-refs";
-import { deriveQueryForCard } from "@/lib/one-piece-variants";
+import { clause, deriveQueryForCard } from "@/lib/one-piece-variants";
 import type { Card } from "@/lib/types";
 
 export const GRADED_MARKET_CONDITIONS: EbayCondition[] = ["PSA 10", "PSA 9", "PSA 8", "Raw"];
@@ -403,7 +403,9 @@ async function fetchActiveTier(
   /** Competing printings of this card's code — see lib/one-piece-variants.ts. */
   rejectTags?: string[],
   /** Alternative spellings of the wanted treatment, ORed — see titleMatchesCard. */
-  acceptAnyTags?: string[]
+  acceptAnyTags?: string[],
+  /** The version clause, appended after the grade — see conditionQuery. */
+  querySuffix?: string
 ): Promise<GradedMarketTypeData> {
   try {
     const { listings, total, asks } = await searchActiveListings(
@@ -415,7 +417,8 @@ async function fetchActiveTier(
       variantTags,
       marketGuardFor(card, condition, language),
       rejectTags,
-      acceptAnyTags
+      acceptAnyTags,
+      querySuffix
     );
     if (listings.length === 0) {
       console.warn(
@@ -432,7 +435,7 @@ async function fetchActiveTier(
         medianPrice: 0,
         currency: card.currency,
         count: 0,
-        seeAllUrl: conditionSearchLink(card, condition, language, nameOverride, numberOverride),
+        seeAllUrl: conditionSearchLink(card, condition, language, nameOverride, numberOverride, querySuffix),
         rows: [],
         asks: [],
       };
@@ -444,7 +447,7 @@ async function fetchActiveTier(
         medianPrice: med,
         currency: card.currency,
         count: total,
-        seeAllUrl: conditionSearchLink(card, condition, language, nameOverride, numberOverride),
+        seeAllUrl: conditionSearchLink(card, condition, language, nameOverride, numberOverride, querySuffix),
         asks,
         rows: listings.map((listing) => ({
           date: listing.listedDate
@@ -468,7 +471,7 @@ async function fetchActiveTier(
     medianPrice: median(rows.map((r) => r.price))!,
     currency: card.currency,
     count: total,
-    seeAllUrl: conditionSearchLink(card, condition, language, nameOverride, numberOverride),
+    seeAllUrl: conditionSearchLink(card, condition, language, nameOverride, numberOverride, querySuffix),
     // Sorted rather than taken as-is: asks is an ascending array by contract,
     // and the illustrative rows are ordered for display, not by price.
     asks: rows.map((r) => r.price).sort((a, b) => a - b),
@@ -491,7 +494,8 @@ function buildSoldTier(
   condition: EbayCondition,
   language: EbayLanguage,
   nameOverride?: string,
-  numberOverride?: string
+  numberOverride?: string,
+  querySuffix?: string
 ): GradedMarketTypeData {
   const { rows, total } = illustrativeSoldListings(card, condition);
   return {
@@ -499,7 +503,7 @@ function buildSoldTier(
     medianPrice: median(rows.map((r) => r.price))!,
     currency: card.currency,
     count: total,
-    seeAllUrl: conditionSearchLink(card, condition, language, nameOverride, numberOverride),
+    seeAllUrl: conditionSearchLink(card, condition, language, nameOverride, numberOverride, querySuffix),
     asks: rows.map((r) => r.price).sort((a, b) => a - b),
     rows: rows.map((row) => ({ ...row, currency: card.currency })),
   };
@@ -733,14 +737,18 @@ async function resolveGradedMarketData(card: Card): Promise<GradedMarketData | u
     tags: string[] | undefined;
     acceptAny: string[] | undefined;
     nameOverride: string | undefined;
+    suffix: string | undefined;
     reject: string[] | undefined;
   } => {
     if (card.franchise !== "one-piece")
-      return { tags: undefined, acceptAny: undefined, nameOverride: undefined, reject: undefined };
+      return { tags: undefined, acceptAny: undefined, nameOverride: undefined, suffix: undefined, reject: undefined };
     const ref = cardRefs.find((r) => r.slug === card.slug);
     const override = language === "Japanese" ? ref?.ebayVariantTags?.jp : ref?.ebayVariantTags?.en;
     if (override && override.length > 0) {
-      return { tags: override, acceptAny: undefined, nameOverride: override.join(" "), reject: undefined };
+      // Same SHAPE as a derived query even though the content is hand-written:
+      // the code identifies the card, the parenthesised group qualifies which
+      // version, and both sit in the same place in every One Piece query.
+      return { tags: override, acceptAny: undefined, nameOverride: "", suffix: clause(override), reject: undefined };
     }
 
     /**
@@ -771,7 +779,11 @@ async function resolveGradedMarketData(card: Card): Promise<GradedMarketData | u
         return {
           tags: undefined,
           acceptAny: derived.acceptAny,
-          nameOverride: derived.queryText,
+          // "" not undefined: cardSearchTerms reads "" as "no name", which is
+          // what a One Piece query wants — the character name is thrown away
+          // and the code identifies the card. See its own doc comment.
+          nameOverride: "",
+          suffix: derived.queryText,
           reject: derived.reject,
         };
       }
@@ -796,7 +808,8 @@ async function resolveGradedMarketData(card: Card): Promise<GradedMarketData | u
     const tags = derived ? [derived] : ref && ref.lookup.by === "code" ? ref.lookup.variantTags : undefined;
     // "" (not undefined) so cardSearchTerms reads it as "no name" rather
     // than "use the card's own name" — see its doc comment.
-    return { tags, acceptAny: undefined, nameOverride: tags?.map(tagFirstWord).join(" ") ?? "", reject: undefined };
+    const terms = tags?.map(tagFirstWord) ?? [];
+    return { tags, acceptAny: undefined, nameOverride: "", suffix: clause(terms) || undefined, reject: undefined };
   };
 
   const activeResults = await Promise.all(
@@ -810,7 +823,8 @@ async function resolveGradedMarketData(card: Card): Promise<GradedMarketData | u
           language === "Japanese" ? japaneseNumberOverride : undefined,
           oneQueryInputs(language).tags,
           oneQueryInputs(language).reject,
-          oneQueryInputs(language).acceptAny
+          oneQueryInputs(language).acceptAny,
+          oneQueryInputs(language).suffix
         )
       )
     )
@@ -830,7 +844,14 @@ async function resolveGradedMarketData(card: Card): Promise<GradedMarketData | u
     languages: GRADED_MARKET_LANGUAGES.map((language) => ({
       language,
       active: activeByKey.get(`${condition}:${language}`)!,
-      sold: buildSoldTier(card, condition, language, oneQueryInputs(language).nameOverride, language === "Japanese" ? japaneseNumberOverride : undefined),
+      sold: buildSoldTier(
+        card,
+        condition,
+        language,
+        oneQueryInputs(language).nameOverride,
+        language === "Japanese" ? japaneseNumberOverride : undefined,
+        oneQueryInputs(language).suffix
+      ),
     })),
   }));
 
