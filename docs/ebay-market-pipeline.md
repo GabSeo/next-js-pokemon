@@ -204,6 +204,56 @@ breadth can only add. A family code is excluded only when it is 3+ characters
 *and* not a prefix of the card's own code: `-op01` on OP01-024 would fight the
 card number itself.
 
+### Parallel and Alternate Art are one treatment
+
+Bandai's early sets say "Parallel", its later ones say "Alternate Art", for the
+same thing. Modelling them separately made them look like competing printings
+of one code:
+
+- Across 10,689 corpus rows, **no code carries a Parallel row and a separate
+  Alt Art row**. Two treatments would collide somewhere; these never do (174
+  parallel-only, 504 alt-only).
+- The only two rows carrying both say `(Parallel) (Manga) (Alternate Art)` —
+  one card named three ways.
+- Sellers write them together: `PSA 10 Luffy OP01-024 SR Parallel Alt Art THE
+  BEST PRB-01`.
+
+Splitting them meant OP01-024 emitted `-parallel` **against its own card**,
+discarding two real Japanese PSA 10 listings. Merging drops `-parallel`
+everywhere, which costs nothing: the 2nd Anniversary promo, the one card that
+relied on it, returns 32 PSA 10 and 10 raw listings either way.
+
+**The consequence: the product becomes the only discriminator.** OP01-024's OG
+Romance Dawn printing and its PRB-01 printing are now the same treatment in two
+products, and a PRB-01 alt art is a new picture — confirmed by the card's owner
+at SR, and by OP05-119 at SEC. So its query must NAME the product. Without
+`(prb,"premium booster","the best")` it returns 26 English PSA 10 listings
+instead of 8, the extras all OG Parallels at $135–245 that never say "Romance
+Dawn" for an exclusion to catch.
+
+### Only the most specific treatment is searched
+
+Every Manga Rare is an alternate art. So a row labelled `(Alternate Art) (Manga)`
+is one thing named twice, and asking for both is worse than redundant — the
+terms are ORed, so `alt` admits the **separate plain Alternate Art printing**
+that the same code also has.
+
+OP05-074 PSA 10, 2026-09-06:
+
+| asks for | listings | range | median |
+|---|---|---|---|
+| `(alt,alternate,alternative,altart,manga)` | 22 | $69.99–3,100 | $1,399 |
+| `(manga)` | 14 | $1,200–3,100 | $1,475 |
+
+The median barely moves, but the four cheapest — the ones the panel displays —
+were $69.99, $80, $84.99 and $120, none of them this card. A `implies` field on
+the treatment carries the relation, so this is a subtype rule rather than a
+per-card fix.
+
+Note the direction: `implies` only strips POSITIVE terms. The broad treatment is
+still what a sibling gets excluded on, and `alternate-art` remains
+`excludable: false` for the reasons above.
+
 ### Rarity: excluded, never required
 
 Required, a rarity term is destructive — most sellers do not write it, so

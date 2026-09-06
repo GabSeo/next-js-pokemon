@@ -199,13 +199,27 @@ import path from "node:path";
  *      own artwork, and sells for half the original — $790 against $400 in
  *      English, $542 against $211 in Japanese.
  *
+ *  19. A card carrying several treatments now searches only the most specific
+ *      one: every Manga Rare is an alternate art, so OP05-074 asks for
+ *      `(manga)` rather than `(alt,...,manga)`. The OR group had been letting
+ *      the code's SEPARATE plain Alt Art printing in, and since the panel shows
+ *      the cheapest asks, a $1,400 card was displaying live asks of $69.99,
+ *      $80, $84.99 and $120 — all of them a different printing, all of them in
+ *      the cached entry.
+ *
+ *  20. Parallel and Alternate Art merged into one treatment — Bandai's early
+ *      sets say one and its later sets say the other. They had been modelled as
+ *      competing printings, so OP01-024 emitted `-parallel` against its own
+ *      card and threw away listings titled "SR Parallel Alt Art THE BEST
+ *      PRB-01". Two of them on the Japanese PSA 10 tier, in every cached entry.
+ *
  * Surviving deploys is the whole point of this cache (see the header
  * comment) — it is what keeps a redeploy from re-spending quota. So the fix
  * is not to shorten its reach but to make a deliberate computation change
  * able to say so. Bumping this starts a fresh namespace; the previous one is
  * simply never read again.
  */
-const CACHE_VERSION = 18;
+const CACHE_VERSION = 20;
 
 /** Versioned so a computation change cannot silently reuse pre-change values across a deploy — see CACHE_VERSION. */
 const CACHE_DIR = path.join(process.cwd(), ".next", "cache", "resolved-cards", `v${CACHE_VERSION}`);

@@ -112,21 +112,6 @@ const TREATMENTS: {
   match: RegExp;
   terms: string[];
   /**
-   * The subset of `terms` safe to EXCLUDE on, when that is narrower than the
-   * terms searched for. Defaults to all of them.
-   *
-   * Parallel needs this and alternate art does not, even though both are
-   * alt-art treatments, because the asymmetry lives in seller vocabulary
-   * rather than in Bandai's. A Parallel is SEARCHED for as "parallel" or as
-   * "alt art": OP09-061's Leader Parallel returns 18 listings on `(parallel)`
-   * alone and 40 once the alt-art spellings join it, with titles reading
-   * "Monkey.D.Luffy 2024 Leader Alt Art OP09-061". It must be EXCLUDED on
-   * "parallel" alone, because `-alt` is the exclusion already measured to cost
-   * OP09-093 nine of fifteen listings, and OP01-024's query depends on
-   * `-parallel` meaning the Parallel print and nothing wider.
-   */
-  excludeTerms?: string[];
-  /**
    * This treatment's reprints ALWAYS carry the original artwork, so a product
    * can never be grounds for splitting them.
    *
@@ -141,11 +126,21 @@ const TREATMENTS: {
    * $1,475; the PRB-01 reprint 4 listings, $1,399-3,100, median $1,600 —
    * overlapping ranges, medians 8% apart.
    *
-   * It does NOT generalise to other treatments, and OP05-119 is the proof. Its
-   * Premium Booster SEC Alt Art is a genuinely different picture, and the money
-   * follows: English OG median $790 across 45 listings against PRB-01's $400
-   * across 6, Japanese $542 across 28 against $211 across 13. Half the price,
-   * on both language tiers.
+   * IT DOES NOT GENERALISE TO ALT ART, confirmed twice and at two rarities. A
+   * PRB-01 reprint of an alt art is a NEW picture:
+   *
+   *   OP05-119  SEC  English OG median $790 across 45 listings against PRB-01's
+   *                  $400 across 6; Japanese $542 across 28 against $211 across
+   *                  13. Half the price on both tiers.
+   *   OP01-024  SR   Same answer from the card's owner. Its PRB-01 print is not
+   *                  the Romance Dawn Parallel's artwork.
+   *
+   * Which is why alt art is not flagged and manga is, and why OP01-024's query
+   * has to NAME the product: once Parallel and Alt Art merged into one
+   * treatment (see the entry below), nothing else tells the two printings
+   * apart. Drop that product group and the OG Romance Dawn Parallel floods in —
+   * 26 English PSA 10 listings instead of 8, at $135-245, none of them saying
+   * "Romance Dawn" for an exclusion to catch.
    *
    * Splitting is therefore the default and this flag is the exception, because
    * the errors are not symmetric: splitting printings that should be grouped
@@ -153,23 +148,54 @@ const TREATMENTS: {
    * one card's price as another's.
    */
   reprintedIdentically?: true;
+  /**
+   * The broader treatment this one IS a kind of.
+   *
+   * Every Manga Rare is an alternate art. So a card labelled "(Alternate Art)
+   * (Manga)" is not two things, it is one thing named twice, and searching for
+   * both is worse than redundant: the terms are ORed, so `alt` lets in the
+   * SEPARATE plain Alternate Art printing the same code also has.
+   *
+   * Measured on OP05-074 PSA 10, 2026-09-06. `(alt,alternate,alternative,
+   * altart,manga)` returns 22 listings spanning $69.99-3,100, and its four
+   * cheapest — the ones the panel actually displays — are plain Alt Arts at
+   * $69.99, $80, $84.99 and $120, none of them this card. `(manga)` alone
+   * returns 14, every one the Manga Rare, $1,200-3,100.
+   *
+   * So when a card carries a treatment and something that treatment implies,
+   * only the specific one generates POSITIVE terms. The broad one is still what
+   * a sibling gets excluded on.
+   */
+  implies?: string;
   excludable?: false;
 }[] = [
-  { id: "alternate-art", match: /\balt(ernate)?\s*art\b/i, terms: ["alt", "alternate", "alternative", "altart"], excludable: false },
-  { id: "manga", match: /\bmanga\b/i, terms: ["manga"], reprintedIdentically: true },
+  // PARALLEL IS ALT ART. Bandai's early sets say "Parallel" and its later ones
+  // say "Alternate Art" for the same thing, and this used to be two treatments,
+  // which made them look like competing printings of one code. They are not:
+  //
+  //   - Across 10,689 corpus rows, NO code carries a Parallel row and a
+  //     separate Alternate Art row. Two treatments would collide somewhere;
+  //     these never do. 174 rows say parallel, 504 say alt art.
+  //   - The two rows that carry both say "(Parallel) (Manga) (Alternate Art)" —
+  //     one card named three ways, not three versions.
+  //   - Sellers write them together: "PSA 10 Luffy OP01-024 SR Parallel Alt Art
+  //     THE BEST PRB-01". Splitting them meant OP01-024 emitted `-parallel`
+  //     against its own card, discarding two real Japanese PSA 10 listings.
+  //
+  // Merging also drops `-parallel` everywhere, which cost nothing: the 2nd
+  // Anniversary promo, the one card that relied on it, returns 32 PSA 10 and 10
+  // raw listings either way.
+  {
+    id: "alternate-art",
+    match: /\balt(ernate)?\s*art\b|\bparallel\b/i,
+    terms: ["alt", "alternate", "alternative", "altart", "parallel"],
+    excludable: false,
+  },
+  { id: "manga", match: /\bmanga\b/i, terms: ["manga"], reprintedIdentically: true, implies: "alternate-art" },
   // Sellers write the short form. Measured in docs/ebay-market-pipeline.md:
   // "Wanted Poster OP09-093 PSA 10" returns 3 results and 0 survive the title
   // check, while "Wanted OP09-093 PSA 10" returns 7 real matches.
   { id: "wanted-poster", match: /\bwanted\s*poster\b/i, terms: ["wanted"] },
-  // Sellers call this "alt art" as readily as "parallel" — see excludeTerms
-  // on the type above for the measurement and for why the exclusion stays
-  // narrow while the search goes wide.
-  {
-    id: "parallel",
-    match: /\bparallel\b/i,
-    terms: ["parallel", "alt", "alternate", "alternative", "altart"],
-    excludeTerms: ["parallel"],
-  },
   { id: "sp", match: /\bsp\b/i, terms: ["sp"] },
   { id: "gold", match: /\bgold\b/i, terms: ["gold"] },
   { id: "silver", match: /\bsilver\b/i, terms: ["silver"] },
@@ -256,7 +282,7 @@ function termsFor(ids: string[], forExclusion = false): string[] {
         const t = TREATMENTS.find((x) => x.id === id);
         if (!t) return [];
         if (forExclusion && t.excludable === false) return [];
-        return forExclusion ? (t.excludeTerms ?? t.terms) : t.terms;
+        return t.terms;
       })
     ),
   ];
@@ -396,7 +422,14 @@ export function deriveQuery(code: string, wanted: OpEntry): DerivedQuery {
   ];
 
   const product = wantedIds.length === 0 ? productOf(wanted.card.name) : undefined;
-  const accept = wantedIds.length > 0 ? termsFor(wantedIds) : product ? [productTerm(product)] : [];
+  // Only the most specific treatments generate positive terms: "(Alternate Art)
+  // (Manga)" searches on `manga` alone, because every Manga Rare is an alt art
+  // and naming both would OR the plain Alt Art printing back in. See `implies`.
+  const impliedIds = new Set(
+    wantedIds.map((id) => TREATMENTS.find((t) => t.id === id)?.implies).filter((id): id is string => id !== undefined)
+  );
+  const specificIds = wantedIds.filter((id) => !impliedIds.has(id));
+  const accept = wantedIds.length > 0 ? termsFor(specificIds) : product ? [productTerm(product)] : [];
   const reject = termsFor(competingIds, true);
 
   // The rows treatment CANNOT separate from this one: same version, different
@@ -498,11 +531,10 @@ export function deriveQuery(code: string, wanted: OpEntry): DerivedQuery {
    * EVERY other product this code was printed in, excluded by set name.
    *
    * A treatment exclusion cannot do this job, and OP01-024 is the proof.
-   * BerryWallet calls the Romance Dawn printing "(Parallel)"; every seller
-   * calls it "Alt Art". So the query dutifully sent `-parallel`, aimed at a
-   * word nobody writes, and the original print sailed straight through the
-   * search for the PRB one. Two catalogues and a marketplace, three
-   * vocabularies for one treatment.
+   * BerryWallet calls the Romance Dawn printing "(Parallel)" and the PRB-01 one
+   * "(Alternate Art)", but those are the same treatment under two names, so no
+   * treatment term separates them at all — the original print sailed straight
+   * through the search for the reprint. What actually differs is the PRODUCT.
    *
    * A set NAME survives that. Sellers of one printing write its product and
    * sellers of another do not. Measured PSA 10, 2026-09-06:
