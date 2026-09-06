@@ -139,6 +139,31 @@ OP01-024 is the card where a hand-written `["PRB","alt"]` returned **zero**
 PSA 10 listings against 19 for the plain query. That was never evidence against
 naming the product; it is evidence against naming it where nothing competes.
 
+**The other product is excluded by SET NAME, not by treatment.** OP01-024 is
+why. BerryWallet calls the Romance Dawn printing `(Parallel)`; every seller
+calls it "Alt Art" — so the query sent `-parallel`, aimed at a word nobody
+writes, and the original sailed through the search for the reprint. Three
+vocabularies for one treatment, across two catalogues and a marketplace.
+
+A set name survives that, because sellers of the original write it and sellers
+of the reprint do not. Measured PSA 10, 2026-09-06:
+
+| query | listings | dropped |
+|---|---|---|
+| OP01-024 EN, no set exclusion | 19 | — |
+| + `-"romance dawn"` | 12 | 7, all titled Romance Dawn, none naming PRB |
+| OP01-024 JA + `-"romance dawn"` | 15 | 4, same shape |
+| OP05-119 EN + `-"awakening of the new era"` | 6 | 0 — the positive PRB term already did it |
+
+Two different markets either side of that cut: $505-2,000 against $148-719.
+
+Exclusions take the LONGEST segment of a set name only — "Premium Booster -The
+Best-" excludes on `premium booster` and drops `the best`, which a seller might
+write about condition. Both segments stay available as positive terms, where
+breadth can only add. A family code is excluded only when it is 3+ characters
+*and* not a prefix of the card's own code: `-op01` on OP01-024 would fight the
+card number itself.
+
 Which side of the split a row sits on decides the shape. A row in its code's
 **own** family is the original and *excludes* the rivals; a row in any other
 family is the reprint and must *name itself*, because a listing that mentions no

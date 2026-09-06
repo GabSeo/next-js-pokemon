@@ -284,6 +284,30 @@ function familyAliases(entry: OpEntry): string[] {
   return [...new Set([familyOf(entry), ...segments])];
 }
 
+/**
+ * The one phrase that names a set, for use as an exclusion.
+ *
+ * The LONGEST segment, not every segment: "Premium Booster -The Best-" yields
+ * "premium booster" and drops "the best". Both are fair game as POSITIVE terms,
+ * where breadth only ever adds, but an exclusion is the one place a loose
+ * phrase can silently destroy real listings — and "the best" is a phrase a
+ * seller might write about condition rather than about the product.
+ */
+function setNamePhrase(entry: OpEntry): string | undefined {
+  const segments = entry.set.name
+    .split(/[-–—]/)
+    .map((part) =>
+      part
+        .replace(/vol\.?\s*\d+/i, "")
+        .replace(/\((japanese|english)\)/i, "")
+        .trim()
+        .toLowerCase()
+    )
+    .filter((part) => part.length > 3)
+    .sort((a, b) => b.length - a.length);
+  return segments[0];
+}
+
 /** The treatments a row carries, as one comparable key. */
 function treatmentKey(name: string): string {
   return treatmentsOf(name)
@@ -341,11 +365,52 @@ export function deriveQuery(code: string, wanted: OpEntry): DerivedQuery {
   const homeFamily = code.split("-")[0].toLowerCase();
   const isHome = wantedFamily === homeFamily;
   const familyAccept = rivalFamilies.length > 0 && !isHome ? familyAliases(wanted) : [];
-  // Exclusions stay narrow where positives go wide: only the family CODE, and
-  // only when it is long enough to stand alone. Two-letter families (OP, ST,
-  // LT, CM) are prefixes of the tokens sellers really write — OP05, ST21 — and
-  // neither eBay nor titleMatchesCard can be trusted to tell them apart.
-  const familyReject = isHome ? rivalFamilies.filter((f) => f.length >= 3) : [];
+
+  /**
+   * The OTHER product, excluded BY SET NAME.
+   *
+   * A treatment exclusion cannot do this job, and OP01-024 is the proof.
+   * BerryWallet calls the Romance Dawn printing "(Parallel)"; every seller
+   * calls it "Alt Art". So the query dutifully sent `-parallel`, aimed at a
+   * word nobody writes, and the original print sailed straight through the
+   * search for the PRB one. Two catalogues and a marketplace, three
+   * vocabularies for one treatment.
+   *
+   * A set NAME survives that. Sellers of the original write it — "PSA 10
+   * Monkey D. Luffy (Alt Art) Romance Dawn OP01-024 EN One Piece" — and
+   * sellers of the reprint do not. Measured PSA 10, 2026-09-06:
+   *
+   *   OP01-024 EN  19 -> 12 with -"romance dawn"; all 7 dropped say Romance
+   *                Dawn, none says PRB. The inverse group returns those same
+   *                7, none naming PRB. A clean cut, and two different markets
+   *                either side of it: $505-2,000 against $148-719.
+   *   OP01-024 JA  19 -> 15, same shape.
+   *   OP05-119 EN   6 -> 6. Nothing to lose where the positive PRB term has
+   *                already done the work.
+   *
+   * Away from home, the home family's name is excluded unconditionally: the
+   * original is the printing that competes, and the vocabulary mismatch above
+   * means treatment terms cannot be trusted to have separated it. At home, the
+   * same-treatment rivals are excluded instead — the mirror case, and the only
+   * away rows treatment leaves ambiguous.
+   */
+  const excludedFamilies = isHome ? rivalFamilies : [homeFamily];
+  const familyReject =
+    wantedIds.length === 0
+      ? []
+      : [
+          ...new Set([
+            // The family CODE, but never when it is a prefix of this card's own
+            // code: `-op01` on OP01-024 would fight the card number itself.
+            // Two-letter families (OP, ST, LT, CM) are out for the same reason
+            // — they are prefixes of the tokens sellers write, OP05 and ST21.
+            ...excludedFamilies.filter((f) => f.length >= 3 && !code.toLowerCase().startsWith(f)),
+            ...rows
+              .filter((r) => excludedFamilies.includes(familyOf(r)))
+              .map(setNamePhrase)
+              .filter((n): n is string => n !== undefined),
+          ]),
+        ];
 
   return {
     queryText: [clause(accept), clause(familyAccept), clause(reject, true), clause(familyReject, true)]

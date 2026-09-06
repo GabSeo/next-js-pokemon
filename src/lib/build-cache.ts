@@ -156,13 +156,21 @@ import path from "node:path";
  *      wrong card, now that the PRB reprints are known to carry different art.
  *      Card.set and Card.setCode are part of every cached entry.
  *
+ *  14. A reprint's query now EXCLUDES the original product by set name —
+ *      OP01-024 carries -"romance dawn", OP05-119 -"awakening of the new era".
+ *      Needed because treatment could not separate them: BerryWallet calls the
+ *      Romance Dawn printing "Parallel" and every seller calls it "Alt Art",
+ *      so `-parallel` was aimed at a word nobody writes. Cached OP01-024
+ *      entries hold 7 of 19 listings that belong to the other card, at three
+ *      times the price.
+ *
  * Surviving deploys is the whole point of this cache (see the header
  * comment) — it is what keeps a redeploy from re-spending quota. So the fix
  * is not to shorten its reach but to make a deliberate computation change
  * able to say so. Bumping this starts a fresh namespace; the previous one is
  * simply never read again.
  */
-const CACHE_VERSION = 13;
+const CACHE_VERSION = 14;
 
 /** Versioned so a computation change cannot silently reuse pre-change values across a deploy — see CACHE_VERSION. */
 const CACHE_DIR = path.join(process.cwd(), ".next", "cache", "resolved-cards", `v${CACHE_VERSION}`);
