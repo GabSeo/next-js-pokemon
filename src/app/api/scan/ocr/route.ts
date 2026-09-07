@@ -1,5 +1,6 @@
 import { artDistance, artSignature, rarityFromText, referenceSignatures } from "@/lib/art-rank";
 import { extractCardCodes } from "@/lib/card-code-ocr";
+import { namesInText } from "@/lib/card-name-match";
 import { lookupCards } from "@/lib/card-lookup";
 import { getCardView, type CardPrint, type CardView } from "@/lib/card-view";
 import { readTextFromImage, visionConfigured, VisionNotConfiguredError } from "@/lib/vision";
@@ -196,32 +197,42 @@ async function rankPrintings(cards: CardView[], image: Buffer, text: string): Pr
 const JAPANESE_SCRIPT = /[぀-ゟ゠-ヿ一-鿿]/;
 
 /**
- * Put the candidates written in the script Vision actually read first.
+ * Put the candidate that best matches what Vision actually read first.
  *
- * WHY THIS IS NEEDED AT ALL. What is printed on a Pokemon card is `048/082` —
+ * WHY ANY ORDERING IS NEEDED. What is printed on a Pokemon card is `048/082` —
  * a number and a set size, never the set, which is carried by a symbol no OCR
- * reads. 154 of 216 English sets share their printed total with another
- * English set, and 152 of 182 Japanese ones do, so one photographed number
- * genuinely names several cards. A photographed Japanese Gengar ex resolves to
- * three: Team Rocket Porygon, and two Japanese cards. The scan shows the FIRST
- * as "your card", so the order is the answer.
+ * reads. 154 of 216 English sets share their printed total with another English
+ * set and 152 of 182 Japanese ones do, so one photographed number genuinely
+ * names several cards. The scan shows the FIRST as "your card", so the order is
+ * the answer, and both signals below were already in hand and thrown away.
  *
- * The evidence was already in hand and thrown away: Vision read the card face
- * and returned kana. A card whose text is written in kana is not an English
- * Team Rocket card, and one written only in Latin is not a Japanese release.
+ * THE NAME, which is the stronger of the two. A card face carries its name and
+ * Vision returns it; a candidate whose name appears in that text is the card,
+ * not a card with the same number. This only became possible for Japanese cards
+ * once the official data supplied names as printed — TCGdex romanises them, so
+ * `ゲンガーex` matched nothing before.
  *
- * ORDERS, DOES NOT FILTER — the same rule as the rarity boost above. Vision
- * misreads, cards carry both scripts, and a Japanese card can be photographed
- * beside English text. A wrong guess here costs position, which the person can
- * see past; filtering would cost availability, which they cannot.
+ * THE SCRIPT, as a fallback for the 4,330 Japanese cards no source names in
+ * Japanese. A card whose text is kana is not an English Team Rocket card.
+ *
+ * ORDERS, NEVER FILTERS — the same rule as the rarity boost. Vision misreads,
+ * cards carry both scripts, and a card can be photographed beside other text.
+ * A wrong guess costs position, which a person can see past; filtering would
+ * cost availability, which they cannot.
  */
-function orderByScript(cards: CardView[], text: string): void {
+function orderCandidates(cards: CardView[], text: string): void {
   const japanese = JAPANESE_SCRIPT.test(text);
-  const rank = (card: CardView) => {
-    if (card.tcg !== "pokemon") return 0;
-    const isJapanese = card.code.startsWith("ja~");
-    return isJapanese === japanese ? 0 : 1;
+  const haystack = text.toLowerCase();
+
+  const rank = (card: CardView): number => {
+    // 0 — the name Vision read is this card's name.
+    const name = card.name?.trim();
+    if (name && name.length >= 2 && (text.includes(name) || haystack.includes(name.toLowerCase()))) return 0;
+    if (card.tcg !== "pokemon") return 1;
+    // 1 — written in the script Vision read. 2 — written in the other one.
+    return card.code.startsWith("ja~") === japanese ? 1 : 2;
   };
+
   // Stable: equal ranks keep the order the catalogue gave them.
   cards.sort((a, b) => rank(a) - rank(b));
 }
@@ -284,7 +295,23 @@ export async function POST(request: Request) {
       }
     }
 
-    orderByScript(cards, text);
+    // NO CODE RESOLVED. A blurred or cropped number leaves nothing to look up,
+    // but the name is usually the largest text on the card and survives. This
+    // runs only in that case: when a number DID resolve, the name is used to
+    // order those candidates rather than to invent more.
+    if (cards.length === 0) {
+      for (const hit of namesInText(text)) {
+        for (const match of lookupCards(hit.name).matches.slice(0, 6)) {
+          const id = `${match.tcg}:${match.code}`;
+          if (seen.has(id)) continue;
+          seen.add(id);
+          const view = await getCardView(match.tcg, match.code);
+          if (view) cards.push(view);
+        }
+      }
+    }
+
+    orderCandidates(cards, text);
     await rankPrintings(cards, image, text);
 
     return Response.json({ text, candidates, cards });

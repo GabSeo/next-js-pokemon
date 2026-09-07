@@ -3,7 +3,7 @@ import Link from "next/link";
 import { CatalogFilters } from "@/components/catalog-filters";
 import { CatalogCardTile } from "@/components/catalog-card-tile";
 import { EyebrowTitle } from "@/components/retro/eyebrow-title";
-import { catalogStats } from "@/lib/catalog";
+import { catalogStats, getCatalogSets } from "@/lib/catalog";
 import { getCatalogPriceValues, getCatalogPricesByVariant, priceSnapshotDate } from "@/lib/catalog-prices";
 import { PAGE_SIZE, isSortId, searchCatalogCards, type CatalogQuery } from "@/lib/catalog-search";
 
@@ -45,20 +45,28 @@ function one(value: string | string[] | undefined): string | undefined {
 export default async function CardsPage({ searchParams }: PageProps) {
   const raw = await searchParams;
   const sort = one(raw.sort);
+  const lang = one(raw.lang);
   const query: CatalogQuery = {
     q: one(raw.q),
-    serie: one(raw.serie),
     set: one(raw.set),
-    rarity: one(raw.rarity),
-    category: one(raw.category),
-    variant: one(raw.variant),
-    priced: one(raw.priced) === "1",
+    // Only these two survive: see CatalogFilters on why the other four groups
+    // were removed rather than hidden.
+    language: lang === "en" || lang === "ja" ? lang : undefined,
     sort: isSortId(sort) ? sort : undefined,
     page: Number(one(raw.page)) || 1,
   };
 
   const result = searchCatalogCards(query);
-  const stats = catalogStats();
+  const stats = catalogStats({ language: query.language ?? "all" });
+
+  // The picker shows names, the URL carries qualified ids. Built here because
+  // this is the layer that holds the catalogue; the filter panel is a client
+  // component and must not read it.
+  const setNames: Record<string, string> = {};
+  for (const set of getCatalogSets({ language: "all" })) {
+    const key = `${set.language ?? "en"}~${set.id}`;
+    setNames[key] = set.language === "ja" ? `${set.name} (JP)` : set.name;
+  }
   const pricedAt = priceSnapshotDate();
 
   // A price sort must order the WHOLE result set, so it reads one comparable
@@ -102,7 +110,7 @@ export default async function CardsPage({ searchParams }: PageProps) {
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[260px_1fr]">
         <aside className="lg:sticky lg:top-6 lg:self-start">
-          <CatalogFilters facets={result.facets} total={result.total} />
+          <CatalogFilters facets={result.facets} total={result.total} setNames={setNames} />
         </aside>
 
         <section>

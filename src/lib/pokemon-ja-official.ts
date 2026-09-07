@@ -140,3 +140,8 @@ export function searchJapaneseNames(text: string, limit = 30): string[] {
   }
   return out;
 }
+
+/** Every official Japanese record, keyed by `setId#number`. For building an index once. */
+export function japaneseOfficialCards(): Map<string, JapaneseOfficialCard> {
+  return load().cards;
+}

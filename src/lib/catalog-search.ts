@@ -32,7 +32,7 @@ export type CatalogSearchResult = {
   total: number;
   page: number;
   pageCount: number;
-  facets: { serie: Facet[]; rarity: Facet[]; category: Facet[]; variant: Facet[] };
+  facets: { serie: Facet[]; rarity: Facet[]; category: Facet[]; variant: Facet[]; set: Facet[] };
   /**
    * The caller asked to sort by price, so it must resolve prices for `matched`
    * and order them itself — this layer has no prices of its own.
@@ -55,7 +55,10 @@ function predicatesFor(query: CatalogQuery): Record<string, Predicate> {
   return {
     q: (e) => !needle || e.card.name.toLowerCase().includes(needle) || e.card.localId.toLowerCase() === needle,
     serie: (e) => !query.serie || e.set.serie?.name === query.serie,
-    set: (e) => !query.set || e.set.id === query.set,
+    // The QUALIFIED id: `neo1` names a set in each catalogue, so the bare one
+    // would silently mix two sets' cards under one filter.
+    set: (e) => !query.set || `${e.set.language ?? "en"}~${e.set.id}` === query.set,
+    language: (e) => !query.language || (e.set.language ?? "en") === query.language,
     rarity: (e) => !query.rarity || e.card.rarity === query.rarity,
     category: (e) => !query.category || e.card.category === query.category,
     variant: (e) => !query.variant || e.card.variants.some((v) => v.type === query.variant),
@@ -151,6 +154,9 @@ export function searchCatalogCards(query: CatalogQuery): CatalogSearchResult {
       variant: facetCounts(entries, predicates, "variant", (e) =>
         e.card.variants.map((v) => v.type).filter((t): t is string => t !== undefined)
       ),
+      // Keyed on the QUALIFIED id and labelled with the set name, so the two
+      // `neo1`s stay distinguishable in a picker as well as in the filter.
+      set: facetCounts(entries, predicates, "set", (e) => `${e.set.language ?? "en"}~${e.set.id}`),
     },
     priceSortPending: wantsPriceSort,
   };

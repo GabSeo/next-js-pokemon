@@ -10,7 +10,7 @@ import { useEffect, useRef, useState } from "react";
  * WHY IT IS GROUPED. The flat list had grown to ten links at `gap-10`, which
  * overflows the 1180px container it sits in — every phase of the catalogue work
  * added another entry and nothing ever removed one. Ten peers also say nothing
- * about how the site is organised: "Scan a Card", "Find a Card" and "Search
+ * about how the site is organised: "Scan a Card", "Search Pokémon Cards" and "Search
  * Cards" read as three near-synonyms until you know they are three steps of one
  * flow. Three groups of three or four say it.
  *
@@ -33,13 +33,18 @@ const GROUPS: NavGroup[] = [
   {
     id: "find",
     label: "Find cards",
-    // The three steps of one flow, in the order a person meets them, followed
-    // by the browse surface for when they have nothing to look up. Their
-    // labels are near-synonyms in isolation, so each carries a hint.
+    // Scan first, then one search per game, then browse. The two games get
+    // their own entry because they are not searched the same way: a Pokemon
+    // card is filtered by language and set, a One Piece code by pack — Bandai
+    // publishes the same cards in three languages rather than three
+    // catalogues, so there is nothing there to switch between. Their labels
+    // are near-synonyms in isolation, so each carries a hint.
     items: [
-      { href: "/scan", label: "Scan a Card", hint: "Photograph it — read on your device" },
-      { href: "/lookup", label: "Find a Card", hint: "By code, printed number or name" },
-      { href: "/cards", label: "Search Cards", hint: "Browse Pokémon with filters" },
+      // The hint used to say "read on your device", which stopped being true
+      // when Vision replaced the in-browser OCR. The photo is uploaded.
+      { href: "/scan", label: "Scan a Card", hint: "Photograph it — read, then not kept" },
+      { href: "/cards", label: "Search Pokémon Cards", hint: "English and Japanese, filtered by set" },
+      { href: "/cards/one-piece", label: "Search One Piece Cards", hint: "Every code, filtered by pack" },
       { href: "/sets", label: "Browse Sets", hint: "Every set and pack, both games" },
     ],
   },

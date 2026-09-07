@@ -52,6 +52,15 @@ export function sortNeedsPrices(sort: SortId): boolean {
 export type Facet = { value: string; count: number };
 
 export type CatalogQuery = {
+  /**
+   * Which catalogue to search: `"en"`, `"ja"`, or undefined for both.
+   *
+   * The Japanese corpus is a different catalogue rather than a translation —
+   * different sets, different numbering, 12,781 cards TCGdex publishes only
+   * there. Someone searching for a card they hold usually holds one or the
+   * other, and mixing them doubles every result list for no gain.
+   */
+  language?: "en" | "ja";
   q?: string;
   serie?: string;
   set?: string;

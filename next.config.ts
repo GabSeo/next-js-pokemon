@@ -207,6 +207,9 @@ const nextConfig: NextConfig = {
     // no prices exist for it, because Bandai publishes what a card is rather
     // than what it sells for.
     "/sets/onepiece": ["./data/catalog/one-piece-official/**"],
+    // The One Piece search is request-time by definition (searchParams) and
+    // reads the same catalogue the pack pages do.
+    "/cards/one-piece": ["./data/catalog/one-piece-official/**"],
     "/sets/onepiece/[packId]": ["./data/catalog/one-piece-official/**"],
     // The image proxy resolves a printing id to its Bandai URL through the same
     // catalogue, at request time by definition — the id arrives in the path, so
