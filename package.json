@@ -22,7 +22,9 @@
     "catalog:one-piece-images": "npx tsx scripts/one-piece-image-repatriate.mts",
     "catalog:one-piece-refresh": "npx tsx scripts/one-piece-refresh.mts",
     "catalog:one-piece-aliases": "npx tsx scripts/one-piece-print-aliases.mts",
-    "check:image-urls": "npx tsx scripts/check-image-urls.mts"
+    "check:image-urls": "npx tsx scripts/check-image-urls.mts",
+    "catalog:pokemon-ja": "npx tsx scripts/catalog-crawl.mts --language ja",
+    "catalog:pokemon-ja-official": "npx tsx scripts/pokemon-ja-official-crawl.mts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

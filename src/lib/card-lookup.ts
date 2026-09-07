@@ -2,6 +2,7 @@ import { getCatalogCard, getCatalogSetCards, getCatalogSets, type CatalogEntry }
 import { searchCatalogCards } from "@/lib/catalog-search";
 import { officialCode, officialRowsForCode, officialSearchByName } from "@/lib/one-piece-official";
 import { onePieceImageUrl } from "@/lib/one-piece-images";
+import { japaneseImageUrl, japaneseName, searchJapaneseNames } from "@/lib/pokemon-ja-official";
 
 /**
  * Resolve whatever a person types into candidate CARDS, across both games.
@@ -71,15 +72,22 @@ function pokemonMatch(entry: CatalogEntry, detail?: string): LookupMatch {
   // card-view.ts on why Base Set Charizard's four `holo` variants are one.
   const printings = new Set(card.variants.map((v) => v.type ?? "unknown")).size;
 
+  const japanese = set.language === "ja";
+
   return {
     tcg: "pokemon",
-    code: set.language === "ja" ? `ja~${card.tcgdexId}` : card.tcgdexId,
-    name: card.name,
+    code: japanese ? `ja~${card.tcgdexId}` : card.tcgdexId,
+    // As printed. TCGdex romanises Japanese names; the card does not.
+    name: (japanese ? japaneseName(set.id, card.localId) : undefined) ?? card.name,
     // Named, not flagged: two sets can share a printed total and a card
     // number, and "which one is mine" is answered by seeing that one is the
     // Japanese release.
     origin: set.language === "ja" ? `${set.name} (JP)` : set.name,
-    image: card.image ? `${card.image}/low.webp` : undefined,
+    image: card.image
+      ? `${card.image}/low.webp`
+      : japanese
+        ? japaneseImageUrl(set.id, card.localId, 320)
+        : undefined,
     printings: Math.max(printings, 1),
     detail: detail ?? card.rarity,
   };
@@ -163,9 +171,27 @@ function byName(text: string): LookupMatch[] {
 
   const pokemon = searchCatalogCards({ q: text }).matched.map((entry) => pokemonMatch(entry));
 
+  // NAMES AS PRINTED, which the catalogue does not hold. TCGdex romanises every
+  // Japanese card, so searching it for `ゲンガー` — the string Vision reads off
+  // a Japanese face — finds nothing. These are looked up in the official data
+  // and joined back by (set, number).
+  const japanese: LookupMatch[] = [];
+  const alreadyFound = new Set(pokemon.map((m) => m.code));
+  for (const key of searchJapaneseNames(text, LIMIT / 2)) {
+    const hash = key.lastIndexOf("#");
+    const entry = getCatalogSetCards(key.slice(0, hash), "ja").find(
+      (e) => Number(e.card.localId) === Number(key.slice(hash + 1))
+    );
+    if (!entry) continue;
+    const match = pokemonMatch(entry);
+    if (alreadyFound.has(match.code)) continue;
+    alreadyFound.add(match.code);
+    japanese.push(match);
+  }
+
   // Stable within a rank: each source already arrives in its own sensible
   // order, so ranking only lifts the better answers rather than reshuffling.
-  return [...onePiece, ...pokemon].sort((a, b) => nameRank(a.name, text) - nameRank(b.name, text));
+  return [...onePiece, ...pokemon, ...japanese].sort((a, b) => nameRank(a.name, text) - nameRank(b.name, text));
 }
 
 /**

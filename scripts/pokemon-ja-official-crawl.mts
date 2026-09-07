@@ -1,0 +1,171 @@
+#!/usr/bin/env -S UNUSED=1 npx tsx
+/**
+ * Mirror the Japanese card data type-null/PTCG-database has scraped from the
+ * official Pokemon site, into data/catalog/pokemon-ja-official/.
+ *
+ * WHY A FOURTH SOURCE. TCGdex publishes a Japanese catalogue and it is thin
+ * where it matters most. Measured 2026-09-08 across our 12,781 Japanese cards:
+ *
+ *   3,882 (30%) carry an image, against 92% on the English side
+ *   every Japanese card NAME is romanised — `Gengar Ex`, never `ゲンガーex`
+ *
+ * Both gaps break the scan specifically. Without an image a printing cannot be
+ * ranked by artwork; without the Japanese name, the text Vision reads off a
+ * Japanese card face matches nothing, so a card can only ever be resolved by
+ * its printed number — and that number names several cards, which is how a
+ * photographed Japanese Gengar ex became Team Rocket Porygon.
+ *
+ * This database fills 4,569 of the 8,899 missing images (51%) and carries the
+ * real Japanese name for every record. Sampled 150 of the 4,330 it does NOT
+ * cover: zero are on TCGdex's CDN either, so the two sources do not overlap on
+ * the residual — this is strictly the better half, not a supplement.
+ *
+ * WHAT IS STILL MISSING AFTERWARDS, and it is honest to name it: 4,330 cards,
+ * concentrated in the MEGA era (1,785), PCG (722), Pokemon-e (492), the 1996
+ * originals (457) and neo (323). The official site's own search does not reach
+ * back that far, so nobody scraping it can.
+ *
+ * ONE CLONE, NOT 22,000 REQUESTS. The data is 21,925 small JSON files. A shallow
+ * clone takes it in a single transfer; walking the GitHub API instead would be
+ * twenty-two thousand calls against someone's public repository for the same
+ * bytes. The clone is removed afterwards unless it was already there.
+ *
+ * WE STORE POINTERS AND TEXT, NOT PICTURES. The `img` URL is recorded; the image
+ * itself is fetched, resized and cached by app/api/pokemon-ja-image at request
+ * time, the same arrangement app/api/one-piece-image has with Bandai. Copying
+ * 4,569 official scans into this repository would be ~270 MB and a different
+ * kind of claim over somebody else's artwork.
+ *
+ * ATTRIBUTION: the data originates with The Pokemon Company's official Japanese
+ * card search. type-null/PTCG-database (MIT) is an independent project that
+ * scrapes it and is not affiliated with them.
+ *
+ *   npm run catalog:pokemon-ja-official
+ *   npx tsx scripts/pokemon-ja-official-crawl.mts --clone /path/to/existing/clone
+ */
+import { spawnSync } from "node:child_process";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
+
+const REPO = "https://github.com/type-null/PTCG-database.git";
+const OUT_DIR = path.join(process.cwd(), "data", "catalog", "pokemon-ja-official");
+
+const args = process.argv.slice(2);
+const provided = args.includes("--clone") ? args[args.indexOf("--clone") + 1] : undefined;
+
+/** Only what we use, so a schema change upstream is visible rather than silently carried. */
+type Record_ = {
+  jp_id?: number | string;
+  name?: string;
+  img?: string;
+  set_name?: string;
+  number?: string;
+  set_total?: number;
+  card_type?: string;
+  url?: string;
+};
+
+function clone(): { dir: string; temporary: boolean } {
+  if (provided) {
+    if (!existsSync(provided)) {
+      console.error(`[pokemon-ja] --clone ${provided} does not exist.`);
+      process.exit(1);
+    }
+    return { dir: provided, temporary: false };
+  }
+  const dir = mkdtempSync(path.join(tmpdir(), "ptcg-"));
+  console.log(`[pokemon-ja] shallow-cloning ${REPO}`);
+  const result = spawnSync("git", ["clone", "--depth", "1", "--quiet", REPO, dir], {
+    stdio: "inherit",
+    shell: process.platform === "win32",
+  });
+  if (result.status !== 0) {
+    console.error("[pokemon-ja] clone failed.");
+    process.exit(result.status ?? 1);
+  }
+  return { dir, temporary: true };
+}
+
+function walk(dir: string, out: string[] = []): string[] {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) walk(full, out);
+    else if (entry.name.endsWith(".json")) out.push(full);
+  }
+  return out;
+}
+
+/**
+ * `(setId, number)` — the join our own catalogue can answer.
+ *
+ * Their files are named by the official site's internal id, which nothing else
+ * we hold knows; `set_name` and `number` live INSIDE each record and use
+ * TCGdex's own Japanese set ids. The number is zero-padded on one side and not
+ * the other, so both are reduced to an integer — the same rule card-lookup.ts
+ * applies for the same reason.
+ */
+function key(setId: string, number: string): string {
+  const digits = Number(String(number).replace(/^0+/, "") || "0");
+  return Number.isFinite(digits) && /^\d+$/.test(String(number)) ? `${setId}#${digits}` : `${setId}#${number}`;
+}
+
+const started = Date.now();
+const { dir, temporary } = clone();
+
+try {
+  const root = path.join(dir, "data_jp");
+  if (!existsSync(root)) {
+    console.error(`[pokemon-ja] no data_jp/ in ${dir}`);
+    process.exit(1);
+  }
+
+  const files = walk(root);
+  const cards: Record<string, { jpId: string; name: string; img: string; total?: number; url?: string }> = {};
+  let skipped = 0;
+
+  for (const file of files) {
+    let record: Record_;
+    try {
+      record = JSON.parse(readFileSync(file, "utf8")) as Record_;
+    } catch {
+      skipped++;
+      continue;
+    }
+    const { set_name: setName, number, img, name, jp_id: jpId } = record;
+    if (!setName || !number || !img || !name) {
+      skipped++;
+      continue;
+    }
+    const id = key(setName, String(number));
+    // First writer wins: a set can list the same number twice for a promo
+    // reprint, and there is nothing here to tell them apart.
+    if (cards[id]) continue;
+    cards[id] = {
+      jpId: String(jpId ?? ""),
+      name,
+      img,
+      total: record.set_total && record.set_total > 0 ? record.set_total : undefined,
+      url: record.url,
+    };
+  }
+
+  mkdirSync(OUT_DIR, { recursive: true });
+  writeFileSync(
+    path.join(OUT_DIR, "index.json"),
+    JSON.stringify({
+      crawledAt: new Date().toISOString(),
+      source: REPO,
+      note: "Data originates with The Pokemon Company's official Japanese card search; PTCG-database (MIT) mirrors it and is not affiliated with them.",
+      cards,
+    })
+  );
+
+  const count = Object.keys(cards).length;
+  console.log(
+    `[pokemon-ja] ${files.length} records read, ${count} keyed by (set, number), ${skipped} incomplete — ` +
+      `${((Date.now() - started) / 1000).toFixed(0)}s`
+  );
+} finally {
+  if (temporary) rmSync(dir, { recursive: true, force: true });
+}

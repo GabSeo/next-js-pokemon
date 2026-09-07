@@ -4,6 +4,7 @@ import { officialCode, officialRowsForCode } from "@/lib/one-piece-official";
 import { onePieceImageUrl, onePiecePictureUrl } from "@/lib/one-piece-images";
 import { isBandaiPicture, optcgRowsForCode, pictureKey, printAlias } from "@/lib/one-piece-optcg";
 import { productOf, treatmentsOf } from "@/lib/one-piece-variants";
+import { japaneseImageUrl, japaneseName } from "@/lib/pokemon-ja-official";
 
 /**
  * The card→print shape both games render through — see
@@ -81,12 +82,16 @@ function pokemonView(tcgdexId: string, prices: Map<string, CatalogPrice[]>): Car
   return {
     tcg: "pokemon",
     code: japanese ? `ja~${card.tcgdexId}` : card.tcgdexId,
-    name: card.name,
+    // The name AS PRINTED. TCGdex romanises every Japanese card — `Gengar Ex`,
+    // never `ゲンガーex` — which is not what is on the card in someone's hand.
+    // The romanised form still answers search, because that is what the
+    // catalogue is indexed on.
+    name: (japanese ? japaneseName(set.id, card.localId) : undefined) ?? card.name,
     priceNote: japanese
       ? "Japanese print, from TCGdex's Japanese catalogue. Cardmarket and TCGplayer index far fewer " +
         "Japanese cards, so a missing price here usually means nobody publishes one."
       : "Cardmarket and TCGplayer, from our latest snapshot. Each printing is priced separately.",
-    prints: variantPrints(card, japanese ? `${set.name} (JP)` : set.name, byVariant),
+    prints: variantPrints(card, japanese ? `${set.name} (JP)` : set.name, byVariant, japanese ? set.id : undefined),
   };
 }
 
@@ -114,7 +119,12 @@ function pokemonView(tcgdexId: string, prices: Map<string, CatalogPrice[]>): Car
  * rather than dropped — a printing we cannot price and a printing that does not
  * exist are different claims.
  */
-function variantPrints(card: CatalogCard, setName: string, byVariant: CatalogPrice[]): CardPrint[] {
+function variantPrints(
+  card: CatalogCard,
+  setName: string,
+  byVariant: CatalogPrice[],
+  japaneseSetId?: string
+): CardPrint[] {
   const seen = new Set<string>();
   const prints: CardPrint[] = [];
 
@@ -128,7 +138,15 @@ function variantPrints(card: CatalogCard, setName: string, byVariant: CatalogPri
       label: variant.type,
       origin: setName,
       rarity: card.rarity,
-      image: card.image ? `${card.image}/high.webp` : undefined,
+      // TCGdex first; then the official Japanese data, which carries a picture
+      // for 4,569 cards TCGdex has none for. Undefined when neither does —
+      // 4,330 Japanese cards are pictured nowhere public, and a placeholder
+      // saying so beats another card's artwork.
+      image: card.image
+        ? `${card.image}/high.webp`
+        : japaneseSetId
+          ? japaneseImageUrl(japaneseSetId, card.localId, 480)
+          : undefined,
       price: byVariant.find((p) => p.variantType === variant.type),
     });
   }

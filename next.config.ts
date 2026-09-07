@@ -178,15 +178,31 @@ const nextConfig: NextConfig = {
     // directory really does contain data/ — they are listed anyway rather than
     // reasoned about per deploy, since their revalidation runs in the same
     // serverless context.
-    "/cards": ["./data/catalog/pokemon/**", "./data/catalog/pokemon-ja/**", "./data/prices/**"],
+    "/cards": [
+      "./data/catalog/pokemon/**",
+      "./data/catalog/pokemon-ja/**",
+      "./data/catalog/pokemon-ja-official/**",
+      "./data/prices/**",
+    ],
     // /sets is now a chooser and counts both catalogues, so it needs both.
     "/sets": [
       "./data/catalog/pokemon/**",
       "./data/catalog/pokemon-ja/**",
+      "./data/catalog/pokemon-ja-official/**",
       "./data/catalog/one-piece-official/**",
     ],
-    "/sets/pokemon": ["./data/catalog/pokemon/**", "./data/catalog/pokemon-ja/**", "./data/prices/**"],
-    "/sets/[setId]": ["./data/catalog/pokemon/**", "./data/catalog/pokemon-ja/**", "./data/prices/**"],
+    "/sets/pokemon": [
+      "./data/catalog/pokemon/**",
+      "./data/catalog/pokemon-ja/**",
+      "./data/catalog/pokemon-ja-official/**",
+      "./data/prices/**",
+    ],
+    "/sets/[setId]": [
+      "./data/catalog/pokemon/**",
+      "./data/catalog/pokemon-ja/**",
+      "./data/catalog/pokemon-ja-official/**",
+      "./data/prices/**",
+    ],
     // The One Piece browse page reads the official catalogue and nothing else —
     // no prices exist for it, because Bandai publishes what a card is rather
     // than what it sells for.
@@ -196,12 +212,16 @@ const nextConfig: NextConfig = {
     // catalogue, at request time by definition — the id arrives in the path, so
     // there is no build step at which this could have been read instead.
     "/api/one-piece-image/[printingId]": ["./data/catalog/one-piece-official/**"],
+    // Same shape for Japanese Pokemon: the key arrives in the path and resolves
+    // to an official URL through the mirrored index.
+    "/api/pokemon-ja-image/[cardKey]": ["./data/catalog/pokemon-ja-official/**"],
     // The scan resolves scanned codes to cards and ranks their printings by
     // artwork, so it needs both catalogues, the price snapshot the card view
     // reads, and the precomputed artwork signatures.
     "/api/scan/ocr": [
       "./data/catalog/pokemon/**",
       "./data/catalog/pokemon-ja/**",
+      "./data/catalog/pokemon-ja-official/**",
       "./data/catalog/one-piece-official/**",
       "./data/catalog/one-piece-optcg/**",
       "./data/catalog/one-piece-art/**",
@@ -210,6 +230,7 @@ const nextConfig: NextConfig = {
     "/api/scan/resolve": [
       "./data/catalog/pokemon/**",
       "./data/catalog/pokemon-ja/**",
+      "./data/catalog/pokemon-ja-official/**",
       "./data/catalog/one-piece-official/**",
       "./data/catalog/one-piece-optcg/**",
       "./data/prices/**",
@@ -222,10 +243,12 @@ const nextConfig: NextConfig = {
     // so it reads both catalogues. No prices: it answers "which card", and only
     // the card page answers "which printing".
     "/lookup": ["./data/catalog/pokemon/**",
-      "./data/catalog/pokemon-ja/**", "./data/catalog/one-piece-official/**", "./data/catalog/one-piece-optcg/**"],
+      "./data/catalog/pokemon-ja/**",
+      "./data/catalog/pokemon-ja-official/**", "./data/catalog/one-piece-official/**", "./data/catalog/one-piece-optcg/**"],
     "/card/[tcg]/[code]": [
       "./data/catalog/pokemon/**",
       "./data/catalog/pokemon-ja/**",
+      "./data/catalog/pokemon-ja-official/**",
       "./data/catalog/one-piece-official/**",
       "./data/catalog/one-piece-optcg/**",
       "./data/prices/**",
