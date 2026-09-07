@@ -27,6 +27,63 @@ import { extractCardCodes, type CodeCandidate } from "@/lib/card-code-ocr";
  * hands it to /lookup exactly as if it had been typed.
  */
 
+/**
+ * The bottom band of the photo, upscaled and flattened to hard grey.
+ *
+ * WHY NOT JUST READ THE WHOLE PHOTO, which is what this did first and why the
+ * first real scan failed. Measured against an actual card on 2026-09-07: OCR of
+ * the full image returned `"<4 VN 16000k g 7 = 4 - = \ Vg | | REN Ey"` — pure
+ * noise from the artwork, with the code nowhere in it. The same photo cropped
+ * to its bottom band returned `aOP09-1198H`, which contains OP09-119 exactly.
+ *
+ * The reason is proportion rather than resolution. A card code occupies roughly
+ * 1% of a photo of a card, and an OCR engine handed the whole frame spends its
+ * effort on the 99% that is illustration. Cropping to the band where the code
+ * always sits changes what the engine is looking at, not how hard it looks.
+ *
+ * FULL WIDTH, not the right corner alone: One Piece prints its code bottom
+ * right, Pokémon bottom left, and a band costs nothing that a corner saves.
+ *
+ * Grayscale and a hard contrast curve because the code is dark text over
+ * artwork that is frequently neither dark nor light. Everything here runs in
+ * the visitor's browser on a canvas, so it stays free.
+ */
+async function bottomBand(file: File): Promise<HTMLCanvasElement | undefined> {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const bandTop = Math.round(bitmap.height * 0.86);
+    const bandHeight = bitmap.height - bandTop;
+
+    // Upscale so the code is large enough for the engine to resolve; ~1800px
+    // across the band is comfortably past where accuracy stops improving.
+    const scale = Math.min(4, Math.max(1, 1800 / bitmap.width));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bandHeight * scale);
+
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return undefined;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(bitmap, 0, bandTop, bitmap.width, bandHeight, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+
+    const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const pixels = image.data;
+    for (let i = 0; i < pixels.length; i += 4) {
+      const grey = 0.299 * pixels[i] + 0.587 * pixels[i + 1] + 0.114 * pixels[i + 2];
+      // Push mid-tones apart so thin dark glyphs separate from busy artwork.
+      const contrasted = Math.max(0, Math.min(255, (grey - 128) * 1.8 + 128));
+      pixels[i] = pixels[i + 1] = pixels[i + 2] = contrasted;
+    }
+    ctx.putImageData(image, 0, 0);
+    return canvas;
+  } catch {
+    // No createImageBitmap, a canvas the browser will not give us, or an image
+    // it cannot decode. The caller falls back to the untouched file.
+    return undefined;
+  }
+}
+
 type Status =
   | { phase: "idle" }
   | { phase: "reading"; progress: number }
@@ -60,10 +117,16 @@ export function ScanClient() {
         },
       });
 
-      const { data } = await worker.recognize(file);
+      // The band first, because that is where the code is. The whole photo is
+      // the fallback rather than the default — it is what failed on the first
+      // real card, and it stays only because a cropped band cannot help a photo
+      // framed some other way.
+      const band = await bottomBand(file);
+      let candidates = band ? extractCardCodes((await worker.recognize(band)).data.text ?? "") : [];
+      if (candidates.length === 0) {
+        candidates = extractCardCodes((await worker.recognize(file)).data.text ?? "");
+      }
       await worker.terminate();
-
-      const candidates = extractCardCodes(data.text ?? "");
       setStatus({ phase: "done", candidates });
 
       // One unambiguous read goes straight through. Anything else is a choice,

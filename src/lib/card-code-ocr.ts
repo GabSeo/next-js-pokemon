@@ -36,6 +36,17 @@ function asLetters(text: string): string {
   return [...text].map((ch) => TO_LETTER[ch] ?? ch).join("").toUpperCase();
 }
 
+/**
+ * `AOP` -> ["AOP", "OP", "P"]. The prefix as read, then with leading characters
+ * peeled off one at a time, because OCR reliably welds a stray glyph from the
+ * artwork onto the front of a code it otherwise read correctly.
+ */
+function prefixVariants(letters: string): string[] {
+  const out: string[] = [];
+  for (let i = 0; i < letters.length; i++) out.push(letters.slice(i));
+  return out;
+}
+
 export type CodeCandidate = {
   /** Ready to hand to lookupCards. */
   value: string;
@@ -50,13 +61,22 @@ export type CodeCandidate = {
  * digit-ish, a dash, three digit-ish. The separator is generous because a card's
  * dash is often read as an en dash, an underscore or a space.
  *
- * It ends on `(?![0-9])` rather than `\b`, because `\b` does not fire between a
- * digit and an underscore -- both are word characters -- so `OP05-119_p2`
- * matched nothing at all. Rejecting only a following DIGIT keeps the guard that
- * matters (not truncating a longer number) while letting a printing suffix sit
- * where it really does appear on a card.
+ * DELIBERATELY UNANCHORED AT BOTH ENDS, and both ends cost a real scan to
+ * learn. Photographed off an actual card (OP09-119, 2026-09-07), Tesseract
+ * returned `aOP09-1198H` and `aOP09-110tH`: the code is read correctly and
+ * arrives welded to whatever the surrounding artwork resolved to.
+ *
+ * A leading `\b` did not help -- `a` and `O` are both word characters, so no
+ * boundary exists between them and the prefix silently absorbed the `a`,
+ * yielding `AOP09-110`, which is not a card. A trailing `(?![0-9])` was worse:
+ * it rejected `1198H` outright rather than taking the first three digits, so a
+ * perfectly readable code produced nothing at all.
+ *
+ * So the pattern floats, and the LETTER PREFIX IS TRIMMED afterwards instead --
+ * see `prefixVariants`. Structure cannot tell `aOP` from `AOP`; only the
+ * catalogue can, and that lives downstream in the lookup.
  */
-const OP_LOOSE = /\b([A-Za-z0OQDIl|S5B]{1,4})([0-9OoQDIlSsBZGT]{2})\s*[-–—_ ]\s*([0-9OoQDIlSsBZGT]{3})(?![0-9])/g;
+const OP_LOOSE = /([A-Za-z0OQDIl|S5B]{1,4})([0-9OoQDIlSsBZGT]{2})\s*[-–—_ ]\s*([0-9OoQDIlSsBZGT]{3})/g;
 
 /** Bandai promos: `P-033`. Separate because it has no two-digit set number. */
 const OP_PROMO = /\bP\s*[-–—_ ]\s*([0-9OoQDIlSsBZGT]{3})\b/gi;
@@ -87,7 +107,16 @@ export function extractCardCodes(text: string): CodeCandidate[] {
     // A One Piece set prefix is letters only. If OCR gave us something that
     // still is not, after repair, it was not a code.
     if (!/^[A-Z]{1,4}$/.test(letters)) continue;
-    add(`${letters}${asDigits(m[2])}-${asDigits(m[3])}`, "one-piece-code", m[0].trim());
+
+    const tail = `${asDigits(m[2])}-${asDigits(m[3])}`;
+    // Longest first: the full prefix is the likeliest reading, each trimmed
+    // variant a fallback for a leading glyph that came from the artwork. `OP`
+    // and `ST` are two letters, `PRB` three, so a four-letter run is usually
+    // one character of noise plus a real prefix. Only the catalogue can say
+    // which, so all are offered and the lookup decides.
+    for (const value of prefixVariants(letters).map((prefix) => `${prefix}${tail}`)) {
+      add(value, "one-piece-code", m[0].trim());
+    }
   }
 
   for (const m of text.matchAll(OP_PROMO)) {
