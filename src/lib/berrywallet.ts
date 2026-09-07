@@ -712,9 +712,12 @@ export async function findCardInLanguage(
       // The guessed set has this card_number but not the requested variant
       // — check whether it's a separate promo product instead (see
       // findVariantAcrossProducts' own comment) before settling for
-      // "highest in the wrong set". Reports the guessed set alongside a
-      // cross-product match too — it's the best real set label available;
-      // a promo product carries no set of its own to report instead.
+      // "highest in the wrong set". The guessed set is still reported
+      // alongside a cross-product match, but it is no longer the final
+      // label: cards.ts replaces it with the row's REAL containing set from
+      // the offline corpus, which knows what this call cannot (see its
+      // crossProductSet comment). Kept here as the fallback for a checkout
+      // with no corpus crawled.
       if (variantTags && variantTags.length > 0) {
         const crossMatch = await findVariantAcrossProducts(cardNumber, variantTags, options?.excludeTags);
         // `crossProduct: true` is load-bearing, not a diagnostic. This card

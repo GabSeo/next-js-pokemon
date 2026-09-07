@@ -403,6 +403,31 @@ export const cardRefs: CardRef[] = [
     },
   },
   {
+    // THE OTHER OP09-061, and the reason it needs its own ref rather than a
+    // variantTag on the one above: same code, same character, same Leader
+    // rarity, different printing. This is the Parallel — BerryWallet's
+    // `Monkey.D.Luffy (061) (Parallel)`, V.2 in Emperors in the New World,
+    // Cardmarket `Emperors-in-the-New-World/MonkeyDLuffy-OP09-061-V2`,
+    // tcgplayer/596997. The ref above is the 2nd Anniversary Set promo, a
+    // separate product with its own marketplace listing entirely.
+    //
+    // `["(Parallel)"]` with the parentheses, matching how the corpus writes
+    // it, so it cannot also match a row that merely mentions the word.
+    //
+    // Its eBay query is where the Parallel/Alt Art vocabulary split shows up
+    // (see TREATMENTS in lib/one-piece-variants.ts): sellers title this card
+    // "Leader Alt Art OP09-061" at least as often as "Leader Parallel", so
+    // the derived query searches both and still excludes on "parallel" alone.
+    franchise: "one-piece",
+    tcg: "one-piece",
+    slug: "monkey-d-luffy-op09-061-parallel",
+    displayName: "Monkey D. Luffy",
+    character: "Monkey D. Luffy",
+    lookup: { by: "code", code: "OP09-061", variantTags: ["(Parallel)"] },
+    berryWalletSetCode: { en: "OP09" },
+    berryWalletEnabled: true,
+  },
+  {
     // A different card_number and product entirely from OP09-061 above,
     // despite being the same character — P-033 (BerryWallet's generic
     // promo-number series) has 3 real, separate products sharing that one
@@ -602,7 +627,20 @@ export const cardRefs: CardRef[] = [
     //
     // No `jp`: this ref's Japanese identity is itself the wrong product (note
     // 1 above), so there is nothing yet to write Japanese eBay tags against.
-    ebayVariantTags: { en: ["PRB", "alt"] },
+    //
+    // NO `en` EITHER, AS OF 2026-09-06 — the derivation now beats it outright.
+    // The measurements above stand and are worth keeping, but they were all
+    // taken against a query that ANDed its terms, where `PRB` + `alt` was the
+    // best of a bad set of options. eBay tokenises, so `alt` never matched a
+    // seller who wrote "Alternate", and the shipped tier was FIVE listings.
+    //
+    // lib/one-piece-variants.ts derives `(alt,alternate)` from this row's own
+    // "(OP05-119) (Alternate Art)" and rejects the competing printings by name
+    // — manga, wanted, sp, gold, reprint — which is what `PRB` was really
+    // standing in for. Measured with the app's own filters: 5 -> 56 real
+    // listings. And excluding on the PRODUCT was always slightly wrong anyway,
+    // since PRB-01 contains a Manga print too; the treatment is the axis that
+    // separates a EUR 283 card from a EUR 8,000 one.
     franchise: "one-piece",
     tcg: "one-piece",
     slug: "monkey-d-luffy-op05-119",

@@ -102,8 +102,8 @@ export default async function SetPage({ params }: PageProps) {
     <main className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }} />
 
-      <Link href="/sets" className="text-xs font-bold text-muted-text underline underline-offset-4">
-        ← All sets
+      <Link href="/sets/pokemon" className="text-xs font-bold text-muted-text underline underline-offset-4">
+        ← All Pokémon sets
       </Link>
 
       <div className="mt-4 flex items-start gap-4">

@@ -182,9 +182,19 @@ function conditionFilter(condition: EbayCondition): string {
  * TCGdex's French translation or BerryWallet's real One Piece print name;
  * localized number, e.g. a Japanese Pokémon print's own set number).
  */
-function conditionQuery(card: Card, condition: EbayCondition, nameOverride?: string, numberOverride?: string): string {
+function conditionQuery(
+  card: Card,
+  condition: EbayCondition,
+  nameOverride?: string,
+  numberOverride?: string,
+  querySuffix?: string
+): string {
   const base = cardSearchTerms(card, nameOverride, numberOverride);
-  return condition === "Raw" ? base : `${base} ${condition}`;
+  const graded = condition === "Raw" ? base : `${base} ${condition}`;
+  // The version clause goes LAST, after the grade, so a live query reads
+  // "OP05-119 PSA 10 (alt,alternate) -manga" — card, grade, then the terms
+  // qualifying which version. See cardSearchTerms' own note.
+  return querySuffix ? `${graded} ${querySuffix}` : graded;
 }
 
 export type EbayLanguage = "English" | "Japanese" | "French";
@@ -292,7 +302,39 @@ function titleMatchesCard(
   condition: EbayCondition,
   numberOverride?: string,
   variantTags?: string[],
-  language?: EbayLanguage
+  language?: EbayLanguage,
+  /**
+   * Words that DISQUALIFY a listing — the competing printings of this card's
+   * own code, derived from the catalogue (lib/one-piece-variants.ts).
+   *
+   * A positive tag says "this looks like my card"; a reject says "this is
+   * provably a different one". OP05-074 shares its code with an SP and a
+   * Reprint, and no positive term can exclude them because sellers write the
+   * shared words too. Empty for Pokemon and for any card whose row the corpus
+   * does not hold, in which case behaviour is exactly what shipped before.
+   */
+  rejectTags?: string[],
+  /**
+   * Alternatives: a title must contain at least ONE of these. Distinct from
+   * `variantTags`, which is ANDed.
+   *
+   * A derived treatment produces spellings, not requirements — "2nd
+   * anniversary" OR "2 anniversary", "alt" OR "alternate". Feeding them to the
+   * AND check asked for every spelling at once and matched nothing: measured
+   * live at ZERO listings on OP09-061, a card with 31.
+   *
+   * Quote characters are stripped before comparison. They are eBay QUERY
+   * syntax that make a group member a phrase; a listing title never contains
+   * a literal quote, so leaving them in fails every row.
+   *
+   * GROUPS, not one list: OR inside a group, AND between groups — the same
+   * shape the query itself has. A One Piece card can need two independent
+   * questions answered at once, "is this the alternate art?" AND "is this the
+   * PRB-01 printing of it?", and one flat list would accept a title that
+   * answers only one of them. See one-piece-variants.ts on why the product is
+   * part of the card's identity.
+   */
+  acceptGroups?: string[][]
 ): boolean {
   // English-tier-only: reject a title that also says "Japanese", or carries
   // a standalone "JP" language marker. precisionAspectFilter's own
@@ -346,6 +388,35 @@ function titleMatchesCard(
 
   const primaryNumber = (numberOverride ?? card.number)?.split("/")[0];
   if (primaryNumber && !numberMatchesTitle(primaryNumber, title)) return false;
+
+  if (rejectTags && rejectTags.length > 0) {
+    // Whole-word (or whole-phrase) matching, never substring: "sp" must not
+    // fire on "spectacular", and a two-word reject like "2nd anniversary" only
+    // counts when both words appear together.
+    const lower = title.toLowerCase();
+    const words = new Set(lower.split(/[^a-z0-9]+/).filter(Boolean));
+    const disqualified = rejectTags.some((tag) => {
+      const parts = tag.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+      if (parts.length === 0) return false;
+      return parts.length > 1 ? lower.includes(parts.join(" ")) : words.has(parts[0]);
+    });
+    if (disqualified) return false;
+  }
+
+  if (acceptGroups && acceptGroups.length > 0) {
+    const lower = title.toLowerCase();
+    const words = new Set(lower.split(/[^a-z0-9]+/));
+    const everyGroupOk = acceptGroups.every(
+      (group) =>
+        group.length === 0 ||
+        group.some((tag) => {
+          const clean = tag.replace(/["'‘’“”]/g, "").toLowerCase().trim();
+          if (!clean) return false;
+          return clean.includes(" ") ? lower.includes(clean) : words.has(clean);
+        })
+    );
+    if (!everyGroupOk) return false;
+  }
 
   if (variantTags && variantTags.length > 0) {
     const titleLower = title.toLowerCase();
@@ -544,7 +615,21 @@ type RunSearchResult = EbaySearchResult & {
   titlePassCount: number;
 };
 
-const FETCH_LIMIT = 20;
+/**
+ * How many results one search asks eBay for.
+ *
+ * RAISED 20 -> 100 on 2026-09-06, and the old value was costing real rows for
+ * nothing. `limit` is priced per REQUEST, not per result — 100 costs exactly
+ * the same one call as 20 — while filtering routinely discards most of a page:
+ * OP09-061's tier had 32 eBay matches, of which a 20-result window left three
+ * survivors after titleMatchesCard and the market guard. DISPLAY_LIMIT is 4, so
+ * the panel could not even fill itself.
+ *
+ * Not 200 (eBay's maximum): 100 already exceeds what any tier here needs after
+ * filtering, and a bigger page is more JSON to parse on every render for rows
+ * nobody will see.
+ */
+const FETCH_LIMIT = 100;
 /** Shown to the user (and used for the median) — the cheapest this-many survivors of titleMatchesCard, per the local sort below. */
 const DISPLAY_LIMIT = 4;
 
@@ -560,9 +645,15 @@ async function runSearch(
   nameOverride?: string,
   numberOverride?: string,
   variantTags?: string[],
-  guard?: EbayMarketGuard
+  guard?: EbayMarketGuard,
+  /** Competing printings of this card's own code — see titleMatchesCard. */
+  rejectTags?: string[],
+  /** OR within a group, AND between groups — see titleMatchesCard. */
+  acceptGroups?: string[][],
+  /** The version clause, appended after the grade — see conditionQuery. */
+  querySuffix?: string
 ): Promise<RunSearchResult> {
-  const query = conditionQuery(card, condition, nameOverride, numberOverride);
+  const query = conditionQuery(card, condition, nameOverride, numberOverride, querySuffix);
   const qs = new URLSearchParams({
     q: query,
     category_ids: CCG_INDIVIDUAL_CARDS_CATEGORY,
@@ -639,7 +730,7 @@ async function runSearch(
   // and BEFORE the guard is the only thing that can tell those two apart
   // when a result set ends up empty.
   const titlePassed = priced.filter((listing) =>
-    titleMatchesCard(listing.title, card, condition, numberOverride, variantTags, language)
+    titleMatchesCard(listing.title, card, condition, numberOverride, variantTags, language, rejectTags, acceptGroups)
   );
 
   const survivors = titlePassed
@@ -776,15 +867,21 @@ export async function searchActiveListings(
   nameOverride?: string,
   numberOverride?: string,
   variantTags?: string[],
-  guard?: EbayMarketGuard
+  guard?: EbayMarketGuard,
+  /** Competing printings of this card's own code — see titleMatchesCard. */
+  rejectTags?: string[],
+  /** OR within a group, AND between groups — see titleMatchesCard. */
+  acceptGroups?: string[][],
+  /** The version clause, appended after the grade — see conditionQuery. */
+  querySuffix?: string
 ): Promise<EbaySearchResult> {
-  const primary = await runSearch(card, condition, language, PRIMARY_SORT, nameOverride, numberOverride, variantTags, guard);
+  const primary = await runSearch(card, condition, language, PRIMARY_SORT, nameOverride, numberOverride, variantTags, guard, rejectTags, acceptGroups, querySuffix);
   if (primary.listings.length > MERGE_THRESHOLD) return primary;
 
   // Best Match is not recency-biased the way the sorted searches are, so it
   // can surface a real listing that has simply been sitting unsold — which
   // matters most on exactly the thin markets that trip MERGE_THRESHOLD.
-  const fallback = await runSearch(card, condition, language, undefined, nameOverride, numberOverride, variantTags, guard);
+  const fallback = await runSearch(card, condition, language, undefined, nameOverride, numberOverride, variantTags, guard, rejectTags, acceptGroups, querySuffix);
 
   // Merged rather than replaced: the point is to REACH four rows, and either
   // search alone may be short. Deduped by item URL, since the same listing

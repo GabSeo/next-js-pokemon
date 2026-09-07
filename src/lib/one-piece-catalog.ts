@@ -8,17 +8,22 @@
  * prices — those live in `data/prices/one-piece.json`.
  *
  * WHY IT EXISTS AT ALL, beyond speed. One Piece's hard problem is that a card
- * CODE is an identity, not a printing: 1,084 of 2,865 codes (37.8%, measured)
- * carry more than one treatment, and OP05-119 alone spans plain / Alternate Art
- * / Manga / SP / SP Gold / Reprint / Wanted Poster across five sets at EUR 4.49
- * to EUR 7,500. Answering "what else shares this code" used to cost a metered
- * `searchCards` call per card against a 100/hour ceiling. It is now a map
- * lookup, which is what makes deriving an eBay query affordable at all.
+ * CODE is an identity, not a printing. Measured across the 2,632 codes in this
+ * corpus on 2026-09-06: 2,495 of them (94.8%) have more than one row, 346
+ * (13.1%) carry more than one TREATMENT and 219 (8.3%) span more than one
+ * PRODUCT. OP05-119 alone runs plain / Alternate Art / Manga / SP / SP Gold /
+ * Reprint / Wanted Poster across five sets at EUR 4.49 to EUR 7,500.
+ *
+ * Answering "what else shares this code" used to cost a metered `searchCards`
+ * call per card against a 100/hour ceiling. It is now a map lookup, which is
+ * what makes deriving an eBay query affordable at all.
  *
  * It also stores each row WITH its set, which `BerryWalletCard` does not carry.
- * `findVariantAcrossProducts` reports the set of ORIGIN for a cross-product
- * match, which is why a PRB-01 reprint could not name itself "PRB" — here it
- * can.
+ * `findVariantAcrossProducts` reports the set it was SEARCHING when it found a
+ * card somewhere else, which is why a PRB-01 reprint could not name itself
+ * "PRB". Here it can, by id: `opRowById` is what lets cards.ts label OP05-119's
+ * PRB-01 printing "Premium Booster -The Best-" instead of "Awakening of the New
+ * Era", and what lets one-piece-variants.ts put `prb` in its eBay query.
  */
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
@@ -61,14 +66,26 @@ let cache: Loaded | undefined;
 /**
  * A row's card code.
  *
- * `cardNumber` is a HINT, not a key — whole sets carry null for it (all 300
- * rows of CM-UNNUMBERED-JP), holding the code only inside `name` as
- * `Monkey.D.Luffy (ST21-014) (V.1)`. So the name is parsed as a fallback, the
- * same way findCardInLanguage matches on `card_number === code || name.includes(code)`.
+ * THE NAME WINS, and `cardNumber` is only the fallback. That order is the
+ * opposite of the obvious one and it is the order the data demands.
+ *
+ * `cardNumber` is a HINT, not a key, and it fails in both directions. Whole
+ * sets carry null for it (all 300 rows of CM-UNNUMBERED-JP), holding the code
+ * only inside `name` as `Monkey.D.Luffy (ST21-014) (V.1)`. Worse, 3,758 of
+ * 10,689 rows — every JP main set, CM-UNNUMBERED, CM-PROMO, CM-JUDGE — carry
+ * only the code's numeric TAIL: `Boa Hancock (OP02-059)` with cardNumber
+ * `"59"`, and sometimes float-formatted as `"61.0"`. Trusting that field first
+ * filed 35% of the corpus under bare numbers like `59`, where no lookup by
+ * card code could ever reach them — including the whole Japanese side of every
+ * numbered set, and the English Unnumbered Promo printing of OP05-119.
+ *
+ * Safe because the two never actually disagree: across all 3,758 rows the
+ * `cardNumber` is exactly the numeric tail of the code in the name, float
+ * formatting aside (verified 2026-09-06, 0 genuine conflicts). The name
+ * carries strictly more information, so it is the key.
  */
 function codeOf(card: OpCard): string | undefined {
-  if (card.cardNumber) return card.cardNumber;
-  return card.name.match(/\b([A-Z]{1,4}\d{2}-\d{3}|P-\d{3})\b/)?.[1];
+  return card.name.match(/\b([A-Z]{1,4}\d{2}-\d{3}|P-\d{3})\b/)?.[1] ?? card.cardNumber ?? undefined;
 }
 
 function loadCatalog(): Loaded {
@@ -129,18 +146,22 @@ export function opCatalogStats(): { sets: number; rows: number; codes: number; c
 }
 
 /**
- * The TREATMENT a row's name describes — "Alternate Art", "Manga", "SP",
- * "Wanted Poster" — or "" for a plain print.
+ * EVERY treatment word a row's name describes, as one string.
  *
- * The last meaningful parenthetical, matching printDescriptor's rule
- * (lib/ebay-search.ts), with two exclusions: a bare card code (`(119)`,
- * `(OP05-119)`) is not a treatment, and neither is a `(V.N)` index, which is a
- * per-set position rather than a description of the card.
+ * A treatment is NOT a single parenthetical, and taking only the last one was a
+ * measured bug. Eustass Kid's row is `(Alternate Art) (Manga)` — one card that
+ * is both. Reading only "Manga" filed "Alternate Art" as a COMPETING print, so
+ * the reject list threw away the card's own listings: 9 of 38 real results on
+ * OP05-074, every one of them titled "Manga Alternate Art".
+ *
+ * So all meaningful parentheticals are joined. Excluded from "meaningful": a
+ * bare card code (`(119)`, `(OP05-119)`), which is not a treatment, and a
+ * `(V.N)` index, which is a per-set position rather than a description.
  */
 export function opTreatment(name: string): string {
   const inner = [...name.matchAll(/\(([^)]+)\)/g)].map((m) => m[1]);
   const meaningful = inner.filter((v) => !/^[A-Z]{0,4}\d*-?\d+$/i.test(v) && !/^V\.\d+$/i.test(v));
-  return (meaningful[meaningful.length - 1] ?? "").replace(/^(english|japanese)\s+version\s+/i, "").trim();
+  return meaningful.join(" ").replace(/^(english|japanese)\s+version\s+/i, "").trim();
 }
 
 /**

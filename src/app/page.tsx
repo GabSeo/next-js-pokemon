@@ -47,10 +47,12 @@ const TOOL_CATEGORIES: { title: string; tag: string; tools: ToolEntry[] }[] = [
         fill: "on-white",
       },
       {
-        href: "/collections/pokemon",
+        // The set catalogues, not the tracked collection — this card carried
+        // the same mislabel the header nav did.
+        href: "/sets",
         icon: "🗂️",
         title: "Browse Sets",
-        body: "Explore every Pokémon TCG set and every card that lives inside it.",
+        body: "Every Pokémon TCG set and every One Piece pack, with the cards inside them.",
         fill: "on-white",
       },
       {

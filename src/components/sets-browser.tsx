@@ -56,15 +56,38 @@ function yearOf(set: BrowseSet): string {
   return set.releaseDate?.slice(0, 4) ?? "";
 }
 
+/**
+ * The tile's second line: the release month, or nothing at all.
+ *
+ * Returning "" rather than "Release date unknown" is deliberate. The Pokémon
+ * catalogue has a date for every set; the One Piece one has none, because
+ * Bandai's card list does not publish them — so that placeholder was about to
+ * appear on all 60 tiles, saying nothing 60 times. An absent fact should take
+ * no room. The caller drops the separator when this is empty.
+ */
 function monthYear(set: BrowseSet): string {
-  if (!set.releaseDate) return "Release date unknown";
+  if (!set.releaseDate) return "";
   const d = new Date(set.releaseDate);
   return Number.isNaN(d.getTime())
     ? set.releaseDate
     : d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
 }
 
-export function SetsBrowser({ sets, eras }: { sets: BrowseSet[]; eras: string[] }) {
+/**
+ * `hrefBase` exists because this grid now serves two catalogues that live on
+ * different routes. Without it every One Piece tile linked to `/sets/569301`,
+ * which lands in the POKÉMON `[setId]` route and 404s — the set id is real, but
+ * for the wrong catalogue.
+ */
+export function SetsBrowser({
+  sets,
+  eras,
+  hrefBase = "/sets",
+}: {
+  sets: BrowseSet[];
+  eras: string[];
+  hrefBase?: string;
+}) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortId>("newest");
   const [era, setEra] = useState<string | null>(null);
@@ -166,7 +189,7 @@ export function SetsBrowser({ sets, eras }: { sets: BrowseSet[]; eras: string[] 
             )}
             <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {group.sets.map((set, i) => (
-                <SetCard key={set.id} set={set} index={i} />
+                <SetCard key={set.id} set={set} index={i} hrefBase={hrefBase} />
               ))}
             </ul>
           </section>
@@ -184,7 +207,7 @@ function eraRange(sets: BrowseSet[]): string {
   return first === last ? first : `${first} – ${last}`;
 }
 
-function SetCard({ set, index }: { set: BrowseSet; index: number }) {
+function SetCard({ set, index, hrefBase }: { set: BrowseSet; index: number; hrefBase: string }) {
   const [logoFailed, setLogoFailed] = useState(false);
   // Only the first row or so animates — see globals.css's set-card-enter for
   // why this is CSS and not a JS whileInView (the motion version rendered
@@ -197,7 +220,7 @@ function SetCard({ set, index }: { set: BrowseSet; index: number }) {
       style={animated ? { animationDelay: `${index * 0.06}s` } : undefined}
     >
       <Link
-        href={`/sets/${set.id}`}
+        href={`${hrefBase}/${set.id}`}
         className="group relative flex h-full flex-col overflow-hidden rounded-lg border-2 border-black bg-card-surface p-5 shadow-hard-md transition-[transform,box-shadow] duration-150 hover:-translate-x-[3px] hover:-translate-y-[3px] hover:shadow-hard-lg"
       >
         {/* The logo sits unboxed and left-aligned: a set logo is already a
@@ -225,7 +248,8 @@ function SetCard({ set, index }: { set: BrowseSet; index: number }) {
 
         <span className="mb-0.5 text-base font-black tracking-[-0.3px]">{set.name}</span>
         <span className="mb-3 text-xs font-bold text-muted-text">
-          {monthYear(set)} · {set.cardCount} cards
+          {monthYear(set) ? `${monthYear(set)} · ` : ""}
+          {set.cardCount} cards
         </span>
 
         <span className="mt-auto flex items-center justify-between">

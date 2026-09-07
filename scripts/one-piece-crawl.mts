@@ -47,7 +47,7 @@
  *   npx tsx scripts/one-piece-crawl.mts --max-calls 60  # stop short of the ceiling
  *   npx tsx scripts/one-piece-crawl.mts --force         # re-fetch sets already held
  */
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 function loadEnvLocal() {
@@ -222,6 +222,84 @@ async function main() {
       (stoppedEarly ? " — INCOMPLETE, re-run to continue" : "")
   );
   console.log(`[one-piece] output: ${path.relative(process.cwd(), CATALOG_DIR)}`);
+
+  await reportUnknownVocabulary();
+}
+
+/**
+ * Names every product family on disk that data/one-piece-sets.ts does not know.
+ *
+ * This is the only part of the eBay query model that does not derive itself. A
+ * card, a printing, a promo product — all of those come out of the row names
+ * this crawl just wrote, and need no hand-editing ever. A new SET does: the
+ * short word sellers write for it is marketplace vocabulary, not something the
+ * catalogue records, so it lives in a table.
+ *
+ * The danger is silence rather than effort. An unknown family contributes no
+ * exclusion and nothing complains, so a query quietly stops separating one of
+ * the products its code was printed in. One line of output at the end of a
+ * crawl is what turns that into a five-second edit.
+ */
+async function reportUnknownVocabulary() {
+  const { opSetFamily, opRowsForCode } = await import("../src/lib/one-piece-catalog");
+  const { productOf } = await import("../src/lib/one-piece-variants");
+  const { OP_SET_VOCABULARY, OP_PRODUCT_VOCABULARY } = await import("../src/data/one-piece-sets");
+  const { cardRefs } = await import("../src/data/card-refs");
+
+  const known = new Set(Object.keys(OP_SET_VOCABULARY));
+  const unknown = new Map<string, string[]>();
+  for (const file of readdirSync(CATALOG_DIR)) {
+    if (!file.endsWith(".json")) continue;
+    let parsed: OpSetFile;
+    try {
+      parsed = JSON.parse(readFileSync(path.join(CATALOG_DIR, file), "utf8")) as OpSetFile;
+    } catch {
+      continue;
+    }
+    const family = opSetFamily(parsed.set.code).toUpperCase();
+    if (known.has(family)) continue;
+    unknown.set(family, [...(unknown.get(family) ?? []), `${parsed.set.code} = ${parsed.set.name}`]);
+  }
+
+  // Products are only checked against TRACKED codes: 405 exist, 249 could ever
+  // generate a term, and a query only ever needs the handful printed on a code
+  // this site actually resolves. Six cover the nine cards tracked today.
+  const unknownProducts = new Map<string, string[]>();
+  for (const ref of cardRefs) {
+    if (ref.franchise !== "one-piece" || ref.lookup.by !== "code") continue;
+    for (const row of opRowsForCode(ref.lookup.code)) {
+      const product = productOf(row.card.name);
+      if (!product || product in OP_PRODUCT_VOCABULARY) continue;
+      unknownProducts.set(product, [...(unknownProducts.get(product) ?? []), ref.slug]);
+    }
+  }
+
+  if (unknownProducts.size > 0) {
+    console.log(
+      `
+[one-piece] ${unknownProducts.size} product(s) on tracked codes are NOT in` +
+        ` src/data/one-piece-sets.ts. Those printings cannot be told apart until they are added.`
+    );
+    for (const [product, slugs] of unknownProducts) {
+      console.log(`  "${product}"  on ${[...new Set(slugs)].join(", ")}`);
+    }
+  }
+
+  if (unknown.size === 0) {
+    console.log(
+      `[one-piece] vocabulary: all ${known.size} set families known` +
+        (unknownProducts.size === 0 ? `, all products on tracked codes known` : "")
+    );
+    return;
+  }
+  console.log(
+    `\n[one-piece] ${unknown.size} product family/families are NOT in src/data/one-piece-sets.ts.` +
+      ` Queries cannot exclude them until they are added — see that file's header for what` +
+      ` \`exclude\` should be, and null for a catalogue bucket or a deck.`
+  );
+  for (const [family, sets] of unknown) {
+    console.log(`  ${family.padEnd(8)} ${sets.slice(0, 3).join(" | ")}`);
+  }
 }
 
 main().catch((err) => {

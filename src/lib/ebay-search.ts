@@ -93,10 +93,25 @@ export function cleanCardName(card: Card): string {
  * query reliably finds real listings; the caller doesn't need this function
  * to also guess at a variant-specific name.
  */
-export function cardSearchTerms(card: Card, nameOverride?: string, numberOverride?: string): string {
+export function cardSearchTerms(
+  card: Card,
+  nameOverride?: string,
+  numberOverride?: string,
+  /**
+   * Query text appended AFTER the card number, rather than before the name.
+   *
+   * A derived One Piece query reads `OP05-119 PSA 10 (alt,alternate) -manga`,
+   * with the card identified first and the version terms qualifying it. Putting
+   * that group in `nameOverride` instead put it at the FRONT, which searches
+   * identically but is unreadable in the "see all on eBay" link a visitor
+   * follows — the point of the link is that a person can see what was asked.
+   */
+  suffix?: string
+): string {
   const name = nameOverride ?? cleanCardName(card);
   const number = numberOverride ?? card.number;
-  return cleanQueryText(number ? `${name} ${number}` : name);
+  const base = number ? `${name} ${number}` : name;
+  return cleanQueryText(suffix ? `${base} ${suffix}` : base);
 }
 
 /**
@@ -174,11 +189,39 @@ export function tagFirstWord(tag: string): string {
  * gets tracked, and this is what stops that from ever needing its own fix.
  */
 function cleanQueryText(text: string): string {
+  // eBay QUERY SYNTAX is protected; everything else is scrubbed.
+  //
+  // Two constructs matter and both use quotes deliberately:
+  //   ("2nd anniversary","2 anniversary")   an OR group of phrases
+  //   -"2nd anniversary"                    a phrase exclusion
+  //
+  // Stripping their quotes does not merely lose precision, it inverts meaning.
+  // The group became `( 2nd anniversary , 2 anniversary )`, read as loose ANDed
+  // tokens — measured live at ZERO listings on a card with 31. And `-"2nd
+  // anniversary"` would become `-2nd -anniversary`, barring every anniversary
+  // print including the one being searched for.
+  //
+  // Everything outside those spans is still cleaned, so BerryWallet's
+  // `Eustass"Captain"Kid` is fixed exactly as before — the case this function
+  // was written for.
+  const protectedSpans: string[] = [];
+  const masked = text.replace(/\([^()]*\)|-"[^"]*"/g, (m) => {
+    protectedSpans.push(m);
+    return `\u0000${protectedSpans.length - 1}\u0000`;
+  });
+  return scrubQuotes(masked)
+    .replace(/\u0000(\d+)\u0000/g, (_, i) => protectedSpans[Number(i)])
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function scrubQuotes(text: string): string {
   return text
     .replace(/["'‘’“”]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
+
 
 /**
  * Per-condition-tier fallback link — used by GradedMarketPanel when the real
@@ -217,17 +260,21 @@ function cleanQueryText(text: string): string {
  * median a stable, comparable number, not about what's worth browsing.
  *
  * `nameOverride`/`numberOverride` are threaded straight through to
- * cardSearchTerms — see its doc comment.
+ * cardSearchTerms — see its doc comment. `querySuffix` goes after the grade,
+ * so the link a visitor clicks reads the same way the API query does:
+ * `OP05-119 PSA 10 (alt,alternate) -manga`.
  */
 export function conditionSearchLink(
   card: Card,
   condition: EbayCondition,
   language: EbayLanguage = "English",
   nameOverride?: string,
-  numberOverride?: string
+  numberOverride?: string,
+  querySuffix?: string
 ): string {
   const terms = cardSearchTerms(card, nameOverride, numberOverride);
-  const nkw = condition === "Raw" ? terms : `${terms} ${condition}`;
+  const graded = condition === "Raw" ? terms : `${terms} ${condition}`;
+  const nkw = querySuffix ? `${graded} ${querySuffix}` : graded;
   const params: Record<string, string> = {
     _dcat: CCG_INDIVIDUAL_CARDS_CATEGORY,
     _sacat: "0",
