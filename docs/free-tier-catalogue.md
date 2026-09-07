@@ -570,7 +570,7 @@ wasm core and trained data from a public CDN at first use — free, and not our
 bandwidth, but a runtime dependency we do not control. Its failure path is the
 one already handled: the reader does not start, and typing still works.
 
-### Phase 6 — Collection (free)
+### Phase 6 — Collection (free) ✅ *print half done*
 
 - A collection row is a **print identity**: `(tcg, code, printingId, quantity,
   condition, acquiredAt)`.
@@ -578,6 +578,28 @@ one already handled: the reader does not start, and typing still works.
 - The absence of a total is the paywall, stated honestly rather than teased.
 
 **Exit criteria**: add, list and remove cards, with zero metered calls.
+
+**Done 2026-09-07 — the print half.** A collection row is now a print identity,
+`{tcg}:{code}:{printKey}`, and `/collection` reads it instead of being a "coming
+soon" placeholder. Verified in the browser: on `sv08-001` you can own the
+reverse and not the normal, which the old `string[]` of card ids could not
+express at all — and that gap was a median 3.36x valuation error waiting to
+happen. One Piece records the Bandai printing id (`OP05-119_p2`) out of nine.
+
+**Not done: quantity, condition, or a server.** Still `localStorage`, still one
+browser, still no total — the absence of a valuation is the paywall, stated
+rather than teased.
+
+**Migration is lossless and honest.** v1 entries (bare card ids) are kept, not
+dropped, and shown as "printing not recorded" rather than upgraded to a guessed
+default. Nothing in the old format said which printing was meant, and inventing
+one is exactly the error the change removes. The page counts them and asks the
+person to pick.
+
+**The id is deliberately not canonical yet** — `pokemon:sv08-001:reverse` still
+carries TCGdex's name for the card (ARCHITECTURE_AUDIT.md §5). Doing the print
+half first is what makes the collection correct today without waiting for that
+rename.
 
 ### Phase 7 — Market activation *(paid)*
 

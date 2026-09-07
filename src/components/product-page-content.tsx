@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { AddToCollectionButton } from "@/components/add-to-collection-button";
+import { collectionRefForCard } from "@/lib/collection";
 import { AlertSubscribe } from "@/components/alert-subscribe";
 import { CardImage } from "@/components/card-image";
 import { META_ROW_CLASS, OpenDataLinks } from "@/components/open-data-links";
@@ -327,7 +328,7 @@ export function ProductPageContent({
             </a>
 
             <div className="mt-4">
-              <AddToCollectionButton cardId={card.id} />
+              <AddToCollectionButton {...collectionRefForCard(card)} />
             </div>
 
             <OpenDataLinks markdownHref={markdownHref} jsonHref={jsonHref} okfHref={okfHref} className="mt-4" />

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AddToCollectionButton } from "@/components/add-to-collection-button";
 import { getCardView, type CardPrint, type CardView } from "@/lib/card-view";
 import { absoluteUrl } from "@/lib/site";
 
@@ -94,7 +95,7 @@ export default async function CardPage({ params }: { params: Promise<{ tcg: stri
       <ul className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {view.prints.map((print) => (
           <li key={print.key}>
-            <PrintTile print={print} tcg={view.tcg} />
+            <PrintTile print={print} tcg={view.tcg} code={view.code} />
           </li>
         ))}
       </ul>
@@ -105,7 +106,7 @@ export default async function CardPage({ params }: { params: Promise<{ tcg: stri
 /** Must match WIDTHS in app/api/one-piece-image — a width only here is a 400. */
 const OP_WIDTHS = [320, 480, 640];
 
-function PrintTile({ print, tcg }: { print: CardPrint; tcg: CardView["tcg"] }) {
+function PrintTile({ print, tcg, code }: { print: CardPrint; tcg: CardView["tcg"]; code: string }) {
   const cm = print.price?.cardmarket?.avg;
   const tp = print.price?.tcgplayer?.market;
   const money =
@@ -154,6 +155,14 @@ function PrintTile({ print, tcg }: { print: CardPrint; tcg: CardView["tcg"] }) {
 
       <div className="mt-2 text-xs font-black">
         {money ?? <span className="font-bold text-muted-text">No price</span>}
+      </div>
+
+      {/* THE POINT OF THIS PAGE. Every other surface can only offer "add this
+          card", which cannot say whether you hold the EUR 0.04 printing or the
+          EUR 0.15 one. This is the only place that knows the printings apart,
+          so it is the only place that can record one honestly. */}
+      <div className="mt-2">
+        <AddToCollectionButton tcg={tcg} code={code} printKey={print.key} size="sm" />
       </div>
     </div>
   );
