@@ -92,20 +92,18 @@ export function optcgRowsForCode(code: string): OptcgRow[] {
 }
 
 /**
- * The product a row names, or undefined when the parenthetical is not one.
+ * The parenthetical a row ends with, or undefined when there is none.
  *
- * `Monkey.D.Luffy (Event Pack Vol. 2)` -> `Event Pack Vol. 2`
- * `Roronoa Zoro (001)`                 -> undefined, that is a card number
- * `Spandine (OP01-024)`                -> undefined, that is a code
+ * Deciding whether that parenthetical is a PRODUCT is not this module's job —
+ * `lib/one-piece-variants.ts` already carries a treatment table measured
+ * against live eBay listings, and duplicating it here produced exactly the bug
+ * that table exists to prevent: `Wanted Poster`, `SP` and `Gold` were admitted
+ * as products and appended to OP05-119 as four extra printings, on top of the
+ * nine Bandai already lists with their own artwork.
  */
-export function optcgProduct(name: string): string | undefined {
+export function optcgParenthetical(name: string): string | undefined {
   const match = name.match(/\(([^)]+)\)\s*$/);
-  if (!match) return undefined;
-  const inner = match[1].trim();
-  // Bare numbers and card codes are identity repeated, not a product.
-  if (/^\d{1,3}$/.test(inner)) return undefined;
-  if (/^[A-Z]{1,4}\d{0,2}-?\d{2,3}$/i.test(inner)) return undefined;
-  return inner;
+  return match ? match[1].trim() : undefined;
 }
 
 export function optcgStats(): { rows: number; codes: number; priced: number; crawledAt?: string } {

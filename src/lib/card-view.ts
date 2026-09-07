@@ -1,7 +1,8 @@
 import { getCatalogCard, type CatalogCard } from "@/lib/catalog";
 import { getCatalogPricesByVariant, type CatalogPrice } from "@/lib/catalog-prices";
 import { officialCode, officialRowsForCode } from "@/lib/one-piece-official";
-import { optcgProduct, optcgRowsForCode } from "@/lib/one-piece-optcg";
+import { optcgRowsForCode } from "@/lib/one-piece-optcg";
+import { productOf } from "@/lib/one-piece-variants";
 
 /**
  * The card→print shape both games render through — see
@@ -174,8 +175,14 @@ function namedPromoPrints(code: string, image: string): CardPrint[] {
   const prints: CardPrint[] = [];
 
   for (const row of optcgRowsForCode(code)) {
-    const product = optcgProduct(row.name);
+    // `productOf` strips the treatments — Parallel, Manga, SP, Gold, Wanted
+    // Poster — using the table measured against live eBay listings. Bandai
+    // already lists those as separate printings with their own artwork, so
+    // admitting them here appended four phantom tiles to OP05-119.
+    const product = productOf(row.name);
     if (!product || seen.has(product)) continue;
+    // What survives can still be identity repeated rather than a product.
+    if (/^\d{1,3}$/.test(product) || /^[A-Z]{1,4}\d{0,2}-?\d{2,3}$/i.test(product)) continue;
     seen.add(product);
 
     prints.push({
@@ -234,23 +241,29 @@ function onePiecePrints(code: string, rows: ReturnType<typeof officialRowsForCod
     price: undefined,
   });
 
-  // Split rather than all-or-nothing: the common shape is a card that exists in
-  // a real set AND in several promo products, and Bandai names the first and
-  // buckets the rest. EB01-043 is one EB-01 row plus six identical "Promotion
-  // card" rows. Replacing the whole list would discard the one row that carries
-  // a real pack and distinct artwork; keeping the whole list leaves six
-  // indistinguishable tiles.
+  const named = namedPromoPrints(code, `/api/one-piece-image/${encodeURIComponent(code)}?lang=english`);
+  if (named.length === 0) return rows.map(toPrint);
+
+  // ALWAYS ADD THE NAMED PRODUCTS, not only when Bandai bucketed something.
+  // The first version gated on "did Bandai file this under Promotion card",
+  // which never fired for ST21-014 or OP09-061 — Bandai files those under real
+  // packs (ST-21, OP-09) while the printing somebody actually owns is a
+  // campaign product Bandai's list does not mention at all:
+  //
+  //   ST21-014  3rd Anniversary Treasure Campaign Pack
+  //   OP09-061  English Version 2nd Anniversary Set
+  //
+  // Both were scanned, both showed only artwork that was not the card in hand.
+  // Whether Bandai bucketed its OWN rows says nothing about whether a product
+  // exists outside its list.
   const fromRealPacks = rows.filter(({ pack }) => !GENERIC_PROMO_PACK.test(pack.title));
   const bucketed = rows.filter(({ pack }) => GENERIC_PROMO_PACK.test(pack.title));
-  if (bucketed.length === 0) return rows.map(toPrint);
 
-  const named = namedPromoPrints(code, `/api/one-piece-image/${encodeURIComponent(code)}?lang=english`);
-  // Only trade anonymous rows for named ones when there are at least as many
-  // names as rows being replaced — otherwise a card would silently lose
-  // printings in exchange for labels.
-  if (named.length < bucketed.length) return rows.map(toPrint);
-
-  return [...fromRealPacks.map(toPrint), ...named];
+  // Anonymous rows are traded for named ones only when there are at least as
+  // many names as rows being replaced, so a card can never lose printings in
+  // exchange for labels. Otherwise everything is kept and the names are added.
+  const keep = named.length >= bucketed.length ? fromRealPacks : rows;
+  return [...keep.map(toPrint), ...named];
 }
 
 /**
