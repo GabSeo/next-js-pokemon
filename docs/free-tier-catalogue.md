@@ -157,17 +157,42 @@ degrades to a text field rather than to an error.
 Each is independently shippable and independently useful. None requires the
 next. None touches the eBay/Cardmarket/TCGplayer pipeline.
 
-### Phase 0 — Guard rails *(no user-visible change)*
+### Phase 0 — Guard rails ✅ *done*
 
-Make the boundary enforceable before building on it.
+`scripts/check-free-tier.mts`, wired into `prebuild`. Walks the import graph
+from all 53 routes and fails the build when one reaches a metered upstream
+without being declared.
 
-- A build check, in the shape of `check-one-piece-vocabulary.mts`: assert that
-  no route reachable by a free user imports a metered module (`cards.ts`,
-  `berrywallet.ts`, `pokewallet.ts`, `apitcg.ts`, `ebay-*`).
-- Wire it into `prebuild`, so the failure is a red build rather than a quota
-  incident.
+**Metered is defined, not listed**: `resilientFetch` charges `rateLimitKey ??
+host` and `chargeApiBudget` no-ops for a bucket with no ceiling, so a module is
+metered exactly when its bucket appears in `BUDGETS`. That is why `lib/tcgdex.ts`
+is absent despite making real HTTP calls — `api.tcgdex.net` has no ceiling,
+which is why the Pokémon catalogue could be built from it at all.
 
-**Exit criteria**: the check passes today and fails if you add such an import.
+Baseline on the day it was written:
+
+```
+53 routes: 24 free, 28 metered by decision, 1 import-only, 0 leaks
+```
+
+Two categories, kept apart because they mean different things:
+
+- **ALLOWED** — metered on purpose: tracked-card pages, the price checker, the
+  market APIs, the entity map (`lib/entitymap.ts` really does call
+  `getCardBySlug` per ref).
+- **IMPORT_ONLY** — reaches a metered module through a module-level import it
+  never invokes, so no quota is spent. `okf/about` returns fixed prose and
+  reaches PokéWallet only because `lib/okf.ts` imports `cards.ts` on line 1 for
+  its *other* functions. This list is a backlog for splitting those modules, not
+  a set of decisions to spend.
+
+**Known limitation**: it walks imports, not calls, so it overstates. That is the
+right bias for a guard rail, and IMPORT_ONLY is where the overstatement is
+recorded rather than hidden.
+
+**Verified by breaking it**: adding `import { getCardBySlug } from "@/lib/cards"`
+to the free One Piece sets page failed the build with the exact chain —
+`@/lib/cards → @/lib/pokewallet → lib/pokewallet` — then passed again on revert.
 
 ### Phase 1 — Unmetered One Piece images
 
