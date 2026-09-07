@@ -21,9 +21,25 @@
  *                      of that exists here, because Bandai does not sell
  *                      singles.
  *
- * So static text and identity should be read from here, and marketplace
- * pointers from there. That split is the whole point: it takes the immutable
- * half off a host metered at 100 calls/hour.
+ * IT DOES NOT REPLACE BERRYWALLET FOR IDENTITY, and an earlier version of this
+ * comment claimed it did. Bandai's catalogue records THAT a code has several
+ * printings and not WHICH is which. Measured across this catalogue: of the 945
+ * (code, pack) groups holding more than one printing, 895 — 94.7% — are
+ * identical in every field but the id and the image URL, and `name` differs in
+ * ZERO of them. OP05-119's Alternate Art, Manga and Reprint all read
+ * "Monkey.D.Luffy", SecretRare, PRB-01.
+ *
+ * Tested against the tracked cards directly: 0 of 9 could be identified
+ * uniquely from (code + pack + treatment) using this data. BerryWallet's
+ * parenthetical naming — "(Alternate Art) (Manga)" — remains the only
+ * machine-readable source of the treatment, and lib/one-piece-variants.ts is
+ * built entirely on it.
+ *
+ * So what this catalogue is actually for: browsing sets, and the per-card
+ * facts BerryWallet has never carried — colour, cost, power, counter,
+ * attributes, types, rules text, Japanese rarity, French. It PREVENTED spend
+ * by making set pages possible at all on a 90/hour budget. It has not REDUCED
+ * any call that was already being made.
  *
  * THE PRINTING ID IS PER-LANGUAGE, NOT UNIVERSAL. `OP05-119_p4` is the PRB-01
  * printing in English and `_p3` is the same product's printing in Japanese,

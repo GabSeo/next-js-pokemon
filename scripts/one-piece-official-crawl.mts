@@ -4,9 +4,17 @@
  *
  * WHY A SECOND ONE PIECE CATALOGUE. `scripts/one-piece-crawl.mts` reads
  * BerryWallet, which is the same host we buy prices from and is metered at 100
- * calls/hour. Using it for data that never changes — a card's name, rarity,
- * colour, effect text — spends the only quota that matters on the only thing
- * that does not move. This crawl exists to take that load off it entirely.
+ * calls/hour. This crawl was built to take the immutable half off it.
+ *
+ * IT DOES NOT DO THAT, and the file it feeds says why in full. Bandai's data
+ * records that a code has several printings but not which is which — 94.7% of
+ * multi-printing groups are identical in every field but the id and image, and
+ * `name` differs in none of them. 0 of our 9 tracked cards can be identified
+ * from it. BerryWallet stays the source of identity.
+ *
+ * What this crawl does buy: set pages that could not otherwise exist on a
+ * 90/hour budget, and per-card facts BerryWallet has never carried. Spend
+ * PREVENTED, not spend reduced — see lib/one-piece-official.ts.
  *
  * WHERE THE DATA COMES FROM, and why we do not scrape. Bandai publishes the
  * authoritative card list at onepiece-cardgame.com, but it is HTML on the
@@ -34,9 +42,8 @@
  *   - French, which BerryWallet has zero sets for, so One Piece's FR toggle
  *     has never been able to show anything real.
  *
- * WHAT IT DOES NOT REPLACE: Cardmarket and TCGplayer product URLs, and prices.
- * Those stay on BerryWallet, which is where its quota should have been going
- * all along.
+ * WHAT IT DOES NOT REPLACE: identity (see above), plus Cardmarket and TCGplayer
+ * product URLs and prices. Those all stay on BerryWallet.
  *
  * ONE FILE PER PACK PER LANGUAGE — punk-records publishes `data/{pack}.json`
  * bundles, so a full crawl is ~160 requests rather than one per card. Free and
