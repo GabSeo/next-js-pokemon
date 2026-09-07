@@ -92,6 +92,22 @@ export async function GET(request: Request, { params }: { params: Promise<{ prin
       // Bandai serves these to ordinary page loads; asking as one avoids
       // looking like something to rate-limit.
       headers: { Accept: "image/avif,image/webp,image/png,*/*" },
+      // CACHE THE SOURCE, not just our output. Measured 2026-09-07 against a
+      // preview deploy: the round trip to Bandai is 593 ms average while the
+      // resize is 37 ms, so 94% of a cold request is spent fetching a file that
+      // never changes. Without this, the five widths in the tile's srcset are
+      // five separate downloads of the same PNG, and every CDN eviction pays
+      // full price again. With it, a printing is fetched once and each
+      // additional width costs only the 37 ms.
+      //
+      // `force-cache` EXPLICITLY, not a `next.revalidate` TTL, because this
+      // route reads `request.url` first: per the bundled guide (02-guides/
+      // caching-without-cache-components.md:111) Next does not cache a fetch
+      // discovered AFTER a request-time API unless the request says so itself.
+      // Never revalidating is correct here — a printing's artwork is immutable,
+      // Bandai issues a new id rather than repainting one — and at 137–206 KB
+      // the response sits well inside the Data Cache's per-entry limit.
+      cache: "force-cache",
     });
   } catch {
     // A timeout or a network fault is upstream's, not a missing card. 502 keeps
