@@ -55,6 +55,8 @@ const args = process.argv.slice(2);
 const provided = args.includes("--clone") ? args[args.indexOf("--clone") + 1] : undefined;
 
 /** Only what we use, so a schema change upstream is visible rather than silently carried. */
+type Attack = { cost?: string[]; damage?: { amount?: number | string } | null };
+
 type Record_ = {
   jp_id?: number | string;
   name?: string;
@@ -64,7 +66,53 @@ type Record_ = {
   set_total?: number;
   card_type?: string;
   url?: string;
+  pokedex_number?: number;
+  hp?: number | string;
+  stage?: string;
+  types?: string[];
+  retreat?: number | string;
+  attacks?: Attack[];
 };
+
+/**
+ * The part of a card that does NOT change with the language.
+ *
+ * A Japanese card and its English print share a Pokedex number, a stage, an HP
+ * value, a type, a retreat cost, and attacks with the same energy cost and the
+ * same damage — everything except the words. Attack NAMES differ (`かえん` /
+ * `Flamethrower`); their cost and damage do not.
+ *
+ * So this is the vocabulary in which a Japanese card can later be matched to
+ * the English print somebody actually tracks, without translating anything.
+ * That matching is deliberately NOT done here — it is the step after this one,
+ * and it will be checked against a paid API rather than guessed. This just
+ * makes sure the data it needs is on disk when it is written.
+ *
+ * Deliberately narrow: flavour text, attack effects, illustrator and the rest
+ * of the record are dropped. They identify nothing across a language boundary
+ * and would multiply the file for no gain.
+ */
+function fingerprint(record: Record_): Record<string, unknown> | undefined {
+  const attacks = (record.attacks ?? [])
+    .map((attack) => {
+      const cost = (attack.cost ?? []).join("+");
+      const amount = attack.damage?.amount;
+      return `${cost}:${amount ?? ""}`;
+    })
+    .filter((entry) => entry !== ":");
+
+  const out: Record<string, unknown> = {};
+  if (typeof record.pokedex_number === "number") out.dex = record.pokedex_number;
+  const hp = Number(record.hp);
+  if (Number.isFinite(hp) && hp > 0) out.hp = hp;
+  if (record.stage) out.stage = record.stage;
+  if (record.types?.length) out.types = record.types;
+  const retreat = Number(record.retreat);
+  if (Number.isFinite(retreat)) out.retreat = retreat;
+  if (attacks.length > 0) out.attacks = attacks;
+
+  return Object.keys(out).length > 0 ? out : undefined;
+}
 
 function clone(): { dir: string; temporary: boolean } {
   if (provided) {
@@ -121,7 +169,10 @@ try {
   }
 
   const files = walk(root);
-  const cards: Record<string, { jpId: string; name: string; img: string; total?: number; url?: string }> = {};
+  const cards: Record<
+    string,
+    { jpId: string; name: string; img: string; total?: number; url?: string; fp?: Record<string, unknown> }
+  > = {};
   let skipped = 0;
 
   for (const file of files) {
@@ -147,6 +198,7 @@ try {
       img,
       total: record.set_total && record.set_total > 0 ? record.set_total : undefined,
       url: record.url,
+      fp: fingerprint(record),
     };
   }
 
@@ -162,9 +214,10 @@ try {
   );
 
   const count = Object.keys(cards).length;
+  const fingerprinted = Object.values(cards).filter((card) => card.fp).length;
   console.log(
-    `[pokemon-ja] ${files.length} records read, ${count} keyed by (set, number), ${skipped} incomplete — ` +
-      `${((Date.now() - started) / 1000).toFixed(0)}s`
+    `[pokemon-ja] ${files.length} records read, ${count} keyed by (set, number), ${skipped} incomplete, ` +
+      `${fingerprinted} with a cross-language fingerprint — ${((Date.now() - started) / 1000).toFixed(0)}s`
   );
 } finally {
   if (temporary) rmSync(dir, { recursive: true, force: true });

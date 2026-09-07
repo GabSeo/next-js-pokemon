@@ -23,9 +23,11 @@ import path from "node:path";
  * Pokemon-e (492), the 1996 originals (457) and neo (323). The official site's
  * own search does not reach that far back, so no mirror of it can.
  *
- * POINTERS, NOT PICTURES. `img` is a URL on the official site; the image is
- * fetched, resized and cached by app/api/pokemon-ja-image, the same arrangement
- * app/api/one-piece-image has with Bandai.
+ * NOT A DISPLAY SOURCE. Nothing here is rendered. Japanese cards are catalogued
+ * so a scan can RECOGNISE what somebody is holding; what they are then shown,
+ * track and price is the English print, which is the one with a market behind
+ * it. The `img` URL is recorded because it is part of the record and will
+ * matter when artwork matching lands — not because a page may point at it.
  *
  * ATTRIBUTION: the data originates with The Pokemon Company's official Japanese
  * card search. type-null/PTCG-database (MIT) mirrors it and is not affiliated
@@ -43,10 +45,28 @@ export type JapaneseOfficialCard = {
   jpId: string;
   /** The name as printed — in Japanese. */
   name: string;
-  /** A URL on pokemon-card.com. Serve it through /api/pokemon-ja-image, never directly. */
+  /** A URL on pokemon-card.com. Recorded, never rendered — see this file's header. */
   img: string;
   total?: number;
   url?: string;
+  /**
+   * The part of the card that does not change with the language: Pokedex
+   * number, HP, stage, types, retreat, and each attack as `cost:damage`.
+   *
+   * This is the vocabulary a Japanese card will be matched to its English
+   * print in — attack NAMES differ across languages, their cost and damage do
+   * not. 15,298 of 19,640 records carry one. Nothing reads it yet: the
+   * matching is the next piece of work and will be checked against a paid API
+   * rather than guessed. See scripts/pokemon-ja-official-crawl.mts.
+   */
+  fp?: {
+    dex?: number;
+    hp?: number;
+    stage?: string;
+    types?: string[];
+    retreat?: number;
+    attacks?: string[];
+  };
 };
 
 type Loaded = { cards: Map<string, JapaneseOfficialCard>; crawledAt?: string };
@@ -94,21 +114,6 @@ export function japaneseOfficialCard(setId: string, localId: string): JapaneseOf
 export function japaneseOfficialStats(): { cards: number; crawledAt?: string } {
   const { cards, crawledAt } = load();
   return { cards: cards.size, crawledAt };
-}
-
-/**
- * Where to render this Japanese card's artwork, when the official data has it.
- *
- * Always our proxy, never the publisher's URL directly: see
- * app/api/pokemon-ja-image for why. Returns undefined rather than a guess when
- * the card is not in the official data — 4,330 Japanese cards are pictured
- * nowhere public, and showing them somebody else's artwork is the failure this
- * whole catalogue effort exists to remove.
- */
-export function japaneseImageUrl(setId: string, localId: string, width?: number): string | undefined {
-  if (!japaneseOfficialCard(setId, localId)) return undefined;
-  const key = encodeURIComponent(japaneseKey(setId, localId));
-  return width ? `/api/pokemon-ja-image/${key}?w=${width}` : `/api/pokemon-ja-image/${key}`;
 }
 
 /** The name as printed on the card, in Japanese, when the official data has it. */

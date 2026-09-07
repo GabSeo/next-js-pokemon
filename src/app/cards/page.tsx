@@ -45,27 +45,25 @@ function one(value: string | string[] | undefined): string | undefined {
 export default async function CardsPage({ searchParams }: PageProps) {
   const raw = await searchParams;
   const sort = one(raw.sort);
-  const lang = one(raw.lang);
   const query: CatalogQuery = {
     q: one(raw.q),
     set: one(raw.set),
-    // Only these two survive: see CatalogFilters on why the other four groups
-    // were removed rather than hidden.
-    language: lang === "en" || lang === "ja" ? lang : undefined,
+    // English only — see catalog-search's allEntries. The set filter is the one
+    // control that survived; see SearchControls on why the other four went.
+    language: "en",
     sort: isSortId(sort) ? sort : undefined,
     page: Number(one(raw.page)) || 1,
   };
 
   const result = searchCatalogCards(query);
-  const stats = catalogStats({ language: query.language ?? "all" });
+  const stats = catalogStats({ language: "en" });
 
   // The picker shows names, the URL carries qualified ids. Built here because
   // this is the layer that holds the catalogue; the filter panel is a client
   // component and must not read it.
   const setNames: Record<string, string> = {};
-  for (const set of getCatalogSets({ language: "all" })) {
-    const key = `${set.language ?? "en"}~${set.id}`;
-    setNames[key] = set.language === "ja" ? `${set.name} (JP)` : set.name;
+  for (const set of getCatalogSets({ language: "en" })) {
+    setNames[`en~${set.id}`] = set.name;
   }
   const pricedAt = priceSnapshotDate();
 
@@ -113,7 +111,6 @@ export default async function CardsPage({ searchParams }: PageProps) {
           basePath="/cards"
           total={result.total}
           placeholder="Search by card name or number…"
-          showLanguage
           filter={{
             param: "set",
             label: "Set",

@@ -4,7 +4,6 @@ import { officialCode, officialRowsForCode } from "@/lib/one-piece-official";
 import { onePieceImageUrl, onePiecePictureUrl } from "@/lib/one-piece-images";
 import { isBandaiPicture, optcgRowsForCode, pictureKey, printAlias } from "@/lib/one-piece-optcg";
 import { productOf, treatmentsOf } from "@/lib/one-piece-variants";
-import { japaneseImageUrl, japaneseName } from "@/lib/pokemon-ja-official";
 
 /**
  * The card→print shape both games render through — see
@@ -75,23 +74,18 @@ function pokemonView(tcgdexId: string, prices: Map<string, CatalogPrice[]>): Car
   const { card, set } = entry;
   const byVariant = prices.get(card.tcgdexId) ?? [];
 
-  // A Japanese card keeps the qualified id so a link back to this page lands
-  // on the same card: `neo1-1` names one card in each catalogue.
-  const japanese = set.language === "ja";
-
+  // ENGLISH ONLY, and this is a product rule rather than a data limit. The
+  // Japanese corpus exists to RECOGNISE a card somebody is holding; what they
+  // are shown, track and price is the English print. A Japanese card page would
+  // be a dead end: Cardmarket and TCGplayer barely index those printings, so it
+  // would offer artwork and no market. `pokemonView` therefore refuses one
+  // rather than rendering half a page — see getCardView.
   return {
     tcg: "pokemon",
-    code: japanese ? `ja~${card.tcgdexId}` : card.tcgdexId,
-    // The name AS PRINTED. TCGdex romanises every Japanese card — `Gengar Ex`,
-    // never `ゲンガーex` — which is not what is on the card in someone's hand.
-    // The romanised form still answers search, because that is what the
-    // catalogue is indexed on.
-    name: (japanese ? japaneseName(set.id, card.localId) : undefined) ?? card.name,
-    priceNote: japanese
-      ? "Japanese print, from TCGdex's Japanese catalogue. Cardmarket and TCGplayer index far fewer " +
-        "Japanese cards, so a missing price here usually means nobody publishes one."
-      : "Cardmarket and TCGplayer, from our latest snapshot. Each printing is priced separately.",
-    prints: variantPrints(card, japanese ? `${set.name} (JP)` : set.name, byVariant, japanese ? set.id : undefined),
+    code: card.tcgdexId,
+    name: card.name,
+    priceNote: "Cardmarket and TCGplayer, from our latest snapshot. Each printing is priced separately.",
+    prints: variantPrints(card, set.name, byVariant),
   };
 }
 
@@ -119,12 +113,7 @@ function pokemonView(tcgdexId: string, prices: Map<string, CatalogPrice[]>): Car
  * rather than dropped — a printing we cannot price and a printing that does not
  * exist are different claims.
  */
-function variantPrints(
-  card: CatalogCard,
-  setName: string,
-  byVariant: CatalogPrice[],
-  japaneseSetId?: string
-): CardPrint[] {
+function variantPrints(card: CatalogCard, setName: string, byVariant: CatalogPrice[]): CardPrint[] {
   const seen = new Set<string>();
   const prints: CardPrint[] = [];
 
@@ -138,15 +127,7 @@ function variantPrints(
       label: variant.type,
       origin: setName,
       rarity: card.rarity,
-      // TCGdex first; then the official Japanese data, which carries a picture
-      // for 4,569 cards TCGdex has none for. Undefined when neither does —
-      // 4,330 Japanese cards are pictured nowhere public, and a placeholder
-      // saying so beats another card's artwork.
-      image: card.image
-        ? `${card.image}/high.webp`
-        : japaneseSetId
-          ? japaneseImageUrl(japaneseSetId, card.localId, 480)
-          : undefined,
+      image: card.image ? `${card.image}/high.webp` : undefined,
       price: byVariant.find((p) => p.variantType === variant.type),
     });
   }
@@ -480,7 +461,10 @@ export async function getCardView(tcg: string, code: string): Promise<CardView |
   if (tcg !== "pokemon") return undefined;
 
   const entry = getCatalogCard(code);
-  if (!entry) return undefined;
+  // Japanese cards are catalogued for RECOGNITION, never for display: the
+  // frontend shows the English print of a card, which is the one with a market
+  // behind it. A `ja~` id is therefore not an address this app will render.
+  if (!entry || entry.set.language === "ja") return undefined;
   const prices = await getCatalogPricesByVariant([entry.card]);
   return pokemonView(code, prices);
 }

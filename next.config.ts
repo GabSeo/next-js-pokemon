@@ -215,9 +215,6 @@ const nextConfig: NextConfig = {
     // catalogue, at request time by definition — the id arrives in the path, so
     // there is no build step at which this could have been read instead.
     "/api/one-piece-image/[printingId]": ["./data/catalog/one-piece-official/**"],
-    // Same shape for Japanese Pokemon: the key arrives in the path and resolves
-    // to an official URL through the mirrored index.
-    "/api/pokemon-ja-image/[cardKey]": ["./data/catalog/pokemon-ja-official/**"],
     // The scan resolves scanned codes to cards and ranks their printings by
     // artwork, so it needs both catalogues, the price snapshot the card view
     // reads, and the precomputed artwork signatures.

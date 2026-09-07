@@ -13,14 +13,14 @@ import { SORTS, type SortId } from "@/lib/catalog-query";
  * one narrower. The controls are read once and the grid is looked at for the
  * rest of the visit, so the grid gets the width.
  *
- * ONE COMPONENT, TWO GAMES, so they are the same surface because they are the
- * same code rather than two copies that drift. The only difference is the
- * language toggle, which exists only on the Pokemon side and not by oversight:
- * Pokemon has an English and a Japanese CATALOGUE — different sets, different
- * numbering, 12,781 cards published only in Japanese — while Bandai publishes
- * the same cards in three languages rather than three catalogues. There is
- * nothing on the One Piece side to switch between, and a toggle that filters
- * nothing would be worse than its absence.
+ * ONE COMPONENT, TWO GAMES, identical on both sides — they are the same surface
+ * because they are the same code rather than two copies that drift.
+ *
+ * NO LANGUAGE CONTROL. There was one, briefly, and it was a mistake: this app
+ * shows English prints. The Japanese Pokemon corpus exists to RECOGNISE a card
+ * somebody is holding, and what they are then shown, track and price is the
+ * English print — the one with a market behind it. Offering Japanese cards for
+ * browsing would offer pages the app deliberately will not render.
  *
  * SET AND PRICE, and nothing else. Card type, series, rarity and printing each
  * had their own group on the Pokemon side and together they filled the panel
@@ -42,14 +42,12 @@ type Props = {
   /** The set or pack picker: which query parameter it writes, and what to call it. */
   filter: { param: string; label: string; options: SelectOption[] };
   placeholder: string;
-  /** Pokemon only — see this file's header. */
-  showLanguage?: boolean;
 };
 
 const PILL =
   "rounded-full border-2 border-black px-3 py-1 text-xs font-bold shadow-hard-sm transition-[transform,box-shadow] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-md";
 
-export function SearchControls({ basePath, total, filter, placeholder, showLanguage }: Props) {
+export function SearchControls({ basePath, total, filter, placeholder }: Props) {
   const router = useRouter();
   const params = useSearchParams();
   const [pending, startTransition] = useTransition();
@@ -105,26 +103,6 @@ export function SearchControls({ basePath, total, filter, placeholder, showLangu
             </option>
           ))}
         </select>
-
-        {showLanguage && (
-          <select
-            value={activeLanguage}
-            // The set is cleared too: a set belongs to one catalogue, so
-            // carrying it across a language switch guarantees no results.
-            onChange={(event) =>
-              apply({
-                lang: event.target.value || undefined,
-                [filter.param]: undefined,
-              })
-            }
-            aria-label="Filter by language"
-            className="rounded-lg border-2 border-black bg-card-surface px-3 py-2 text-sm shadow-hard-sm outline-none focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-hard-md"
-          >
-            <option value="">Both languages</option>
-            <option value="en">English</option>
-            <option value="ja">Japanese</option>
-          </select>
-        )}
 
         <button
           type="submit"
