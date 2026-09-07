@@ -49,6 +49,39 @@ export class VisionNotConfiguredError extends Error {
 
 type ServiceAccount = { client_email: string; private_key: string };
 
+/**
+ * A service account from either the raw JSON or a base64 copy of it.
+ *
+ * BASE64 IS THE RECOMMENDED FORM, and the reason is Vercel's environment
+ * editor. A service-account file is multi-line and its `private_key` is a PEM
+ * full of newlines; pasting it raw makes the editor warn that the value "starts
+ * with whitespace and has return characters", and the newlines survive or do
+ * not depending on how it was pasted. Base64 is one line of `A-Za-z0-9+/=` with
+ * nothing an editor can normalise, so it either arrives intact or not at all.
+ *
+ * Raw JSON is still accepted, because it works when it works and telling
+ * someone their existing setup is invalid would be a lie.
+ */
+function parseServiceAccount(raw: string): ServiceAccount {
+  const trimmed = raw.trim();
+
+  // A JSON object starts with `{`; anything else that is long is base64.
+  const decoded = trimmed.startsWith("{")
+    ? trimmed
+    : Buffer.from(trimmed, "base64").toString("utf8");
+
+  let account: ServiceAccount;
+  try {
+    account = JSON.parse(decoded) as ServiceAccount;
+  } catch {
+    throw new Error(
+      "GOOGLE_VISION_KEY is neither valid JSON nor base64-encoded JSON. " +
+        "Paste the whole service-account file, or its base64 (see /api/scan/ocr for what is actually there)."
+    );
+  }
+  return account;
+}
+
 let client: JWT | undefined;
 
 /**
@@ -65,12 +98,7 @@ function authClient(): JWT {
   const raw = process.env.GOOGLE_VISION_KEY;
   if (!raw) throw new VisionNotConfiguredError();
 
-  let account: ServiceAccount;
-  try {
-    account = JSON.parse(raw) as ServiceAccount;
-  } catch {
-    throw new Error("GOOGLE_VISION_KEY is not valid JSON — paste the whole service-account file");
-  }
+  const account = parseServiceAccount(raw);
 
   if (!account.client_email || !account.private_key) {
     throw new Error("GOOGLE_VISION_KEY is missing client_email or private_key");

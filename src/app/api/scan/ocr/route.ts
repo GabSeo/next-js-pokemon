@@ -33,6 +33,77 @@ import { readTextFromImage, visionConfigured, VisionNotConfiguredError } from "@
 
 export const runtime = "nodejs";
 
+/**
+ * What is wrong with the key, without ever showing it.
+ *
+ * Added because diagnosing this by guesswork was costing more than the feature.
+ * The 501 the POST returns says only "not configured", which is true for a
+ * missing variable and indistinguishable from one that is present but
+ * unusable — a truncated paste, a value scoped to the wrong environment, or a
+ * PEM whose newlines an editor turned into the characters backslash-n.
+ *
+ * Everything below is a SHAPE, never a value: whether the variable exists, how
+ * long it is, whether it parses, and whether the two fields that matter are
+ * present. `client_email` is reported as its domain only, which identifies the
+ * project without exposing the account. The private key is reported as a length
+ * and a yes/no on looking like a PEM. None of it is a secret, and all of it is
+ * enough to tell the four failure modes apart in one request.
+ */
+export function GET() {
+  const raw = process.env.GOOGLE_VISION_KEY;
+
+  if (!raw) {
+    return Response.json({
+      configured: false,
+      problem: "GOOGLE_VISION_KEY is not present on this deployment.",
+      likely:
+        "The variable exists in Vercel but is not ticked for this environment " +
+        "(a branch deploys to Preview, not Production), or it was added after " +
+        "this deployment was built. Tick Preview, then redeploy.",
+    });
+  }
+
+  // Same acceptance as lib/vision.ts: raw JSON, or base64 of it.
+  const trimmed = raw.trim();
+  const decoded = trimmed.startsWith("{") ? trimmed : Buffer.from(trimmed, "base64").toString("utf8");
+
+  let parsed: { client_email?: string; private_key?: string; private_key_id?: string };
+  try {
+    parsed = JSON.parse(decoded) as typeof parsed;
+  } catch {
+    return Response.json({
+      configured: false,
+      length: raw.length,
+      encoding: trimmed.startsWith("{") ? "looks like raw JSON" : "not JSON — tried base64 and that failed too",
+      problem: "Present, but unreadable.",
+      likely:
+        raw.length < 200
+          ? "Too short to be a service-account file — this looks like a single field (a private_key_id or an API key) rather than the whole JSON."
+          : "The paste may be truncated. Copy the entire downloaded .json, braces included.",
+    });
+  }
+
+  const key = parsed.private_key ?? "";
+  return Response.json({
+    configured: Boolean(parsed.client_email && parsed.private_key),
+    length: raw.length,
+    hasClientEmail: Boolean(parsed.client_email),
+    // Domain only: identifies the project, exposes no account.
+    emailDomain: parsed.client_email?.split("@")[1] ?? null,
+    hasPrivateKey: Boolean(parsed.private_key),
+    privateKeyLength: key.length,
+    privateKeyLooksLikePem: key.includes("BEGIN PRIVATE KEY"),
+    // The one mangling that is common and silent.
+    privateKeyHasLiteralBackslashN: key.includes("\n"),
+    problem:
+      parsed.client_email && parsed.private_key
+        ? null
+        : parsed.private_key_id && !parsed.private_key
+          ? "This has private_key_id but no private_key — it is not the full service-account file."
+          : "Missing client_email or private_key.",
+  });
+}
+
 /** Vision's own hard limit is 20 MB base64; a phone photo is 2–6 MB and a card needs far less. */
 const MAX_BYTES = 8 * 1024 * 1024;
 
