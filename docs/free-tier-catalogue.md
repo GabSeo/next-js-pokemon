@@ -452,13 +452,58 @@ first wrote, to match the existing `/sets/onepiece`.
 card page classified free without being allowlisted. Build holds at 393 pages
 in 2.7s. BerryWallet and PokéWallet untouched by the page.
 
-### Phase 4 — Lookup by code *(the scan without the camera)*
+### Phase 4 — Lookup by code ✅ *done* *(the scan without the camera)*
 
-- A search box that accepts `OP05-119`, `190/182`, or a name.
-- Routes to the Phase 2 page.
-- Ships the whole *match → choose* interaction with no OCR risk.
+`/lookup` takes what a person types and resolves it to candidate CARDS across
+both games; each links to its card page, where they pick the printing.
+`src/lib/card-lookup.ts` is the resolver, tried in order:
 
-**Exit criteria**: a person can find any of 34,000 cards and pick a printing.
+| input | read as | example |
+|---|---|---|
+| `OP05-119`, `op05-119`, `OP05-119_p2`, `P-033` | One Piece card code | 1 card, 9 printings |
+| `190/182` | the number printed on a Pokémon card | **2 cards** |
+| `sv08-001` | a TCGdex id — what our own links carry | 1 card, 2 printings |
+| `Monkey.D.Luffy`, `monkey d luffy` | a name, in either game | 30 cards |
+
+Code before id, because `OP05-119` also satisfies the looser shape of a TCGdex
+id and only one reading is right.
+
+**Ambiguity is a result, not a failure — and the printed number proves it.**
+`190/182` is Vanillish in Paradox Rift *and* Ethan's Typhlosion in sv10;
+`4/102` is Base Set Charizard *and* Drapion in Triumphant. Measured: **44 of
+203** set totals are shared by more than one set, the worst by **18**. Returning
+every candidate and saying how the input was read is correct; picking one would
+be a guess with a wrong answer half the time. This is the same *match → choose*
+shape the whole design turns on (§1), arriving from a text box.
+
+**Two things found while building:**
+
+1. **Name search ranked badly.** "Charizard" led with *Blaine's* Charizard,
+   because both underlying searches order alphabetically and a substring match
+   is a substring match. Someone typing a name usually means the card that IS
+   that name, so exact now outranks prefix, which outranks a mention anywhere.
+2. **One Piece names needed flattening and grouping.** Bandai writes
+   `Monkey.D.Luffy` where a person types spaces, so both spellings normalise to
+   one. And results group by CODE, not printing — a name search is a search for
+   a card, and returning hundreds of printings would bury the distinction the
+   card page exists to show.
+
+**Verified end to end**: 25 lookup results followed through to their card pages
+— all resolve, and the printing count on the tile agrees with the page. Every
+input form checked, including lowercase, printing suffixes, and no-match.
+
+**In the nav as "Find a Card"**, kept distinct from "Search Cards" (`/cards`)
+because they answer different questions: this resolves a known card across both
+games; `/cards` is the Pokémon browse surface with facets, for when you do not
+know what you are looking for.
+
+**Budget**: `check-free-tier` reports **56 routes, 27 free** — up from 26,
+classified free without being allowlisted. Build 394 pages in 3.4s. No prices
+on this page at all: it answers *which card*, and only the card page has an
+honest place for a number.
+
+**What this leaves for Phase 5**: only capture and read. The camera fills this
+same field, and a bad photo degrades to typing rather than to an error.
 
 ### Phase 5 — Scan
 

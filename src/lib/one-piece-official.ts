@@ -184,6 +184,46 @@ export function officialRowsForCode(code: string, language?: string): OfficialEn
 }
 
 /**
+ * Cards whose name contains `text`, one entry per CODE rather than per printing.
+ *
+ * Grouped because a name search is a search for a CARD. "Monkey.D.Luffy" spans
+ * dozens of codes and hundreds of printings; returning every printing would
+ * bury the distinction that matters — which card — under the one the card page
+ * exists to show. The first row of each code is representative: 0 of 945
+ * multi-printing groups differ by name (see the file header), so any of them
+ * names the group correctly.
+ *
+ * Case- and separator-insensitive: Bandai writes "Monkey.D.Luffy" with dots
+ * where a person types spaces, and neither spelling should miss the other.
+ */
+export function officialSearchByName(text: string, language: string, limit = 60): OfficialEntry[] {
+  const needle = normaliseName(text);
+  if (needle.length === 0) return [];
+
+  const out: OfficialEntry[] = [];
+  const seen = new Set<string>();
+
+  for (const entry of loadCatalog().entries) {
+    if (entry.language !== language) continue;
+    if (!normaliseName(entry.card.name).includes(needle)) continue;
+
+    const code = officialCode(entry.card.id);
+    if (seen.has(code)) continue;
+    seen.add(code);
+
+    out.push(entry);
+    if (out.length >= limit) break;
+  }
+
+  return out;
+}
+
+/** Lowercased, with dots and separators flattened to spaces — see officialSearchByName. */
+function normaliseName(text: string): string {
+  return text.toLowerCase().replace(/[.\-_]+/g, " ").replace(/\s+/g, " ").trim();
+}
+
+/**
  * Where a language's card images are served from.
  *
  * Measured 2026-09-07, and both halves of the pair matter. The HOST is

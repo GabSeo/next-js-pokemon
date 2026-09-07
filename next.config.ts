@@ -196,6 +196,10 @@ const nextConfig: NextConfig = {
     // both catalogues plus the price snapshot. Request-time by necessity rather
     // than choice: ~24k cards is far too many to prerender, so it is on-demand
     // ISR and really does read these at runtime (app/card/[tcg]/[code]).
+    // The lookup box resolves across both games at request time (searchParams),
+    // so it reads both catalogues. No prices: it answers "which card", and only
+    // the card page answers "which printing".
+    "/lookup": ["./data/catalog/pokemon/**", "./data/catalog/one-piece-official/**"],
     "/card/[tcg]/[code]": [
       "./data/catalog/pokemon/**",
       "./data/catalog/one-piece-official/**",

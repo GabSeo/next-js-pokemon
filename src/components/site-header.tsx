@@ -3,6 +3,12 @@ import { SITE_NAME } from "@/lib/site";
 
 const NAV_LINKS = [
   { href: "/tools/price-checker", label: "Price Checker" },
+  // Two card-finding entries, kept apart because they answer different
+  // questions. /lookup takes a card code, a printed number or a name across
+  // BOTH games and resolves to one card's printings — it is the scan's
+  // interaction without the camera. /cards is the Pokémon browse surface, with
+  // facets and sorting, for when you do not know what you are looking for.
+  { href: "/lookup", label: "Find a Card" },
   { href: "/cards", label: "Search Cards" },
   // Points at the real set catalogues. It used to send people to
   // /collections/pokemon — the handful of tracked cards — which was never what
