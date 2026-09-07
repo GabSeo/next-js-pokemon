@@ -183,6 +183,24 @@ function aliases(): Map<string, string> {
   return aliasCache;
 }
 
+/**
+ * What the printings of one code have sold for, low to high.
+ *
+ * USD, from optcgapi's mirror of TCGplayer, as of the crawl — never live. One
+ * number for a code would be the thing this project keeps refusing to print:
+ * OP05-119 spans roughly 200x across its printings, so a single figure answers
+ * a question nobody asked. The RANGE is honest, and the per-printing figures on
+ * the card page are where the actual answer is.
+ */
+export function optcgPriceRange(code: string): { low: number; high: number; priced: number } | undefined {
+  const values = optcgRowsForCode(code)
+    .map((row) => row.market)
+    .filter((v): v is number => typeof v === "number" && v > 0)
+    .sort((a, b) => a - b);
+  if (values.length === 0) return undefined;
+  return { low: values[0], high: values[values.length - 1], priced: values.length };
+}
+
 export function optcgStats(): { rows: number; codes: number; priced: number; crawledAt?: string } {
   const { rows, byCode, crawledAt } = load();
   return {

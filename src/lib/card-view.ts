@@ -209,6 +209,21 @@ function printingLabel(name: string): string | undefined {
     .join(" · ");
 }
 
+/**
+ * The figure optcgapi reports for one row, as a CardPrint price.
+ *
+ * USD from their mirror of TCGplayer, as of the crawl. Attached PER PRINTING
+ * rather than per code, which is the whole point: optcgapi keys its rows on the
+ * card code and each row is one product, so the Alternate Art and the base
+ * print carry their own numbers. OP05-119 spans roughly 200x across its
+ * printings — a single figure for the code would be the exact mistake this
+ * project keeps refusing to make.
+ */
+function optcgPrice(market: number | undefined): CardPrint["price"] {
+  if (typeof market !== "number" || market <= 0) return undefined;
+  return { tcgplayer: { market, currency: "USD" } };
+}
+
 /** One Piece: every printing of a code, across every pack that holds one. */
 function onePieceView(code: string): CardView | undefined {
   const rows = officialRowsForCode(code, "english");
@@ -237,8 +252,8 @@ function onePieceView(code: string): CardView | undefined {
       code,
       name: fallback[0].name.replace(/\s*\([^)]*\)\s*$/, ""),
       priceNote:
-        "Not in Bandai's English card list — details from optcgapi, an independent mirror. " +
-        "Each printing below is a different product.",
+        "Not in Bandai's English card list — details and prices from optcgapi, an independent " +
+        "mirror, in USD as of our last crawl. Each printing below is a different product.",
       prints: onePiecePrints(code, []),
     };
   }
@@ -248,8 +263,9 @@ function onePieceView(code: string): CardView | undefined {
     code,
     name: rows[0].card.name,
     priceNote:
-      "No prices: Bandai publishes what a card is and does not sell singles. " +
-      "Each printing below is a different picture — that is what tells them apart.",
+      "Prices are per printing, in USD, from optcgapi's mirror as of our last crawl — " +
+      "Bandai publishes what a card is and does not sell singles. Each printing below is a " +
+      "different picture, and often a very different price.",
     prints: onePiecePrints(code, rows),
   };
 }
@@ -343,7 +359,13 @@ function onePiecePrints(code: string, rows: ReturnType<typeof officialRowsForCod
       if (!product || namedProducts.has(product)) continue;
       namedProducts.add(product);
       entries.push({
-        print: { key: `optcg:${product}`, label: product, origin: row.setName, rarity: row.rarity },
+        print: {
+          key: `optcg:${product}`,
+          label: product,
+          origin: row.setName,
+          rarity: row.rarity,
+          price: optcgPrice(row.market),
+        },
         bucketed: false,
       });
       continue;
@@ -358,6 +380,12 @@ function onePiecePrints(code: string, rows: ReturnType<typeof officialRowsForCod
       const existing = byId.get(row.imageId!);
 
       if (existing) {
+        // The mirror points at THIS printing's file, so its figure is this
+        // printing's figure — the reason optcgapi is worth having at all. Only
+        // when the tile has none: a row that also names a product gets its own
+        // tile below, and that one carries its own price.
+        existing.print.price ??= optcgPrice(row.market);
+
         if (!product || namedProducts.has(product)) continue;
         namedProducts.add(product);
 
@@ -380,6 +408,7 @@ function onePiecePrints(code: string, rows: ReturnType<typeof officialRowsForCod
             origin: row.setName,
             rarity: row.rarity,
             image: existing.print.image,
+            price: optcgPrice(row.market),
           },
           bucketed: false,
         });
@@ -404,6 +433,7 @@ function onePiecePrints(code: string, rows: ReturnType<typeof officialRowsForCod
           origin: row.setName,
           rarity: row.rarity,
           image: held ?? onePieceImageUrl(row.imageId!),
+          price: optcgPrice(row.market),
         },
         bucketed: false,
       };
@@ -421,6 +451,7 @@ function onePiecePrints(code: string, rows: ReturnType<typeof officialRowsForCod
         origin: row.setName,
         rarity: row.rarity,
         image: onePiecePictureUrl(picture),
+        price: optcgPrice(row.market),
       },
       bucketed: false,
     };

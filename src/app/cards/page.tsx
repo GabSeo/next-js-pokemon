@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CatalogFilters } from "@/components/catalog-filters";
+import { SearchControls } from "@/components/search-controls";
 import { CatalogCardTile } from "@/components/catalog-card-tile";
 import { EyebrowTitle } from "@/components/retro/eyebrow-title";
 import { catalogStats, getCatalogSets } from "@/lib/catalog";
@@ -110,7 +110,21 @@ export default async function CardsPage({ searchParams }: PageProps) {
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[260px_1fr]">
         <aside className="lg:sticky lg:top-6 lg:self-start">
-          <CatalogFilters facets={result.facets} total={result.total} setNames={setNames} />
+          <SearchControls
+            basePath="/cards"
+            total={result.total}
+            placeholder="Search by card name or number…"
+            showLanguage
+            filter={{
+              param: "set",
+              label: "Set",
+              options: result.facets.set.map((f) => ({
+                value: f.value,
+                label: setNames[f.value] ?? f.value,
+                count: f.count,
+              })),
+            }}
+          />
         </aside>
 
         <section>

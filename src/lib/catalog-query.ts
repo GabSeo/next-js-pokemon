@@ -31,18 +31,31 @@ export const PAGE_SIZE = 60;
 
 export type SortId = "name" | "name-desc" | "newest" | "oldest" | "number" | "price-high" | "price-low";
 
+/**
+ * FOUR, so both games offer the same ones.
+ *
+ * The two searches are meant to be the same surface with one difference —
+ * Pokemon has an English and a Japanese catalogue and One Piece does not.
+ * `newest`, `oldest` and `number` cannot be offered on the One Piece side:
+ * Bandai's packs carry no release date we hold, and a One Piece row is a CODE
+ * with several printings rather than a numbered card. Keeping them on one side
+ * only would make the two pages differ for a reason nobody can see.
+ *
+ * They remain valid `SortId`s so an existing bookmarked URL still sorts rather
+ * than falling back silently; they are simply not offered.
+ */
 export const SORTS: { id: SortId; label: string; needsPrices?: true }[] = [
   { id: "name", label: "Name A–Z" },
   { id: "name-desc", label: "Name Z–A" },
-  { id: "newest", label: "Newest set" },
-  { id: "oldest", label: "Oldest set" },
-  { id: "number", label: "Card number" },
   { id: "price-high", label: "Price high → low", needsPrices: true },
   { id: "price-low", label: "Price low → high", needsPrices: true },
 ];
 
+/** Sorts that exist but are no longer offered. Kept valid so old links keep working. */
+const RETIRED: SortId[] = ["newest", "oldest", "number"];
+
 export function isSortId(value: string | undefined): value is SortId {
-  return SORTS.some((s) => s.id === value);
+  return SORTS.some((s) => s.id === value) || RETIRED.includes(value as SortId);
 }
 
 export function sortNeedsPrices(sort: SortId): boolean {

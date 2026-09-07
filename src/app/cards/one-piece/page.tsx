@@ -1,40 +1,56 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { EyebrowTitle } from "@/components/retro/eyebrow-title";
+import { SearchControls } from "@/components/search-controls";
+import { isSortId, PAGE_SIZE, type SortId } from "@/lib/catalog-query";
 import { officialCardsInPack, officialCode, officialPacks } from "@/lib/one-piece-official";
 import { onePieceImageUrl, onePieceSrc, onePieceSrcSet } from "@/lib/one-piece-images";
+import { optcgPriceRange } from "@/lib/one-piece-optcg";
 
 /**
- * Search the One Piece catalogue by name, filtered by pack.
+ * Search the One Piece catalogue — the same surface as /cards, one game over.
  *
- * WHY A SEPARATE PAGE FROM /cards. The two games do not share a search because
- * they do not share a shape. A Pokemon card has one picture and several named
- * printings; a One Piece code has several pictures and no names at all
- * (0 of 945 multi-printing groups differ by name). So /cards filters by
- * language and set, and this filters by pack — the only axis Bandai's own data
- * offers.
+ * THE TWO PAGES ARE DELIBERATELY IDENTICAL except for the language toggle,
+ * which exists only on the Pokemon side. Pokemon has an English and a Japanese
+ * CATALOGUE — different sets, different numbering, 12,781 cards published only
+ * in Japanese. Bandai publishes the same cards in three languages rather than
+ * three catalogues, so there is nothing here to switch between, and inventing a
+ * toggle that filters nothing would be worse than its absence.
  *
- * NO LANGUAGE FILTER, and that is a gap rather than a decision. Bandai
- * publishes three catalogues and we hold English and Japanese, but the two are
- * keyed on the same printing ids and a code resolves across both, so there is
- * nothing here to switch BETWEEN. Pokemon's Japanese cards are a different
- * catalogue; One Piece's are the same cards photographed for another market.
+ * ONE ROW PER CODE, not per printing, which is the real difference from the
+ * Pokemon grid underneath the shared layout. A code is what somebody searches
+ * for; its printings differ by picture and by as much as 200x in price, and the
+ * card page is where they are compared side by side. So a row shows the RANGE.
+ *
+ * PRICES ARE optcgapi's, in USD, as of the last crawl — the figures Bandai does
+ * not publish because it does not sell singles. A card with no price sorts to
+ * the end in BOTH directions: "we have no price" is not "this is free".
  *
  * FREE AND REQUEST-TIME. Reading searchParams makes this dynamic, and it costs
- * nothing: the whole answer comes from data/catalog/one-piece-official/.
+ * nothing — the whole answer is two files on disk.
  */
 
 export const metadata: Metadata = {
   title: "Search One Piece cards",
-  description: "Search every One Piece card by name, filtered by pack. Every printing of a code, side by side.",
+  description:
+    "Search every One Piece card by name or code, filtered by pack and sorted by price. " +
+    "Every printing of a code, side by side.",
 };
 
-const LIMIT = 60;
 const LANGUAGE = "english";
 
 function one(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
+
+type Row = {
+  code: string;
+  name: string;
+  pack: string;
+  printings: number;
+  low?: number;
+  high?: number;
+};
 
 export default async function OnePieceSearchPage({
   searchParams,
@@ -44,111 +60,192 @@ export default async function OnePieceSearchPage({
   const raw = await searchParams;
   const q = one(raw.q)?.trim() ?? "";
   const pack = one(raw.pack) ?? "";
+  const sortParam = one(raw.sort);
+  const sort: SortId = isSortId(sortParam) ? sortParam : "name";
+  const page = Math.max(1, Number(one(raw.page)) || 1);
 
   const packs = officialPacks(LANGUAGE);
+  const needle = q.toLowerCase();
 
-  // One row per CODE, not per printing: a code is what someone searches for,
-  // and the card page is where its printings are compared.
+  // One row per code. A code appears in several packs when it was reprinted,
+  // and the first pack that carries it names it here; the card page lists them
+  // all.
   const seen = new Set<string>();
-  const rows: { code: string; name: string; pack: string; printings: number }[] = [];
+  const rows: Row[] = [];
 
   for (const { pack: p } of packs) {
     if (pack && p.id !== pack) continue;
-    for (const card of officialCardsInPack(p.id, LANGUAGE)) {
+    const cards = officialCardsInPack(p.id, LANGUAGE);
+    for (const card of cards) {
       const code = officialCode(card.id);
       if (seen.has(code)) continue;
-      if (q && !card.name.toLowerCase().includes(q.toLowerCase()) && !code.toLowerCase().includes(q.toLowerCase())) {
-        continue;
-      }
+      if (needle && !card.name.toLowerCase().includes(needle) && !code.toLowerCase().includes(needle)) continue;
       seen.add(code);
+      const range = optcgPriceRange(code);
       rows.push({
         code,
         name: card.name,
         pack: p.label ?? p.title,
-        printings: officialCardsInPack(p.id, LANGUAGE).filter((c) => officialCode(c.id) === code).length,
+        printings: cards.filter((c) => officialCode(c.id) === code).length,
+        low: range?.low,
+        high: range?.high,
       });
-      if (rows.length >= LIMIT) break;
     }
-    if (rows.length >= LIMIT) break;
   }
+
+  // Unpriced rows sort to the end in BOTH directions rather than counting as
+  // zero — a low-to-high list led by cards we cannot price would be actively
+  // misleading, which is the same rule /cards applies.
+  const byPrice = (direction: 1 | -1) => (a: Row, b: Row) => {
+    const av = direction === 1 ? a.low : a.high;
+    const bv = direction === 1 ? b.low : b.high;
+    if (av === undefined && bv === undefined) return a.name.localeCompare(b.name);
+    if (av === undefined) return 1;
+    if (bv === undefined) return -1;
+    return (av - bv) * direction;
+  };
+
+  if (sort === "name-desc") rows.sort((a, b) => b.name.localeCompare(a.name) || a.code.localeCompare(b.code));
+  else if (sort === "price-high") rows.sort(byPrice(-1));
+  else if (sort === "price-low") rows.sort(byPrice(1));
+  else rows.sort((a, b) => a.name.localeCompare(b.name) || a.code.localeCompare(b.code));
+
+  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const current = Math.min(page, pageCount);
+  const entries = rows.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
+
+  const money = (value: number) =>
+    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(value);
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8">
-      <EyebrowTitle tone="blue">One Piece</EyebrowTitle>
+      <EyebrowTitle tone="blue">Catalogue</EyebrowTitle>
       <h1 className="mt-2 text-3xl font-black tracking-tight">Search One Piece cards</h1>
-
-      <form method="get" className="mt-6 flex flex-wrap gap-2">
-        <input
-          type="search"
-          name="q"
-          defaultValue={q}
-          placeholder="Search by card name or code…"
-          aria-label="Search One Piece cards"
-          className="min-w-0 flex-1 rounded-lg border-2 border-black bg-card-surface px-3 py-2 text-sm shadow-hard-sm outline-none"
-        />
-        <select
-          name="pack"
-          defaultValue={pack}
-          aria-label="Filter by pack"
-          className="rounded-lg border-2 border-black bg-card-surface px-3 py-2 text-sm shadow-hard-sm outline-none"
-        >
-          <option value="">All packs</option>
-          {packs.map(({ pack: p, cardCount }) => (
-            <option key={p.id} value={p.id}>
-              {p.label ?? p.title} ({cardCount})
-            </option>
-          ))}
-        </select>
-        <button
-          type="submit"
-          className="rounded-lg border-2 border-black bg-pokemon-yellow px-4 py-2 text-sm font-black shadow-hard-sm"
-        >
-          Search
-        </button>
-      </form>
-
-      <p className="mt-4 text-xs text-muted-text">
-        {rows.length === LIMIT ? `First ${LIMIT}` : rows.length} card{rows.length === 1 ? "" : "s"}
-        {q || pack ? " matching" : " in the catalogue"}. Open one to see every printing of it side by side.
+      <p className="mt-2 text-sm text-muted-text">
+        {seen.size.toLocaleString("en-US")} cards across {packs.length} packs. Identity is Bandai&apos;s; prices are
+        optcgapi&apos;s mirror in USD, as of our last crawl.{" "}
+        <Link href="/sets/onepiece" className="font-bold underline underline-offset-4">
+          Browse by pack
+        </Link>
+        .
       </p>
 
-      {rows.length === 0 ? (
-        <p className="mt-8 text-sm text-muted-text">
-          Nothing matches. Bandai names every printing of a code the same way, so try the code itself — `OP05-119`.
-        </p>
-      ) : (
-        <ul className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-          {rows.map((row) => {
-            const image = onePieceImageUrl(row.code);
-            return (
-              <li key={row.code}>
-                <Link
-                  href={`/card/onepiece/${encodeURIComponent(row.code)}`}
-                  className="flex h-full flex-col rounded-lg border-2 border-black bg-white p-2 shadow-hard-sm transition-[transform,box-shadow] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-md"
-                >
-                  <div className="mb-2 overflow-hidden rounded border-2 border-black bg-muted-surface">
-                    {/* eslint-disable-next-line @next/next/no-img-element -- pre-sized by /api/one-piece-image (sharp -> webp); next/image would re-optimize on a metered quota */}
-                    <img
-                      src={onePieceSrc(image, 320)}
-                      srcSet={onePieceSrcSet(image)}
-                      sizes="(min-width: 1024px) 20vw, (min-width: 640px) 28vw, 45vw"
-                      alt={`${row.name} ${row.code}`}
-                      width={300}
-                      height={420}
-                      loading="lazy"
-                      className="aspect-[300/420] w-full object-contain"
-                    />
-                  </div>
-                  <p className="text-sm font-black leading-tight">{row.name}</p>
-                  <p className="mt-1 text-[11px] text-muted-text">
-                    {row.code} · {row.pack}
-                  </p>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+      <div className="mt-8 grid gap-8 lg:grid-cols-[260px_1fr]">
+        <aside className="lg:sticky lg:top-6 lg:self-start">
+          <SearchControls
+            basePath="/cards/one-piece"
+            total={rows.length}
+            placeholder="Search by card name or code…"
+            filter={{
+              param: "pack",
+              label: "Pack",
+              options: packs.map(({ pack: p, cardCount }) => ({
+                value: p.id,
+                label: p.label ?? p.title,
+                count: cardCount,
+              })),
+            }}
+          />
+        </aside>
+
+        <section>
+          {entries.length === 0 ? (
+            <p className="rounded-lg border-2 border-black bg-muted-surface p-4 text-sm">
+              No cards match those filters. Bandai names every printing of a code the same way, so the code itself —
+              <code className="px-1 font-mono">OP05-119</code> — is often the surer search.
+            </p>
+          ) : (
+            <>
+              <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+                {entries.map((row) => {
+                  const image = onePieceImageUrl(row.code);
+                  return (
+                    <li key={row.code}>
+                      <Link
+                        href={`/card/onepiece/${encodeURIComponent(row.code)}`}
+                        className="flex h-full flex-col overflow-hidden rounded-lg border-2 border-black bg-card-surface shadow-hard-sm transition-transform hover:-translate-y-0.5"
+                      >
+                        <div className="bg-muted-surface p-2">
+                          {/* eslint-disable-next-line @next/next/no-img-element -- pre-sized by /api/one-piece-image (sharp -> webp); next/image would re-optimize on a metered quota */}
+                          <img
+                            src={onePieceSrc(image, 320)}
+                            srcSet={onePieceSrcSet(image)}
+                            sizes="(min-width: 1280px) 20vw, (min-width: 640px) 28vw, 45vw"
+                            alt={`${row.name} ${row.code}`}
+                            loading="lazy"
+                            className="aspect-[300/420] w-full rounded object-contain"
+                          />
+                        </div>
+                        <div className="flex flex-1 flex-col gap-0.5 border-t-2 border-black p-2">
+                          <span className="truncate text-xs font-bold" title={row.name}>
+                            {row.name}
+                          </span>
+                          <span className="truncate text-[10px] text-muted-text" title={row.pack}>
+                            {row.pack} · {row.code}
+                          </span>
+                          <span className="mt-auto pt-1 text-xs font-black">
+                            {row.high === undefined ? (
+                              <span className="font-bold text-muted-text">No price</span>
+                            ) : row.low !== undefined && row.low !== row.high ? (
+                              `${money(row.low)} – ${money(row.high)}`
+                            ) : (
+                              money(row.high)
+                            )}
+                          </span>
+                          <span className="text-[10px] text-muted-text">
+                            {row.printings} printing{row.printings === 1 ? "" : "s"} in this pack
+                          </span>
+                        </div>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+
+              {pageCount > 1 && (
+                <nav className="mt-6 flex items-center justify-between gap-2 text-sm" aria-label="Pagination">
+                  <PageLink params={raw} target={current - 1} disabled={current <= 1} label="Previous" />
+                  <span className="text-xs text-muted-text">
+                    Page {current} of {pageCount}
+                  </span>
+                  <PageLink params={raw} target={current + 1} disabled={current >= pageCount} label="Next" />
+                </nav>
+              )}
+            </>
+          )}
+        </section>
+      </div>
     </main>
+  );
+}
+
+/** Plain links, not buttons — a page of results is a URL, and this survives JavaScript being off. */
+function PageLink({
+  params,
+  target,
+  disabled,
+  label,
+}: {
+  params: Record<string, string | string[] | undefined>;
+  target: number;
+  disabled: boolean;
+  label: string;
+}) {
+  if (disabled) {
+    return <span className="rounded-lg border-2 border-black/20 px-3 py-1 text-muted-text">{label}</span>;
+  }
+  const next = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    const single = Array.isArray(value) ? value[0] : value;
+    if (single !== undefined && key !== "page") next.set(key, single);
+  }
+  if (target > 1) next.set("page", String(target));
+  return (
+    <Link
+      href={`/cards/one-piece?${next.toString()}`}
+      className="rounded-lg border-2 border-black bg-card-surface px-3 py-1 font-bold shadow-hard-sm"
+    >
+      {label}
+    </Link>
   );
 }
