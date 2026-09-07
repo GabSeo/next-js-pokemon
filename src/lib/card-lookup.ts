@@ -1,6 +1,7 @@
 import { getCatalogCard, getCatalogSetCards, getCatalogSets, type CatalogEntry } from "@/lib/catalog";
 import { searchCatalogCards } from "@/lib/catalog-search";
 import { officialCode, officialRowsForCode, officialSearchByName } from "@/lib/one-piece-official";
+import { onePieceImageUrl } from "@/lib/one-piece-images";
 
 /**
  * Resolve whatever a person types into candidate CARDS, across both games.
@@ -91,7 +92,7 @@ function onePieceMatch(code: string): LookupMatch | undefined {
     code,
     name: first.card.name,
     origin: rows.length === 1 ? (first.pack.label ?? first.pack.title) : `${rows.length} packs`,
-    image: `/api/one-piece-image/${encodeURIComponent(first.card.id)}?lang=english&w=320`,
+    image: onePieceImageUrl(first.card.id, { width: 320 }),
     printings: rows.length,
     detail: first.card.rarity ?? undefined,
   };

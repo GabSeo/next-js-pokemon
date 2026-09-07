@@ -1,7 +1,8 @@
 import { getCatalogCard, type CatalogCard } from "@/lib/catalog";
 import { getCatalogPricesByVariant, type CatalogPrice } from "@/lib/catalog-prices";
 import { officialCode, officialRowsForCode } from "@/lib/one-piece-official";
-import { optcgRowsForCode } from "@/lib/one-piece-optcg";
+import { onePieceImageUrl, onePieceImageUrlOrNone } from "@/lib/one-piece-images";
+import { optcgRowsForCode, printAlias } from "@/lib/one-piece-optcg";
 import { productOf } from "@/lib/one-piece-variants";
 
 /**
@@ -58,8 +59,9 @@ export type CardView = {
   /**
    * Stated rather than implied, because absence has two different causes and a
    * reader deserves to know which. Pokémon: prices are a local snapshot.
-   * One Piece: Bandai does not sell singles, and our price corpus is keyed on
-   * ids we have not proved joinable to Bandai's (§6).
+   * One Piece: Bandai does not sell singles. optcgapi carries prices keyed by
+   * card code and joinable to Bandai's printing ids, which is new — wiring them
+   * in is its own piece of work (ARCHITECTURE_AUDIT.md §3).
    */
   priceNote: string;
 };
@@ -139,64 +141,19 @@ function variantPrints(card: CatalogCard, setName: string, byVariant: CatalogPri
 const GENERIC_PROMO_PACK = /promotion|other product|限定商品|プロモーション/i;
 
 /**
- * The printings optcgapi names for a code Bandai lumped.
+ * The product a row names, or undefined when its parenthetical is not one.
  *
- * MEASURED 2026-09-07, and it is the largest single gap in our One Piece data.
- * Bandai files 349 codes under a generic promo bucket; for 343 of them (98%)
- * the corpus names an actual product, and for 322 it holds MORE printings than
- * Bandai lists at all:
- *
- *   P-033     Bandai 1  ->  corpus 5: Event Pack Vol. 2, CS 2023 Event Pack,
- *                           CS 2023 Event Pack Finalist Ver., …
- *   EB01-043  Bandai 7  ->  corpus 10: Offline Regional Participation Pack
- *                           2025 Vol.1, Finalist Card Set, Champion Card Set
- *
- * These are precisely the cards people search for and the ones tracked in
- * card-refs.ts, so showing them as one anonymous "Promotion card" was the
- * catalogue's most visible failure.
- *
- * optcgapi rather than the BerryWallet corpus, which named 84% of the same
- * codes: optcgapi covers 65 that the corpus does not, carries prices keyed by
- * code, and costs three bulk requests to refresh instead of a metered crawl at
- * 90 calls an hour.
- *
- * THE IMAGE STAYS BANDAI'S BASE PRINTING, and that is not a shortcut: verified,
- * Bandai serves P-033.png and 404s on P-033_pr1 and P-033_pr2. No distinct
- * artwork exists publicly for these products. A competitor with the same
- * product names shows the same base image for the same reason.
- *
- * Applied ONLY to lumped codes. Everywhere else Bandai's own printing list is
- * richer and carries real per-printing artwork, and the corpus row ids cannot
- * be joined to Bandai's printing ids anyway (ARCHITECTURE_AUDIT.md §6) — so
- * this replaces a list that says nothing rather than merging two that disagree.
+ * `productOf` carries the treatment table measured against live eBay listings —
+ * Parallel, Manga, SP, Gold, Wanted Poster are treatments Bandai already lists
+ * as separate printings with their own artwork, and admitting them here once
+ * appended four phantom tiles to OP05-119. What survives that can still be the
+ * card's own identity repeated (`119`, `OP05-119`), so both shapes are dropped.
  */
-function namedPromoPrints(code: string, image: string): CardPrint[] {
-  const seen = new Set<string>();
-  const prints: CardPrint[] = [];
-
-  for (const row of optcgRowsForCode(code)) {
-    // `productOf` strips the treatments — Parallel, Manga, SP, Gold, Wanted
-    // Poster — using the table measured against live eBay listings. Bandai
-    // already lists those as separate printings with their own artwork, so
-    // admitting them here appended four phantom tiles to OP05-119.
-    const product = productOf(row.name);
-    if (!product || seen.has(product)) continue;
-    // What survives can still be identity repeated rather than a product.
-    if (/^\d{1,3}$/.test(product) || /^[A-Z]{1,4}\d{0,2}-?\d{2,3}$/i.test(product)) continue;
-    seen.add(product);
-
-    prints.push({
-      key: `optcg:${product}`,
-      // The product IS the label here — it is the only thing separating these.
-      label: product,
-      origin: row.setName,
-      rarity: row.rarity,
-      image,
-      price: undefined,
-    });
-  }
-
-  return prints;
+function namedProduct(name: string): string | undefined {
+  const product = productOf(name);
+  if (!product) return undefined;
+  if (/^\d{1,3}$/.test(product) || /^[A-Z]{1,4}\d{0,2}-?\d{2,3}$/i.test(product)) return undefined;
+  return product;
 }
 
 /** One Piece: every printing of a code, across every pack that holds one. */
@@ -204,8 +161,9 @@ function onePieceView(code: string): CardView | undefined {
   const rows = officialRowsForCode(code, "english");
 
   // 17 codes exist in optcgapi and not in Bandai's English list. Returning
-  // "not found" for a card somebody is holding is worse than returning it with
-  // the one image Bandai does serve for that code.
+  // "not found" for a card somebody is holding is worse than returning it from
+  // the mirror — and since the merge below keys on Bandai's own printing ids,
+  // this path is the same code with an empty left side.
   if (rows.length === 0) {
     const fallback = optcgRowsForCode(code);
     if (fallback.length === 0) return undefined;
@@ -216,7 +174,7 @@ function onePieceView(code: string): CardView | undefined {
       priceNote:
         "Not in Bandai's English card list — details from optcgapi, an independent mirror. " +
         "Each printing below is a different product.",
-      prints: namedPromoPrints(code, `/api/one-piece-image/${encodeURIComponent(code)}?lang=english`),
+      prints: onePiecePrints(code, []),
     };
   }
 
@@ -231,39 +189,126 @@ function onePieceView(code: string): CardView | undefined {
   };
 }
 
+/**
+ * THE MERGE: one printing list per code, from both catalogues at once.
+ *
+ * WHY A JOIN IS POSSIBLE AT ALL, and it is the finding this rests on: optcgapi's
+ * `card_image_id` is BANDAI'S OWN printing id — `P-033_pr1`, `OP09-061_pr1`,
+ * `OP05-119_p6` — the same string punk-records stores as `card.id`. So the two
+ * sources can be joined on identity rather than matched on names, which is what
+ * every earlier attempt did and why it kept inventing printings.
+ *
+ * Measured 2026-09-07 across all 4,930 distinct printings optcgapi knows:
+ *
+ *   4,299  already in punk-records          image from Bandai, unmetered
+ *     541  Bandai's list does not carry      image repatriated into this repo
+ *      10  outside the list, Bandai has it   image from Bandai
+ *      80  no image anywhere public          listed, with the gap showing
+ *
+ * That is 98.4% of printings rendering their own artwork. Before this, the 551
+ * in the middle two rows either did not appear or showed a different card's
+ * picture — which is the failure that started this: scanning a card you are
+ * holding and getting no reference for it.
+ *
+ * TWO KINDS OF optcgapi ROW, and they are not interchangeable:
+ *
+ *   a NEW imageId      a printing Bandai's list omits entirely. Genuinely its
+ *                      own artwork, so it becomes its own tile.
+ *   a KNOWN imageId    the same picture as a printing already listed. A Jumbo
+ *                      promo is a real, separate product that reuses the art.
+ *                      Worth a tile only when it NAMES something.
+ *
+ * Rows are never dropped for lack of a name and never invented from one.
+ */
 function onePiecePrints(code: string, rows: ReturnType<typeof officialRowsForCode>): CardPrint[] {
-  const toPrint = ({ card, pack }: (typeof rows)[number]): CardPrint => ({
-    key: card.id,
-    // Deliberately no label. See CardPrint.label.
-    origin: pack.label ?? pack.title,
-    rarity: card.rarity ?? undefined,
-    image: `/api/one-piece-image/${encodeURIComponent(card.id)}?lang=english`,
-    price: undefined,
-  });
+  type Entry = { print: CardPrint; bucketed: boolean };
 
-  const named = namedPromoPrints(code, `/api/one-piece-image/${encodeURIComponent(code)}?lang=english`);
-  if (named.length === 0) return rows.map(toPrint);
+  const entries: Entry[] = rows.map(({ card, pack }) => ({
+    print: {
+      key: card.id,
+      // Deliberately no label yet. See CardPrint.label — Bandai records that a
+      // code has three printings and not which is the Alternate Art. optcgapi
+      // may fill this in below.
+      origin: pack.label ?? pack.title,
+      rarity: card.rarity ?? undefined,
+      image: onePieceImageUrl(card.id),
+      price: undefined,
+    },
+    bucketed: GENERIC_PROMO_PACK.test(pack.title),
+  }));
 
-  // ALWAYS ADD THE NAMED PRODUCTS, not only when Bandai bucketed something.
-  // The first version gated on "did Bandai file this under Promotion card",
-  // which never fired for ST21-014 or OP09-061 — Bandai files those under real
-  // packs (ST-21, OP-09) while the printing somebody actually owns is a
-  // campaign product Bandai's list does not mention at all:
-  //
-  //   ST21-014  3rd Anniversary Treasure Campaign Pack
-  //   OP09-061  English Version 2nd Anniversary Set
-  //
-  // Both were scanned, both showed only artwork that was not the card in hand.
-  // Whether Bandai bucketed its OWN rows says nothing about whether a product
-  // exists outside its list.
-  const fromRealPacks = rows.filter(({ pack }) => !GENERIC_PROMO_PACK.test(pack.title));
-  const bucketed = rows.filter(({ pack }) => GENERIC_PROMO_PACK.test(pack.title));
+  const byId = new Map(entries.map((entry) => [entry.print.key, entry]));
+  const namedProducts = new Set<string>();
+  /** Anonymous Bandai rows a named printing turned out to be a second copy of. */
+  const retired = new Set<string>();
 
-  // Anonymous rows are traded for named ones only when there are at least as
-  // many names as rows being replaced, so a card can never lose printings in
-  // exchange for labels. Otherwise everything is kept and the names are added.
-  const keep = named.length >= bucketed.length ? fromRealPacks : rows;
-  return [...keep.map(toPrint), ...named];
+  for (const row of optcgRowsForCode(code)) {
+    const product = namedProduct(row.name);
+    const existing = row.imageId ? byId.get(row.imageId) : undefined;
+
+    if (row.imageId && !existing) {
+      // Bandai's list does not have this printing. `onePieceImageUrl` resolves
+      // it to the file we repatriated, or to Bandai when they serve it after
+      // all — the caller never needs to know which.
+      const entry: Entry = {
+        print: {
+          key: row.imageId,
+          label: product,
+          origin: row.setName,
+          rarity: row.rarity,
+          // May be undefined: 80 of these printings are named by the mirror and
+          // pictured by nobody. See onePieceImageUrlOrNone.
+          image: onePieceImageUrlOrNone(row.imageId, Boolean(row.image)),
+          price: undefined,
+        },
+        bucketed: false,
+      };
+      byId.set(row.imageId, entry);
+      entries.push(entry);
+      if (product) namedProducts.add(product);
+
+      // THE DUPLICATE THIS RETIRES. Bandai lists six Spandine promo printings
+      // and names none of them; optcgapi lists seven and names all of them,
+      // under different ids. Several are the same picture, so listing both
+      // sides showed the card fifteen times. A NAMED printing may retire the
+      // ANONYMOUS one it duplicates — never the reverse, and never when this
+      // tile has no picture to offer in its place.
+      const twin = product && entry.print.image ? printAlias(row.imageId) : undefined;
+      const twinEntry = twin ? byId.get(twin) : undefined;
+      if (twin && twinEntry && !twinEntry.print.label && twinEntry.bucketed) retired.add(twin);
+      continue;
+    }
+
+    if (!product || namedProducts.has(product)) continue;
+    namedProducts.add(product);
+
+    // NAME IN PLACE rather than beside, when the row we already show is the
+    // anonymous one this product describes. P-033 arrives from Bandai as a
+    // single unlabelled "Promotion card"; optcgapi says it is the CS 2023 Event
+    // Pack Finalist Ver. Adding a second tile would show the same picture twice
+    // and leave one of them nameless.
+    if (existing && !existing.print.label && existing.bucketed) {
+      existing.print.label = product;
+      existing.print.origin = row.setName;
+      continue;
+    }
+
+    // A separate product that reuses artwork we already show — a Jumbo, an
+    // oversized event print. Its own tile, its own name, the shared picture.
+    entries.push({
+      print: {
+        key: `optcg:${product}`,
+        label: product,
+        origin: row.setName,
+        rarity: row.rarity,
+        image: existing?.print.image ?? onePieceImageUrl(code),
+        price: undefined,
+      },
+      bucketed: false,
+    });
+  }
+
+  return entries.filter((entry) => !retired.has(entry.print.key)).map((entry) => entry.print);
 }
 
 /**

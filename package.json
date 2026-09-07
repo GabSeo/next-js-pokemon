@@ -18,7 +18,10 @@
     "docs:pipelines": "npx tsx scripts/build-pipeline-docs.mts",
     "prices:backfill": "npx tsx scripts/price-history-backfill.mts",
     "catalog:one-piece-art": "npx tsx scripts/one-piece-art-signatures.mts",
-    "catalog:one-piece-optcg": "npx tsx scripts/one-piece-optcg-crawl.mts"
+    "catalog:one-piece-optcg": "npx tsx scripts/one-piece-optcg-crawl.mts",
+    "catalog:one-piece-images": "npx tsx scripts/one-piece-image-repatriate.mts",
+    "catalog:one-piece-refresh": "npx tsx scripts/one-piece-refresh.mts",
+    "catalog:one-piece-aliases": "npx tsx scripts/one-piece-print-aliases.mts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

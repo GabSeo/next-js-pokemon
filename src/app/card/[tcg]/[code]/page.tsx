@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { AddToCollectionButton } from "@/components/add-to-collection-button";
 import { getCardView, type CardPrint, type CardView } from "@/lib/card-view";
 import { absoluteUrl } from "@/lib/site";
+import { onePieceSrc, onePieceSrcSet } from "@/lib/one-piece-images";
 
 /**
  * One card, every printing of it, side by side. Free.
@@ -103,9 +104,6 @@ export default async function CardPage({ params }: { params: Promise<{ tcg: stri
   );
 }
 
-/** Must match WIDTHS in app/api/one-piece-image — a width only here is a 400. */
-const OP_WIDTHS = [320, 480, 640];
-
 function PrintTile({ print, tcg, code }: { print: CardPrint; tcg: CardView["tcg"]; code: string }) {
   const cm = print.price?.cardmarket?.avg;
   const tp = print.price?.tcgplayer?.market;
@@ -125,12 +123,8 @@ function PrintTile({ print, tcg, code }: { print: CardPrint; tcg: CardView["tcg"
         {print.image ? (
           /* eslint-disable-next-line @next/next/no-img-element -- both sources are pre-sized: TCGdex publishes quality tiers, and /api/one-piece-image resizes with sharp. next/image would re-optimize an already-optimized file on a metered Vercel quota (docs/free-tier-catalogue.md §7) */
           <img
-            src={tcg === "onepiece" ? `${print.image}&w=320` : print.image}
-            srcSet={
-              tcg === "onepiece"
-                ? OP_WIDTHS.map((w) => `${print.image}&w=${w} ${w}w`).join(", ")
-                : undefined
-            }
+            src={tcg === "onepiece" ? onePieceSrc(print.image, 320) : print.image}
+            srcSet={tcg === "onepiece" ? onePieceSrcSet(print.image) : undefined}
             sizes={tcg === "onepiece" ? "(min-width: 1024px) 20vw, (min-width: 640px) 28vw, 45vw" : undefined}
             alt={`${print.origin} printing`}
             width={300}
@@ -139,7 +133,11 @@ function PrintTile({ print, tcg, code }: { print: CardPrint; tcg: CardView["tcg"
             className="aspect-[300/420] w-full object-contain"
           />
         ) : (
-          <div className="aspect-[300/420] w-full" />
+          // A printing the mirror names and nobody pictures — 80 of them, all
+          // promos. Saying so beats an empty frame the reader has to interpret.
+          <div className="flex aspect-[300/420] w-full items-center justify-center p-3 text-center text-[11px] text-muted-text">
+            No picture published for this printing
+          </div>
         )}
       </div>
 

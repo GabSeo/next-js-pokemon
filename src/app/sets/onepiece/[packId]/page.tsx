@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { EyebrowTitle } from "@/components/retro/eyebrow-title";
 import { officialCardsInPack, officialCode, officialPacks, type OfficialCard } from "@/lib/one-piece-official";
 import { absoluteUrl } from "@/lib/site";
+import { onePieceImageUrl, onePieceSrcSet } from "@/lib/one-piece-images";
 
 /**
  * One One Piece pack, every printing inside it.
@@ -111,11 +112,13 @@ export default async function OnePiecePackPage({ params }: PageProps) {
   );
 }
 
-/** Must match WIDTHS in app/api/one-piece-image — the route rejects anything else with a 400. */
-const IMAGE_WIDTHS = [320, 480, 640];
+function imageSrc(printingId: string, width?: number): string {
+  return onePieceImageUrl(printingId, { width });
+}
 
-function imageSrc(printingId: string): string {
-  return `/api/one-piece-image/${encodeURIComponent(printingId)}?lang=english`;
+/** See onePieceSrcSet: a repatriated file is one width on disk and cannot honour a srcset. */
+function imageSrcSet(printingId: string): string | undefined {
+  return onePieceSrcSet(onePieceImageUrl(printingId));
 }
 
 function PrintingTile({ card }: { card: OfficialCard }) {
@@ -153,8 +156,8 @@ function PrintingTile({ card }: { card: OfficialCard }) {
       <div className="mb-2 overflow-hidden rounded border-2 border-black bg-muted-surface">
         {/* eslint-disable-next-line @next/next/no-img-element -- resizing happens in /api/one-piece-image (sharp -> webp); next/image would re-optimize an already-optimized file on a metered Vercel quota */}
         <img
-          src={`${imageSrc(card.id)}&w=320`}
-          srcSet={IMAGE_WIDTHS.map((w) => `${imageSrc(card.id)}&w=${w} ${w}w`).join(", ")}
+          src={imageSrc(card.id, 320)}
+          srcSet={imageSrcSet(card.id)}
           sizes="(min-width: 1024px) 20vw, (min-width: 640px) 28vw, 45vw"
           alt={`${card.name} (${card.id})`}
           width={300}

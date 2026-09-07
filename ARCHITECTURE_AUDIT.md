@@ -88,10 +88,29 @@ Verified, 2026-09-07:
 2. **The canonical identity IS a provider ID.** A Pokémon card's primary key is
    its TCGdex id (`sv08-001`). Every one of the four proposals independently
    names this as the mistake to avoid, and they are right.
-3. **One Piece has two identity spaces that are provably unjoinable.** Bandai's
-   `OP05-119_p2` and BerryWallet's opaque hash both exist; 94.7% of Bandai's
-   multi-printing groups are identical in every field but id and image. Measured:
-   0 of 9 tracked cards were identifiable from (code + pack + treatment).
+3. **One Piece had two identity spaces that are provably unjoinable — a third
+   turned out to be joinable.** Bandai's `OP05-119_p2` and BerryWallet's opaque
+   hash both exist; 94.7% of Bandai's multi-printing groups are identical in
+   every field but id and image, and 0 of 9 tracked cards were identifiable from
+   (code + pack + treatment). That still holds for BerryWallet.
+
+   **Corrected 2026-09-07.** optcgapi's `card_image_id` is *Bandai's own printing
+   id* — `P-033_pr1`, `OP09-061_pr1` — the same string punk-records stores as
+   `card.id`. The two catalogues join on identity, not on name matching, and
+   `lib/card-view.ts` now does exactly that. This is the single finding that
+   moved the One Piece catalogue from partial to 98.4% complete; the earlier
+   note that optcgapi rows "cannot be joined to Bandai's printing ids" was about
+   BerryWallet and was wrongly generalised.
+
+   The residual gap is a *namespace* disagreement, not an identity one: both
+   sources suffix a code and disagree on the suffix (`_p2` against `_pr1`), so
+   201 codes carry ids in both spaces. Artwork settles those —
+   `scripts/one-piece-print-aliases.mts` hashes both sides offline and pairs
+   what looks identical at a threshold measured against 3,000 unrelated pairs
+   (control p1 = 0.393; threshold 0.05). 195 pairs found. A pair licenses
+   retiring an *anonymous* listing in favour of a *named* one, and nothing else:
+   two named products are never collapsed, because a Participation and a
+   Finalist pack share artwork and differ by a stamp no 64-bit hash will see.
 4. **Neither game has a print-level identity** — only card-level. A collection
    holds printings, and a reverse holo is a median **3.36×** its normal twin.
 

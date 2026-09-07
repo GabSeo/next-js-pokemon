@@ -106,6 +106,43 @@ export function optcgParenthetical(name: string): string | undefined {
   return match ? match[1].trim() : undefined;
 }
 
+/**
+ * The Bandai printing that shows the same picture as this mirror printing, if
+ * one does.
+ *
+ * The two sources suffix a card code differently — `_p2` against `_pr1` — so
+ * 201 codes carry ids in both namespaces with no key to join them on. Artwork
+ * joins them instead: scripts/one-piece-print-aliases.mts hashes both sides
+ * offline and pairs what looks identical, at a threshold measured against 3,000
+ * unrelated pairs.
+ *
+ * A pair means SAME PICTURE, not same product. An Online Regional Participation
+ * Pack and its Finalist counterpart differ by a stamp no 64-bit hash will see.
+ * So callers may use this to retire an ANONYMOUS listing in favour of a named
+ * one, and never to merge two products that both have names.
+ */
+export function printAlias(printingId: string): string | undefined {
+  return aliases().get(printingId);
+}
+
+let aliasCache: Map<string, string> | undefined;
+
+function aliases(): Map<string, string> {
+  if (aliasCache) return aliasCache;
+  aliasCache = new Map();
+  const file = path.join(process.cwd(), "data", "catalog", "one-piece-art", "aliases.json");
+  try {
+    if (existsSync(file)) {
+      const parsed = JSON.parse(readFileSync(file, "utf8")) as { pairs?: Record<string, string> };
+      for (const [from, to] of Object.entries(parsed.pairs ?? {})) aliasCache.set(from, to);
+    }
+  } catch {
+    // Absent or unreadable: the merge simply lists both printings, which is the
+    // behaviour before this file existed — verbose rather than wrong.
+  }
+  return aliasCache;
+}
+
 export function optcgStats(): { rows: number; codes: number; priced: number; crawledAt?: string } {
   const { rows, byCode, crawledAt } = load();
   return {
