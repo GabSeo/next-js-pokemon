@@ -1,6 +1,8 @@
 import { getCatalogCard, type CatalogCard } from "@/lib/catalog";
 import { getCatalogPricesByVariant, type CatalogPrice } from "@/lib/catalog-prices";
+import { opRowsForCode, opTreatment } from "@/lib/one-piece-catalog";
 import { officialCode, officialRowsForCode } from "@/lib/one-piece-official";
+import { productOf } from "@/lib/one-piece-variants";
 
 /**
  * The card→print shape both games render through — see
@@ -125,6 +127,72 @@ function variantPrints(card: CatalogCard, setName: string, byVariant: CatalogPri
   return prints;
 }
 
+/**
+ * Packs Bandai uses as a bucket rather than a product.
+ *
+ * A promo card's real origin — Event Pack Vol. 2, Treasure Cup 2024, an Offline
+ * Regional Participation Pack — is what a collector calls it and what a
+ * marketplace listing says. Bandai's own card list files all of them under one
+ * of these, so three physically different cards arrive as one row named
+ * "Promotion card".
+ */
+const GENERIC_PROMO_PACK = /promotion|other product|限定商品|プロモーション/i;
+
+/** `(P-033)` is a code repeated in the name, not a product. */
+const CODE_LIKE = /^[A-Z]{1,4}\d{0,2}-?\d{2,3}$/i;
+
+/**
+ * The printings the BerryWallet corpus knows for a code Bandai lumped.
+ *
+ * MEASURED 2026-09-07, and it is the largest single gap in our One Piece data.
+ * Bandai files 349 codes under a generic promo bucket; for 343 of them (98%)
+ * the corpus names an actual product, and for 322 it holds MORE printings than
+ * Bandai lists at all:
+ *
+ *   P-033     Bandai 1  ->  corpus 5: Event Pack Vol. 2, CS 2023 Event Pack,
+ *                           CS 2023 Event Pack Finalist Ver., …
+ *   EB01-043  Bandai 7  ->  corpus 10: Offline Regional Participation Pack
+ *                           2025 Vol.1, Finalist Card Set, Champion Card Set
+ *
+ * These are precisely the cards people search for and the ones tracked in
+ * card-refs.ts, so showing them as one anonymous "Promotion card" was the
+ * catalogue's most visible failure.
+ *
+ * THE IMAGE STAYS BANDAI'S BASE PRINTING, and that is not a shortcut: verified,
+ * Bandai serves P-033.png and 404s on P-033_pr1 and P-033_pr2. No distinct
+ * artwork exists publicly for these products. A competitor with the same
+ * product names shows the same base image for the same reason.
+ *
+ * Applied ONLY to lumped codes. Everywhere else Bandai's own printing list is
+ * richer and carries real per-printing artwork, and the corpus row ids cannot
+ * be joined to Bandai's printing ids anyway (ARCHITECTURE_AUDIT.md §6) — so
+ * this replaces a list that says nothing rather than merging two that disagree.
+ */
+function promoPrintsFromCorpus(code: string, image: string): CardPrint[] {
+  const seen = new Set<string>();
+  const prints: CardPrint[] = [];
+
+  for (const row of opRowsForCode(code)) {
+    const product = productOf(row.card.name);
+    if (!product || CODE_LIKE.test(product)) continue;
+    if (seen.has(product)) continue;
+    seen.add(product);
+
+    const treatment = opTreatment(row.card.name);
+    prints.push({
+      key: `corpus:${product}`,
+      // The product IS the label here — it is the only thing separating these.
+      label: treatment && treatment !== product ? `${product} · ${treatment}` : product,
+      origin: row.set.name,
+      rarity: row.card.rarity,
+      image,
+      price: undefined,
+    });
+  }
+
+  return prints;
+}
+
 /** One Piece: every printing of a code, across every pack that holds one. */
 function onePieceView(code: string): CardView | undefined {
   const rows = officialRowsForCode(code, "english");
@@ -137,15 +205,37 @@ function onePieceView(code: string): CardView | undefined {
     priceNote:
       "No prices: Bandai publishes what a card is and does not sell singles. " +
       "Each printing below is a different picture — that is what tells them apart.",
-    prints: rows.map(({ card, pack }) => ({
-      key: card.id,
-      // Deliberately no label. See CardPrint.label.
-      origin: pack.label ?? pack.title,
-      rarity: card.rarity ?? undefined,
-      image: `/api/one-piece-image/${encodeURIComponent(card.id)}?lang=english`,
-      price: undefined,
-    })),
+    prints: onePiecePrints(code, rows),
   };
+}
+
+function onePiecePrints(code: string, rows: ReturnType<typeof officialRowsForCode>): CardPrint[] {
+  const toPrint = ({ card, pack }: (typeof rows)[number]): CardPrint => ({
+    key: card.id,
+    // Deliberately no label. See CardPrint.label.
+    origin: pack.label ?? pack.title,
+    rarity: card.rarity ?? undefined,
+    image: `/api/one-piece-image/${encodeURIComponent(card.id)}?lang=english`,
+    price: undefined,
+  });
+
+  // Split rather than all-or-nothing: the common shape is a card that exists in
+  // a real set AND in several promo products, and Bandai names the first and
+  // buckets the rest. EB01-043 is one EB-01 row plus six identical "Promotion
+  // card" rows. Replacing the whole list would discard the one row that carries
+  // a real pack and distinct artwork; keeping the whole list leaves six
+  // indistinguishable tiles.
+  const fromRealPacks = rows.filter(({ pack }) => !GENERIC_PROMO_PACK.test(pack.title));
+  const bucketed = rows.filter(({ pack }) => GENERIC_PROMO_PACK.test(pack.title));
+  if (bucketed.length === 0) return rows.map(toPrint);
+
+  const named = promoPrintsFromCorpus(code, `/api/one-piece-image/${encodeURIComponent(code)}?lang=english`);
+  // Only trade anonymous rows for named ones when there are at least as many
+  // names as rows being replaced — otherwise a card would silently lose
+  // printings in exchange for labels.
+  if (named.length < bucketed.length) return rows.map(toPrint);
+
+  return [...fromRealPacks.map(toPrint), ...named];
 }
 
 /**
