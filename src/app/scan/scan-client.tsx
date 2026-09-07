@@ -41,30 +41,47 @@ import { extractCardCodes, type CodeCandidate } from "@/lib/card-code-ocr";
  * effort on the 99% that is illustration. Cropping to the band where the code
  * always sits changes what the engine is looking at, not how hard it looks.
  *
- * FULL WIDTH, not the right corner alone: One Piece prints its code bottom
- * right, Pokémon bottom left, and a band costs nothing that a corner saves.
+ * SEVERAL CROPS, NOT ONE, and that is measured rather than cautious. Swept
+ * across five real cards on 2026-09-07, no single region won: a band at
+ * 0.90–0.99 and a bottom-right box each read 3 of 5, the wider 0.86–1.0 band
+ * read 1, and they did not succeed on the SAME cards. Alt arts bleed
+ * illustration into the footer and a wide crop drowns the code in it; plain
+ * cards carry a clean strip a wide crop reads easily. Trying a few in order and
+ * stopping at the first real card costs a few hundred milliseconds and covers
+ * more ground than any single choice.
  *
  * Grayscale and a hard contrast curve because the code is dark text over
  * artwork that is frequently neither dark nor light. Everything here runs in
  * the visitor's browser on a canvas, so it stays free.
  */
-async function bottomBand(file: File): Promise<HTMLCanvasElement | undefined> {
+type Region = { top: number; left: number; width: number; height: number };
+
+/** Ordered by measured hit rate. Fractions of the photo, not pixels. */
+const REGIONS: Region[] = [
+  { left: 0, top: 0.9, width: 1, height: 0.09 },
+  { left: 0.55, top: 0.915, width: 0.45, height: 0.075 },
+  { left: 0, top: 0.86, width: 1, height: 0.14 },
+];
+
+async function cropped(file: File, region: Region): Promise<HTMLCanvasElement | undefined> {
   try {
     const bitmap = await createImageBitmap(file);
-    const bandTop = Math.round(bitmap.height * 0.86);
-    const bandHeight = bitmap.height - bandTop;
+    const sx = Math.round(bitmap.width * region.left);
+    const sy = Math.round(bitmap.height * region.top);
+    const sw = Math.round(bitmap.width * region.width);
+    const sh = Math.round(bitmap.height * region.height);
 
-    // Upscale so the code is large enough for the engine to resolve; ~1800px
-    // across the band is comfortably past where accuracy stops improving.
-    const scale = Math.min(4, Math.max(1, 1800 / bitmap.width));
+    // Upscale so the code is large enough for the engine to resolve, capped so
+    // a 4000px phone photo does not produce a canvas nothing can hold.
+    const scale = Math.min(4, Math.max(1, 1800 / sw));
     const canvas = document.createElement("canvas");
-    canvas.width = Math.round(bitmap.width * scale);
-    canvas.height = Math.round(bandHeight * scale);
+    canvas.width = Math.min(2400, Math.round(sw * scale));
+    canvas.height = Math.round(sh * (canvas.width / sw));
 
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) return undefined;
     ctx.imageSmoothingQuality = "high";
-    ctx.drawImage(bitmap, 0, bandTop, bitmap.width, bandHeight, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bitmap, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
     bitmap.close();
 
     const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -117,12 +134,17 @@ export function ScanClient() {
         },
       });
 
-      // The band first, because that is where the code is. The whole photo is
-      // the fallback rather than the default — it is what failed on the first
-      // real card, and it stays only because a cropped band cannot help a photo
-      // framed some other way.
-      const band = await bottomBand(file);
-      let candidates = band ? extractCardCodes((await worker.recognize(band)).data.text ?? "") : [];
+      // Crops first, in measured order, stopping at the first that yields
+      // anything. The whole photo is the last resort rather than the default —
+      // it is what failed on the first real card, and it stays only because a
+      // crop cannot help a photo framed some other way.
+      let candidates: CodeCandidate[] = [];
+      for (const region of REGIONS) {
+        const canvas = await cropped(file, region);
+        if (!canvas) continue;
+        candidates = extractCardCodes((await worker.recognize(canvas)).data.text ?? "");
+        if (candidates.length > 0) break;
+      }
       if (candidates.length === 0) {
         candidates = extractCardCodes((await worker.recognize(file)).data.text ?? "");
       }
