@@ -73,7 +73,21 @@ function monthYear(set: BrowseSet): string {
     : d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
 }
 
-export function SetsBrowser({ sets, eras }: { sets: BrowseSet[]; eras: string[] }) {
+/**
+ * `hrefBase` exists because this grid now serves two catalogues that live on
+ * different routes. Without it every One Piece tile linked to `/sets/569301`,
+ * which lands in the POKÉMON `[setId]` route and 404s — the set id is real, but
+ * for the wrong catalogue.
+ */
+export function SetsBrowser({
+  sets,
+  eras,
+  hrefBase = "/sets",
+}: {
+  sets: BrowseSet[];
+  eras: string[];
+  hrefBase?: string;
+}) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortId>("newest");
   const [era, setEra] = useState<string | null>(null);
@@ -175,7 +189,7 @@ export function SetsBrowser({ sets, eras }: { sets: BrowseSet[]; eras: string[] 
             )}
             <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {group.sets.map((set, i) => (
-                <SetCard key={set.id} set={set} index={i} />
+                <SetCard key={set.id} set={set} index={i} hrefBase={hrefBase} />
               ))}
             </ul>
           </section>
@@ -193,7 +207,7 @@ function eraRange(sets: BrowseSet[]): string {
   return first === last ? first : `${first} – ${last}`;
 }
 
-function SetCard({ set, index }: { set: BrowseSet; index: number }) {
+function SetCard({ set, index, hrefBase }: { set: BrowseSet; index: number; hrefBase: string }) {
   const [logoFailed, setLogoFailed] = useState(false);
   // Only the first row or so animates — see globals.css's set-card-enter for
   // why this is CSS and not a JS whileInView (the motion version rendered
@@ -206,7 +220,7 @@ function SetCard({ set, index }: { set: BrowseSet; index: number }) {
       style={animated ? { animationDelay: `${index * 0.06}s` } : undefined}
     >
       <Link
-        href={`/sets/${set.id}`}
+        href={`${hrefBase}/${set.id}`}
         className="group relative flex h-full flex-col overflow-hidden rounded-lg border-2 border-black bg-card-surface p-5 shadow-hard-md transition-[transform,box-shadow] duration-150 hover:-translate-x-[3px] hover:-translate-y-[3px] hover:shadow-hard-lg"
       >
         {/* The logo sits unboxed and left-aligned: a set logo is already a

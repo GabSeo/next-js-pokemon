@@ -187,6 +187,7 @@ const nextConfig: NextConfig = {
     // no prices exist for it, because Bandai publishes what a card is rather
     // than what it sells for.
     "/sets/onepiece": ["./data/catalog/one-piece-official/**"],
+    "/sets/onepiece/[packId]": ["./data/catalog/one-piece-official/**"],
   },
 };
 

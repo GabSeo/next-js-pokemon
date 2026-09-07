@@ -12,6 +12,11 @@ const NAV_LINKS = [
   { href: "/sets", label: "Browse Sets" },
   { href: "/tools/grading-calculator", label: "Grading" },
   { href: "/#movers", label: "Market Movers" },
+  // The tracked cards, per game. These pages existed and were reachable only
+  // from the footer and one homepage button — which is why "Browse Sets" was
+  // pointing at one of them: it was the only way in.
+  { href: "/collections/pokemon", label: "Pokémon Cards" },
+  { href: "/collections/one-piece", label: "One Piece Cards" },
   { href: "/collection", label: "My Collection" },
 ];
 

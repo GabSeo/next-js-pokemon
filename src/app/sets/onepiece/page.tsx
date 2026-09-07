@@ -112,7 +112,7 @@ export default function OnePieceSetsPage() {
         not what it sells for. Marketplace figures live on the individual card pages.
       </p>
 
-      <SetsBrowser sets={browse} eras={eras} />
+      <SetsBrowser sets={browse} eras={eras} hrefBase="/sets/onepiece" />
     </main>
   );
 }
