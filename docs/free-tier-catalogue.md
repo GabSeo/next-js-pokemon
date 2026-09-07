@@ -305,25 +305,55 @@ recorded rather than hidden.
 to the free One Piece sets page failed the build with the exact chain —
 `@/lib/cards → @/lib/pokewallet → lib/pokewallet` — then passed again on revert.
 
-### Phase 1 — Variant-correct Pokémon prices
+### Phase 1 — Variant-correct Pokémon prices ✅ *done*
 
-First because it is the only phase that fixes something **already wrong on
-screen**, and it needs no new source, no new call and no new UI surface (§3d).
+First because it was the only phase fixing something **already wrong on
+screen**, needing no new source, no new call and no new crawl (§3d).
 
-- Carry the per-variant price keys into `data/catalog/pokemon/` at crawl time:
-  each variant gains the Cardmarket suffix (`""` / `-holo`) and the TCGplayer
-  block name (`normal` / `reverse-holofoil` / `holofoil` / `1st-edition` / …)
-  that prices *it*, rather than the card.
-- Render price against the variant the user is looking at, not the card.
-- Where a variant has no price of its own, say so. Do **not** fall back to the
-  card's other variant — that is precisely the 3.36× error.
+**§3d overstated the gap and is corrected here.** The variant→price-key edge
+already existed as `cardmarketPriceFields`; no crawl change was needed. Two real
+defects sat on top of it, both measured across the 33,085 card×variant pairs
+that have a snapshot row:
 
-This is also the Pokémon half of the card→print schema (§2), arriving as a bug
-fix rather than a migration.
+| | before | after |
+|---|---|---|
+| variant resolves to a TCGplayer block that exists | 26,874 (81.2%) | **28,623 (86.5%)** |
+| key missed although a block was present | 4,072 (12.3%) | **2,323 (7.0%)** |
 
-**Exit criteria**: a reverse-holo listing shows the reverse-holo figure on all
-16,219 rows that carry one, and the budget report is unchanged — the inputs were
-already on disk.
+1. **The key was a string where the data needed a list.** A block name carries
+   the card's *era* as well as its finish, so Base-Set-era printings failed:
+   1,391 `normal` cards priced under `unlimited`, 358 `holo` under
+   `unlimited-holofoil`. Now an ordered candidate list, first match wins.
+2. **Only the headline printing was reachable.** The tile labelled its variant
+   honestly but had no way to show the others. `getCatalogPricesByVariant`
+   returns every priced printing and the tile renders them.
+
+**Two rules the resolver holds, both load-bearing:**
+
+- **Never cross the foil boundary.** 1,167 pairs are `normal` variants whose
+  only block is `holofoil`; they stay unpriced. Substituting there would be the
+  same 3.36× class of error this phase exists to remove.
+- **Within a finish, the commonest print run leads.** 818 cards hold both a 1st
+  Edition and an Unlimited block and 1st Edition is dearer in **98%** of them
+  (median 2.61×) — leading with it would overstate all 818. The block that
+  answered travels back as `tcgplayer.key` so a caller can name the run.
+
+**Result**: 8,151 cards now show more than one printing's price; **8,028 reverse
+figures became reachable** that were not before. Venonat `swsh12-001` renders
+EUR 0.04 normal against EUR 0.18 reverse — the documented 4.5× case, both
+visible. Build unchanged at 393 pages in 3.1s.
+
+**Short of the original criterion, stated plainly**: this said "all 16,219 rows
+that carry one". 16,219 is the count of snapshot rows holding a `-holo`
+Cardmarket field; only 8,028 belong to cards whose TCGdex variant list actually
+contains `reverse`. The remainder are the orphaned blocks of §3d — 4,497 cards
+priced for a reverse holo that upstream does not list as a variant. Closing it
+would mean asserting a printing exists that TCGdex does not record — inventing
+catalogue data on a source's behalf — so it stays a written gap rather than a
+silent inference.
+
+**Budget**: BerryWallet 12/90, PokéWallet 4/60 after a full build — unchanged.
+The whole phase reads a local snapshot; it added no fetch path.
 
 ### Phase 2 — Unmetered One Piece images
 

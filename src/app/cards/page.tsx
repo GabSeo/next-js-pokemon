@@ -4,7 +4,7 @@ import { CatalogFilters } from "@/components/catalog-filters";
 import { CatalogCardTile } from "@/components/catalog-card-tile";
 import { EyebrowTitle } from "@/components/retro/eyebrow-title";
 import { catalogStats } from "@/lib/catalog";
-import { getCatalogPriceValues, getCatalogPrices, priceSnapshotDate } from "@/lib/catalog-prices";
+import { getCatalogPriceValues, getCatalogPricesByVariant, priceSnapshotDate } from "@/lib/catalog-prices";
 import { PAGE_SIZE, isSortId, searchCatalogCards, type CatalogQuery } from "@/lib/catalog-search";
 
 /**
@@ -85,7 +85,7 @@ export default async function CardsPage({ searchParams }: PageProps) {
       .slice((result.page - 1) * PAGE_SIZE, (result.page - 1) * PAGE_SIZE + PAGE_SIZE);
   }
 
-  const prices = await getCatalogPrices(entries.map((e) => e.card));
+  const prices = await getCatalogPricesByVariant(entries.map((e) => e.card));
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6">
@@ -118,7 +118,7 @@ export default async function CardsPage({ searchParams }: PageProps) {
                     <CatalogCardTile
                       card={entry.card}
                       setName={entry.set.name}
-                      price={prices.get(entry.card.tcgdexId)}
+                      prices={prices.get(entry.card.tcgdexId)}
                     />
                   </li>
                 ))}

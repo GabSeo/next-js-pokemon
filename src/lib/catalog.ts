@@ -320,27 +320,58 @@ export function getCatalogSetCards(setId: string): CatalogEntry[] {
  * that also exists unfoiled". Hence the branch on the card's own variant list
  * rather than on the variant type alone.
  *
- * Returns the Cardmarket field suffix and the TCGplayer sub-type key, which is
- * everything a tier-2 reader needs to pick the right numbers out of a live
- * response.
+ * TCGPLAYER NEEDS A LIST, NOT A KEY, because the block name carries the card's
+ * ERA as well as its finish. Measured 2026-09-07 across 33,085 card×variant
+ * pairs that have a snapshot row: asking for a single key missed a block that
+ * really existed 4,072 times (12.3%), and the misses are dominated by old sets
+ * whose printings are named for their print run rather than their foil —
+ *
+ *   1,389  normal -> "normal"    but the card holds 1st-edition | unlimited
+ *     344  holo   -> "holofoil"  but the card holds 1st-edition-holofoil | unlimited-holofoil
+ *
+ * — where the right block is plainly there and simply spelled for 1999. So the
+ * candidates are returned in precedence order and the caller takes the first
+ * that exists.
+ *
+ * THE ONE RULE THE PRECEDENCE MUST NOT BREAK: never cross the foil boundary.
+ * A "normal" that finds only `holofoil` stays unpriced on purpose — 1,167 pairs
+ * are in exactly that state, and substituting a holo price for an unfoiled card
+ * is the same class of error this whole phase exists to remove (a median 3.36x
+ * one). An honest gap beats a plausible wrong number, so each list stays inside
+ * one finish and the ordering only ever varies the print run.
+ *
+ * WITHIN a finish, the commonest print run leads. 818 cards carry both a 1st
+ * Edition and an Unlimited block, and 1st Edition is the dearer in 98% of them
+ * (median 2.61x, p90 4.76x) — so leading with it would overstate every one of
+ * those cards by default. Unlimited is both the likelier card in a collection
+ * and the conservative number. The block that answered travels back as
+ * `tcgplayer.key` so a caller can name the run instead of implying it.
  */
 export function cardmarketPriceFields(card: CatalogCard, variantType: string | undefined): {
   /** Append to "avg" / "low" / "trend" / "avg1" / "avg7" / "avg30". Empty string means the plain field. */
   cardmarketSuffix: "" | "-holo";
-  /** The key under TCGdex's `pricing.tcgplayer` for this printing. */
-  tcgplayerKey: "normal" | "reverse-holofoil" | "holofoil";
+  /**
+   * Keys to try under TCGdex's `pricing.tcgplayer`, best first. All members of
+   * one list describe the SAME finish; only the print run differs.
+   */
+  tcgplayerKeys: readonly string[];
 } {
   const hasNormal = card.variants.some((v) => v.type === "normal");
   if (variantType === "reverse") {
     // Only meaningful alongside a normal printing; a reverse-only card would
     // be a shape this codebase has not seen, and the plain fields are the
     // honest answer for it rather than a guess at a suffix that is null.
-    return hasNormal
-      ? { cardmarketSuffix: "-holo", tcgplayerKey: "reverse-holofoil" }
-      : { cardmarketSuffix: "", tcgplayerKey: "reverse-holofoil" };
+    // No era twins exist for reverse holos — the finish postdates both the
+    // 1st-edition and unlimited print runs — so this list is a single key.
+    return {
+      cardmarketSuffix: hasNormal ? "-holo" : "",
+      tcgplayerKeys: ["reverse-holofoil"],
+    };
   }
-  if (variantType === "normal") return { cardmarketSuffix: "", tcgplayerKey: "normal" };
-  return { cardmarketSuffix: "", tcgplayerKey: "holofoil" };
+  if (variantType === "normal") {
+    return { cardmarketSuffix: "", tcgplayerKeys: ["normal", "unlimited", "1st-edition"] };
+  }
+  return { cardmarketSuffix: "", tcgplayerKeys: ["holofoil", "unlimited-holofoil", "1st-edition-holofoil"] };
 }
 
 /**
