@@ -1,0 +1,74 @@
+import { getCardView, type CardView } from "@/lib/card-view";
+import { lookupCards } from "@/lib/card-lookup";
+
+/**
+ * Turn scanned codes into the actual cards, with every printing of each.
+ *
+ * WHY THIS RETURNS WHOLE CARDS RATHER THAN A YES/NO. It began as a validity
+ * check — "which of these codes are real" — so the scan could decide whether to
+ * escalate. That question still gets answered, but answering only that forced
+ * the scan to navigate away to /lookup to show anything, which threw away the
+ * photo, the context, and the sense of one continuous action. Scanning a card
+ * and choosing which printing you own are two halves of one gesture; they
+ * belong in one view.
+ *
+ * So the scan now asks for everything it needs to finish: the card, its name,
+ * and its printings with their artwork and prices. Nothing downstream has to
+ * fetch again, and nothing has to change page.
+ *
+ * FREE, which is what lets it sit in the middle of the scan. It reads the
+ * catalogues and the price snapshot off disk and touches no metered upstream —
+ * `scripts/check-free-tier.mts` enforces that rather than trusting it. A
+ * validation step that cost quota would defeat its own purpose.
+ *
+ * ORDER IS THE CALLER'S. Codes come back in the order they were sent, because
+ * the scanner ranks its candidates and that ranking is information this route
+ * does not have.
+ */
+
+export const runtime = "nodejs";
+
+/** More than a handful means the caller is not a scan. */
+const MAX_CODES = 8;
+
+/** A scanned code can match several cards — `190/182` is two — but not dozens. */
+const MAX_CARDS_PER_CODE = 6;
+
+export async function POST(request: Request) {
+  let payload: { codes?: unknown };
+  try {
+    payload = (await request.json()) as { codes?: unknown };
+  } catch {
+    return Response.json({ error: "Expected JSON." }, { status: 400 });
+  }
+
+  const codes = Array.isArray(payload.codes)
+    ? payload.codes.filter((c): c is string => typeof c === "string").slice(0, MAX_CODES)
+    : [];
+
+  const real: string[] = [];
+  const cards: CardView[] = [];
+  const seen = new Set<string>();
+
+  for (const code of codes) {
+    const matches = lookupCards(code).matches.slice(0, MAX_CARDS_PER_CODE);
+    if (matches.length === 0) continue;
+    real.push(code);
+
+    for (const match of matches) {
+      // Two candidates can resolve to the same card — a trimmed prefix variant
+      // and the full read, say — and it should appear once.
+      const id = `${match.tcg}:${match.code}`;
+      if (seen.has(id)) continue;
+      seen.add(id);
+
+      const view = await getCardView(match.tcg, match.code);
+      if (view) cards.push(view);
+    }
+  }
+
+  // `real` is kept alongside `cards` because they answer different questions:
+  // which codes were readable, and what to show. The scan uses the first to
+  // decide whether the read failed at all.
+  return Response.json({ real, cards });
+}

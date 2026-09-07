@@ -12,12 +12,12 @@ export async function GET() {
     collections: [
       {
         franchise: "pokemon",
-        url: absoluteUrl("/collections/pokemon"),
+        url: absoluteUrl("/tracked/pokemon"),
         json: absoluteUrl("/api/pokemon"),
       },
       {
         franchise: "one-piece",
-        url: absoluteUrl("/collections/one-piece"),
+        url: absoluteUrl("/tracked/one-piece"),
         json: absoluteUrl("/api/one-piece"),
       },
     ],

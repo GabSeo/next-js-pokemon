@@ -184,6 +184,93 @@ export function officialRowsForCode(code: string, language?: string): OfficialEn
 }
 
 /**
+ * Cards whose name contains `text`, one entry per CODE rather than per printing.
+ *
+ * Grouped because a name search is a search for a CARD. "Monkey.D.Luffy" spans
+ * dozens of codes and hundreds of printings; returning every printing would
+ * bury the distinction that matters — which card — under the one the card page
+ * exists to show. The first row of each code is representative: 0 of 945
+ * multi-printing groups differ by name (see the file header), so any of them
+ * names the group correctly.
+ *
+ * Case- and separator-insensitive: Bandai writes "Monkey.D.Luffy" with dots
+ * where a person types spaces, and neither spelling should miss the other.
+ */
+export function officialSearchByName(text: string, language: string, limit = 60): OfficialEntry[] {
+  const needle = normaliseName(text);
+  if (needle.length === 0) return [];
+
+  const out: OfficialEntry[] = [];
+  const seen = new Set<string>();
+
+  for (const entry of loadCatalog().entries) {
+    if (entry.language !== language) continue;
+    if (!normaliseName(entry.card.name).includes(needle)) continue;
+
+    const code = officialCode(entry.card.id);
+    if (seen.has(code)) continue;
+    seen.add(code);
+
+    out.push(entry);
+    if (out.length >= limit) break;
+  }
+
+  return out;
+}
+
+/** Lowercased, with dots and separators flattened to spaces — see officialSearchByName. */
+function normaliseName(text: string): string {
+  return text.toLowerCase().replace(/[.\-_]+/g, " ").replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Where a language's card images are served from.
+ *
+ * Measured 2026-09-07, and both halves of the pair matter. The HOST is
+ * load-bearing because the same printing id is a different picture per
+ * language — `ST01-001.png` is 223,541 bytes on `en` and 218,783 on `www`, and
+ * they are not the same bytes. Serving the Japanese asset on an English page
+ * would be a wrong card, not a cosmetic slip.
+ *
+ * The EXTENSION is load-bearing too, and it is why this resolves through the
+ * catalogue rather than building a URL from the id. French is published as
+ * `.webp` while English and Japanese are `.png` — `fr…/ST01-001.png` is a 404
+ * — so `img_url` is the only thing that knows which one a given printing has.
+ * (No English webp exists: `en…/OP05-119_p2.webp` 404s while the png is 200.)
+ *
+ * Languages absent here resolve to nothing rather than guessing a host. The
+ * crawler can fetch four more (`english-asia`, two Chinese, Thai) that the
+ * default pass does not, so there is no data behind them to serve yet.
+ */
+const IMAGE_HOSTS: Record<string, string> = {
+  english: "https://en.onepiece-cardgame.com",
+  japanese: "https://www.onepiece-cardgame.com",
+  french: "https://fr.onepiece-cardgame.com",
+};
+
+/**
+ * The absolute Bandai URL for one printing, or undefined if we do not hold it.
+ *
+ * `img_url` in the feed is relative (`../images/cardlist/card/OP05-119_p2.png`)
+ * because punk-records stores the path as Bandai's own pages write it.
+ *
+ * Returning undefined for an unknown id is a SECURITY property, not just
+ * tidiness: the API route that consumes this fetches whatever comes back, so
+ * resolving through the catalogue is what stops a crafted id from turning that
+ * route into an open proxy for arbitrary paths on Bandai's domain.
+ */
+export function officialImageUrl(printingId: string, language: string): string | undefined {
+  const host = IMAGE_HOSTS[language];
+  if (!host) return undefined;
+
+  const row = officialRowsForCode(officialCode(printingId), language).find((r) => r.card.id === printingId);
+  const relative = row?.card.img_url;
+  if (!relative) return undefined;
+
+  return `${host}/${relative.replace(/^(\.\.\/)+/, "")}`;
+}
+
+/**
  * The packs a code was printed in, by their language-stable label.
  *
  * This is the join the printing id cannot be trusted for — see the file header.

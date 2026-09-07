@@ -120,7 +120,7 @@ export default function OnePieceSetsPage() {
 function Stat({ label, value, sub, accent }: { label: string; value: string; sub: string; accent?: boolean }) {
   return (
     <div
-      className={`rounded-xl border-2 border-black p-4 ${accent ? "bg-accent-surface" : "bg-surface"}`}
+      className={`rounded-xl border-2 border-black p-4 ${accent ? "bg-muted-surface" : "bg-white"}`}
       style={{ boxShadow: "3px 3px 0 0 #000" }}
     >
       <div className="text-[11px] font-bold uppercase tracking-wide text-muted-text">{label}</div>

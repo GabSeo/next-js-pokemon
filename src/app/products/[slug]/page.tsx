@@ -257,7 +257,7 @@ export default async function ProductPage({ params }: PageProps) {
         "@type": "ListItem",
         position: 2,
         name: `${label} collection`,
-        item: absoluteUrl(`/collections/${card.franchise}`),
+        item: absoluteUrl(`/tracked/${card.franchise}`),
       },
       {
         "@type": "ListItem",
@@ -291,7 +291,7 @@ export default async function ProductPage({ params }: PageProps) {
       gradedMarket={gradedMarket ?? null}
       localeVariants={localeVariants}
       franchiseLabel={label}
-      collectionHref={`/collections/${card.franchise}`}
+      collectionHref={`/tracked/${card.franchise}`}
       markdownHref={`/products/${card.slug}/index.md`}
       jsonHref={`/api/${card.franchise}/${card.id}`}
       okfHref={`/okf/products/${card.slug}`}

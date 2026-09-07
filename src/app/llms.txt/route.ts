@@ -27,8 +27,8 @@ maintained separately.
 
 ## Collections
 
-- [Pokémon collection](${absoluteUrl("/collections/pokemon/index.md")}): Markdown mirror — JSON: ${absoluteUrl("/api/pokemon")}
-- [One Piece collection](${absoluteUrl("/collections/one-piece/index.md")}): Markdown mirror — JSON: ${absoluteUrl("/api/one-piece")}
+- [Pokémon collection](${absoluteUrl("/tracked/pokemon/index.md")}): Markdown mirror — JSON: ${absoluteUrl("/api/pokemon")}
+- [One Piece collection](${absoluteUrl("/tracked/one-piece/index.md")}): Markdown mirror — JSON: ${absoluteUrl("/api/one-piece")}
 
 ## Cards
 

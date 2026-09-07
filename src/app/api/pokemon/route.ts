@@ -6,8 +6,8 @@ export async function GET() {
   const cards = await getCardsByFranchise("pokemon");
   return NextResponse.json({
     franchise: "pokemon",
-    canonicalUrl: absoluteUrl("/collections/pokemon"),
-    markdownUrl: absoluteUrl("/collections/pokemon/index.md"),
+    canonicalUrl: absoluteUrl("/tracked/pokemon"),
+    markdownUrl: absoluteUrl("/tracked/pokemon/index.md"),
     count: cards.length,
     cards: cards.map(toPublicCard),
   });

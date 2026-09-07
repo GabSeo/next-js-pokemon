@@ -87,7 +87,7 @@ export default function SetsHubPage() {
             key={game.href}
             href={game.href}
             className={`flex flex-col rounded-xl border-2 border-black p-6 transition-transform hover:-translate-y-0.5 ${
-              game.accent ? "bg-accent-surface" : "bg-surface"
+              game.accent ? "bg-muted-surface" : "bg-white"
             }`}
             style={{ boxShadow: "4px 4px 0 0 #000" }}
           >

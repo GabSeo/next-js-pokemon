@@ -47,3 +47,7 @@ src/app/favicon.ico
 
 .vercel
 .env*
+
+# tesseract.js caches its trained data beside the process when run under Node
+# (a script, not the browser, where it comes from a CDN). 5 MB, regenerable.
+*.traineddata

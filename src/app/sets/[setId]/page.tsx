@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { EyebrowTitle } from "@/components/retro/eyebrow-title";
 import { CatalogCardTile } from "@/components/catalog-card-tile";
 import { getCatalogSet, getCatalogSetCards, getCatalogSets, isDigitalOnlySet } from "@/lib/catalog";
-import { getCatalogPrices, priceSnapshotDate } from "@/lib/catalog-prices";
+import { getCatalogPricesByVariant, priceSnapshotDate } from "@/lib/catalog-prices";
 import { absoluteUrl } from "@/lib/site";
 
 /**
@@ -85,7 +85,7 @@ export default async function SetPage({ params }: PageProps) {
   // Map lookups against the price snapshot — no network in the normal case.
   // See lib/catalog-prices.ts for the per-card live fallback and why it is
   // per-card rather than per-file.
-  const prices = await getCatalogPrices(cards);
+  const prices = await getCatalogPricesByVariant(cards);
 
   const pricedCount = prices.size;
   const pricedAt = priceSnapshotDate();
@@ -143,7 +143,7 @@ export default async function SetPage({ params }: PageProps) {
       <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {entries.map(({ card }) => (
           <li key={card.tcgdexId}>
-            <CatalogCardTile card={card} price={prices.get(card.tcgdexId)} />
+            <CatalogCardTile card={card} prices={prices.get(card.tcgdexId)} />
           </li>
         ))}
       </ul>

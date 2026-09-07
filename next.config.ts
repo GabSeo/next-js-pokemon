@@ -188,6 +188,37 @@ const nextConfig: NextConfig = {
     // than what it sells for.
     "/sets/onepiece": ["./data/catalog/one-piece-official/**"],
     "/sets/onepiece/[packId]": ["./data/catalog/one-piece-official/**"],
+    // The image proxy resolves a printing id to its Bandai URL through the same
+    // catalogue, at request time by definition — the id arrives in the path, so
+    // there is no build step at which this could have been read instead.
+    "/api/one-piece-image/[printingId]": ["./data/catalog/one-piece-official/**"],
+    // The scan resolves scanned codes to cards and ranks their printings by
+    // artwork, so it needs both catalogues, the price snapshot the card view
+    // reads, and the precomputed artwork signatures.
+    "/api/scan/ocr": [
+      "./data/catalog/pokemon/**",
+      "./data/catalog/one-piece-official/**",
+      "./data/catalog/one-piece-art/**",
+      "./data/prices/**",
+    ],
+    "/api/scan/resolve": [
+      "./data/catalog/pokemon/**",
+      "./data/catalog/one-piece-official/**",
+      "./data/prices/**",
+    ],
+    // The free card page serves either game from one component, so it needs
+    // both catalogues plus the price snapshot. Request-time by necessity rather
+    // than choice: ~24k cards is far too many to prerender, so it is on-demand
+    // ISR and really does read these at runtime (app/card/[tcg]/[code]).
+    // The lookup box resolves across both games at request time (searchParams),
+    // so it reads both catalogues. No prices: it answers "which card", and only
+    // the card page answers "which printing".
+    "/lookup": ["./data/catalog/pokemon/**", "./data/catalog/one-piece-official/**"],
+    "/card/[tcg]/[code]": [
+      "./data/catalog/pokemon/**",
+      "./data/catalog/one-piece-official/**",
+      "./data/prices/**",
+    ],
   },
 };
 

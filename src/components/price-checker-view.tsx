@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { AddToCollectionButton } from "@/components/add-to-collection-button";
+import { collectionRefForCard } from "@/lib/collection";
 import { AlertSubscribe } from "@/components/alert-subscribe";
 import { OpenDataLinks } from "@/components/open-data-links";
 import { PriceCheckerForm } from "@/components/price-checker-form";
@@ -185,7 +186,7 @@ export function PriceCheckerView({ cardId, card }: { cardId?: string; card?: Car
             </div>
             <PopulationPanel card={card} />
 
-            <AddToCollectionButton cardId={card.id} />
+            <AddToCollectionButton {...collectionRefForCard(card)} />
 
             <div className="rounded-lg border-2 border-black bg-card-surface p-6 shadow-hard-md">
               <h3 className="mb-3 text-lg font-black tracking-[-0.5px]">Price alerts</h3>

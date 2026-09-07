@@ -41,7 +41,7 @@ import { getCard } from "@/lib/tcgdex";
 const SNAPSHOT_FILE = path.join(process.cwd(), "data", "prices", "pokemon.json");
 
 type CardmarketSnapshot = Record<string, number>;
-type TcgplayerSnapshot = Record<string, { low?: number; mid?: number; high?: number; market?: number }>;
+type TcgplayerSnapshot = Record<string, { market?: number }>;
 type PriceEntry = { u?: string; cm?: CardmarketSnapshot; tp?: TcgplayerSnapshot };
 type PriceSnapshotFile = { generatedAt: string; source: string; cards: Record<string, PriceEntry> };
 
@@ -74,25 +74,38 @@ export function priceSnapshotDate(): string | undefined {
   return loadSnapshot().generatedAt || undefined;
 }
 
-/** One printing's figures. Every field optional: absent means the source had none, never zero. */
+/**
+ * One printing's figures. Every field optional: absent means the source had
+ * none, never zero.
+ *
+ * ONE NUMBER PER MARKETPLACE. This carried Cardmarket's low/trend/avg1/avg7/
+ * avg30 and TCGplayer's low/mid/high as well, until an audit on 2026-09-07
+ * found that no page, component or route had ever read one of them — the whole
+ * app reads `cardmarket.avg` and `tcgplayer.market` and nothing else. A type
+ * that advertises fields the pipeline no longer carries is worse than a narrow
+ * one: it invites a caller to use them and then wonder why they are empty.
+ *
+ * If a feature needs the spread or a rolling average, widen the snapshot in
+ * scripts/price-refresh.mts and widen this to match. TCGdex is unmetered, so
+ * that costs one re-run rather than lost data.
+ */
 export type CatalogPrice = {
   /** Which printing these figures describe — "normal", "reverse", "holo". */
   variantType?: string;
   cardmarket?: {
     avg?: number;
-    low?: number;
-    trend?: number;
-    avg1?: number;
-    avg7?: number;
-    avg30?: number;
     /** EUR, always — Cardmarket is never converted. */
     currency: "EUR";
   };
   tcgplayer?: {
-    low?: number;
-    mid?: number;
-    high?: number;
     market?: number;
+    /**
+     * The block these figures came from — "normal", "holofoil", "1st-edition",
+     * … Reported because the candidate list (cardmarketPriceFields) may resolve
+     * a printing to its era-named twin, and a caller showing a 1st Edition
+     * price should be able to say so rather than implying it is the plain one.
+     */
+    key?: string;
     /** USD, always. */
     currency: "USD";
   };
@@ -119,6 +132,25 @@ function pick(source: Record<string, number> | undefined, key: string): number |
 }
 
 /**
+ * The first candidate block the snapshot actually holds.
+ *
+ * Candidates all describe one finish and differ only by print run, so taking
+ * the first present is a spelling choice rather than a pricing one — see
+ * cardmarketPriceFields for why the list may never cross that boundary.
+ */
+function firstBlock(
+  tp: TcgplayerSnapshot | undefined,
+  keys: readonly string[]
+): { key: string; block: TcgplayerSnapshot[string] } | undefined {
+  if (!tp) return undefined;
+  for (const key of keys) {
+    const block = tp[key];
+    if (block) return { key, block };
+  }
+  return undefined;
+}
+
+/**
  * Turn one snapshot entry into the figures for `variantType`.
  *
  * The Cardmarket half is the part that is not obvious: normal and reverse-holo
@@ -128,23 +160,13 @@ function pick(source: Record<string, number> | undefined, key: string): number |
  */
 function toPrice(card: CatalogCard, entry: PriceEntry, variantType?: string): CatalogPrice | undefined {
   const chosen = variantType ?? primaryVariantType(card);
-  const { cardmarketSuffix, tcgplayerKey } = cardmarketPriceFields(card, chosen);
+  const { cardmarketSuffix, tcgplayerKeys } = cardmarketPriceFields(card, chosen);
 
   const cm = entry.cm;
-  const cardmarket = cm
-    ? {
-        avg: pick(cm, `avg${cardmarketSuffix}`),
-        low: pick(cm, `low${cardmarketSuffix}`),
-        trend: pick(cm, `trend${cardmarketSuffix}`),
-        avg1: pick(cm, `avg1${cardmarketSuffix}`),
-        avg7: pick(cm, `avg7${cardmarketSuffix}`),
-        avg30: pick(cm, `avg30${cardmarketSuffix}`),
-        currency: "EUR" as const,
-      }
-    : undefined;
+  const cardmarket = cm ? { avg: pick(cm, `avg${cardmarketSuffix}`), currency: "EUR" as const } : undefined;
 
-  const tp = entry.tp?.[tcgplayerKey];
-  const tcgplayer = tp ? { low: tp.low, mid: tp.mid, high: tp.high, market: tp.market, currency: "USD" as const } : undefined;
+  const found = firstBlock(entry.tp, tcgplayerKeys);
+  const tcgplayer = found ? { market: found.block.market, key: found.key, currency: "USD" as const } : undefined;
 
   // A block that resolved but carries no figure is an absence, not a price of
   // nothing — report it as such so a caller renders the stated gap.
@@ -171,12 +193,10 @@ async function fetchEntry(card: CatalogCard): Promise<PriceEntry | undefined> {
   for (const [key, value] of Object.entries(pricing.tcgplayer ?? {})) {
     if (key === "unit" || key === "updated" || typeof value !== "object" || value === null) continue;
     const v = value as Record<string, unknown>;
-    tp[key] = {
-      low: typeof v.lowPrice === "number" ? v.lowPrice : undefined,
-      mid: typeof v.midPrice === "number" ? v.midPrice : undefined,
-      high: typeof v.highPrice === "number" ? v.highPrice : undefined,
-      market: typeof v.marketPrice === "number" ? v.marketPrice : undefined,
-    };
+    // Same narrowing as the snapshot writer, so the live fallback and the file
+    // produce identical shapes — a card fetched live must not quietly carry
+    // fields a cached one lacks.
+    tp[key] = { market: typeof v.marketPrice === "number" ? v.marketPrice : undefined };
   }
 
   return {
@@ -210,8 +230,8 @@ export function getCatalogPriceValues(cards: CatalogCard[]): Map<string, number>
   for (const card of cards) {
     const entry = entries[card.tcgdexId];
     if (!entry) continue;
-    const { cardmarketSuffix, tcgplayerKey } = cardmarketPriceFields(card, primaryVariantType(card));
-    const value = pick(entry.cm, `avg${cardmarketSuffix}`) ?? entry.tp?.[tcgplayerKey]?.market;
+    const { cardmarketSuffix, tcgplayerKeys } = cardmarketPriceFields(card, primaryVariantType(card));
+    const value = pick(entry.cm, `avg${cardmarketSuffix}`) ?? firstBlock(entry.tp, tcgplayerKeys)?.block.market;
     if (typeof value === "number" && value !== 0) out.set(card.tcgdexId, value);
   }
   return out;
@@ -224,31 +244,24 @@ export async function getCatalogPrice(card: CatalogCard, variantType?: string): 
 }
 
 /**
- * Prices for many cards — what a set page or a results grid needs.
+ * The raw snapshot entry for each card, filling misses from the live fallback.
  *
- * Snapshot hits are resolved synchronously in a single pass; only the misses
- * cost anything. Returns a Map keyed by `tcgdexId`, with a card that has no
- * price simply absent rather than present-and-empty, so a caller cannot
- * accidentally render a zero.
+ * Shared by both readers below so the fallback policy is written once. Snapshot
+ * hits resolve synchronously in a single pass; only the misses cost anything,
+ * and they are normally none — a snapshot refreshed at deploy covers every card
+ * the corpus knows about, so this only fires for cards added upstream since.
  */
-export async function getCatalogPrices(cards: CatalogCard[]): Promise<Map<string, CatalogPrice>> {
-  const { cards: entries } = loadSnapshot();
-  const out = new Map<string, CatalogPrice>();
+async function entriesFor(cards: CatalogCard[]): Promise<Map<string, PriceEntry>> {
+  const { cards: snapshotEntries } = loadSnapshot();
+  const out = new Map<string, PriceEntry>();
   const misses: CatalogCard[] = [];
 
   for (const card of cards) {
-    const entry = entries[card.tcgdexId];
-    if (!entry) {
-      misses.push(card);
-      continue;
-    }
-    const price = toPrice(card, entry);
-    if (price) out.set(card.tcgdexId, price);
+    const entry = snapshotEntries[card.tcgdexId];
+    if (entry) out.set(card.tcgdexId, entry);
+    else misses.push(card);
   }
 
-  // Bounded, and normally empty. A snapshot refreshed at deploy covers every
-  // card the corpus knows about, so this only fires for cards added upstream
-  // since — see this file's header on why it is per-card and not per-file.
   if (misses.length > 0) {
     const CONCURRENCY = 16;
     let next = 0;
@@ -259,11 +272,72 @@ export async function getCatalogPrices(cards: CatalogCard[]): Promise<Map<string
           if (i >= misses.length) return;
           const card = misses[i];
           const entry = await fetchEntry(card).catch(() => undefined);
-          const price = entry && toPrice(card, entry);
-          if (price) out.set(card.tcgdexId, price);
+          if (entry) out.set(card.tcgdexId, entry);
         }
       })
     );
+  }
+
+  return out;
+}
+
+/**
+ * Prices for many cards — the headline printing only.
+ *
+ * Returns a Map keyed by `tcgdexId`, with a card that has no price simply
+ * absent rather than present-and-empty, so a caller cannot accidentally render
+ * a zero.
+ */
+export async function getCatalogPrices(cards: CatalogCard[]): Promise<Map<string, CatalogPrice>> {
+  const entries = await entriesFor(cards);
+  const out = new Map<string, CatalogPrice>();
+  for (const card of cards) {
+    const entry = entries.get(card.tcgdexId);
+    const price = entry && toPrice(card, entry);
+    if (price) out.set(card.tcgdexId, price);
+  }
+  return out;
+}
+
+/**
+ * EVERY priced printing of each card, headline first.
+ *
+ * The reason this exists: a card's printings are separately priced and far
+ * apart — measured across the snapshot, 16,219 of 20,451 rows (79.3%) carry a
+ * distinct reverse-holo figure, a median 3.36x from the normal one and 10.7x at
+ * the 90th percentile. A grid that can only reach the headline leaves the other
+ * number unreachable, which for a reverse holo is most of its value.
+ *
+ * Ordered by `card.variants`, so index 0 is what `getCatalogPrices` would have
+ * returned and any tail is genuinely additional. Variants the snapshot cannot
+ * price are omitted rather than included empty — an absent printing and a
+ * worthless one are not the same claim.
+ *
+ * Costs no metered quota: same snapshot, same per-card TCGdex fallback.
+ */
+export async function getCatalogPricesByVariant(cards: CatalogCard[]): Promise<Map<string, CatalogPrice[]>> {
+  const entries = await entriesFor(cards);
+  const out = new Map<string, CatalogPrice[]>();
+
+  for (const card of cards) {
+    const entry = entries.get(card.tcgdexId);
+    if (!entry) continue;
+
+    const headline = primaryVariantType(card);
+    const ordered = [
+      ...card.variants.filter((v) => v.type === headline),
+      ...card.variants.filter((v) => v.type !== headline),
+    ];
+
+    const seen = new Set<string>();
+    const prices: CatalogPrice[] = [];
+    for (const variant of ordered) {
+      if (variant.type && seen.has(variant.type)) continue;
+      if (variant.type) seen.add(variant.type);
+      const price = toPrice(card, entry, variant.type);
+      if (price) prices.push(price);
+    }
+    if (prices.length > 0) out.set(card.tcgdexId, prices);
   }
 
   return out;
