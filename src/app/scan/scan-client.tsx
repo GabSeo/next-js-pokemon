@@ -199,15 +199,19 @@ export function ScanClient() {
                       </Link>
                     </div>
 
-                    {card.tcg === "onepiece" && card.prints.length > 1 ? (
-                      <p className="mt-2 text-[11px] text-muted-text">
-                        Ordered by how much each printing looks like your photo — the first is our best guess, not a
-                        certainty. Bandai gives every printing the same name, so the picture is the only difference.
-                      </p>
-                    ) : null}
+                    {/* THE MATCH, ALONE. The grid used to show every printing
+                        ranked best-first, which asked the reader to re-do the
+                        comparison the ranking had already made. When the top
+                        match is right — and on real cards it is — the other six
+                        are noise between the person and the button they want.
 
+                        The rest stay one tap away rather than deleted, because
+                        the ranking is a best guess and the honest recovery from
+                        a wrong guess is "show me the others", not "start the
+                        scan again". `details` because that needs no state and
+                        works before hydration. */}
                     <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                      {card.prints.map((print, index) => {
+                      {card.prints.slice(0, 1).map((print, index) => {
                         const cm = print.price?.cardmarket?.avg;
                         const tp = print.price?.tcgplayer?.market;
                         const money =
@@ -254,6 +258,45 @@ export function ScanClient() {
                         );
                       })}
                     </ul>
+
+                    {card.prints.length > 1 ? (
+                      <details className="mt-3">
+                        <summary className="cursor-pointer text-[11px] font-black underline underline-offset-4">
+                          Not this one? Show the other {card.prints.length - 1} printing
+                          {card.prints.length - 1 === 1 ? "" : "s"}
+                        </summary>
+                        <p className="mt-2 text-[11px] text-muted-text">
+                          Ordered by how much each looks like your photo. Bandai gives every printing the same name,
+                          so the picture is the only difference between them.
+                        </p>
+                        <ul className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                          {card.prints.slice(1).map((print) => (
+                            <li key={print.key} className="rounded-md border-2 border-black bg-muted-surface p-1.5">
+                              {print.image ? (
+                                /* eslint-disable-next-line @next/next/no-img-element -- both sources are pre-sized; see docs/free-tier-catalogue.md §7 */
+                                <img
+                                  src={card.tcg === "onepiece" ? `${print.image}&w=320` : print.image}
+                                  alt={print.origin}
+                                  loading="lazy"
+                                  className="aspect-[300/420] w-full rounded object-contain"
+                                />
+                              ) : (
+                                <div className="aspect-[300/420] w-full rounded" />
+                              )}
+                              <div className="mt-1 truncate text-[11px] font-black">{print.label ?? print.origin}</div>
+                              <div className="mt-1.5">
+                                <AddToCollectionButton
+                                  tcg={card.tcg}
+                                  code={card.code}
+                                  printKey={print.key}
+                                  size="sm"
+                                />
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
+                    ) : null}
                   </div>
                 ))}
               </div>
