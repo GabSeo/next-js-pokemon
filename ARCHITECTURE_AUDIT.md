@@ -8,6 +8,26 @@ Companion documents: `docs/free-tier-catalogue.md` (the plan of record for the
 free tier), `docs/pipeline-by-franchise.md` (what each data source does and does
 not carry), `docs/ebay-market-pipeline.md` (the eBay query model).
 
+**GCP constraints live outside this repository**, at
+`Desktop/Claudy/md ressources/GCP-CONTEXT.md`. Read it before proposing any
+cloud storage, cache or scheduling design; it will not show up in a grep of this
+codebase. Its own header states it is reference rather than current state —
+nothing in it is deployed, and where it disagrees with the code, the code wins.
+The constraints that most often decide a design:
+
+| | |
+|---|---|
+| Region | **`europe-west1` for everything** — same-region traffic is free, mixed regions are not |
+| Cloud Storage free tier | **US regions only.** From Belgium, egress bills from the first byte — fine for JSON, **prohibitive for images**. Card images stay on Vercel |
+| Vision AI | **1,000 units/month (~33/day)** per billing account. §4.8 of that doc says not to expose it publicly without a limit |
+| BigQuery | 10 GiB + 1 TB queries/month. **Never `insertAll`** — streaming is billed; write NDJSON to GCS then batch-load |
+| Cloud Scheduler | **3 jobs** |
+| Billing | Quotas are per billing account, not per project. Budget alert at 1 EUR; there is **no automatic cutoff** |
+
+Two of that document's highest-priority items — §4.2 catalogue mirror and §4.1
+price history — were built here as files on disk instead, and cost nothing. See
+§10 and §2.
+
 ---
 
 # 1. Executive Summary
