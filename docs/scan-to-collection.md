@@ -1,5 +1,11 @@
 # Scan → page → collection
 
+> **Superseded in part.** `docs/free-tier-catalogue.md` is now the plan of
+> record: it takes the finding below and turns it into a phased build, with the
+> free/paid boundary drawn where the metered sources actually are. The
+> *Measured* sections here remain the evidence; the *Implication* reasoning has
+> been carried forward and extended there.
+
 **Status: an architecture note, not a plan of record.** Everything under
 "Measured" was observed against the live APIs on 2026-09-04 while adding
 `monkey-d-luffy-st21-014`. Everything under "Implication" is reasoning from it
