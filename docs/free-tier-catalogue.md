@@ -1,9 +1,10 @@
 # The free catalogue, the scan, and where money starts
 
-**Status: plan of record.** Written 2026-09-07. Supersedes the "Implication"
-half of `docs/scan-to-collection.md`, which reasoned toward this from a smaller
-evidence base; that document's *Measured* sections remain the source for the
-finding this whole design is built on.
+**Status: plan of record.** Written 2026-09-07, revised the same day after a
+second round of measurement extended the central finding from One Piece to
+Pokémon. Supersedes the "Implication" half of `docs/scan-to-collection.md`,
+which reasoned toward this from a smaller evidence base; that document's
+*Measured* sections remain a source for the finding this design is built on.
 
 The product goal: **a person photographs a card, picks which printing they own,
 and it lands in their collection. Free. Market data — eBay, Cardmarket,
@@ -37,17 +38,56 @@ Bandai records *that* a code has three printings. It does not record *which* is
 the Alternate Art, the Manga or the Reprint. That distinction exists only in the
 picture.
 
+### And Pokémon is the same problem, for a stronger reason
+
+This was measured on 2026-09-07 and corrects an assumption held throughout the
+earlier design work: that Pokémon was the solved franchise and One Piece the
+hard one. It is not. **Both are unsolved, in mirror-image ways.**
+
+| | Pokémon (TCGdex) | One Piece (Bandai) |
+|---|---|---|
+| cards / (pack, code) groups | 21,066 | 3,665 |
+| holding more than one printing | 10,110 (48%) | 945 (26%) |
+| **distinct image per printing** | **0 (0%)** | **945 (100%)** |
+| **distinct label per printing** | **100%** — `normal`/`reverse`/`holo` | **0 (0%)** |
+| distinct market id per printing | 1,211 (12%) | n/a — Bandai sells no singles |
+
+**One Piece has pictures with no labels. Pokémon has labels with no pictures.**
+
+And the Pokémon gap cannot be sourced away. Two independent free catalogues were
+checked and agree:
+
+| probe | result |
+|---|---|
+| `assets.tcgdex.net/en/sv/sv08/001/reverse/high.png` | **404** |
+| `assets.tcgdex.net/en/sv/sv08/001-reverse/high.png` | **404** |
+| TCGdex card record | one `image`; `variants` is a **boolean map** |
+| `api.pokemontcg.io/v2/cards/sv8-1` | one `images.small` / `.large` pair |
+
+The reason is not data quality. **A reverse holo is the same artwork** — the
+difference is the foil pattern on the border and text box. There is no second
+scan to publish, so no catalogue publishes one, and none ever will.
+
+This makes the constraint below stronger for Pokémon than for One Piece. A One
+Piece printing is *unlabelled*; a Pokémon variant is *visually identical*. No
+scanner, no embedding and no better source can separate the second case.
+
 ### What follows
 
 1. **No pipeline can pick the printing automatically.** Not from a scan, not
    from a code, not from any catalogue we have found. Anything claiming to is
-   guessing, and a wrong guess is a 204× error in a user's collection total.
+   guessing, and a wrong guess is a 204× error in a user's collection total —
+   or, on the Pokémon side, a median **3.36×** one (§3d).
 2. **So the human picks — and the product is built around that step, not in
    spite of it.** A scan narrows 34,000 cards to three or four candidates. The
    person then answers a question only they can: *which of these is the one in
    your hand?* That is a two-second tap, and it is the only correct answer.
+   It is **mandatory for both games**, not a One Piece workaround.
 3. **The unit of everything downstream is a PRINT IDENTITY**, not a code:
    `(tcg, code, printing)`. Collections, prices and metrics all key on it.
+4. **The choose step is what makes the One Piece join tractable** (§6). We do
+   not need to *label* `_p2`/`_p3`/`_p4` — we show three pictures and the person
+   points. For One Piece, **the image is the label**.
 
 ---
 
@@ -74,11 +114,40 @@ single metered call leak into their path.
 > A page a free user can reach must be renderable with **zero metered calls**.
 > Market data is an explicit, per-card, gated action.
 
+### The shape both catalogues must reach
+
+Today both stores are **card-shaped**. A portfolio holds **printings**. That gap
+is the whole of the remaining catalogue work, and it is one schema for both
+games — the only difference is that a print *may* carry its own image:
+
+```
+CARD    (tcg, setId, number)          ← what a scan matches: name, artwork
+  └─ PRINT  (+ printKey, language)    ← what a collection row points at
+       ├─ image        One Piece: per print (Bandai).  Pokémon: inherits the card's.
+       ├─ label        Pokémon: normal/reverse/holo.   One Piece: none — use the image.
+       ├─ marketKey    the id the price plane is keyed on
+       └─ price        variant-scoped, never card-scoped
+```
+
+Read across the two games, each already solves the half the other is missing:
+
+| | Pokémon | One Piece |
+|---|---|---|
+| card image | ✅ | ✅ |
+| **print image** | none, and none exists (§1) | ✅ 100% of 945 groups |
+| **print label** | ✅ `normal`/`reverse`/`holo`/`1st-edition` | ❌ Bandai gives none |
+| **print price** | ✅ variant-keyed, already on disk, free | ✅ per print, on BerryWallet ids |
+| **print → price join** | ✅ direct | ❌ unproven (§6) |
+
+Only one cell in that table is a genuine unknown, and it sits behind the
+paywall. Everything else is either present or provably absent.
+
 ---
 
-## 3. What violates that rule today
+## 3. What is wrong today
 
-Three things, found while writing this. The first is live.
+Four things. The first three break the free/paid rule above; the fourth is a
+live correctness bug that costs nothing to fix.
 
 ### a. One Piece card images are metered
 
@@ -92,9 +161,21 @@ This is the single blocking issue for the scan flow.
 **Fix**: serve One Piece images from Bandai's URLs, which `punk-records` gives
 us for all 12,720 printings, through our own proxy. Bandai sets
 `Cross-Origin-Resource-Policy: same-site`, so a browser will not load them from
-our domain directly — but a *server* fetch is unaffected (verified: 200,
-212 KB). The proxy pattern already exists for BerryWallet; this is the same
-route pointed at a free source.
+our domain directly — but a *server* fetch is unaffected, re-verified
+2026-09-07: `HTTP 200, 247,155 bytes, image/png`. `same-site` constrains
+browsers, not servers. The proxy pattern already exists for BerryWallet; this is
+the same route pointed at a free source that has no ceiling in `BUDGETS`.
+
+**Not a third party.** `arjunkai/optcg-api` (the Cloudflare Worker behind
+opbindr.com) advertises a public card-image proxy and was evaluated as a
+shortcut. Measured: `/image/…` and `/v1/images/…` both return **401** — the
+data *and* image endpoints are gated to their own origins, key on request. We
+would be depending on one person's worker for every image on the site. Our own
+route is less work and has no owner but us.
+
+**Serve `webp`.** TCGdex publishes both, and the same card is `high.png`
+349,641 b against `high.webp` 82,528 b — **4.2× smaller**, same CDN, same cost.
+Whatever the grid renders, it should not render png.
 
 ### b. There is no free per-card page
 
@@ -108,6 +189,33 @@ nowhere to land that is safe.
 The tier-1 discipline (`lib/catalog.ts` and friends import `node:fs` and
 nothing else) is real but only covers the loaders. Nothing stops a future page
 importing `cards.ts` and quietly putting a metered call on a free route.
+
+### d. Pokémon prices are variant-blind, and we already hold the fix
+
+**This one is live, wrong on screen today, and free to correct.**
+
+TCGdex and pokemontcg.io both split prices by variant — TCGdex as a `-holo`
+suffix on the Cardmarket block and as keyed blocks under `tcgplayer`. Our crawl
+*already keeps them*. Measured across `data/prices/pokemon.json` on 2026-09-07:
+
+| | |
+|---|---|
+| rows | 20,451 |
+| carrying a `-holo` Cardmarket split | **16,219 (79.3%)** |
+| normal vs reverse price ratio | median **3.36×**, p90 **10.7×** |
+| rows where the two differ by more than 2× | 12,190 (**75%**) |
+| TCGplayer variant blocks present | `reverse-holofoil`, `normal`, `holofoil`, `unlimited`, `1st-edition`, `unlimited-holofoil`, `1st-edition-holofoil` |
+
+Nothing renders them. A reverse holo is shown its normal print's price in four
+cases out of five, off by a median 3.4×.
+
+The catalogue side is what is missing: `data/catalog/pokemon/*.json` stores
+`variants` as a type list and `cardmarketProductId` at **card** level, with no
+edge from a variant to its price key. Note that the shared product id is *not*
+the problem it first appears — both marketplaces price the variants separately
+*under one product*, which is exactly why 12% distinct ids (§1) never mattered.
+
+**No new source is needed. No metered call is needed. The data is on disk.**
 
 ---
 
@@ -136,8 +244,11 @@ position on every card in both games. It is the easiest thing on the card to
 read and the most discriminating: it narrows 34,000 cards to typically 1–9.
 
 Image similarity would need an embedding per printing and a vector index — and
-it would still land on the same *choose* step, because reprints of one code are
-often the same artwork. It is a **Phase 6 accelerator**, not a foundation.
+it would still land on the same *choose* step. §1 now puts a number on why: for
+Pokémon, **0%** of the 10,110 multi-variant cards have a distinct image, so the
+embeddings of a normal and a reverse holo are the same vector. Similarity can
+help One Piece, where every printing does differ; it cannot help the larger
+half. It is a **Phase 7 accelerator**, not a foundation.
 
 ### Why OCR runs on the client
 
@@ -194,7 +305,27 @@ recorded rather than hidden.
 to the free One Piece sets page failed the build with the exact chain —
 `@/lib/cards → @/lib/pokewallet → lib/pokewallet` — then passed again on revert.
 
-### Phase 1 — Unmetered One Piece images
+### Phase 1 — Variant-correct Pokémon prices
+
+First because it is the only phase that fixes something **already wrong on
+screen**, and it needs no new source, no new call and no new UI surface (§3d).
+
+- Carry the per-variant price keys into `data/catalog/pokemon/` at crawl time:
+  each variant gains the Cardmarket suffix (`""` / `-holo`) and the TCGplayer
+  block name (`normal` / `reverse-holofoil` / `holofoil` / `1st-edition` / …)
+  that prices *it*, rather than the card.
+- Render price against the variant the user is looking at, not the card.
+- Where a variant has no price of its own, say so. Do **not** fall back to the
+  card's other variant — that is precisely the 3.36× error.
+
+This is also the Pokémon half of the card→print schema (§2), arriving as a bug
+fix rather than a migration.
+
+**Exit criteria**: a reverse-holo listing shows the reverse-holo figure on all
+16,219 rows that carry one, and the budget report is unchanged — the inputs were
+already on disk.
+
+### Phase 2 — Unmetered One Piece images
 
 - `/api/one-piece-image/[printingId]` — resolves the Bandai URL from
   `data/catalog/one-piece-official/`, fetches server-side, serves with
@@ -206,7 +337,7 @@ to the free One Piece sets page failed the build with the exact chain —
 **Exit criteria**: a set page renders every card image, with zero metered calls.
 Measured against `npm run` + the budget report before and after.
 
-### Phase 2 — Free catalogue card pages
+### Phase 3 — Free catalogue card pages
 
 - `/card/[tcg]/[code]` — every printing of a code, side by side: image, name,
   rarity, set/pack, and for One Piece the treatment from the BerryWallet corpus.
@@ -217,7 +348,7 @@ Measured against `npm run` + the budget report before and after.
 **Exit criteria**: `/card/one-piece/OP05-119` shows all printings; the budget
 report is unchanged after loading it.
 
-### Phase 3 — Lookup by code *(the scan without the camera)*
+### Phase 4 — Lookup by code *(the scan without the camera)*
 
 - A search box that accepts `OP05-119`, `190/182`, or a name.
 - Routes to the Phase 2 page.
@@ -225,7 +356,7 @@ report is unchanged after loading it.
 
 **Exit criteria**: a person can find any of 34,000 cards and pick a printing.
 
-### Phase 4 — Scan
+### Phase 5 — Scan
 
 - Camera capture → client-side OCR → extract code → same route as Phase 3.
 - On low confidence, show the text field pre-filled with the best guess.
@@ -233,7 +364,7 @@ report is unchanged after loading it.
 **Exit criteria**: scanning a card lands on its printing grid; a failed read
 degrades to typing, never to an error.
 
-### Phase 5 — Collection (free)
+### Phase 6 — Collection (free)
 
 - A collection row is a **print identity**: `(tcg, code, printingId, quantity,
   condition, acquiredAt)`.
@@ -242,7 +373,7 @@ degrades to typing, never to an error.
 
 **Exit criteria**: add, list and remove cards, with zero metered calls.
 
-### Phase 6 — Market activation *(paid)*
+### Phase 7 — Market activation *(paid)*
 
 - A subscriber activates market data on a specific card.
 - That, and only that, calls the existing pipeline — untouched.
@@ -254,10 +385,22 @@ activation produces exactly the data `/products/[slug]` shows today.
 
 ---
 
-## 6. The open question that Phase 6 turns on
+## 6. The open question that Phase 7 turns on
 
 **For One Piece, the identity plane and the market plane use different ids, and
 we have not proved they can be joined.**
+
+**It is smaller than it was.** The 2026-09-07 measurement moved it off the
+critical path in two ways. First, the *choose* step is mandatory for both games
+anyway (§1), so nothing needs to auto-label `_p2`/`_p3`/`_p4` — the person sees
+three pictures and points at theirs. Identity, browsing, scanning and collecting
+(Phases 1–6) never need this join. Second, it is now scoped to **cards a paying
+user actually owns**, which is the metered boundary already drawn. Pokémon has
+no equivalent problem: its variant → price-key edge is direct (§3d).
+
+What remains is genuinely unresolved, and it is worth stating what it is *not*:
+not a blocker for the free product, and not something to guess at when it does
+arrive.
 
 - `punk-records` gives images, languages and gameplay data, keyed `OP05-119_p4`.
 - The BerryWallet corpus gives the treatment (`(Alternate Art) (Manga)`) and the
@@ -270,13 +413,14 @@ rows and Bandai holds three printings — but "same count, therefore same order"
 is exactly the `(V.N)` assumption this codebase already refuses to make twice
 over.
 
-**How to resolve it**: before Phase 6, measure across all codes present in both
+**How to resolve it**: before Phase 7, measure across all codes present in both
 catalogues — how often do the counts agree, and where they do, does any
 independent signal (rarity, pack, price tier) confirm the alignment? If the
 answer is no, the join is a human step too, done once per card at activation,
-which is acceptable because activation is already a deliberate act.
+which is acceptable because activation is already a deliberate act — and it is
+the same step `card-refs.ts` encodes by hand for 12 cards today.
 
-**Do not build Phase 6 on an assumed join.**
+**Do not build Phase 7 on an assumed join.**
 
 ---
 
@@ -291,7 +435,7 @@ above touches it:
   fails when a tracked card's query cannot separate its own printings.
 - `lib/graded-market.ts`, `lib/ebay-browse.ts` — the tier fetching and title
   filtering.
-- `card-refs.ts` — the 12 hand-resolved cards. Phase 6 generalises this; it does
+- `card-refs.ts` — the 12 hand-resolved cards. Phase 7 generalises this; it does
   not replace it. The existing refs keep working throughout.
 
 The one thing that *should* change, and is worth doing before any of the above:
