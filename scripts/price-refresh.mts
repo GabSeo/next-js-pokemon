@@ -70,10 +70,31 @@ const RETRY_DELAY_MS = 400;
 type CatalogCardRow = { tcgdexId: string };
 type CatalogSetFile = { set: { id: string; serie?: { name?: string } }; cards: CatalogCardRow[] };
 
-/** Cardmarket's block verbatim, minus the metadata — the `-holo` suffixed twins are load-bearing, see lib/catalog.ts's cardmarketPriceFields. */
+/**
+ * ONE HEADLINE FIGURE PER MARKETPLACE PER PRINTING, and no more.
+ *
+ * This used to keep every field each source published — Cardmarket's avg, low,
+ * trend, avg1, avg7 and avg30 plus their `-holo` twins, and TCGplayer's low,
+ * mid, high and market per block. Twenty numbers per card. Audited 2026-09-07:
+ * across every page, component and API route, exactly two of them are ever
+ * read — `cardmarket.avg` and `tcgplayer.market`. The other eighteen were
+ * written, committed, deployed and never looked at.
+ *
+ * Dropping them takes the snapshot from 5.9 MB to 2.4 MB (-59%), which matters
+ * more than it sounds: 97% of rows change between refreshes, so this file
+ * delta-compresses badly and every price commit carried the full weight.
+ *
+ * SAFE TO CUT BECAUSE THE SOURCE IS FREE. api.tcgdex.net has no ceiling in
+ * lib/api-budget.ts, so if a feature ever needs the spread or a rolling
+ * average, one 40-second re-run brings it back. That is the opposite of the
+ * price HISTORY in data/prices/history/, where a gap can never be refilled
+ * because the source only ever reports today.
+ */
+
+/** Cardmarket: `avg` and its `-holo` twin. The suffix pair is load-bearing — see lib/catalog.ts's cardmarketPriceFields. */
 type CardmarketSnapshot = Record<string, number>;
-/** TCGplayer keyed by printing ("normal", "reverse-holofoil", "holofoil"), each with the four figures a page can show. */
-type TcgplayerSnapshot = Record<string, { low?: number; mid?: number; high?: number; market?: number }>;
+/** TCGplayer keyed by printing ("normal", "reverse-holofoil", "holofoil", "1st-edition", …), each with its market price. */
+type TcgplayerSnapshot = Record<string, { market?: number }>;
 
 type PriceEntry = {
   /** TCGdex's own stamp on the price block. */
@@ -123,10 +144,14 @@ function isDigitalOnly(serie: string | undefined): boolean {
   return /pocket/i.test(serie ?? "");
 }
 
-function numbersOnly(source: Record<string, unknown> | undefined): Record<string, number> | undefined {
+function numbersOnly(
+  source: Record<string, unknown> | undefined,
+  keep: (key: string) => boolean = () => true
+): Record<string, number> | undefined {
   if (!source) return undefined;
   const out: Record<string, number> = {};
   for (const [key, value] of Object.entries(source)) {
+    if (!keep(key)) continue;
     // Explicit null is what these sources send for a stat they have no data
     // for; 0 is the same absence wearing a number. Neither belongs in a
     // snapshot a page will read as a real figure.
@@ -171,9 +196,10 @@ async function main() {
         pricing?: { cardmarket?: Record<string, unknown>; tcgplayer?: Record<string, unknown> };
       }>(`${API_BASE}/cards/${encodeURIComponent(id)}`);
 
-      const cm = numbersOnly(card.pricing?.cardmarket);
-      // `idProduct` is a pointer, not a price — it already lives in the corpus.
-      if (cm) delete cm.idProduct;
+      // `avg` and `avg-holo` only. `idProduct` is a pointer rather than a price
+      // and already lives in the corpus; the rest is measured-unread (see
+      // CardmarketSnapshot above).
+      const cm = numbersOnly(card.pricing?.cardmarket, (key) => key === "avg" || key === "avg-holo");
 
       const tpRaw = card.pricing?.tcgplayer;
       let tp: TcgplayerSnapshot | undefined;
@@ -181,13 +207,7 @@ async function main() {
         for (const [key, value] of Object.entries(tpRaw)) {
           if (key === "unit" || key === "updated" || typeof value !== "object" || value === null) continue;
           const v = value as Record<string, unknown>;
-          const entry = {
-            low: typeof v.lowPrice === "number" ? v.lowPrice : undefined,
-            mid: typeof v.midPrice === "number" ? v.midPrice : undefined,
-            high: typeof v.highPrice === "number" ? v.highPrice : undefined,
-            market: typeof v.marketPrice === "number" ? v.marketPrice : undefined,
-          };
-          if (Object.values(entry).some((n) => typeof n === "number")) (tp ??= {})[key] = entry;
+          if (typeof v.marketPrice === "number") (tp ??= {})[key] = { market: v.marketPrice };
         }
       }
 

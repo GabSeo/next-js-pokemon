@@ -413,7 +413,7 @@ and `scripts/price-history-backfill.mts` reconstructs the past from git.
 |---|---|
 | Per-day file | `data/prices/history/{game}-YYYY-MM-DD.json.gz` |
 | Granularity | **per printing**, not per card — a reverse holo is a median 3.36× its normal twin |
-| Size | 20,443 printings → **180 KB gzipped** (from a 6.0 MB snapshot) |
+| Size | 20,443 printings → **180 KB gzipped** |
 | Cost | ~64 MB/year for Pokémon at a daily cadence |
 | Recovered from git | 2 distinct Pokémon observation days, 1 One Piece |
 
@@ -426,6 +426,16 @@ committed — anything else claims prices were seen on a day nobody looked.
 reversible. The files are independent, so they can be pruned, thinned to weekly,
 or imported into Postgres later without touching anything that reads them.
 Revisit at ~500 MB or when a database arrives.
+
+**The snapshot itself was trimmed too, 2026-09-07.** It carried every field each
+source published — 20 numbers per card — and an audit of every page, component
+and route found exactly **two** were ever read: `cardmarket.avg` and
+`tcgplayer.market`. The other eighteen were written, committed and deployed
+without ever being looked at. Now 4 numbers per card, **5.9 MB → 2.4 MB (-59%)**,
+which compounds because 97% of rows change per refresh so the file
+delta-compresses badly and every price commit carried the full weight. Safe
+because TCGdex is unmetered: widening it again costs one 40-second re-run,
+unlike the history, where a gap can never be refilled.
 
 **What it does not promise:** `prebuild` also runs on Vercel, where the
 filesystem is discarded. An observation is recorded when the refresh runs

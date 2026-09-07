@@ -41,7 +41,7 @@ import { getCard } from "@/lib/tcgdex";
 const SNAPSHOT_FILE = path.join(process.cwd(), "data", "prices", "pokemon.json");
 
 type CardmarketSnapshot = Record<string, number>;
-type TcgplayerSnapshot = Record<string, { low?: number; mid?: number; high?: number; market?: number }>;
+type TcgplayerSnapshot = Record<string, { market?: number }>;
 type PriceEntry = { u?: string; cm?: CardmarketSnapshot; tp?: TcgplayerSnapshot };
 type PriceSnapshotFile = { generatedAt: string; source: string; cards: Record<string, PriceEntry> };
 
@@ -74,24 +74,30 @@ export function priceSnapshotDate(): string | undefined {
   return loadSnapshot().generatedAt || undefined;
 }
 
-/** One printing's figures. Every field optional: absent means the source had none, never zero. */
+/**
+ * One printing's figures. Every field optional: absent means the source had
+ * none, never zero.
+ *
+ * ONE NUMBER PER MARKETPLACE. This carried Cardmarket's low/trend/avg1/avg7/
+ * avg30 and TCGplayer's low/mid/high as well, until an audit on 2026-09-07
+ * found that no page, component or route had ever read one of them — the whole
+ * app reads `cardmarket.avg` and `tcgplayer.market` and nothing else. A type
+ * that advertises fields the pipeline no longer carries is worse than a narrow
+ * one: it invites a caller to use them and then wonder why they are empty.
+ *
+ * If a feature needs the spread or a rolling average, widen the snapshot in
+ * scripts/price-refresh.mts and widen this to match. TCGdex is unmetered, so
+ * that costs one re-run rather than lost data.
+ */
 export type CatalogPrice = {
   /** Which printing these figures describe — "normal", "reverse", "holo". */
   variantType?: string;
   cardmarket?: {
     avg?: number;
-    low?: number;
-    trend?: number;
-    avg1?: number;
-    avg7?: number;
-    avg30?: number;
     /** EUR, always — Cardmarket is never converted. */
     currency: "EUR";
   };
   tcgplayer?: {
-    low?: number;
-    mid?: number;
-    high?: number;
     market?: number;
     /**
      * The block these figures came from — "normal", "holofoil", "1st-edition",
@@ -157,29 +163,10 @@ function toPrice(card: CatalogCard, entry: PriceEntry, variantType?: string): Ca
   const { cardmarketSuffix, tcgplayerKeys } = cardmarketPriceFields(card, chosen);
 
   const cm = entry.cm;
-  const cardmarket = cm
-    ? {
-        avg: pick(cm, `avg${cardmarketSuffix}`),
-        low: pick(cm, `low${cardmarketSuffix}`),
-        trend: pick(cm, `trend${cardmarketSuffix}`),
-        avg1: pick(cm, `avg1${cardmarketSuffix}`),
-        avg7: pick(cm, `avg7${cardmarketSuffix}`),
-        avg30: pick(cm, `avg30${cardmarketSuffix}`),
-        currency: "EUR" as const,
-      }
-    : undefined;
+  const cardmarket = cm ? { avg: pick(cm, `avg${cardmarketSuffix}`), currency: "EUR" as const } : undefined;
 
   const found = firstBlock(entry.tp, tcgplayerKeys);
-  const tcgplayer = found
-    ? {
-        low: found.block.low,
-        mid: found.block.mid,
-        high: found.block.high,
-        market: found.block.market,
-        key: found.key,
-        currency: "USD" as const,
-      }
-    : undefined;
+  const tcgplayer = found ? { market: found.block.market, key: found.key, currency: "USD" as const } : undefined;
 
   // A block that resolved but carries no figure is an absence, not a price of
   // nothing — report it as such so a caller renders the stated gap.
@@ -206,12 +193,10 @@ async function fetchEntry(card: CatalogCard): Promise<PriceEntry | undefined> {
   for (const [key, value] of Object.entries(pricing.tcgplayer ?? {})) {
     if (key === "unit" || key === "updated" || typeof value !== "object" || value === null) continue;
     const v = value as Record<string, unknown>;
-    tp[key] = {
-      low: typeof v.lowPrice === "number" ? v.lowPrice : undefined,
-      mid: typeof v.midPrice === "number" ? v.midPrice : undefined,
-      high: typeof v.highPrice === "number" ? v.highPrice : undefined,
-      market: typeof v.marketPrice === "number" ? v.marketPrice : undefined,
-    };
+    // Same narrowing as the snapshot writer, so the live fallback and the file
+    // produce identical shapes — a card fetched live must not quietly carry
+    // fields a cached one lacks.
+    tp[key] = { market: typeof v.marketPrice === "number" ? v.marketPrice : undefined };
   }
 
   return {
