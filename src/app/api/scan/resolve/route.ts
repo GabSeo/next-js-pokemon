@@ -1,30 +1,38 @@
+import { getCardView, type CardView } from "@/lib/card-view";
 import { lookupCards } from "@/lib/card-lookup";
 
 /**
- * Which of these codes are real cards?
+ * Turn scanned codes into the actual cards, with every printing of each.
  *
- * WHY THE SCAN NEEDS THIS. On-device OCR routinely produces a code-SHAPED
- * string that is not a card. Measured on a real photo (s-l1200.jpg,
- * 2026-09-07): Tesseract returned two candidates, neither of which exists in
- * either catalogue. The scan treated "found something" as success, showed the
- * junk, and never escalated to Vision — because the browser has no way to tell
- * a real code from a plausible one. The catalogue is on the server.
+ * WHY THIS RETURNS WHOLE CARDS RATHER THAN A YES/NO. It began as a validity
+ * check — "which of these codes are real" — so the scan could decide whether to
+ * escalate. That question still gets answered, but answering only that forced
+ * the scan to navigate away to /lookup to show anything, which threw away the
+ * photo, the context, and the sense of one continuous action. Scanning a card
+ * and choosing which printing you own are two halves of one gesture; they
+ * belong in one view.
  *
- * So this is the missing question in the middle of the flow:
+ * So the scan now asks for everything it needs to finish: the card, its name,
+ * and its printings with their artwork and prices. Nothing downstream has to
+ * fetch again, and nothing has to change page.
  *
- *   Tesseract -> candidates -> ARE ANY REAL? -> no -> Vision
+ * FREE, which is what lets it sit in the middle of the scan. It reads the
+ * catalogues and the price snapshot off disk and touches no metered upstream —
+ * `scripts/check-free-tier.mts` enforces that rather than trusting it. A
+ * validation step that cost quota would defeat its own purpose.
  *
- * FREE, and that is the whole reason it can sit on that path. It reads
- * lib/card-lookup, which reads the catalogues off disk and touches no metered
- * upstream — `scripts/check-free-tier.mts` enforces that. A validation step
- * that cost quota would defeat the point of asking before spending a Vision
- * unit.
+ * ORDER IS THE CALLER'S. Codes come back in the order they were sent, because
+ * the scanner ranks its candidates and that ranking is information this route
+ * does not have.
  */
 
 export const runtime = "nodejs";
 
 /** More than a handful means the caller is not a scan. */
-const MAX_CODES = 12;
+const MAX_CODES = 8;
+
+/** A scanned code can match several cards — `190/182` is two — but not dozens. */
+const MAX_CARDS_PER_CODE = 6;
 
 export async function POST(request: Request) {
   let payload: { codes?: unknown };
@@ -38,10 +46,29 @@ export async function POST(request: Request) {
     ? payload.codes.filter((c): c is string => typeof c === "string").slice(0, MAX_CODES)
     : [];
 
-  // Ordered as received, so the caller keeps its own ranking — the first real
-  // code in ITS order is the one it should prefer, not the first we happen to
-  // resolve.
-  const real = codes.filter((code) => lookupCards(code).matches.length > 0);
+  const real: string[] = [];
+  const cards: CardView[] = [];
+  const seen = new Set<string>();
 
-  return Response.json({ real });
+  for (const code of codes) {
+    const matches = lookupCards(code).matches.slice(0, MAX_CARDS_PER_CODE);
+    if (matches.length === 0) continue;
+    real.push(code);
+
+    for (const match of matches) {
+      // Two candidates can resolve to the same card — a trimmed prefix variant
+      // and the full read, say — and it should appear once.
+      const id = `${match.tcg}:${match.code}`;
+      if (seen.has(id)) continue;
+      seen.add(id);
+
+      const view = await getCardView(match.tcg, match.code);
+      if (view) cards.push(view);
+    }
+  }
+
+  // `real` is kept alongside `cards` because they answer different questions:
+  // which codes were readable, and what to show. The scan uses the first to
+  // decide whether the read failed at all.
+  return Response.json({ real, cards });
 }

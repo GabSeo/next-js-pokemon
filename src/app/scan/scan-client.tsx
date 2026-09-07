@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import { AddToCollectionButton } from "@/components/add-to-collection-button";
 import type { CodeCandidate } from "@/lib/card-code-ocr";
+import type { CardView } from "@/lib/card-view";
 
 /**
  * Photograph a card, read its code, hand it to the lookup.
@@ -32,6 +33,13 @@ import type { CodeCandidate } from "@/lib/card-code-ocr";
  * code needs a fraction of that, so sending the original costs seconds of
  * mobile upload for no extra accuracy.
  *
+ * ONE VIEW, NO NAVIGATION. A successful scan used to push straight to /lookup,
+ * which threw away the photo, the context and the sense of one continuous
+ * action — the page you were on vanished at the moment it succeeded.
+ * Photographing a card and choosing which printing you own are two halves of
+ * one gesture, so the results now appear beneath the photo and the collection
+ * button sits on each printing. Nothing moves; the page only grows.
+ *
  * FAILURE IS A DESIGNED STATE. No photo, an unreadable photo, no key on the
  * deployment, an exhausted budget — every exit lands on the same text field,
  * present at every stage, and says which of those happened instead of showing
@@ -41,7 +49,7 @@ import type { CodeCandidate } from "@/lib/card-code-ocr";
 type Status =
   | { phase: "idle" }
   | { phase: "reading" }
-  | { phase: "done"; candidates: CodeCandidate[]; note?: string };
+  | { phase: "done"; candidates: CodeCandidate[]; cards: CardView[]; note?: string };
 
 /** Long edge in pixels. Comfortably more detail than a card code needs. */
 const UPLOAD_MAX_EDGE = 1600;
@@ -68,34 +76,36 @@ async function uploadable(file: File): Promise<Blob> {
 }
 
 /**
- * Which candidates the catalogue recognises as real cards.
+ * The real cards behind a set of scanned codes, with every printing of each.
  *
- * Vision misreads glyphs too, and a misread often lands on a code-SHAPED string
- * that is not a card. Free route — it reads the catalogue off disk and spends
- * nothing.
+ * Vision misreads glyphs, and a misread often lands on a code-SHAPED string
+ * that is not a card, so this both filters and fetches: what survives is what
+ * the catalogue recognises, and it comes back complete enough to render without
+ * another request. Free route — it reads off disk.
  *
- * Returns the input unchanged on any failure, so a network blip cannot make a
- * real card look unreal.
+ * On any failure the candidates pass through unfiltered with no cards, so a
+ * network blip shows the codes it read rather than claiming it read nothing.
  */
-async function keepReal(candidates: CodeCandidate[]): Promise<CodeCandidate[]> {
-  if (candidates.length === 0) return candidates;
+async function resolveCards(
+  candidates: CodeCandidate[]
+): Promise<{ candidates: CodeCandidate[]; cards: CardView[] }> {
+  if (candidates.length === 0) return { candidates, cards: [] };
   try {
     const response = await fetch("/api/scan/resolve", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ codes: candidates.map((c) => c.value) }),
     });
-    if (!response.ok) return candidates;
-    const { real } = (await response.json()) as { real?: string[] };
-    if (!Array.isArray(real)) return candidates;
-    return candidates.filter((c) => real.includes(c.value));
+    if (!response.ok) return { candidates, cards: [] };
+    const { real, cards } = (await response.json()) as { real?: string[]; cards?: CardView[] };
+    if (!Array.isArray(real)) return { candidates, cards: cards ?? [] };
+    return { candidates: candidates.filter((c) => real.includes(c.value)), cards: cards ?? [] };
   } catch {
-    return candidates;
+    return { candidates, cards: [] };
   }
 }
 
 export function ScanClient() {
-  const router = useRouter();
   const [status, setStatus] = useState<Status>({ phase: "idle" });
   const [preview, setPreview] = useState<string | undefined>();
   const [typed, setTyped] = useState("");
@@ -111,6 +121,7 @@ export function ScanClient() {
     setStatus({ phase: "reading" });
 
     let candidates: CodeCandidate[] = [];
+    let cards: CardView[] = [];
     let note: string | undefined;
 
     try {
@@ -128,19 +139,15 @@ export function ScanClient() {
         note = `The card reader failed: ${error ?? response.status}`;
       } else {
         const payload = (await response.json()) as { candidates?: CodeCandidate[] };
-        candidates = await keepReal(payload.candidates ?? []);
+        const resolved = await resolveCards(payload.candidates ?? []);
+        candidates = resolved.candidates;
+        cards = resolved.cards;
       }
     } catch {
       note = "Could not reach the card reader. Check your connection, or type the code below.";
     }
 
-    setStatus({ phase: "done", candidates, note });
-
-    // One unambiguous read goes straight through. Anything else is a choice,
-    // and a choice belongs to the person holding the card.
-    if (candidates.length === 1) {
-      router.push(`/lookup?q=${encodeURIComponent(candidates[0].value)}`);
-    }
+    setStatus({ phase: "done", candidates, cards, note });
   }
 
   return (
@@ -181,7 +188,7 @@ export function ScanClient() {
         ) : null}
 
         {status.phase === "done" ? (
-          status.candidates.length === 0 ? (
+          status.cards.length === 0 && status.candidates.length === 0 ? (
             <p className="rounded-lg border-2 border-black bg-muted-surface p-3 text-sm">
               No card code found in that photo. The code sits in a bottom corner — <b>OP05-119</b> on a One Piece
               card, <b>190/182</b> on a Pokémon one. Try again with that corner in frame, or type it below.
@@ -190,25 +197,88 @@ export function ScanClient() {
           ) : (
             <>
               <p className="text-xs font-black uppercase tracking-wide text-muted-text">
-                {status.candidates.length === 1 ? "Found" : "Which of these is on your card?"}
+                {status.cards.length === 1 ? "Your card" : "Which of these is yours?"}
               </p>
-              <ul className="mt-3 grid gap-2">
-                {status.candidates.map((candidate) => (
-                  <li key={candidate.value}>
-                    <Link
-                      href={`/lookup?q=${encodeURIComponent(candidate.value)}`}
-                      className="flex items-baseline gap-3 rounded-lg border-2 border-black bg-white p-3 transition-transform hover:-translate-y-0.5"
-                      style={{ boxShadow: "3px 3px 0 0 #000" }}
-                    >
-                      <span className="font-black">{candidate.value}</span>
-                      <span className="text-xs text-muted-text">
-                        {candidate.kind === "one-piece-code" ? "One Piece card code" : "Pokémon printed number"}
-                        {candidate.raw !== candidate.value ? ` · read as ${candidate.raw}` : ""}
-                      </span>
-                    </Link>
-                  </li>
+
+              {/* THE PRINTINGS, not just the code. A code names a card; a card
+                  is several printings and they are not worth the same — a
+                  reverse holo is a median 3.4x its normal twin. Showing them
+                  here is what lets someone finish in one place: read, recognise,
+                  and record which one is actually in their hand. */}
+              <div className="mt-3 grid gap-4">
+                {status.cards.map((card) => (
+                  <div
+                    key={`${card.tcg}:${card.code}`}
+                    className="rounded-lg border-2 border-black bg-white p-3"
+                    style={{ boxShadow: "3px 3px 0 0 #000" }}
+                  >
+                    <div className="flex items-baseline justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-black">{card.name}</div>
+                        <div className="text-[11px] text-muted-text">
+                          {card.code} · {card.prints.length} printing{card.prints.length === 1 ? "" : "s"}
+                        </div>
+                      </div>
+                      <Link
+                        href={`/card/${card.tcg}/${encodeURIComponent(card.code)}`}
+                        className="shrink-0 text-[11px] font-black underline underline-offset-4"
+                      >
+                        Full page
+                      </Link>
+                    </div>
+
+                    <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      {card.prints.map((print) => {
+                        const cm = print.price?.cardmarket?.avg;
+                        const tp = print.price?.tcgplayer?.market;
+                        const money =
+                          cm !== undefined
+                            ? new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR" }).format(cm)
+                            : tp !== undefined
+                              ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(tp)
+                              : undefined;
+
+                        return (
+                          <li key={print.key} className="rounded-md border-2 border-black bg-muted-surface p-1.5">
+                            {print.image ? (
+                              /* eslint-disable-next-line @next/next/no-img-element -- both sources are pre-sized; see docs/free-tier-catalogue.md §7 */
+                              <img
+                                src={card.tcg === "onepiece" ? `${print.image}&w=320` : print.image}
+                                alt={print.origin}
+                                loading="lazy"
+                                className="aspect-[300/420] w-full rounded object-contain"
+                              />
+                            ) : (
+                              <div className="aspect-[300/420] w-full rounded" />
+                            )}
+                            <div className="mt-1 truncate text-[11px] font-black" title={print.label ?? print.origin}>
+                              {print.label ?? print.origin}
+                            </div>
+                            <div className="text-[11px] text-muted-text">{money ?? "No price"}</div>
+                            <div className="mt-1.5">
+                              <AddToCollectionButton
+                                tcg={card.tcg}
+                                code={card.code}
+                                printKey={print.key}
+                                size="sm"
+                              />
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
                 ))}
-              </ul>
+              </div>
+
+              {/* The codes are still worth showing when they did not all resolve
+                  to a card — it is the difference between "unreadable" and
+                  "read, but not in our catalogue". */}
+              {status.cards.length === 0 && status.candidates.length > 0 ? (
+                <p className="mt-3 rounded-lg border-2 border-black bg-muted-surface p-3 text-sm">
+                  Read {status.candidates.map((c) => c.value).join(", ")}, but no card in the catalogue matches.
+                </p>
+              ) : null}
             </>
           )
         ) : null}
