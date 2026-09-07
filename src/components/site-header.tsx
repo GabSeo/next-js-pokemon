@@ -4,10 +4,12 @@ import { SITE_NAME } from "@/lib/site";
 const NAV_LINKS = [
   { href: "/tools/price-checker", label: "Price Checker" },
   { href: "/cards", label: "Search Cards" },
-  // NOTE: this points at the 11 tracked cards, not at sets. /sets is the
-  // catalogue's own 218-set index and is arguably what this label promises —
-  // left as-is rather than repointed, since the destination is a product call.
-  { href: "/collections/pokemon", label: "Browse Sets" },
+  // Points at the real set catalogues. It used to send people to
+  // /collections/pokemon — the handful of tracked cards — which was never what
+  // this label promises; it was left that way while /sets held Pokémon only and
+  // One Piece sat on a route of its own. Now /sets is a chooser over both
+  // games, so the label and the destination finally agree.
+  { href: "/sets", label: "Browse Sets" },
   { href: "/tools/grading-calculator", label: "Grading" },
   { href: "/#movers", label: "Market Movers" },
   { href: "/collection", label: "My Collection" },
