@@ -49,6 +49,8 @@
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
+import { recordObservation } from "../src/lib/price-history";
+
 const API_BASE = "https://api.tcgdex.net/v2/en";
 const CATALOG_DIR = path.join(process.cwd(), "data", "catalog", "pokemon");
 const OUT_DIR = path.join(process.cwd(), "data", "prices");
@@ -208,8 +210,20 @@ async function main() {
   });
 
   mkdirSync(OUT_DIR, { recursive: true });
-  const file: PriceSnapshotFile = { generatedAt: new Date().toISOString(), source: API_BASE, cards };
+  const observedAt = new Date();
+  const file: PriceSnapshotFile = { generatedAt: observedAt.toISOString(), source: API_BASE, cards };
   writeFileSync(OUT_FILE, `${JSON.stringify(file)}\n`, "utf8");
+
+  // AND an append-only observation, which the snapshot above is not. That file
+  // holds the CURRENT price of every card and this run has just overwritten the
+  // previous one; without this line, the reading it replaced is written down
+  // nowhere we chose to write it. See lib/price-history.ts for what is kept,
+  // what it costs, and what it deliberately does not promise.
+  const observation = recordObservation("pokemon", API_BASE, cards, observedAt);
+  console.log(
+    `[prices] ${path.relative(process.cwd(), observation.file)} — ` +
+      `${observation.cards} printings observed, ${(observation.bytes / 1024).toFixed(0)} KB gzipped`
+  );
 
   const elapsed = ((Date.now() - started) / 1000).toFixed(1);
   const bytes = readFileSync(OUT_FILE).length;
