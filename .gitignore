@@ -51,3 +51,6 @@ src/app/favicon.ico
 # tesseract.js caches its trained data beside the process when run under Node
 # (a script, not the browser, where it comes from a CDN). 5 MB, regenerable.
 *.traineddata
+
+# Scratch space for one-off API dumps during investigation.
+.cache/

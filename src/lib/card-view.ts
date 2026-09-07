@@ -1,8 +1,7 @@
 import { getCatalogCard, type CatalogCard } from "@/lib/catalog";
 import { getCatalogPricesByVariant, type CatalogPrice } from "@/lib/catalog-prices";
-import { opRowsForCode, opTreatment } from "@/lib/one-piece-catalog";
 import { officialCode, officialRowsForCode } from "@/lib/one-piece-official";
-import { productOf } from "@/lib/one-piece-variants";
+import { optcgProduct, optcgRowsForCode } from "@/lib/one-piece-optcg";
 
 /**
  * The card→print shape both games render through — see
@@ -138,11 +137,8 @@ function variantPrints(card: CatalogCard, setName: string, byVariant: CatalogPri
  */
 const GENERIC_PROMO_PACK = /promotion|other product|限定商品|プロモーション/i;
 
-/** `(P-033)` is a code repeated in the name, not a product. */
-const CODE_LIKE = /^[A-Z]{1,4}\d{0,2}-?\d{2,3}$/i;
-
 /**
- * The printings the BerryWallet corpus knows for a code Bandai lumped.
+ * The printings optcgapi names for a code Bandai lumped.
  *
  * MEASURED 2026-09-07, and it is the largest single gap in our One Piece data.
  * Bandai files 349 codes under a generic promo bucket; for 343 of them (98%)
@@ -158,6 +154,11 @@ const CODE_LIKE = /^[A-Z]{1,4}\d{0,2}-?\d{2,3}$/i;
  * card-refs.ts, so showing them as one anonymous "Promotion card" was the
  * catalogue's most visible failure.
  *
+ * optcgapi rather than the BerryWallet corpus, which named 84% of the same
+ * codes: optcgapi covers 65 that the corpus does not, carries prices keyed by
+ * code, and costs three bulk requests to refresh instead of a metered crawl at
+ * 90 calls an hour.
+ *
  * THE IMAGE STAYS BANDAI'S BASE PRINTING, and that is not a shortcut: verified,
  * Bandai serves P-033.png and 404s on P-033_pr1 and P-033_pr2. No distinct
  * artwork exists publicly for these products. A competitor with the same
@@ -168,23 +169,21 @@ const CODE_LIKE = /^[A-Z]{1,4}\d{0,2}-?\d{2,3}$/i;
  * be joined to Bandai's printing ids anyway (ARCHITECTURE_AUDIT.md §6) — so
  * this replaces a list that says nothing rather than merging two that disagree.
  */
-function promoPrintsFromCorpus(code: string, image: string): CardPrint[] {
+function namedPromoPrints(code: string, image: string): CardPrint[] {
   const seen = new Set<string>();
   const prints: CardPrint[] = [];
 
-  for (const row of opRowsForCode(code)) {
-    const product = productOf(row.card.name);
-    if (!product || CODE_LIKE.test(product)) continue;
-    if (seen.has(product)) continue;
+  for (const row of optcgRowsForCode(code)) {
+    const product = optcgProduct(row.name);
+    if (!product || seen.has(product)) continue;
     seen.add(product);
 
-    const treatment = opTreatment(row.card.name);
     prints.push({
-      key: `corpus:${product}`,
+      key: `optcg:${product}`,
       // The product IS the label here — it is the only thing separating these.
-      label: treatment && treatment !== product ? `${product} · ${treatment}` : product,
-      origin: row.set.name,
-      rarity: row.card.rarity,
+      label: product,
+      origin: row.setName,
+      rarity: row.rarity,
       image,
       price: undefined,
     });
@@ -196,7 +195,23 @@ function promoPrintsFromCorpus(code: string, image: string): CardPrint[] {
 /** One Piece: every printing of a code, across every pack that holds one. */
 function onePieceView(code: string): CardView | undefined {
   const rows = officialRowsForCode(code, "english");
-  if (rows.length === 0) return undefined;
+
+  // 17 codes exist in optcgapi and not in Bandai's English list. Returning
+  // "not found" for a card somebody is holding is worse than returning it with
+  // the one image Bandai does serve for that code.
+  if (rows.length === 0) {
+    const fallback = optcgRowsForCode(code);
+    if (fallback.length === 0) return undefined;
+    return {
+      tcg: "onepiece",
+      code,
+      name: fallback[0].name.replace(/\s*\([^)]*\)\s*$/, ""),
+      priceNote:
+        "Not in Bandai's English card list — details from optcgapi, an independent mirror. " +
+        "Each printing below is a different product.",
+      prints: namedPromoPrints(code, `/api/one-piece-image/${encodeURIComponent(code)}?lang=english`),
+    };
+  }
 
   return {
     tcg: "onepiece",
@@ -229,7 +244,7 @@ function onePiecePrints(code: string, rows: ReturnType<typeof officialRowsForCod
   const bucketed = rows.filter(({ pack }) => GENERIC_PROMO_PACK.test(pack.title));
   if (bucketed.length === 0) return rows.map(toPrint);
 
-  const named = promoPrintsFromCorpus(code, `/api/one-piece-image/${encodeURIComponent(code)}?lang=english`);
+  const named = namedPromoPrints(code, `/api/one-piece-image/${encodeURIComponent(code)}?lang=english`);
   // Only trade anonymous rows for named ones when there are at least as many
   // names as rows being replaced — otherwise a card would silently lose
   // printings in exchange for labels.

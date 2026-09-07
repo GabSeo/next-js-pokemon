@@ -94,7 +94,8 @@ export default async function OnePiecePackPage({ params }: PageProps) {
       </div>
 
       <p className="mt-6 rounded-lg border-2 border-black bg-muted-surface p-3 text-xs">
-        Card data and images are Bandai&apos;s official One Piece Card Game list. Parallels and alternate arts are
+        Card data comes from Bandai&apos;s published card list via punk-records, an independent mirror; images are
+        Bandai&apos;s own. Parallels and alternate arts are
         listed as separate printings, because that is what they are — and since each carries its own artwork, the
         picture is what tells them apart. No prices: Bandai does not sell singles.
       </p>

@@ -5,7 +5,7 @@ import { officialPacks, officialStats } from "@/lib/one-piece-official";
 import { absoluteUrl } from "@/lib/site";
 
 /**
- * Browse Sets — every One Piece pack in the official catalogue.
+ * Browse Sets — every One Piece pack we hold.
  *
  * COSTS NOTHING TO RENDER, and that is the point of the whole exercise it came
  * out of. It reads `data/catalog/one-piece-official/` off disk and makes no
@@ -108,7 +108,8 @@ export default function OnePieceSetsPage() {
           distinction matters: this is Bandai's own published card list, read
           from a maintained mirror rather than scraped by us. */}
       <p className="mb-6 rounded-lg border-2 border-black bg-muted-surface p-3 text-xs">
-        Card data is Bandai&apos;s official One Piece Card Game list. No prices here — Bandai publishes what a card is,
+        Card data comes from Bandai&apos;s published card list, mirrored by punk-records — an independent project, not
+        affiliated with Bandai. No prices here: Bandai publishes what a card is,
         not what it sells for. Marketplace figures live on the individual card pages.
       </p>
 

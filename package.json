@@ -17,7 +17,8 @@
     "check:one-piece": "npx tsx scripts/check-one-piece-vocabulary.mts",
     "docs:pipelines": "npx tsx scripts/build-pipeline-docs.mts",
     "prices:backfill": "npx tsx scripts/price-history-backfill.mts",
-    "catalog:one-piece-art": "npx tsx scripts/one-piece-art-signatures.mts"
+    "catalog:one-piece-art": "npx tsx scripts/one-piece-art-signatures.mts",
+    "catalog:one-piece-optcg": "npx tsx scripts/one-piece-optcg-crawl.mts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

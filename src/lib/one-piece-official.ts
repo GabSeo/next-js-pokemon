@@ -1,4 +1,12 @@
 /**
+ * ATTRIBUTION, since this module's name overstates it: punk-records is an
+ * INDEPENDENT project that mirrors Bandai's published card list. It is not
+ * affiliated with Bandai and neither are we. The DATA originates with Bandai;
+ * this mirror does not, and calling it "official" claims a relationship that
+ * does not exist. The filename is kept only because renaming it would touch
+ * every consumer for no behavioural gain.
+ *
+
  * TIER 1 for the OFFICIAL One Piece card list — the catalogue crawled by
  * scripts/one-piece-official-crawl.mts from Bandai's own data.
  *

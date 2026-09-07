@@ -198,12 +198,14 @@ const nextConfig: NextConfig = {
     "/api/scan/ocr": [
       "./data/catalog/pokemon/**",
       "./data/catalog/one-piece-official/**",
+      "./data/catalog/one-piece-optcg/**",
       "./data/catalog/one-piece-art/**",
       "./data/prices/**",
     ],
     "/api/scan/resolve": [
       "./data/catalog/pokemon/**",
       "./data/catalog/one-piece-official/**",
+      "./data/catalog/one-piece-optcg/**",
       "./data/prices/**",
     ],
     // The free card page serves either game from one component, so it needs
@@ -213,10 +215,11 @@ const nextConfig: NextConfig = {
     // The lookup box resolves across both games at request time (searchParams),
     // so it reads both catalogues. No prices: it answers "which card", and only
     // the card page answers "which printing".
-    "/lookup": ["./data/catalog/pokemon/**", "./data/catalog/one-piece-official/**"],
+    "/lookup": ["./data/catalog/pokemon/**", "./data/catalog/one-piece-official/**", "./data/catalog/one-piece-optcg/**"],
     "/card/[tcg]/[code]": [
       "./data/catalog/pokemon/**",
       "./data/catalog/one-piece-official/**",
+      "./data/catalog/one-piece-optcg/**",
       "./data/prices/**",
     ],
   },
