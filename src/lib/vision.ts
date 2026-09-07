@@ -3,27 +3,23 @@ import { JWT } from "google-auth-library";
 import { chargeApiBudget } from "@/lib/api-budget";
 
 /**
- * Google Cloud Vision, used as a FALLBACK for card codes the browser could not
- * read on its own.
+ * Google Cloud Vision — the card reader.
  *
- * WHY THIS IS NOT THE PRIMARY OCR. Tesseract runs on the visitor's device: it
- * is unlimited, free, private (the photo never leaves the phone) and reads 5 of
- * 6 real cards after the preprocessing in app/scan. Vision is better but capped
- * at **1,000 units/month across the whole billing account**
- * (GCP-CONTEXT.md §4.8). Making it the default would spend a finite monthly
- * budget on cards that already read for nothing.
+ * THE ONLY OCR, since 2026-09-07. This began as a fallback behind Tesseract in
+ * the browser, which existed to protect Vision's 1,000 units/month. At this
+ * project's real scale — five people, roughly thirty cards each, about 150
+ * scans in TOTAL rather than per day — there is no quota to protect, so the
+ * second engine bought nothing and cost a multi-megabyte wasm download per
+ * visit, three hand-tuned crop regions and two paths to debug.
  *
- * WHAT IT IS ACTUALLY FOR is the failure Tesseract cannot fix by trying harder:
- * a single misread glyph. Measured 2026-09-07, OP05-119 came back as OP08-119 —
- * one digit wrong, and OP08-119 is itself a real card, so the scan resolved
- * confidently to the wrong one. No crop and no regex repairs that. A stronger
- * engine is the only thing that does, and it is worth a unit precisely because
- * the alternative is a silently wrong answer.
+ * It also removed a class of failure. Tesseract read OP05-119 as OP08-119 —
+ * one glyph wrong, and OP08-119 is itself a real card, so the scan resolved
+ * confidently to the wrong one. On another photo it returned two code-shaped
+ * strings that were not cards at all, which the scan counted as success.
+ * Neither is fixable by cropping harder.
  *
- * SCALE THIS IS BUILT FOR, stated because it decides the design: five people
- * with roughly thirty cards each — about 150 scans in total, not per day.
- * Against 1,000/month that is comfortably free, and the elaborate quota
- * protection a public free tier would need is not built here on purpose.
+ * NOT INFALLIBLE EITHER, which is why `/api/scan/resolve` still asks the
+ * catalogue whether a candidate is a real card before it is shown.
  *
  * EU ENDPOINT, not the global one. `eu-vision.googleapis.com` keeps the image
  * inside the European Union, which is the same reason GCP-CONTEXT.md §2 puts
@@ -31,7 +27,9 @@ import { chargeApiBudget } from "@/lib/api-budget";
  * set on a Vision project in the console.
  *
  * The image is sent, read, and not stored by us. Google's own retention for
- * this endpoint is theirs, not ours.
+ * this endpoint is theirs, not ours — so the page says "sent once, read, and
+ * not kept" rather than claiming the photo never leaves the device, which was
+ * true of Tesseract and is not true of this.
  */
 
 /** `eu-` so the image is processed in the EU. The global host would work and would not. */

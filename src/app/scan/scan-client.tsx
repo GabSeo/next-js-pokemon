@@ -3,119 +3,53 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import { extractCardCodes, type CodeCandidate } from "@/lib/card-code-ocr";
+import type { CodeCandidate } from "@/lib/card-code-ocr";
 
 /**
  * Photograph a card, read its code, hand it to the lookup.
  *
- * OCR RUNS IN THE BROWSER, and that is a cost decision rather than a technical
- * preference. GCP Vision's free tier is 1,000 units/month — about 33 scans a
- * day across every user — which cannot serve a free tier at all
- * (docs/free-tier-catalogue.md §4, GCP-CONTEXT.md §4.8). Tesseract runs on the
- * visitor's own machine, so the cost per scan is zero and capacity scales with
- * users instead of against them.
+ * ONE READER, NOT TWO. This ran Tesseract in the browser first and called Cloud
+ * Vision only when that failed. The second engine existed to protect Vision's
+ * 1,000 units/month — and at this project's real scale, roughly 150 scans in
+ * total, there is no quota to protect. So the fallback bought nothing and cost
+ * a multi-megabyte wasm download on every visit, three hand-tuned crop regions,
+ * a preprocessing pass, and two code paths to reason about whenever a scan went
+ * wrong.
  *
- * THE ENGINE IS IMPORTED LAZILY, only once a photo exists. It is several MB of
- * wasm plus a trained-data download, and nobody should pay for that to read the
- * instructions or to type a code into the box below.
+ * Removing it also removed the failure that prompted all of it: on a real photo
+ * Tesseract returned two code-shaped strings that were not cards, the scan
+ * counted that as success, and it never escalated. Fewer engines, fewer ways to
+ * be confidently wrong.
  *
- * FAILURE IS A DESIGNED STATE, NOT AN ERROR PATH. Every exit lands on the same
- * text field: no photo, an unreadable photo, a code that matches nothing, an
- * engine that will not load. The scan is a convenience over the keyboard, so a
- * bad read degrades to typing — which is why Phase 4 shipped first, and why
- * this component holds no matching logic of its own. It finds a string and
- * hands it to /lookup exactly as if it had been typed.
+ * WHAT SURVIVES FROM THAT WORK, because none of it was engine-specific:
+ * `lib/card-code-ocr.ts` still extracts the code from whatever text comes back,
+ * repairing the digit/letter confusions every OCR makes and trimming the stray
+ * glyph that gets welded onto a code read off artwork. And `/api/scan/resolve`
+ * still asks the catalogue whether a candidate is a real card before it is
+ * shown. Vision is better; it is not infallible.
+ *
+ * THE PHOTO IS DOWNSCALED BEFORE UPLOAD. A phone photo is 2–6 MB and a card
+ * code needs a fraction of that, so sending the original costs seconds of
+ * mobile upload for no extra accuracy.
+ *
+ * FAILURE IS A DESIGNED STATE. No photo, an unreadable photo, no key on the
+ * deployment, an exhausted budget — every exit lands on the same text field,
+ * present at every stage, and says which of those happened instead of showing
+ * an unexplained blank.
  */
 
-/**
- * The bottom band of the photo, upscaled and flattened to hard grey.
- *
- * WHY NOT JUST READ THE WHOLE PHOTO, which is what this did first and why the
- * first real scan failed. Measured against an actual card on 2026-09-07: OCR of
- * the full image returned `"<4 VN 16000k g 7 = 4 - = \ Vg | | REN Ey"` — pure
- * noise from the artwork, with the code nowhere in it. The same photo cropped
- * to its bottom band returned `aOP09-1198H`, which contains OP09-119 exactly.
- *
- * The reason is proportion rather than resolution. A card code occupies roughly
- * 1% of a photo of a card, and an OCR engine handed the whole frame spends its
- * effort on the 99% that is illustration. Cropping to the band where the code
- * always sits changes what the engine is looking at, not how hard it looks.
- *
- * SEVERAL CROPS, NOT ONE, and that is measured rather than cautious. Swept
- * across five real cards on 2026-09-07, no single region won: a band at
- * 0.90–0.99 and a bottom-right box each read 3 of 5, the wider 0.86–1.0 band
- * read 1, and they did not succeed on the SAME cards. Alt arts bleed
- * illustration into the footer and a wide crop drowns the code in it; plain
- * cards carry a clean strip a wide crop reads easily. Trying a few in order and
- * stopping at the first real card costs a few hundred milliseconds and covers
- * more ground than any single choice.
- *
- * Grayscale and a hard contrast curve because the code is dark text over
- * artwork that is frequently neither dark nor light. Everything here runs in
- * the visitor's browser on a canvas, so it stays free.
- */
-type Region = { top: number; left: number; width: number; height: number };
+type Status =
+  | { phase: "idle" }
+  | { phase: "reading" }
+  | { phase: "done"; candidates: CodeCandidate[]; note?: string };
 
-/** Ordered by measured hit rate. Fractions of the photo, not pixels. */
-const REGIONS: Region[] = [
-  { left: 0, top: 0.9, width: 1, height: 0.09 },
-  { left: 0.55, top: 0.915, width: 0.45, height: 0.075 },
-  { left: 0, top: 0.86, width: 1, height: 0.14 },
-];
+/** Long edge in pixels. Comfortably more detail than a card code needs. */
+const UPLOAD_MAX_EDGE = 1600;
 
-async function cropped(file: File, region: Region): Promise<HTMLCanvasElement | undefined> {
-  try {
-    const bitmap = await createImageBitmap(file);
-    const sx = Math.round(bitmap.width * region.left);
-    const sy = Math.round(bitmap.height * region.top);
-    const sw = Math.round(bitmap.width * region.width);
-    const sh = Math.round(bitmap.height * region.height);
-
-    // Upscale so the code is large enough for the engine to resolve, capped so
-    // a 4000px phone photo does not produce a canvas nothing can hold.
-    const scale = Math.min(4, Math.max(1, 1800 / sw));
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.min(2400, Math.round(sw * scale));
-    canvas.height = Math.round(sh * (canvas.width / sw));
-
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
-    if (!ctx) return undefined;
-    ctx.imageSmoothingQuality = "high";
-    ctx.drawImage(bitmap, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
-    bitmap.close();
-
-    const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const pixels = image.data;
-    for (let i = 0; i < pixels.length; i += 4) {
-      const grey = 0.299 * pixels[i] + 0.587 * pixels[i + 1] + 0.114 * pixels[i + 2];
-      // Push mid-tones apart so thin dark glyphs separate from busy artwork.
-      const contrasted = Math.max(0, Math.min(255, (grey - 128) * 1.8 + 128));
-      pixels[i] = pixels[i + 1] = pixels[i + 2] = contrasted;
-    }
-    ctx.putImageData(image, 0, 0);
-    return canvas;
-  } catch {
-    // No createImageBitmap, a canvas the browser will not give us, or an image
-    // it cannot decode. The caller falls back to the untouched file.
-    return undefined;
-  }
-}
-
-/**
- * The photo, downscaled to something worth uploading.
- *
- * A phone photo is 2-6 MB and Vision reads a card code from a fraction of that.
- * Sending the original would cost the visitor seconds of mobile upload for no
- * extra accuracy. 1600px across is comfortably more detail than the code needs.
- *
- * The FULL frame, not a crop: the crops in REGIONS are tuned for Tesseract,
- * which needs the code isolated. Vision handles a whole card well and a wrong
- * crop would hide the very code we are asking it to find.
- */
 async function uploadable(file: File): Promise<Blob> {
   try {
     const bitmap = await createImageBitmap(file);
-    const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+    const scale = Math.min(1, UPLOAD_MAX_EDGE / Math.max(bitmap.width, bitmap.height));
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(bitmap.width * scale);
     canvas.height = Math.round(bitmap.height * scale);
@@ -127,44 +61,38 @@ async function uploadable(file: File): Promise<Blob> {
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.9));
     return blob ?? file;
   } catch {
+    // A format this browser will not decode, or no canvas available. Send the
+    // original: Vision reads more formats than createImageBitmap does.
     return file;
   }
 }
 
 /**
- * Ask the server to read the photo with Google Vision.
+ * Which candidates the catalogue recognises as real cards.
  *
- * Called ONLY when the on-device pass found nothing. Vision is capped at 1,000
- * units/month across the billing account, so spending one on a card the browser
- * already read would be paying for an answer we have.
+ * Vision misreads glyphs too, and a misread often lands on a code-SHAPED string
+ * that is not a card. Free route — it reads the catalogue off disk and spends
+ * nothing.
  *
- * Every failure returns an empty list rather than throwing: not configured on
- * this deployment, budget exhausted, offline. The scan then behaves exactly as
- * it did before this existed, which is the point — Vision is an improvement on
- * the fallback path, never a dependency of it.
+ * Returns the input unchanged on any failure, so a network blip cannot make a
+ * real card look unreal.
  */
-async function readWithVision(file: File): Promise<CodeCandidate[]> {
+async function keepReal(candidates: CodeCandidate[]): Promise<CodeCandidate[]> {
+  if (candidates.length === 0) return candidates;
   try {
-    const image = await uploadable(file);
-    const response = await fetch("/api/scan/ocr", {
+    const response = await fetch("/api/scan/resolve", {
       method: "POST",
-      headers: { "Content-Type": image.type || "image/jpeg" },
-      body: image,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ codes: candidates.map((c) => c.value) }),
     });
-    if (!response.ok) return [];
-    const payload = (await response.json()) as { candidates?: CodeCandidate[] };
-    return payload.candidates ?? [];
+    if (!response.ok) return candidates;
+    const { real } = (await response.json()) as { real?: string[] };
+    if (!Array.isArray(real)) return candidates;
+    return candidates.filter((c) => real.includes(c.value));
   } catch {
-    return [];
+    return candidates;
   }
 }
-
-type Status =
-  | { phase: "idle" }
-  | { phase: "reading"; progress: number }
-  | { phase: "escalating" }
-  | { phase: "done"; candidates: CodeCandidate[] }
-  | { phase: "failed"; reason: string };
 
 export function ScanClient() {
   const router = useRouter();
@@ -180,52 +108,38 @@ export function ScanClient() {
     if (objectUrl.current) URL.revokeObjectURL(objectUrl.current);
     objectUrl.current = URL.createObjectURL(file);
     setPreview(objectUrl.current);
-    setStatus({ phase: "reading", progress: 0 });
+    setStatus({ phase: "reading" });
+
+    let candidates: CodeCandidate[] = [];
+    let note: string | undefined;
 
     try {
-      // Lazy: the wasm bundle is only fetched once there is something to read.
-      const { createWorker } = await import("tesseract.js");
-      const worker = await createWorker("eng", 1, {
-        logger: (message: { status: string; progress: number }) => {
-          if (message.status === "recognizing text") {
-            setStatus({ phase: "reading", progress: Math.round(message.progress * 100) });
-          }
-        },
+      const image = await uploadable(file);
+      const response = await fetch("/api/scan/ocr", {
+        method: "POST",
+        headers: { "Content-Type": image.type || "image/jpeg" },
+        body: image,
       });
 
-      // Crops first, in measured order, stopping at the first that yields
-      // anything. The whole photo is the last resort rather than the default —
-      // it is what failed on the first real card, and it stays only because a
-      // crop cannot help a photo framed some other way.
-      let candidates: CodeCandidate[] = [];
-      for (const region of REGIONS) {
-        const canvas = await cropped(file, region);
-        if (!canvas) continue;
-        candidates = extractCardCodes((await worker.recognize(canvas)).data.text ?? "");
-        if (candidates.length > 0) break;
-      }
-      if (candidates.length === 0) {
-        candidates = extractCardCodes((await worker.recognize(file)).data.text ?? "");
-      }
-      await worker.terminate();
-
-      // Nothing on the device. This is the only path that spends a Vision unit.
-      if (candidates.length === 0) {
-        setStatus({ phase: "escalating" });
-        candidates = await readWithVision(file);
-      }
-      setStatus({ phase: "done", candidates });
-
-      // One unambiguous read goes straight through. Anything else is a choice,
-      // and a choice belongs to the person holding the card.
-      if (candidates.length === 1) {
-        router.push(`/lookup?q=${encodeURIComponent(candidates[0].value)}`);
+      if (response.status === 501) {
+        note = "The card reader is not configured on this deployment.";
+      } else if (!response.ok) {
+        const { error } = (await response.json().catch(() => ({}))) as { error?: string };
+        note = `The card reader failed: ${error ?? response.status}`;
+      } else {
+        const payload = (await response.json()) as { candidates?: CodeCandidate[] };
+        candidates = await keepReal(payload.candidates ?? []);
       }
     } catch {
-      setStatus({
-        phase: "failed",
-        reason: "The reader could not start. Type the code instead — it reaches the same place.",
-      });
+      note = "Could not reach the card reader. Check your connection, or type the code below.";
+    }
+
+    setStatus({ phase: "done", candidates, note });
+
+    // One unambiguous read goes straight through. Anything else is a choice,
+    // and a choice belongs to the person holding the card.
+    if (candidates.length === 1) {
+      router.push(`/lookup?q=${encodeURIComponent(candidates[0].value)}`);
     }
   }
 
@@ -257,26 +171,13 @@ export function ScanClient() {
       </div>
 
       <div>
-        {status.phase === "escalating" ? (
-          <p className="rounded-lg border-2 border-black bg-muted-surface p-3 text-sm font-bold">
-            Trying a stronger reader…
-            <span className="mt-1 block text-xs font-normal text-muted-text">
-              Your device could not find the code, so the photo is being read on the server.
-            </span>
-          </p>
-        ) : null}
-
         {status.phase === "reading" ? (
           <p className="rounded-lg border-2 border-black bg-muted-surface p-3 text-sm font-bold">
-            Reading the card… {status.progress}%
+            Reading the card…
             <span className="mt-1 block text-xs font-normal text-muted-text">
-              This happens on your device. Nothing is uploaded.
+              The photo is sent once, read, and not stored.
             </span>
           </p>
-        ) : null}
-
-        {status.phase === "failed" ? (
-          <p className="rounded-lg border-2 border-black bg-muted-surface p-3 text-sm">{status.reason}</p>
         ) : null}
 
         {status.phase === "done" ? (
@@ -284,6 +185,7 @@ export function ScanClient() {
             <p className="rounded-lg border-2 border-black bg-muted-surface p-3 text-sm">
               No card code found in that photo. The code sits in a bottom corner — <b>OP05-119</b> on a One Piece
               card, <b>190/182</b> on a Pokémon one. Try again with that corner in frame, or type it below.
+              {status.note ? <span className="mt-2 block text-xs text-muted-text">{status.note}</span> : null}
             </p>
           ) : (
             <>
