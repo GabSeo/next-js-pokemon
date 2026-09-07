@@ -17,10 +17,10 @@ export function SiteFooter() {
 
         <div className="flex flex-col gap-4 border-t-2 border-white/15 pt-8 text-sm font-bold sm:flex-row sm:items-center sm:justify-between">
           <nav aria-label="Footer" className="flex flex-wrap gap-x-5 gap-y-2 text-white/70">
-            <Link href="/collections/pokemon" className="hover:text-white">
+            <Link href="/tracked/pokemon" className="hover:text-white">
               Pokémon collection
             </Link>
-            <Link href="/collections/one-piece" className="hover:text-white">
+            <Link href="/tracked/one-piece" className="hover:text-white">
               One Piece collection
             </Link>
             <Link href="/tools/price-checker" className="hover:text-white">

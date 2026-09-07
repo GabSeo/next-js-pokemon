@@ -1299,7 +1299,7 @@ export function toPublicCard(card: Card) {
     // first few lines rather than after the data tables.
     productUrl: absoluteUrl(`/products/${card.slug}`),
     markdownUrl: absoluteUrl(`/products/${card.slug}/index.md`),
-    collectionUrl: absoluteUrl(`/collections/${card.franchise}`),
+    collectionUrl: absoluteUrl(`/tracked/${card.franchise}`),
     collectionJsonUrl: absoluteUrl(`/api/${card.franchise}`),
     agentIndexUrl: absoluteUrl("/llms.txt"),
     currency: card.currency,

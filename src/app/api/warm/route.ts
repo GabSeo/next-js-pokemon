@@ -78,7 +78,7 @@ function warmOrder(): string[] {
   return [
     // Catalogue-wide renders first — these do the expensive resolution once.
     "/",
-    ...franchises.flatMap((f) => [`/collections/${f}`, `/collections/${f}/index.md`]),
+    ...franchises.flatMap((f) => [`/tracked/${f}`, `/tracked/${f}/index.md`]),
     // Then the per-card surfaces, which now hit a warm Data Cache. The
     // markdown mirror and the JSON route matter as much as the HTML here:
     // llms.txt points agents straight at them, so they are the surfaces an

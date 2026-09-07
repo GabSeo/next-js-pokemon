@@ -164,7 +164,7 @@ export async function entityMapDocument() {
         {
           chunkId: `c_${franchise}-collection`,
           text: `${SITE_NAME} tracks the current market price and price history for ${f.name} trading cards.`,
-          sourceUrl: absoluteUrl(`/collections/${franchise}`),
+          sourceUrl: absoluteUrl(`/tracked/${franchise}`),
           pageTitle: `${f.name} collection`,
           publisher: SITE_NAME,
           retrieved: generated,

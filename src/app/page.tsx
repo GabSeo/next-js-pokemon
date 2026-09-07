@@ -368,7 +368,7 @@ export default async function HomePage() {
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link
-              href="/collections/pokemon"
+              href="/tracked/pokemon"
               className="rounded-md border-2 border-black bg-pokemon-red px-6.5 py-3.5 text-[15px] font-black text-white shadow-[4px_4px_0px_0px_rgba(255,255,255,0.9)] transition-[transform,box-shadow] duration-100 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.9)] active:translate-x-0 active:translate-y-0 active:shadow-none"
             >
               Browse Pokémon Cards

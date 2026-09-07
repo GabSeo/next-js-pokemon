@@ -58,9 +58,9 @@ const GROUPS: NavGroup[] = [
     // The tracked cards, per game, plus the personal collection. These were
     // reachable only from the footer for a long time.
     items: [
-      { href: "/collection", label: "My Collection", hint: "Cards you have added" },
-      { href: "/collections/pokemon", label: "Pokémon Cards", hint: "Tracked, with full market data" },
-      { href: "/collections/one-piece", label: "One Piece Cards", hint: "Tracked, with full market data" },
+      { href: "/collection", label: "My Collection", hint: "The printings YOU own" },
+      { href: "/tracked/pokemon", label: "Tracked Pokémon", hint: "Cards WE track, with full market data" },
+      { href: "/tracked/one-piece", label: "Tracked One Piece", hint: "Cards WE track, with full market data" },
     ],
   },
 ];

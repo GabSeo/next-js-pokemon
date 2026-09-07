@@ -141,7 +141,7 @@ export async function okfCollectionConcept(franchise: Franchise): Promise<string
       type: "CollectionPage",
       title: `${label} collection`,
       description: `${cards.length} tracked ${label} cards with current price and history.`,
-      resource: absoluteUrl(`/collections/${franchise}`),
+      resource: absoluteUrl(`/tracked/${franchise}`),
       tags: [franchise, "tcg", "collection"],
       generated: { by: GENERATED_BY, at: now.toISOString() },
       stale_after: staleAfter(now, CONTENT_REVALIDATE_SECONDS),
@@ -213,8 +213,8 @@ One concept per page, plain markdown with YAML frontmatter, cross-linked back to
 
 ## Collections
 
-- [Pokémon](${absoluteUrl("/okf/collections/pokemon")})
-- [One Piece](${absoluteUrl("/okf/collections/one-piece")})
+- [Pokémon](${absoluteUrl("/okf/tracked/pokemon")})
+- [One Piece](${absoluteUrl("/okf/tracked/one-piece")})
 
 ## Cards (${cards.length})
 

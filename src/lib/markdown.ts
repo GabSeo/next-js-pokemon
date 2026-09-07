@@ -188,7 +188,7 @@ Price-check tool: ${absoluteUrl(`/api/price-check?cardId=${card.id}`)}
 
 ## More cards
 
-Collection: ${absoluteUrl(`/collections/${card.franchise}`)} (JSON: ${absoluteUrl(`/api/${card.franchise}`)})
+Collection: ${absoluteUrl(`/tracked/${card.franchise}`)} (JSON: ${absoluteUrl(`/api/${card.franchise}`)})
 Full agent index (every card, tools, MCP server): ${absoluteUrl("/llms.txt")}
 `;
 }
@@ -207,8 +207,8 @@ export async function collectionToMarkdown(franchise: Franchise): Promise<string
 
   return `# ${label} Collection
 
-Canonical page: ${absoluteUrl(`/collections/${franchise}`)}
-Markdown: ${absoluteUrl(`/collections/${franchise}/index.md`)}
+Canonical page: ${absoluteUrl(`/tracked/${franchise}`)}
+Markdown: ${absoluteUrl(`/tracked/${franchise}/index.md`)}
 JSON: ${absoluteUrl(`/api/${franchise}`)}
 
 ## Cards (${cards.length})
@@ -328,8 +328,8 @@ ${SITE_DESCRIPTION}
 
 ## Collections
 
-- Pokémon: ${absoluteUrl("/collections/pokemon")} (Markdown: ${absoluteUrl("/collections/pokemon/index.md")}, JSON: ${absoluteUrl("/api/pokemon")})
-- One Piece: ${absoluteUrl("/collections/one-piece")} (Markdown: ${absoluteUrl("/collections/one-piece/index.md")}, JSON: ${absoluteUrl("/api/one-piece")})
+- Pokémon: ${absoluteUrl("/tracked/pokemon")} (Markdown: ${absoluteUrl("/tracked/pokemon/index.md")}, JSON: ${absoluteUrl("/api/pokemon")})
+- One Piece: ${absoluteUrl("/tracked/one-piece")} (Markdown: ${absoluteUrl("/tracked/one-piece/index.md")}, JSON: ${absoluteUrl("/api/one-piece")})
 
 ## All cards (${cards.length})
 

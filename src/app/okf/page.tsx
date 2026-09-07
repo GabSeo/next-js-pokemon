@@ -49,7 +49,7 @@ export default function OkfIndexPage() {
           <ul className="mt-2 space-y-1 text-sm">
             {FRANCHISES.map((franchise) => (
               <li key={franchise}>
-                <a href={`/okf/collections/${franchise}`} className="underline underline-offset-4 hover:text-foreground">
+                <a href={`/okf/tracked/${franchise}`} className="underline underline-offset-4 hover:text-foreground">
                   {franchiseLabel(franchise)}
                 </a>
               </li>

@@ -54,8 +54,8 @@ export const dynamic = "force-dynamic";
 const VINTED_ROUTE_PATTERNS = [
   "/products/[slug]",
   "/products/[slug]/index.md",
-  "/collections/[franchise]",
-  "/collections/[franchise]/index.md",
+  "/tracked/[franchise]",
+  "/tracked/[franchise]/index.md",
 ] as const;
 
 /** Literal paths take no type parameter — see revalidatePath's own API contract. */

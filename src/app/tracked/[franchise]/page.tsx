@@ -33,8 +33,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: `${label} card collection`,
     description: `Browse the ${label} card collection with live market prices.`,
     alternates: {
-      canonical: `/collections/${franchise}`,
-      types: { "text/markdown": `/collections/${franchise}/index.md` },
+      canonical: `/tracked/${franchise}`,
+      types: { "text/markdown": `/tracked/${franchise}/index.md` },
     },
   };
 }
@@ -60,7 +60,7 @@ export default async function CollectionPage({ params }: PageProps) {
     "@context": "https://schema.org",
     "@type": "ItemList",
     name: `${label} collection`,
-    url: absoluteUrl(`/collections/${franchise}`),
+    url: absoluteUrl(`/tracked/${franchise}`),
     numberOfItems: cards.length,
     itemListElement: cards.map((card, index) => ({
       "@type": "ListItem",
@@ -86,15 +86,15 @@ export default async function CollectionPage({ params }: PageProps) {
         <h1 className="text-[32px] leading-tight font-black tracking-[-1px] sm:text-[40px]">{label} collection</h1>
         <p className="mt-3 max-w-2xl text-base leading-6 text-muted-text">
           Every {label} card CardTrace tracks, with live market pricing. Looking for something else? See the{" "}
-          <Link href={`/collections/${other}`} className="font-bold underline underline-offset-4">
+          <Link href={`/tracked/${other}`} className="font-bold underline underline-offset-4">
             {otherLabel} collection
           </Link>{" "}
           instead.
         </p>
         <OpenDataLinks
-          markdownHref={`/collections/${franchise}/index.md`}
+          markdownHref={`/tracked/${franchise}/index.md`}
           jsonHref={`/api/${franchise}`}
-          okfHref={`/okf/collections/${franchise}`}
+          okfHref={`/okf/tracked/${franchise}`}
           className="mt-5"
         />
 

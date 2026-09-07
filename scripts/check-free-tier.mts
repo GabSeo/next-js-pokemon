@@ -71,9 +71,9 @@ const ALLOWED = new Set([
   "products/[slug]/page.tsx",
   "products/[slug]/index.md/route.ts",
   "okf/products/[slug]/route.ts",
-  "collections/[franchise]/page.tsx",
-  "collections/[franchise]/index.md/route.ts",
-  "okf/collections/[franchise]/route.ts",
+  "tracked/[franchise]/page.tsx",
+  "tracked/[franchise]/index.md/route.ts",
+  "okf/tracked/[franchise]/route.ts",
   // The price checker is a market tool by definition.
   "tools/price-checker/page.tsx",
   "tools/price-checker/[cardId]/page.tsx",
