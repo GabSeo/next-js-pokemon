@@ -70,6 +70,20 @@ type Budget = Window & { burst?: Window };
  * to run early, see lib/lobstr.ts) are both deliberately absent.
  */
 const BUDGETS: Record<string, Budget> = {
+  /**
+   * Google Cloud Vision — 1,000 units/month on the free tier, shared across the
+   * whole BILLING ACCOUNT rather than per project (GCP-CONTEXT.md §2).
+   *
+   * 900, not 1,000, for the same reason every other ceiling here sits under its
+   * real one: this ledger charges at attempt time, so it over-counts a retry,
+   * and the margin is what stops an over-count from becoming a real overrun.
+   * There is no automatic cutoff on GCP billing — passing 1,000 bills, it does
+   * not stop — so the ceiling is the only brake that exists.
+   *
+   * Expected consumption is far below it: Vision is a fallback for codes the
+   * on-device OCR could not read, against roughly 150 scans in total.
+   */
+  "vision.googleapis.com": { limit: 900, windowMs: 30 * 24 * HOUR_MS },
   // Both 100/hour real, but their per-card costs are nothing alike, so the
   // ceilings are set from measurement rather than symmetry.
   //

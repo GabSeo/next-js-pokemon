@@ -56,8 +56,9 @@ const SRC_DIR = path.join(process.cwd(), "src");
  *   pokewallet    api.pokewallet.io#pokewallet         60/hour
  *   ebay-browse   api.ebay.com                         1200/day
  *   tcggo         cardmarket-api-tcg.p.rapidapi.com    80/day, burst 24/min
+ *   vision        vision.googleapis.com                900/month
  */
-const METERED_MODULES = ["apitcg", "berrywallet", "pokewallet", "ebay-browse", "tcggo"];
+const METERED_MODULES = ["apitcg", "berrywallet", "pokewallet", "ebay-browse", "tcggo", "vision"];
 
 /**
  * Routes that are metered ON PURPOSE.
@@ -101,6 +102,10 @@ const ALLOWED = new Set([
   "index.md/route.ts",
   "okf/index.md/route.ts",
   "okf/home/route.ts",
+  // The premium half of the scan. Called only when the on-device OCR could not
+  // read a code, so most scans never reach it — see the route's own header for
+  // why that ordering is the cost design rather than an optimisation.
+  "api/scan/ocr/route.ts",
   // The entity map resolves every tracked card: lib/entitymap.ts calls
   // getCardBySlug per ref. Genuinely metered, not an import artifact.
   "entitymap/page.tsx",

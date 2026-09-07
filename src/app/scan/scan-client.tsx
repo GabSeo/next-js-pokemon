@@ -101,9 +101,68 @@ async function cropped(file: File, region: Region): Promise<HTMLCanvasElement | 
   }
 }
 
+/**
+ * The photo, downscaled to something worth uploading.
+ *
+ * A phone photo is 2-6 MB and Vision reads a card code from a fraction of that.
+ * Sending the original would cost the visitor seconds of mobile upload for no
+ * extra accuracy. 1600px across is comfortably more detail than the code needs.
+ *
+ * The FULL frame, not a crop: the crops in REGIONS are tuned for Tesseract,
+ * which needs the code isolated. Vision handles a whole card well and a wrong
+ * crop would hide the very code we are asking it to find.
+ */
+async function uploadable(file: File): Promise<Blob> {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return file;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.9));
+    return blob ?? file;
+  } catch {
+    return file;
+  }
+}
+
+/**
+ * Ask the server to read the photo with Google Vision.
+ *
+ * Called ONLY when the on-device pass found nothing. Vision is capped at 1,000
+ * units/month across the billing account, so spending one on a card the browser
+ * already read would be paying for an answer we have.
+ *
+ * Every failure returns an empty list rather than throwing: not configured on
+ * this deployment, budget exhausted, offline. The scan then behaves exactly as
+ * it did before this existed, which is the point — Vision is an improvement on
+ * the fallback path, never a dependency of it.
+ */
+async function readWithVision(file: File): Promise<CodeCandidate[]> {
+  try {
+    const image = await uploadable(file);
+    const response = await fetch("/api/scan/ocr", {
+      method: "POST",
+      headers: { "Content-Type": image.type || "image/jpeg" },
+      body: image,
+    });
+    if (!response.ok) return [];
+    const payload = (await response.json()) as { candidates?: CodeCandidate[] };
+    return payload.candidates ?? [];
+  } catch {
+    return [];
+  }
+}
+
 type Status =
   | { phase: "idle" }
   | { phase: "reading"; progress: number }
+  | { phase: "escalating" }
   | { phase: "done"; candidates: CodeCandidate[] }
   | { phase: "failed"; reason: string };
 
@@ -149,6 +208,12 @@ export function ScanClient() {
         candidates = extractCardCodes((await worker.recognize(file)).data.text ?? "");
       }
       await worker.terminate();
+
+      // Nothing on the device. This is the only path that spends a Vision unit.
+      if (candidates.length === 0) {
+        setStatus({ phase: "escalating" });
+        candidates = await readWithVision(file);
+      }
       setStatus({ phase: "done", candidates });
 
       // One unambiguous read goes straight through. Anything else is a choice,
@@ -192,6 +257,15 @@ export function ScanClient() {
       </div>
 
       <div>
+        {status.phase === "escalating" ? (
+          <p className="rounded-lg border-2 border-black bg-muted-surface p-3 text-sm font-bold">
+            Trying a stronger reader…
+            <span className="mt-1 block text-xs font-normal text-muted-text">
+              Your device could not find the code, so the photo is being read on the server.
+            </span>
+          </p>
+        ) : null}
+
         {status.phase === "reading" ? (
           <p className="rounded-lg border-2 border-black bg-muted-surface p-3 text-sm font-bold">
             Reading the card… {status.progress}%
