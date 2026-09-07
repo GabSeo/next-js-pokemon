@@ -94,9 +94,9 @@ export default async function OnePiecePackPage({ params }: PageProps) {
       </div>
 
       <p className="mt-6 rounded-lg border-2 border-black bg-muted-surface p-3 text-xs">
-        Card data is Bandai&apos;s official One Piece Card Game list. Parallels and alternate arts are listed as
-        separate printings, because that is what they are. No prices — Bandai does not sell singles — and no card
-        images, because Bandai serves them with a same-site policy that blocks them anywhere but their own site.
+        Card data and images are Bandai&apos;s official One Piece Card Game list. Parallels and alternate arts are
+        listed as separate printings, because that is what they are — and since each carries its own artwork, the
+        picture is what tells them apart. No prices: Bandai does not sell singles.
       </p>
 
       <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -110,6 +110,13 @@ export default async function OnePiecePackPage({ params }: PageProps) {
   );
 }
 
+/** Must match WIDTHS in app/api/one-piece-image — the route rejects anything else with a 400. */
+const IMAGE_WIDTHS = [160, 240, 320, 480, 640];
+
+function imageSrc(printingId: string): string {
+  return `/api/one-piece-image/${encodeURIComponent(printingId)}?lang=english`;
+}
+
 function PrintingTile({ card }: { card: OfficialCard }) {
   // `_p2` / `_r1` mark a parallel or a reprint printing of the same code. Worth
   // surfacing: it is the whole reason one code can span a 200x price range, and
@@ -119,15 +126,36 @@ function PrintingTile({ card }: { card: OfficialCard }) {
 
   return (
     <div className="flex h-full flex-col rounded-lg border-2 border-black bg-surface p-2" style={{ boxShadow: "3px 3px 0 0 #000" }}>
-      {/* NO CARD IMAGE, and not by oversight. Bandai serves every card image
-          with `Cross-Origin-Resource-Policy: same-site`, so a browser refuses
-          to render it on our domain — measured, every one of the 319 here came
-          back ERR_BLOCKED_BY_RESPONSE.NotSameSite with naturalWidth 0. The two
-          ways around it both cost somebody: proxying through our own route puts
-          319 images per page view on our bandwidth, and optcgapi's mirror is
-          one person's VPS whose author asks people not to hammer it. Neither is
-          worth deciding by default, so the tile leads with what the catalogue
-          actually gives us for free. */}
+      {/* THE IMAGE IS THE POINT OF THIS GRID. Every printing of a One Piece
+          code carries its own artwork — measured, 945 of 945 multi-printing
+          groups differ by image while 0 differ by name — so a text tile showed
+          the same card five times for no visible reason. Bandai's own bytes,
+          through our proxy: see app/api/one-piece-image for why a proxy is
+          needed (same-site policy) and why it costs no quota.
+
+          A plain <img> with our own srcset, matching the Pokemon tile rather
+          than next/image. The route resizes with sharp and returns webp, so the
+          optimizer would be a second resize of an already-right-sized file — and
+          it would spend Vercel's Image Optimization quota, a metered resource
+          our budget report cannot see, on a page any free user can open. Bandai
+          publishes one size (~285 KB PNG), which is the only reason this needs
+          resizing at all where TCGdex does not. `sizes` matches the grid below —
+          2 up on mobile, 4 at lg — so no viewport fetches a file bigger than it
+          paints. See docs/free-tier-catalogue.md §7. */}
+      <div className="mb-2 overflow-hidden rounded border-2 border-black bg-muted-surface">
+        {/* eslint-disable-next-line @next/next/no-img-element -- resizing happens in /api/one-piece-image (sharp -> webp); next/image would re-optimize an already-optimized file on a metered Vercel quota */}
+        <img
+          src={`${imageSrc(card.id)}&w=320`}
+          srcSet={IMAGE_WIDTHS.map((w) => `${imageSrc(card.id)}&w=${w} ${w}w`).join(", ")}
+          sizes="(min-width: 1024px) 20vw, (min-width: 640px) 28vw, 45vw"
+          alt={`${card.name} (${card.id})`}
+          width={300}
+          height={420}
+          loading="lazy"
+          className="aspect-[300/420] w-full object-contain"
+        />
+      </div>
+
       <div className="flex-1">
         <div className="text-xs font-black leading-tight">{card.name}</div>
         <div className="mt-0.5 text-[11px] text-muted-text">

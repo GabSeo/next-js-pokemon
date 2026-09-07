@@ -355,17 +355,47 @@ silent inference.
 **Budget**: BerryWallet 12/90, PokéWallet 4/60 after a full build — unchanged.
 The whole phase reads a local snapshot; it added no fetch path.
 
-### Phase 2 — Unmetered One Piece images
+### Phase 2 — Unmetered One Piece images ✅ *done*
 
-- `/api/one-piece-image/[printingId]` — resolves the Bandai URL from
-  `data/catalog/one-piece-official/`, fetches server-side, serves with
-  `Cache-Control: immutable`.
-- Thumbnail variant for grids. Bandai's files are 200–250 KB; a 319-tile page
-  at full size is ~80 MB and untenable.
-- Point `/sets/onepiece/[packId]` at it, replacing the text-only tiles.
+`/api/one-piece-image/[printingId]?lang=english` resolves a printing to its
+Bandai URL through the crawled catalogue, fetches it server-side and serves it
+`immutable`. `/sets/onepiece/[packId]` renders it in place of the text tiles.
 
-**Exit criteria**: a set page renders every card image, with zero metered calls.
-Measured against `npm run` + the budget report before and after.
+**Why a proxy is needed, and why it works.** Bandai sends every card image with
+`Cross-Origin-Resource-Policy: same-site`, so a browser refuses to paint one on
+our domain — all 319 tiles came back `ERR_BLOCKED_BY_RESPONSE.NotSameSite`. That
+header constrains *browsers*, not servers: the same URL fetched server-side is a
+plain 200 (247,155 bytes, `image/png`). Nothing about it is metered —
+`onepiece-cardgame.com` has no ceiling in `BUDGETS`.
+
+**Why the URL is resolved, not constructed.** Both halves are per-language and
+neither is derivable from the id:
+
+| | host | extension |
+|---|---|---|
+| english | `en.onepiece-cardgame.com` | `.png` |
+| japanese | `www.onepiece-cardgame.com` | `.png` |
+| french | `fr.onepiece-cardgame.com` | **`.webp`** |
+
+`ST01-001.png` is 223,541 bytes on `en` and 218,783 on `www` — *different
+bytes*, so a wrong host is a wrong card, not a cosmetic slip. And
+`fr/ST01-001.png` 404s while its `.webp` is 200. Only `img_url` knows.
+
+**Resolving through the catalogue is also the security property.** The route
+fetches whatever comes back, so returning undefined for an id we do not hold is
+what stops a crafted `printingId` from making this an open proxy for arbitrary
+paths on Bandai's domain. Verified: `../../etc/passwd` refused, `OP99-999_p9`
+refused, an unknown language refused, `OP05-119_p2` resolves.
+
+**Measured**: 4,844 of 4,844 English printings (100%) resolve to a live URL.
+Sample fetches return 200 at 283–289 KB. `check-free-tier` reports **54 routes,
+25 free** — up from 24, the new route classified free without being allowlisted.
+Build holds at 393 pages in 3.1s. BerryWallet and PokéWallet unchanged by the
+route; the ±12 per build is the tracked-card prerender, as before.
+
+**Resizing happens in the route, not in `next/image`** — see §7 for why, and
+for the measurements. The tile is a plain `<img>` with a `srcset` over the five
+widths the route will produce.
 
 ### Phase 3 — Free catalogue card pages
 
@@ -454,7 +484,53 @@ the same step `card-refs.ts` encodes by hand for 12 cards today.
 
 ---
 
-## 7. What must not break
+## 7. Who resizes the One Piece images — decided: we do
+
+Bandai publishes exactly one size: ~247–289 KB of PNG per printing, no
+thumbnail, and no webp outside the French feed. A 319-tile pack page is **78.8
+MB** untouched, so something has to resize. Two candidates, and the decision
+went against the one that was already working.
+
+| | `next/image` | **`sharp` in our route** ✅ |
+|---|---|---|
+| Cost | Vercel Image Optimization | our CPU once per (printing, width), then CDN |
+| Visible to `api-budget.ts` | **no** | n/a — nothing to meter |
+| Exposure | up to 4,844 English source images | none |
+| Precedent here | the BerryWallet proxy | the Pokémon grid's plain `<img>` |
+
+**The deciding argument.** Vercel's image quota is a metered resource that
+`lib/api-budget.ts` cannot see. The free tier's whole premise is that a free
+surface cannot spend a metered resource, and a meter our own budget report is
+blind to is worse than one it tracks — that blind spot is precisely what Phase 0
+exists to prevent everywhere else. Shipping the optimizer would have put an
+invisible meter on a page any free user can open.
+
+It also makes the site consistent: the Pokémon grid already uses a plain `<img>`
+against TCGdex's pre-sized `low.webp`. Bandai simply publishes no such variant,
+so we produce one.
+
+**Measured on `OP05-119_p2` (600×838 PNG, 247,155 b):**
+
+| width | webp bytes | vs source | resize |
+|---|---|---|---|
+| 160 | 14,046 | 17.6× | 15 ms |
+| 240 | 29,656 | 8.3× | 18 ms |
+| **320** | **48,196** | **5.1×** | 24 ms |
+| 480 | 94,052 | 2.6× | 41 ms |
+| 640 | 140,464 | 1.8× | 45 ms |
+
+A 319-tile pack page at the grid's 320w tile: **78.8 MB → 15.4 MB**, before
+lazy-loading takes most of the rest.
+
+**Two guards worth keeping.** `?w=` is an ALLOWLIST, not a clamp — an open
+parameter multiplies CDN cache entries per card by however many integers a
+caller sends, and each miss is a real resize. And a source sharp cannot decode
+falls back to the original bytes rather than a 500: heavier, but the card stays
+visible.
+
+---
+
+## 8. What must not break
 
 The market pipeline is the hardest-won part of this codebase and none of the
 above touches it:

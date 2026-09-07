@@ -184,6 +184,53 @@ export function officialRowsForCode(code: string, language?: string): OfficialEn
 }
 
 /**
+ * Where a language's card images are served from.
+ *
+ * Measured 2026-09-07, and both halves of the pair matter. The HOST is
+ * load-bearing because the same printing id is a different picture per
+ * language — `ST01-001.png` is 223,541 bytes on `en` and 218,783 on `www`, and
+ * they are not the same bytes. Serving the Japanese asset on an English page
+ * would be a wrong card, not a cosmetic slip.
+ *
+ * The EXTENSION is load-bearing too, and it is why this resolves through the
+ * catalogue rather than building a URL from the id. French is published as
+ * `.webp` while English and Japanese are `.png` — `fr…/ST01-001.png` is a 404
+ * — so `img_url` is the only thing that knows which one a given printing has.
+ * (No English webp exists: `en…/OP05-119_p2.webp` 404s while the png is 200.)
+ *
+ * Languages absent here resolve to nothing rather than guessing a host. The
+ * crawler can fetch four more (`english-asia`, two Chinese, Thai) that the
+ * default pass does not, so there is no data behind them to serve yet.
+ */
+const IMAGE_HOSTS: Record<string, string> = {
+  english: "https://en.onepiece-cardgame.com",
+  japanese: "https://www.onepiece-cardgame.com",
+  french: "https://fr.onepiece-cardgame.com",
+};
+
+/**
+ * The absolute Bandai URL for one printing, or undefined if we do not hold it.
+ *
+ * `img_url` in the feed is relative (`../images/cardlist/card/OP05-119_p2.png`)
+ * because punk-records stores the path as Bandai's own pages write it.
+ *
+ * Returning undefined for an unknown id is a SECURITY property, not just
+ * tidiness: the API route that consumes this fetches whatever comes back, so
+ * resolving through the catalogue is what stops a crafted id from turning that
+ * route into an open proxy for arbitrary paths on Bandai's domain.
+ */
+export function officialImageUrl(printingId: string, language: string): string | undefined {
+  const host = IMAGE_HOSTS[language];
+  if (!host) return undefined;
+
+  const row = officialRowsForCode(officialCode(printingId), language).find((r) => r.card.id === printingId);
+  const relative = row?.card.img_url;
+  if (!relative) return undefined;
+
+  return `${host}/${relative.replace(/^(\.\.\/)+/, "")}`;
+}
+
+/**
  * The packs a code was printed in, by their language-stable label.
  *
  * This is the join the printing id cannot be trusted for — see the file header.

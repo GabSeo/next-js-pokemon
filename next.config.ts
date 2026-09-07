@@ -188,6 +188,10 @@ const nextConfig: NextConfig = {
     // than what it sells for.
     "/sets/onepiece": ["./data/catalog/one-piece-official/**"],
     "/sets/onepiece/[packId]": ["./data/catalog/one-piece-official/**"],
+    // The image proxy resolves a printing id to its Bandai URL through the same
+    // catalogue, at request time by definition — the id arrives in the path, so
+    // there is no build step at which this could have been read instead.
+    "/api/one-piece-image/[printingId]": ["./data/catalog/one-piece-official/**"],
   },
 };
 
