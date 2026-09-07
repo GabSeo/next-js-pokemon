@@ -58,13 +58,23 @@ const UPSTREAM_TIMEOUT_MS = 10_000;
 /**
  * The only widths this route will produce.
  *
- * An allowlist rather than a clamp, and both halves matter: an open `?w=`
- * multiplies the CDN's cache entries per card by however many integers a
- * caller cares to send, and each miss is a real resize. Five sizes cover the
- * grid at 1x and 2x — it is 2 columns on mobile, 4 at `lg`, on tiles that never
- * exceed ~300 CSS px.
+ * An allowlist rather than a clamp: an open `?w=` multiplies the CDN's cache
+ * entries per card by however many integers a caller cares to send, and each
+ * miss is a real resize.
+ *
+ * THREE, NOT FIVE, and the reason is cache density rather than bytes. Every
+ * width is its own CDN entry, so a card served at five widths goes cold five
+ * separate times — a phone at 1x, a laptop at 2x and a 4K monitor each miss a
+ * different one. Narrowing makes viewports converge, so "the first visitor pays
+ * 1.3s" happens roughly once per card instead of once per card PER WIDTH.
+ *
+ * These three cover the grid's real range (169–768 device px: 2 columns at
+ * 45vw on mobile, 4 at 20vw from `lg`, at 1x through 3x). Dropping 160 and 240
+ * costs the narrowest 1x viewports about 18–34 KB each, which is a good trade
+ * for 40% fewer cold paths. Keep in step with IMAGE_WIDTHS in
+ * app/sets/onepiece/[packId]/page.tsx — a width only in the page is a 400.
  */
-const WIDTHS = [160, 240, 320, 480, 640] as const;
+const WIDTHS = [320, 480, 640] as const;
 
 /** webp at this quality is visually clean on card art and ~5x lighter than the source PNG. */
 const WEBP_QUALITY = 72;

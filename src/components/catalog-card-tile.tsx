@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import type { CatalogCard } from "@/lib/catalog";
 import { primaryVariantType, type CatalogPrice } from "@/lib/catalog-prices";
 
@@ -17,17 +19,18 @@ import { primaryVariantType, type CatalogPrice } from "@/lib/catalog-prices";
  * swsh12-001 is EUR 0.04 against EUR 0.18). Extra printings render smaller than
  * the headline, so the tile still reads as one price at a glance.
  *
- * NOT A LINK, deliberately — a product decision, not an oversight. The
- * catalogue is the FREE view and the tracked cards in data/card-refs.ts are the
- * PREMIUM one, a split that falls out of what each costs: a product page needs
- * price history (apitcg, 1,000/month), a graded market (eBay, 8 searches per
- * card) and JP/FR prints (PokéWallet, 100/hour), none of which can be paid
- * 21,066 times. Linking a tile to a thin page would advertise the premium
- * surface and then not deliver it.
+ * LINKS TO /card/pokemon/[tcgdexId], which it did not used to. The old comment
+ * here argued the tile should NOT be a link, because the only card page was
+ * /products/[slug] — a premium surface needing price history (apitcg,
+ * 1,000/month), a graded market (eBay, 8 searches per card) and JP/FR prints
+ * (PokéWallet, 100/hour), none of which can be paid 21,066 times. Linking a
+ * tile to a thin imitation of it would have advertised the premium surface and
+ * then not delivered.
  *
- * What a non-premium card page shows, and how "track this card" promotes one
- * into the metered tier, is a design job of its own — see
- * docs/pokemon-catalogue.md §8.
+ * That reasoning held until there was a real free destination. There is now:
+ * /card/[tcg]/[code] renders every printing of a card from disk, costs no
+ * metered call, and is the page a scan will land on. The premium split is
+ * unchanged — it moved from "do not link" to "link to the free page".
  */
 /**
  * The one figure a tile quotes for a printing: Cardmarket's average when there
@@ -62,7 +65,10 @@ export function CatalogCardTile({
   const headlineLabel = multi ? (headline?.price.variantType ?? primaryVariantType(card)) : undefined;
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-lg border-2 border-black bg-card-surface shadow-hard-sm">
+    <Link
+      href={`/card/pokemon/${card.tcgdexId}`}
+      className="flex h-full flex-col overflow-hidden rounded-lg border-2 border-black bg-card-surface shadow-hard-sm transition-transform hover:-translate-y-0.5"
+    >
       <div className="bg-muted-surface p-2">
         {card.image ? (
           /* eslint-disable-next-line @next/next/no-img-element -- TCGdex asset host: the URL needs a quality/extension suffix appended, which next/image's loader would not produce */
@@ -94,6 +100,6 @@ export function CatalogCardTile({
           </span>
         ))}
       </div>
-    </div>
+    </Link>
   );
 }

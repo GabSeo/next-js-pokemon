@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EyebrowTitle } from "@/components/retro/eyebrow-title";
-import { officialCardsInPack, officialPacks, type OfficialCard } from "@/lib/one-piece-official";
+import { officialCardsInPack, officialCode, officialPacks, type OfficialCard } from "@/lib/one-piece-official";
 import { absoluteUrl } from "@/lib/site";
 
 /**
@@ -111,7 +111,7 @@ export default async function OnePiecePackPage({ params }: PageProps) {
 }
 
 /** Must match WIDTHS in app/api/one-piece-image — the route rejects anything else with a 400. */
-const IMAGE_WIDTHS = [160, 240, 320, 480, 640];
+const IMAGE_WIDTHS = [320, 480, 640];
 
 function imageSrc(printingId: string): string {
   return `/api/one-piece-image/${encodeURIComponent(printingId)}?lang=english`;
@@ -124,8 +124,15 @@ function PrintingTile({ card }: { card: OfficialCard }) {
   // reason.
   const suffix = card.id.includes("_") ? card.id.split("_")[1] : undefined;
 
+  // Links to the code, not the printing: /card/onepiece/OP05-119 shows all
+  // nine of its printings side by side, which is the question a tile in a pack
+  // grid raises and cannot answer on its own.
   return (
-    <div className="flex h-full flex-col rounded-lg border-2 border-black bg-surface p-2" style={{ boxShadow: "3px 3px 0 0 #000" }}>
+    <Link
+      href={`/card/onepiece/${encodeURIComponent(officialCode(card.id))}`}
+      className="flex h-full flex-col rounded-lg border-2 border-black bg-surface p-2 transition-transform hover:-translate-y-0.5"
+      style={{ boxShadow: "3px 3px 0 0 #000" }}
+    >
       {/* THE IMAGE IS THE POINT OF THIS GRID. Every printing of a One Piece
           code carries its own artwork — measured, 945 of 945 multi-printing
           groups differ by image while 0 differ by name — so a text tile showed
@@ -184,6 +191,6 @@ function PrintingTile({ card }: { card: OfficialCard }) {
           </span>
         ))}
       </div>
-    </div>
+    </Link>
   );
 }

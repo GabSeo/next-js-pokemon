@@ -192,6 +192,15 @@ const nextConfig: NextConfig = {
     // catalogue, at request time by definition — the id arrives in the path, so
     // there is no build step at which this could have been read instead.
     "/api/one-piece-image/[printingId]": ["./data/catalog/one-piece-official/**"],
+    // The free card page serves either game from one component, so it needs
+    // both catalogues plus the price snapshot. Request-time by necessity rather
+    // than choice: ~24k cards is far too many to prerender, so it is on-demand
+    // ISR and really does read these at runtime (app/card/[tcg]/[code]).
+    "/card/[tcg]/[code]": [
+      "./data/catalog/pokemon/**",
+      "./data/catalog/one-piece-official/**",
+      "./data/prices/**",
+    ],
   },
 };
 

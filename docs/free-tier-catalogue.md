@@ -397,16 +397,60 @@ route; the ±12 per build is the tracked-card prerender, as before.
 for the measurements. The tile is a plain `<img>` with a `srcset` over the five
 widths the route will produce.
 
-### Phase 3 — Free catalogue card pages
+### Phase 3 — Free catalogue card pages ✅ *done*
 
-- `/card/[tcg]/[code]` — every printing of a code, side by side: image, name,
-  rarity, set/pack, and for One Piece the treatment from the BerryWallet corpus.
-- Reads only tier-1 loaders. No prices, and it says so.
-- This is both the scan's landing page and a browsable destination in its own
-  right, so it is worth building before the scanner exists.
+`/card/[tcg]/[code]` renders every printing of a card, for either game, from one
+component. `src/lib/card-view.ts` is the actual deliverable: the card→print
+shape of §2 made concrete, so the scan's candidate grid and a collection row
+later inherit it rather than re-deriving it.
 
-**Exit criteria**: `/card/one-piece/OP05-119` shows all printings; the budget
-report is unchanged after loading it.
+**Verified**:
+
+| | |
+|---|---|
+| `/card/pokemon/sv08-001` | 2 printings — normal EUR 0.04, reverse EUR 0.15 |
+| `/card/onepiece/OP05-119` | 9 printings across OP-05, OP-09, OP-11, PRB-01, each its own artwork |
+| `/card/pokemon/base1-4` | 1 printing, holo, EUR 487.19 |
+| unknown code / unknown game | not found, no throw |
+
+**The shape holds both games without hiding their difference.** `image` is
+per-print for One Piece and shared for Pokémon; `label` is meaningful for
+Pokémon and **deliberately absent** for One Piece. Those are not gaps to fill
+later, they are what the sources contain (§1).
+
+**Deviation from this plan, on purpose.** The line above used to promise "for
+One Piece the treatment from the BerryWallet corpus". It is not there. Joining
+a BerryWallet treatment onto a Bandai printing id is precisely the unproven
+join of §6, and printing a guessed "Alternate Art" under the wrong picture is
+worse than printing nothing. The pack label and the artwork carry it instead.
+
+**Found while building — the Pokémon mirror of the One Piece label gap.** Base
+Set Charizard holds **four** `holo` variants pointing at two different
+Cardmarket products (273699 and 660224 — 1st Edition against Unlimited). They
+are real, separate printings, and TCGdex types all four identically, so nothing
+in our data can name which is which. Rendering four tiles all reading "holo"
+would show a distinction we cannot explain, so they dedupe to one. The
+TCGplayer block names Phase 1 already resolves through
+(`1st-edition-holofoil`, `unlimited-holofoil`) are the missing vocabulary; using
+them as printing identities is its own piece of work, not smuggled in here.
+
+**Not prerendered, and that is scale not caching.** ~24k cards against a site of
+393 pages that builds in 3s. `generateStaticParams` returns nothing, so a page
+renders on first request and caches from then on. It costs no quota to render,
+so an uncached first hit is slow at worst, never expensive.
+
+**Tiles now link to it**, reversing a decision `catalog-card-tile.tsx` had
+documented as deliberate. That comment argued against linking because the only
+card page was the premium `/products/[slug]`, and a thin imitation would
+advertise a surface it could not deliver. The reasoning was sound and its
+premise is now gone: there is a real free destination.
+
+**Route naming**: `/card/onepiece/…`, not the `/card/one-piece/…` this document
+first wrote, to match the existing `/sets/onepiece`.
+
+**Budget**: `check-free-tier` reports **55 routes, 26 free** — up from 25, the
+card page classified free without being allowlisted. Build holds at 393 pages
+in 2.7s. BerryWallet and PokéWallet untouched by the page.
 
 ### Phase 4 — Lookup by code *(the scan without the camera)*
 
