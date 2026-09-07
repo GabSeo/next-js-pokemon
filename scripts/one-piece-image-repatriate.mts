@@ -44,6 +44,7 @@ import path from "node:path";
 
 import sharp from "sharp";
 
+import { officialRowsForCode } from "../src/lib/one-piece-official";
 import { isBandaiPicture, pictureKey } from "../src/lib/one-piece-optcg";
 
 const OUT_DIR = path.join(process.cwd(), "public", "card-images", "one-piece");
@@ -115,9 +116,26 @@ for (const row of rows) {
 }
 
 const candidates = [...byPicture.values()];
-// A picture that IS Bandai's file for its printing needs no copy: the image
-// route serves it, unmetered and larger than anything stored here.
-const mirrorOnly = candidates.filter((c) => !isBandaiPicture(c.url, c.imageId));
+
+/**
+ * A Bandai-style filename is a HYPOTHESIS, not a fact.
+ *
+ * `EB02-041_pr2` and `OP07-116_pr1` are named exactly like Bandai's own files
+ * and Bandai answers 404 for both. Trusting the name alone dropped them from
+ * this pass, and the card page then pointed at a URL that does not exist. Only
+ * a printing Bandai's card list actually CARRIES is safe to leave to Bandai;
+ * everything else is HEAD-checked below before the mirror is spared.
+ */
+function bandaiListsIt(c: Candidate): boolean {
+  if (!c.imageId) return false;
+  const code = c.imageId.replace(/_(?:p|pr|r)\d+$/, "");
+  return (
+    officialRowsForCode(code, "english").some((r) => r.card.id === c.imageId) ||
+    officialRowsForCode(code, "japanese").some((r) => r.card.id === c.imageId)
+  );
+}
+
+const mirrorOnly = candidates.filter((c) => !(isBandaiPicture(c.url, c.imageId) && bandaiListsIt(c)));
 const pending = mirrorOnly.filter((c) => !existsSync(path.join(OUT_DIR, `${c.key}.webp`)));
 
 console.log(`[images] optcgapi rows: ${rows.length}`);
@@ -143,9 +161,9 @@ const started = Date.now();
 // Modest concurrency: Bandai tolerates far more, but optcgapi is one person's
 // donation-supported server and this walks through hundreds of their pictures.
 await pooled(work, 6, async (candidate) => {
-  // Even a mirror-named picture can turn out to exist at Bandai under the
-  // printing id, in which case theirs is better and free.
-  if (candidate.imageId && (await bandaiHas(candidate.key))) {
+  // Bandai may serve it under the printing id after all, in which case theirs
+  // is better and free. This is the check the filename alone cannot replace.
+  if (candidate.imageId && (await bandaiHas(candidate.imageId))) {
     skippedBandai++;
     return;
   }

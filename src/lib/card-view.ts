@@ -188,11 +188,23 @@ function printingLabel(name: string): string | undefined {
 function onePieceView(code: string): CardView | undefined {
   const rows = officialRowsForCode(code, "english");
 
-  // 17 codes exist in optcgapi and not in Bandai's English list. Returning
-  // "not found" for a card somebody is holding is worse than returning it from
-  // the mirror — and since the merge below keys on Bandai's own printing ids,
-  // this path is the same code with an empty left side.
+  // A code absent from the English list is not an absent card. It may be in
+  // the Japanese one — the two lists are not translations of each other — or
+  // known only to the mirror. Returning "not found" for a card somebody is
+  // holding is the worst answer available, so both are consulted before it.
   if (rows.length === 0) {
+    const japanese = officialRowsForCode(code, "japanese");
+    if (japanese.length > 0) {
+      return {
+        tcg: "onepiece",
+        code,
+        name: japanese[0].card.name,
+        priceNote:
+          "Not in Bandai's English card list — this printing comes from the Japanese one. " +
+          "Each printing below is a different picture.",
+        prints: onePiecePrints(code, []),
+      };
+    }
     const fallback = optcgRowsForCode(code);
     if (fallback.length === 0) return undefined;
     return {
@@ -265,6 +277,31 @@ function onePiecePrints(code: string, rows: ReturnType<typeof officialRowsForCod
     bucketed: GENERIC_PROMO_PACK.test(pack.title),
   }));
 
+  // BOTH OF BANDAI'S LISTS, because they are not translations of each other.
+  // Measured 2026-09-07: 435 printings across 369 codes appear in the Japanese
+  // card list and not the English one — ST21-014_p2 among them, a completely
+  // different picture from either English printing. Reading only English did
+  // not merely mislabel those cards, it made them unscannable: a printing that
+  // is not in the list cannot be ranked, so the photo was matched against
+  // artwork that was never the card in hand.
+  //
+  // Bandai serves them from the Japanese host, and lib/art-rank.ts already
+  // loads Japanese signatures beside English — the data was there, only this
+  // list was not asking for it.
+  for (const { card, pack } of officialRowsForCode(code, "japanese")) {
+    if (entries.some((entry) => entry.print.key === card.id)) continue;
+    entries.push({
+      print: {
+        key: card.id,
+        origin: `JP · ${pack.label ?? pack.title}`,
+        rarity: card.rarity ?? undefined,
+        image: onePieceImageUrl(card.id, { language: "japanese" }),
+        price: undefined,
+      },
+      bucketed: GENERIC_PROMO_PACK.test(pack.title),
+    });
+  }
+
   const byId = new Map(entries.map((entry) => [entry.print.key, entry]));
   const seenPictures = new Set<string>();
   const namedProducts = new Set<string>();
@@ -324,15 +361,24 @@ function onePiecePrints(code: string, rows: ReturnType<typeof officialRowsForCod
         continue;
       }
 
-      // Bandai-named picture for a printing Bandai's list omits: the image
-      // route still finds it, unmetered.
+      // Bandai-named picture for a printing Bandai's list omits. Usually the
+      // image route still finds it; when it does not (EB02-041_pr2 and
+      // OP07-116_pr1 are named like Bandai files and 404 there) repatriation
+      // will have stored one, so a file we hold wins over a URL we hope for.
+      // KEY, IMAGE AND SIGNATURE MUST AGREE, and here they nearly did not.
+      // optcgapi re-uploads carry a suffix (`EB02-041_pr2_F7Wv3tp`), which
+      // `isBandaiPicture` strips in order to compare — so the file lands under
+      // the suffixed name while the printing id has none. Keying the tile on
+      // the id then made its signature unfindable and left the whole card
+      // unranked. Whichever source answers for the picture also names the key.
+      const held = onePiecePictureUrl(picture);
       const entry: Entry = {
         print: {
-          key: row.imageId!,
+          key: held ? picture : row.imageId!,
           label: product,
           origin: row.setName,
           rarity: row.rarity,
-          image: onePieceImageUrl(row.imageId!),
+          image: held ?? onePieceImageUrl(row.imageId!),
         },
         bucketed: false,
       };

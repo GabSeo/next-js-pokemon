@@ -142,14 +142,37 @@ async function rankPrintings(cards: CardView[], image: Buffer, text: string): Pr
     // each reference image per scan -- seven sequential 250 KB downloads for a
     // seven-printing card, which was the entire "works great but very slow".
     const scored: { print: CardPrint; distance: number }[] = [];
+    const unpictured: CardPrint[] = [];
+    let gap = false;
+
     for (const print of card.prints) {
-      const signature = english.get(print.key) ?? japanese.get(print.key);
-      // A printing with no stored signature leaves the whole card unranked
-      // rather than sorted against a partial set, which would quietly promote
-      // whichever printings happened to be covered.
-      if (!signature) return;
+      // A printing nobody has published a picture of cannot be compared to a
+      // photograph, and that is not a coverage gap — 139 promo printings are
+      // named by the mirror and pictured by no one. Sorting them last is the
+      // honest place for them: they stay reachable, and they cannot win a
+      // comparison they never entered.
+      if (!print.image) {
+        unpictured.push(print);
+        continue;
+      }
+
+      // A print whose key is `<printingId>~<product>` is a separate product
+      // that the mirror points at an existing printing's picture — a Jumbo, an
+      // oversized event print. It has no signature of its own because it has no
+      // artwork of its own, so it is compared using the picture it shares.
+      const base = print.key.includes("~") ? print.key.slice(0, print.key.indexOf("~")) : print.key;
+      const signature = english.get(print.key) ?? japanese.get(print.key) ?? english.get(base) ?? japanese.get(base);
+      // A printing that HAS a picture and no signature is a real gap in the
+      // catalogue. Ranking the rest would quietly promote whichever printings
+      // happened to be covered, so the card keeps catalogue order instead.
+      if (!signature) {
+        gap = true;
+        break;
+      }
       scored.push({ print, distance: artDistance(photo, signature) });
     }
+
+    if (gap || scored.length < 2) continue;
 
     // Rarity BOOSTS, it does not filter, and the difference matters. Vision read
     // both "SP" and "SR" off one real card; had the wrong one won, filtering
@@ -165,7 +188,7 @@ async function rankPrintings(cards: CardView[], image: Buffer, text: string): Pr
     }
 
     scored.sort((a, b) => a.distance - b.distance);
-    card.prints = scored.map((s) => s.print);
+    card.prints = [...scored.map((s) => s.print), ...unpictured];
   }
 }
 

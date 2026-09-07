@@ -31,6 +31,7 @@ import path from "node:path";
 
 import { artSignature } from "../src/lib/art-rank";
 import { officialCardsInPack, officialImageUrl, officialPacks } from "../src/lib/one-piece-official";
+import { isBandaiPicture, optcgRowsForCode } from "../src/lib/one-piece-optcg";
 
 const OUT_DIR = path.join(process.cwd(), "data", "catalog", "one-piece-art");
 
@@ -51,6 +52,35 @@ const force = args.includes("--force");
  * has never seen scores as if it were absent.
  */
 const LOCAL_DIR = path.join(process.cwd(), "public", "card-images", "one-piece");
+
+/** Bandai's hosts, so a printing outside its card list can still be addressed. */
+const IMAGE_HOSTS: Record<string, string> = {
+  english: "https://en.onepiece-cardgame.com",
+  japanese: "https://www.onepiece-cardgame.com",
+};
+
+/**
+ * Printings Bandai SERVES but does not LIST.
+ *
+ * `officialImageUrl` derives its URL from the card list, so a printing absent
+ * from that list has no URL and never gets signed — and an unsigned printing
+ * leaves its whole card unranked in the scan. OP03-006_p1 is one: optcgapi
+ * knows it, Bandai answers 200 for it, punk-records does not mention it.
+ */
+function unlistedBandaiPrintings(language: string): string[] {
+  const listed = new Set<string>();
+  for (const pack of officialPacks(language)) {
+    for (const card of officialCardsInPack(pack.pack.id, language)) listed.add(card.id);
+  }
+  const extra = new Set<string>();
+  for (const id of listed) {
+    for (const row of optcgRowsForCode(id.replace(/_(?:p|pr|r)\d+$/, ""))) {
+      if (!row.image || !row.imageId || listed.has(row.imageId)) continue;
+      if (isBandaiPicture(row.image, row.imageId)) extra.add(row.imageId);
+    }
+  }
+  return [...extra];
+}
 
 /** `[r, g, b]` rounded to four places, and the 64 hash bits as 16 hex characters. */
 type StoredSignature = { c: [number, number, number]; h: string };
@@ -85,6 +115,9 @@ for (const language of languages) {
   // Local files are English-side: they come from a mirror that carries one
   // language, and pairing them with the Japanese pass would claim a print we
   // have not seen.
+  // Bandai serves these; only its index is missing them.
+  for (const id of unlistedBandaiPrintings(language)) ids.push(id);
+
   const local =
     language === "english" && existsSync(LOCAL_DIR)
       ? readdirSync(LOCAL_DIR).filter((n) => n.endsWith(".webp")).map((n) => n.slice(0, -5))
@@ -107,7 +140,9 @@ for (const language of languages) {
   await pooled(todo, CONCURRENCY, async (id) => {
     const localFile = path.join(LOCAL_DIR, `${id}.webp`);
     const onDisk = existsSync(localFile);
-    const url = onDisk ? undefined : officialImageUrl(id, language);
+    const url = onDisk
+      ? undefined
+      : officialImageUrl(id, language) ?? `${IMAGE_HOSTS[language]}/images/cardlist/card/${id}.png`;
     if (!onDisk && !url) {
       failed++;
       return;
