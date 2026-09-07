@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { AddToCollectionButton } from "@/components/add-to-collection-button";
 import type { CodeCandidate } from "@/lib/card-code-ocr";
 import type { CardView } from "@/lib/card-view";
+import { onePieceSrc } from "@/lib/one-piece-image-url";
 
 /**
  * Photograph a card, read its code, hand it to the lookup.
@@ -233,7 +234,7 @@ export function ScanClient() {
                             {print.image ? (
                               /* eslint-disable-next-line @next/next/no-img-element -- both sources are pre-sized; see docs/free-tier-catalogue.md §7 */
                               <img
-                                src={card.tcg === "onepiece" ? `${print.image}&w=320` : print.image}
+                                src={card.tcg === "onepiece" ? onePieceSrc(print.image, 320) : print.image}
                                 alt={print.origin}
                                 loading="lazy"
                                 className="aspect-[300/420] w-full rounded object-contain"
@@ -275,7 +276,7 @@ export function ScanClient() {
                               {print.image ? (
                                 /* eslint-disable-next-line @next/next/no-img-element -- both sources are pre-sized; see docs/free-tier-catalogue.md §7 */
                                 <img
-                                  src={card.tcg === "onepiece" ? `${print.image}&w=320` : print.image}
+                                  src={card.tcg === "onepiece" ? onePieceSrc(print.image, 320) : print.image}
                                   alt={print.origin}
                                   loading="lazy"
                                   className="aspect-[300/420] w-full rounded object-contain"

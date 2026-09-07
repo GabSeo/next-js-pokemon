@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:e2e": "playwright test",
-    "prebuild": "npx tsx scripts/check-free-tier.mts && npx tsx scripts/check-one-piece-vocabulary.mts && npx tsx scripts/price-refresh.mts",
+    "prebuild": "npx tsx scripts/check-free-tier.mts && npx tsx scripts/check-image-urls.mts && npx tsx scripts/check-one-piece-vocabulary.mts && npx tsx scripts/price-refresh.mts",
     "prices": "npx tsx scripts/price-refresh.mts",
     "catalog": "npx tsx scripts/catalog-crawl.mts",
     "catalog:one-piece": "npx tsx scripts/one-piece-official-crawl.mts",
@@ -21,7 +21,8 @@
     "catalog:one-piece-optcg": "npx tsx scripts/one-piece-optcg-crawl.mts",
     "catalog:one-piece-images": "npx tsx scripts/one-piece-image-repatriate.mts",
     "catalog:one-piece-refresh": "npx tsx scripts/one-piece-refresh.mts",
-    "catalog:one-piece-aliases": "npx tsx scripts/one-piece-print-aliases.mts"
+    "catalog:one-piece-aliases": "npx tsx scripts/one-piece-print-aliases.mts",
+    "check:image-urls": "npx tsx scripts/check-image-urls.mts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

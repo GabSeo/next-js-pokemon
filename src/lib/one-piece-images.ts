@@ -1,6 +1,8 @@
 import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 
+import { onePieceSrc } from "@/lib/one-piece-image-url";
+
 /**
  * Which card images live in this repository rather than at Bandai.
  *
@@ -65,8 +67,8 @@ export function onePieceImageUrl(
   if (load().has(printingId)) return `${PUBLIC_PREFIX}/${encodeURIComponent(printingId)}.webp`;
 
   const language = options.language ?? "english";
-  const width = options.width ? `&w=${options.width}` : "";
-  return `/api/one-piece-image/${encodeURIComponent(printingId)}?lang=${language}${width}`;
+  const url = `/api/one-piece-image/${encodeURIComponent(printingId)}?lang=${language}`;
+  return options.width ? onePieceSrc(url, options.width) : url;
 }
 
 /**
@@ -102,30 +104,6 @@ export function repatriatedCount(): number {
   return load().size;
 }
 
-/** Widths /api/one-piece-image accepts. Any other width is a 400 from that route. */
-export const ONE_PIECE_IMAGE_WIDTHS = [320, 480, 640];
-
-/**
- * Whether a URL from this module is one the image route can resize.
- *
- * The distinction has bitten once already: the card page appended `&w=320` to
- * every One Piece print, which turned a repatriated file into
- * `/card-images/one-piece/P-033_pr1.webp&w=320` — a path that exists nowhere
- * and rendered as a broken tile. A print's URL is complete when it leaves this
- * module; only a caller that knows WHICH kind it is may decorate it, so the
- * knowing happens here rather than in each page.
- */
-function isProxied(url: string): boolean {
-  return url.startsWith("/api/one-piece-image/");
-}
-
-/** The URL to request at one width — unchanged for a file we cannot resize. */
-export function onePieceSrc(url: string, width: number): string {
-  return isProxied(url) ? `${url}&w=${width}` : url;
-}
-
-/** A srcset, or undefined when offering one would make the browser fetch the same bytes three times. */
-export function onePieceSrcSet(url: string): string | undefined {
-  if (!isProxied(url)) return undefined;
-  return ONE_PIECE_IMAGE_WIDTHS.map((w) => `${onePieceSrc(url, w)} ${w}w`).join(", ");
-}
+// The width rule lives in one-piece-image-url.ts so client components can
+// share it: this module reads the filesystem and they cannot import it.
+export { ONE_PIECE_IMAGE_WIDTHS, onePieceSrc, onePieceSrcSet } from "@/lib/one-piece-image-url";
