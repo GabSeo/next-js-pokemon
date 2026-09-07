@@ -108,47 +108,43 @@ export default async function CardsPage({ searchParams }: PageProps) {
         .
       </p>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[260px_1fr]">
-        <aside className="lg:sticky lg:top-6 lg:self-start">
-          <SearchControls
-            basePath="/cards"
-            total={result.total}
-            placeholder="Search by card name or number…"
-            showLanguage
-            filter={{
-              param: "set",
-              label: "Set",
-              options: result.facets.set.map((f) => ({
-                value: f.value,
-                label: setNames[f.value] ?? f.value,
-                count: f.count,
-              })),
-            }}
-          />
-        </aside>
+      <div className="mt-6">
+        <SearchControls
+          basePath="/cards"
+          total={result.total}
+          placeholder="Search by card name or number…"
+          showLanguage
+          filter={{
+            param: "set",
+            label: "Set",
+            options: result.facets.set.map((f) => ({
+              value: f.value,
+              label: setNames[f.value] ?? f.value,
+              count: f.count,
+            })),
+          }}
+        />
+      </div>
 
-        <section>
-          {entries.length === 0 ? (
-            <p className="rounded-lg border-2 border-black bg-muted-surface p-4 text-sm">
-              No cards match those filters.
-            </p>
-          ) : (
-            <>
-              <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
-                {entries.map((entry) => (
-                  <li key={entry.card.tcgdexId}>
-                    <CatalogCardTile
-                      card={entry.card}
-                      setName={entry.set.name}
-                      prices={prices.get(entry.card.tcgdexId)}
-                    />
-                  </li>
-                ))}
-              </ul>
-              <Pagination page={result.page} pageCount={result.pageCount} params={raw} />
-            </>
-          )}
-        </section>
+      <div className="mt-6">
+        {entries.length === 0 ? (
+          <p className="rounded-lg border-2 border-black bg-muted-surface p-4 text-sm">No cards match those filters.</p>
+        ) : (
+          <>
+            <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+              {entries.map((entry) => (
+                <li key={entry.card.tcgdexId}>
+                  <CatalogCardTile
+                    card={entry.card}
+                    setName={entry.set.name}
+                    prices={prices.get(entry.card.tcgdexId)}
+                  />
+                </li>
+              ))}
+            </ul>
+            <Pagination page={result.page} pageCount={result.pageCount} params={raw} />
+          </>
+        )}
       </div>
     </main>
   );
@@ -183,7 +179,10 @@ function Pagination({
   return (
     <nav className="mt-8 flex items-center justify-between gap-4" aria-label="Pagination">
       {page > 1 ? (
-        <Link href={href(page - 1)} className="rounded-lg border-2 border-black bg-card-surface px-3 py-1.5 text-xs font-bold shadow-hard-sm">
+        <Link
+          href={href(page - 1)}
+          className="rounded-lg border-2 border-black bg-card-surface px-3 py-1.5 text-xs font-bold shadow-hard-sm"
+        >
           ← Previous
         </Link>
       ) : (
@@ -193,7 +192,10 @@ function Pagination({
         Page {page} of {pageCount.toLocaleString("en-US")}
       </span>
       {page < pageCount ? (
-        <Link href={href(page + 1)} className="rounded-lg border-2 border-black bg-card-surface px-3 py-1.5 text-xs font-bold shadow-hard-sm">
+        <Link
+          href={href(page + 1)}
+          className="rounded-lg border-2 border-black bg-card-surface px-3 py-1.5 text-xs font-bold shadow-hard-sm"
+        >
           Next →
         </Link>
       ) : (

@@ -16,8 +16,16 @@
  * has to stay that way to remain safe on both sides of the boundary.
  */
 
-/** Results per page. 60 prices fetch in well under a second at the concurrency lib/catalog-prices.ts uses. */
-export const PAGE_SIZE = 60;
+/**
+ * Results per page.
+ *
+ * 20, not 60. The grid shows five cards a row, so twenty is four full rows —
+ * about a screenful, which is the amount somebody actually looks at before
+ * deciding whether to refine the search or page on. Sixty made the first page a
+ * long scroll and tripled the prices resolved for it, most of which were never
+ * seen.
+ */
+export const PAGE_SIZE = 20;
 
 /**
  * Price sort has NO cap any more, and the reason is the price snapshot.

@@ -115,7 +115,11 @@ export default async function OnePieceSearchPage({
   const entries = rows.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
 
   const money = (value: number) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(value);
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 2,
+    }).format(value);
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8">
@@ -130,90 +134,89 @@ export default async function OnePieceSearchPage({
         .
       </p>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[260px_1fr]">
-        <aside className="lg:sticky lg:top-6 lg:self-start">
-          <SearchControls
-            basePath="/cards/one-piece"
-            total={rows.length}
-            placeholder="Search by card name or code…"
-            filter={{
-              param: "pack",
-              label: "Pack",
-              options: packs.map(({ pack: p, cardCount }) => ({
-                value: p.id,
-                label: p.label ?? p.title,
-                count: cardCount,
-              })),
-            }}
-          />
-        </aside>
+      <div className="mt-6">
+        <SearchControls
+          basePath="/cards/one-piece"
+          total={rows.length}
+          placeholder="Search by card name or code…"
+          filter={{
+            param: "pack",
+            label: "Pack",
+            options: packs.map(({ pack: p, cardCount }) => ({
+              value: p.id,
+              label: p.label ?? p.title,
+              count: cardCount,
+            })),
+          }}
+        />
+      </div>
 
-        <section>
-          {entries.length === 0 ? (
-            <p className="rounded-lg border-2 border-black bg-muted-surface p-4 text-sm">
-              No cards match those filters. Bandai names every printing of a code the same way, so the code itself —
-              <code className="px-1 font-mono">OP05-119</code> — is often the surer search.
-            </p>
-          ) : (
-            <>
-              <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
-                {entries.map((row) => {
-                  const image = onePieceImageUrl(row.code);
-                  return (
-                    <li key={row.code}>
-                      <Link
-                        href={`/card/onepiece/${encodeURIComponent(row.code)}`}
-                        className="flex h-full flex-col overflow-hidden rounded-lg border-2 border-black bg-card-surface shadow-hard-sm transition-transform hover:-translate-y-0.5"
-                      >
-                        <div className="bg-muted-surface p-2">
-                          {/* eslint-disable-next-line @next/next/no-img-element -- pre-sized by /api/one-piece-image (sharp -> webp); next/image would re-optimize on a metered quota */}
-                          <img
-                            src={onePieceSrc(image, 320)}
-                            srcSet={onePieceSrcSet(image)}
-                            sizes="(min-width: 1280px) 20vw, (min-width: 640px) 28vw, 45vw"
-                            alt={`${row.name} ${row.code}`}
-                            loading="lazy"
-                            className="aspect-[300/420] w-full rounded object-contain"
-                          />
-                        </div>
-                        <div className="flex flex-1 flex-col gap-0.5 border-t-2 border-black p-2">
-                          <span className="truncate text-xs font-bold" title={row.name}>
-                            {row.name}
-                          </span>
-                          <span className="truncate text-[10px] text-muted-text" title={row.pack}>
-                            {row.pack} · {row.code}
-                          </span>
-                          <span className="mt-auto pt-1 text-xs font-black">
-                            {row.high === undefined ? (
-                              <span className="font-bold text-muted-text">No price</span>
-                            ) : row.low !== undefined && row.low !== row.high ? (
-                              `${money(row.low)} – ${money(row.high)}`
-                            ) : (
-                              money(row.high)
-                            )}
-                          </span>
-                          <span className="text-[10px] text-muted-text">
-                            {row.printings} printing{row.printings === 1 ? "" : "s"} in this pack
-                          </span>
-                        </div>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
+      <div className="mt-6">
+        {entries.length === 0 ? (
+          <p className="rounded-lg border-2 border-black bg-muted-surface p-4 text-sm">
+            No cards match those filters. Bandai names every printing of a code the same way, so the code itself —
+            <code className="px-1 font-mono">OP05-119</code> — is often the surer search.
+          </p>
+        ) : (
+          <>
+            <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+              {entries.map((row) => {
+                const image = onePieceImageUrl(row.code);
+                return (
+                  <li key={row.code}>
+                    <Link
+                      href={`/card/onepiece/${encodeURIComponent(row.code)}`}
+                      className="flex h-full flex-col overflow-hidden rounded-lg border-2 border-black bg-card-surface shadow-hard-sm transition-transform hover:-translate-y-0.5"
+                    >
+                      <div className="bg-muted-surface p-2">
+                        {/* eslint-disable-next-line @next/next/no-img-element -- pre-sized by /api/one-piece-image (sharp -> webp); next/image would re-optimize on a metered quota */}
+                        <img
+                          src={onePieceSrc(image, 320)}
+                          srcSet={onePieceSrcSet(image)}
+                          sizes="(min-width: 1280px) 20vw, (min-width: 640px) 28vw, 45vw"
+                          alt={`${row.name} ${row.code}`}
+                          loading="lazy"
+                          className="aspect-[300/420] w-full rounded object-contain"
+                        />
+                      </div>
+                      <div className="flex flex-1 flex-col gap-0.5 border-t-2 border-black p-2">
+                        <span className="truncate text-xs font-bold" title={row.name}>
+                          {row.name}
+                        </span>
+                        <span className="truncate text-[10px] text-muted-text" title={row.pack}>
+                          {row.pack} · {row.code}
+                        </span>
+                        <span className="mt-auto pt-1 text-xs font-black">
+                          {row.high === undefined ? (
+                            <span className="font-bold text-muted-text">No price</span>
+                          ) : row.low !== undefined && row.low !== row.high ? (
+                            `${money(row.low)} – ${money(row.high)}`
+                          ) : (
+                            money(row.high)
+                          )}
+                        </span>
+                        <span className="text-[10px] text-muted-text">
+                          {row.printings} printing
+                          {row.printings === 1 ? "" : "s"} in this pack
+                        </span>
+                      </div>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
 
-              {pageCount > 1 && (
-                <nav className="mt-6 flex items-center justify-between gap-2 text-sm" aria-label="Pagination">
-                  <PageLink params={raw} target={current - 1} disabled={current <= 1} label="Previous" />
-                  <span className="text-xs text-muted-text">
-                    Page {current} of {pageCount}
-                  </span>
-                  <PageLink params={raw} target={current + 1} disabled={current >= pageCount} label="Next" />
-                </nav>
-              )}
-            </>
-          )}
-        </section>
+            {pageCount > 1 && (
+              <nav className="mt-6 flex items-center justify-between gap-2 text-sm" aria-label="Pagination">
+                <PageLink params={raw} target={current - 1} disabled={current <= 1} label="Previous" />
+                <span className="text-xs text-muted-text">
+                  Page {current} of {pageCount}
+                </span>
+                <PageLink params={raw} target={current + 1} disabled={current >= pageCount} label="Next" />
+              </nav>
+            )}
+          </>
+        )}
       </div>
     </main>
   );

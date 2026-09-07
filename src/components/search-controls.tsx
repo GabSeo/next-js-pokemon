@@ -5,21 +5,28 @@ import { useState, useTransition } from "react";
 import { SORTS, type SortId } from "@/lib/catalog-query";
 
 /**
- * The search box, sort bar and filters both catalogue searches share.
+ * The search box, filters and sort bar both catalogue searches share.
  *
- * ONE COMPONENT, TWO GAMES, because the two searches are meant to be the same
- * surface with exactly one difference: Pokemon has an English and a Japanese
- * catalogue to choose between and One Piece does not. Bandai publishes the same
- * cards in three languages rather than three catalogues, so there is nothing
- * there to switch. Everything else — the set picker, the four sorts, the layout
- * — is identical, and it is identical because it is literally the same code
- * rather than two copies that will drift apart.
+ * HORIZONTAL, ACROSS THE TOP — not a sidebar. The Pokemon search used a 260px
+ * vertical panel, and on a page whose entire job is showing card pictures that
+ * panel costs a whole column of them: four cards per row instead of five, each
+ * one narrower. The controls are read once and the grid is looked at for the
+ * rest of the visit, so the grid gets the width.
+ *
+ * ONE COMPONENT, TWO GAMES, so they are the same surface because they are the
+ * same code rather than two copies that drift. The only difference is the
+ * language toggle, which exists only on the Pokemon side and not by oversight:
+ * Pokemon has an English and a Japanese CATALOGUE — different sets, different
+ * numbering, 12,781 cards published only in Japanese — while Bandai publishes
+ * the same cards in three languages rather than three catalogues. There is
+ * nothing on the One Piece side to switch between, and a toggle that filters
+ * nothing would be worse than its absence.
  *
  * SET AND PRICE, and nothing else. Card type, series, rarity and printing each
- * had their own vertical group on the Pokemon side, and together they filled
- * the panel above the one filter people reach for. The set is how a card is
- * placed; the price sort is the only other axis both games can honestly offer,
- * now that One Piece printings carry figures from optcgapi.
+ * had their own group on the Pokemon side and together they filled the panel
+ * above the one filter people reach for. The set is how a card is placed; the
+ * price sort is the only other axis both games can honestly offer, now that
+ * One Piece printings carry figures from optcgapi.
  *
  * EVERY CONTROL WRITES THE URL and the server does the filtering. The corpus
  * cannot be shipped to the browser, a filtered view is a thing people send each
@@ -38,6 +45,9 @@ type Props = {
   /** Pokemon only — see this file's header. */
   showLanguage?: boolean;
 };
+
+const PILL =
+  "rounded-full border-2 border-black px-3 py-1 text-xs font-bold shadow-hard-sm transition-[transform,box-shadow] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-md";
 
 export function SearchControls({ basePath, total, filter, placeholder, showLanguage }: Props) {
   const router = useRouter();
@@ -63,12 +73,13 @@ export function SearchControls({ basePath, total, filter, placeholder, showLangu
 
   return (
     <div className={pending ? "opacity-60 transition-opacity" : "transition-opacity"}>
+      {/* ---- one row: search, set, language, submit ---- */}
       <form
         onSubmit={(event) => {
           event.preventDefault();
           apply({ q: draft });
         }}
-        className="flex gap-2"
+        className="flex flex-wrap gap-2"
       >
         <input
           type="search"
@@ -77,8 +88,44 @@ export function SearchControls({ basePath, total, filter, placeholder, showLangu
           onChange={(event) => setDraft(event.target.value)}
           placeholder={placeholder}
           aria-label="Search cards"
-          className="min-w-0 flex-1 rounded-lg border-2 border-black bg-card-surface px-3 py-2 text-sm shadow-hard-sm outline-none focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-hard-md"
+          className="min-w-[12rem] flex-1 rounded-lg border-2 border-black bg-card-surface px-3 py-2 text-sm shadow-hard-sm outline-none focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-hard-md"
         />
+
+        <select
+          value={activeFilter}
+          onChange={(event) => apply({ [filter.param]: event.target.value || undefined })}
+          aria-label={`Filter by ${filter.label.toLowerCase()}`}
+          className="max-w-[16rem] rounded-lg border-2 border-black bg-card-surface px-3 py-2 text-sm shadow-hard-sm outline-none focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-hard-md"
+        >
+          <option value="">All {filter.label.toLowerCase()}s</option>
+          {filter.options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+              {option.count === undefined ? "" : ` (${option.count.toLocaleString("en-US")})`}
+            </option>
+          ))}
+        </select>
+
+        {showLanguage && (
+          <select
+            value={activeLanguage}
+            // The set is cleared too: a set belongs to one catalogue, so
+            // carrying it across a language switch guarantees no results.
+            onChange={(event) =>
+              apply({
+                lang: event.target.value || undefined,
+                [filter.param]: undefined,
+              })
+            }
+            aria-label="Filter by language"
+            className="rounded-lg border-2 border-black bg-card-surface px-3 py-2 text-sm shadow-hard-sm outline-none focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-hard-md"
+          >
+            <option value="">Both languages</option>
+            <option value="en">English</option>
+            <option value="ja">Japanese</option>
+          </select>
+        )}
+
         <button
           type="submit"
           className="rounded-lg border-2 border-black bg-pokemon-yellow px-4 py-2 text-sm font-black shadow-hard-sm transition-[transform,box-shadow] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-md"
@@ -87,8 +134,8 @@ export function SearchControls({ basePath, total, filter, placeholder, showLangu
         </button>
       </form>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        <span className="text-[10px] font-black tracking-[0.6px] text-muted-text uppercase">Sort</span>
+      {/* ---- second row: sort, count, reset ---- */}
+      <div className="mt-3 flex flex-wrap items-center gap-2">
         {SORTS.map((sort) => {
           const active = activeSort === sort.id;
           return (
@@ -97,20 +144,17 @@ export function SearchControls({ basePath, total, filter, placeholder, showLangu
               type="button"
               onClick={() => apply({ sort: sort.id === "name" ? undefined : sort.id })}
               aria-pressed={active}
-              className={`rounded-full border-2 border-black px-3 py-1 text-xs font-bold shadow-hard-sm transition-[transform,box-shadow] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-md ${
-                active ? "bg-pokemon-blue text-white" : "bg-card-surface"
-              }`}
+              className={`${PILL} ${active ? "bg-pokemon-blue text-white" : "bg-card-surface"}`}
             >
               {sort.label}
             </button>
           );
         })}
-      </div>
 
-      <div className="mt-4 flex items-center justify-between gap-2">
-        <p className="text-xs text-muted-text">
+        <p className="ml-auto text-xs text-muted-text">
           {total.toLocaleString("en-US")} card{total === 1 ? "" : "s"}
         </p>
+
         {dirty && (
           <button
             type="button"
@@ -123,58 +167,6 @@ export function SearchControls({ basePath, total, filter, placeholder, showLangu
             Clear all
           </button>
         )}
-      </div>
-
-      <div className="mt-4 space-y-4">
-        {showLanguage && (
-          <div>
-            <p className="mb-2 text-[10px] font-black tracking-[0.6px] text-muted-text uppercase">Language</p>
-            <div className="flex flex-wrap gap-2">
-              {[
-                { value: "", label: "Both" },
-                { value: "en", label: "English" },
-                { value: "ja", label: "Japanese" },
-              ].map((option) => (
-                <button
-                  key={option.value || "all"}
-                  type="button"
-                  // The set is cleared too: a set belongs to one catalogue, so
-                  // carrying it across a language switch guarantees no results.
-                  onClick={() => apply({ lang: option.value || undefined, [filter.param]: undefined })}
-                  aria-pressed={activeLanguage === option.value}
-                  className={`rounded-full border-2 border-black px-3 py-1 text-xs font-bold shadow-hard-sm transition-[transform,box-shadow] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-md ${
-                    activeLanguage === option.value ? "bg-pokemon-blue text-white" : "bg-card-surface"
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div>
-          <label
-            htmlFor="search-filter"
-            className="mb-2 block text-[10px] font-black tracking-[0.6px] text-muted-text uppercase"
-          >
-            {filter.label}
-          </label>
-          <select
-            id="search-filter"
-            value={activeFilter}
-            onChange={(event) => apply({ [filter.param]: event.target.value || undefined })}
-            className="w-full rounded-lg border-2 border-black bg-card-surface px-3 py-2 text-sm shadow-hard-sm outline-none focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-hard-md"
-          >
-            <option value="">All {filter.label.toLowerCase()}s</option>
-            {filter.options.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-                {option.count === undefined ? "" : ` (${option.count.toLocaleString("en-US")})`}
-              </option>
-            ))}
-          </select>
-        </div>
       </div>
     </div>
   );
