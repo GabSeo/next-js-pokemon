@@ -75,36 +75,6 @@ async function uploadable(file: File): Promise<Blob> {
   }
 }
 
-/**
- * The real cards behind a set of scanned codes, with every printing of each.
- *
- * Vision misreads glyphs, and a misread often lands on a code-SHAPED string
- * that is not a card, so this both filters and fetches: what survives is what
- * the catalogue recognises, and it comes back complete enough to render without
- * another request. Free route — it reads off disk.
- *
- * On any failure the candidates pass through unfiltered with no cards, so a
- * network blip shows the codes it read rather than claiming it read nothing.
- */
-async function resolveCards(
-  candidates: CodeCandidate[]
-): Promise<{ candidates: CodeCandidate[]; cards: CardView[] }> {
-  if (candidates.length === 0) return { candidates, cards: [] };
-  try {
-    const response = await fetch("/api/scan/resolve", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ codes: candidates.map((c) => c.value) }),
-    });
-    if (!response.ok) return { candidates, cards: [] };
-    const { real, cards } = (await response.json()) as { real?: string[]; cards?: CardView[] };
-    if (!Array.isArray(real)) return { candidates, cards: cards ?? [] };
-    return { candidates: candidates.filter((c) => real.includes(c.value)), cards: cards ?? [] };
-  } catch {
-    return { candidates, cards: [] };
-  }
-}
-
 export function ScanClient() {
   const [status, setStatus] = useState<Status>({ phase: "idle" });
   const [preview, setPreview] = useState<string | undefined>();
@@ -138,10 +108,12 @@ export function ScanClient() {
         const { error } = (await response.json().catch(() => ({}))) as { error?: string };
         note = `The card reader failed: ${error ?? response.status}`;
       } else {
-        const payload = (await response.json()) as { candidates?: CodeCandidate[] };
-        const resolved = await resolveCards(payload.candidates ?? []);
-        candidates = resolved.candidates;
-        cards = resolved.cards;
+        // The reader returns the cards already resolved and their printings
+        // already ordered by how much each looks like the photo — one upload,
+        // one response, no second round trip.
+        const payload = (await response.json()) as { candidates?: CodeCandidate[]; cards?: CardView[] };
+        candidates = payload.candidates ?? [];
+        cards = payload.cards ?? [];
       }
     } catch {
       note = "Could not reach the card reader. Check your connection, or type the code below.";
@@ -227,8 +199,15 @@ export function ScanClient() {
                       </Link>
                     </div>
 
+                    {card.tcg === "onepiece" && card.prints.length > 1 ? (
+                      <p className="mt-2 text-[11px] text-muted-text">
+                        Ordered by how much each printing looks like your photo — the first is our best guess, not a
+                        certainty. Bandai gives every printing the same name, so the picture is the only difference.
+                      </p>
+                    ) : null}
+
                     <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                      {card.prints.map((print) => {
+                      {card.prints.map((print, index) => {
                         const cm = print.price?.cardmarket?.avg;
                         const tp = print.price?.tcgplayer?.market;
                         const money =
@@ -239,7 +218,14 @@ export function ScanClient() {
                               : undefined;
 
                         return (
-                          <li key={print.key} className="rounded-md border-2 border-black bg-muted-surface p-1.5">
+                          <li
+                            key={print.key}
+                            className={`rounded-md border-2 p-1.5 ${
+                              index === 0 && card.tcg === "onepiece" && card.prints.length > 1
+                                ? "border-black bg-white"
+                                : "border-black bg-muted-surface"
+                            }`}
+                          >
                             {print.image ? (
                               /* eslint-disable-next-line @next/next/no-img-element -- both sources are pre-sized; see docs/free-tier-catalogue.md §7 */
                               <img
@@ -252,6 +238,7 @@ export function ScanClient() {
                               <div className="aspect-[300/420] w-full rounded" />
                             )}
                             <div className="mt-1 truncate text-[11px] font-black" title={print.label ?? print.origin}>
+                              {index === 0 && card.tcg === "onepiece" && card.prints.length > 1 ? "★ " : ""}
                               {print.label ?? print.origin}
                             </div>
                             <div className="text-[11px] text-muted-text">{money ?? "No price"}</div>

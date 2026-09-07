@@ -1,4 +1,8 @@
+import { artDistance, artSignature, rarityFromText } from "@/lib/art-rank";
 import { extractCardCodes } from "@/lib/card-code-ocr";
+import { lookupCards } from "@/lib/card-lookup";
+import { getCardView, type CardPrint, type CardView } from "@/lib/card-view";
+import { officialImageUrl } from "@/lib/one-piece-official";
 import { readTextFromImage, visionConfigured, VisionNotConfiguredError } from "@/lib/vision";
 
 /**
@@ -107,6 +111,66 @@ export function GET() {
 /** Vision's own hard limit is 20 MB base64; a phone photo is 2–6 MB and a card needs far less. */
 const MAX_BYTES = 8 * 1024 * 1024;
 
+/** Beyond this, comparing every printing costs more than the ordering is worth. */
+const MAX_RANKED_PRINTINGS = 10;
+
+/**
+ * Reorder each card's printings so the one that looks like the photo comes
+ * first, and drop the ones whose rarity the photo contradicts.
+ *
+ * ONE PIECE ONLY. Pokémon printings share their artwork — 0 of 10,110
+ * multi-variant cards have a distinct image — so there is nothing to compare and
+ * catalogue order is already the right order.
+ *
+ * Mutates in place and never throws: an unreadable image, a reference that will
+ * not fetch, or a rarity that matches nothing all leave the list exactly as the
+ * catalogue gave it. A worse ordering is a small loss; a failed scan is not.
+ */
+async function rankPrintings(cards: CardView[], image: Buffer, text: string): Promise<void> {
+  const photo = await artSignature(image);
+  if (!photo) return;
+
+  const rarity = rarityFromText(text);
+
+  for (const card of cards) {
+    if (card.tcg !== "onepiece") continue;
+    if (card.prints.length < 2 || card.prints.length > MAX_RANKED_PRINTINGS) continue;
+
+    const scored: { print: CardPrint; distance: number }[] = [];
+    for (const print of card.prints) {
+      const url = officialImageUrl(print.key, "english") ?? officialImageUrl(print.key, "japanese");
+      if (!url) return;
+      try {
+        // Bandai is unmetered and these are immutable, so the fetch is cached
+        // for a year rather than repeated per scan.
+        const response = await fetch(url, { cache: "force-cache" });
+        if (!response.ok) return;
+        const signature = await artSignature(Buffer.from(await response.arrayBuffer()), true);
+        if (!signature) return;
+        scored.push({ print, distance: artDistance(photo, signature) });
+      } catch {
+        return;
+      }
+    }
+
+    // Rarity BOOSTS, it does not filter, and the difference matters. Vision read
+    // both "SP" and "SR" off one real card; had the wrong one won, filtering
+    // would have deleted the correct printing from the list entirely and left
+    // the person unable to choose it. A misread now costs ordering, which is
+    // recoverable by looking, rather than availability, which is not.
+    //
+    // The bonus is deliberately larger than the widest observed artwork gap
+    // (0.206 across seven printings), so a rarity match leads — but everything
+    // stays on screen.
+    for (const entry of scored) {
+      if (rarity && entry.print.rarity === rarity) entry.distance -= 1;
+    }
+
+    scored.sort((a, b) => a.distance - b.distance);
+    card.prints = scored.map((s) => s.print);
+  }
+}
+
 export async function POST(request: Request) {
   if (!visionConfigured()) {
     // 501, not 500: nothing is broken, the feature simply is not set up. The
@@ -142,11 +206,32 @@ export async function POST(request: Request) {
     );
   }
 
+  const image = Buffer.from(bytes);
+
   try {
-    const text = await readTextFromImage(Buffer.from(bytes));
+    const text = await readTextFromImage(image);
     // The SAME extractor the client uses. An engine swap must not change what
     // counts as a card code, and this one is measured against real OCR noise.
-    return Response.json({ text, candidates: extractCardCodes(text) });
+    const candidates = extractCardCodes(text);
+
+    // Resolve to real cards here rather than in a second round trip: the photo
+    // is already uploaded, and asking the client to send it twice to rank the
+    // printings would double the slowest part of the scan.
+    const cards: CardView[] = [];
+    const seen = new Set<string>();
+    for (const candidate of candidates) {
+      for (const match of lookupCards(candidate.value).matches.slice(0, 6)) {
+        const id = `${match.tcg}:${match.code}`;
+        if (seen.has(id)) continue;
+        seen.add(id);
+        const view = await getCardView(match.tcg, match.code);
+        if (view) cards.push(view);
+      }
+    }
+
+    await rankPrintings(cards, image, text);
+
+    return Response.json({ text, candidates, cards });
   } catch (error) {
     if (error instanceof VisionNotConfiguredError) {
       return Response.json({ error: "Vision is not configured." }, { status: 501 });
