@@ -1,55 +1,44 @@
 import Link from "next/link";
+import { SiteNav } from "@/components/site-nav";
 import { SITE_NAME } from "@/lib/site";
 
-const NAV_LINKS = [
-  { href: "/tools/price-checker", label: "Price Checker" },
-  // Two card-finding entries, kept apart because they answer different
-  // questions. /lookup takes a card code, a printed number or a name across
-  // BOTH games and resolves to one card's printings — it is the scan's
-  // interaction without the camera. /cards is the Pokémon browse surface, with
-  // facets and sorting, for when you do not know what you are looking for.
-  { href: "/scan", label: "Scan a Card" },
-  { href: "/lookup", label: "Find a Card" },
-  { href: "/cards", label: "Search Cards" },
-  // Points at the real set catalogues. It used to send people to
-  // /collections/pokemon — the handful of tracked cards — which was never what
-  // this label promises; it was left that way while /sets held Pokémon only and
-  // One Piece sat on a route of its own. Now /sets is a chooser over both
-  // games, so the label and the destination finally agree.
-  { href: "/sets", label: "Browse Sets" },
-  { href: "/tools/grading-calculator", label: "Grading" },
-  { href: "/#movers", label: "Market Movers" },
-  // The tracked cards, per game. These pages existed and were reachable only
-  // from the footer and one homepage button — which is why "Browse Sets" was
-  // pointing at one of them: it was the only way in.
-  { href: "/collections/pokemon", label: "Pokémon Cards" },
-  { href: "/collections/one-piece", label: "One Piece Cards" },
-  { href: "/collection", label: "My Collection" },
-];
-
+/**
+ * The site header: logo, primary navigation, one call to action.
+ *
+ * The navigation itself lives in components/site-nav.tsx and is a client
+ * component — see its header for why it is grouped and why it needs state.
+ * This shell stays a server component, so the only JavaScript the header ships
+ * is the menu's own behaviour.
+ *
+ * No `relative` here, deliberately: `sticky` is already a positioned value, so
+ * it is the containing block the mobile sheet measures its `absolute … top-16`
+ * against. Adding `relative` would not help and would collide — both set
+ * `position`, and which one wins depends on CSS source order rather than the
+ * order they are written in the class attribute.
+ */
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 border-b-2 border-black bg-[var(--color-nav-dark)] text-white">
-      <div className="mx-auto flex h-16 max-w-[1180px] items-center justify-between px-6">
-        <Link href="/" className="flex items-center gap-2 text-xl font-black tracking-[-0.5px]">
+      <div className="mx-auto flex h-16 max-w-[1180px] items-center justify-between gap-4 px-6">
+        <Link href="/" className="flex shrink-0 items-center gap-2 text-xl font-black tracking-[-0.5px]">
           <span className="flex h-8 w-8 items-center justify-center rounded-md border-2 border-white bg-pokemon-red text-base">
             ⚡
           </span>
           {SITE_NAME}
         </Link>
-        <nav aria-label="Primary" className="hidden items-center gap-10 text-sm font-bold tracking-[0.35px] md:flex">
-          {NAV_LINKS.map((link) => (
-            <Link key={link.href} href={link.href} className="opacity-80 transition-opacity hover:opacity-100">
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-        <Link
-          href="/tools/price-checker"
-          className="rounded-md border-2 border-black bg-pokemon-red px-4.5 py-2.5 text-sm font-black text-white shadow-hard-sm transition-[transform,box-shadow] duration-100 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-md active:translate-x-0 active:translate-y-0 active:shadow-none"
-        >
-          Start Tracking
-        </Link>
+
+        <div className="flex items-center gap-4">
+          <SiteNav />
+          {/* Unchanged destination and wording. Grouping the nav was the task;
+              where the call to action points is a separate decision. It hides
+              below `sm` so the menu button has room on a phone. */}
+          <Link
+            href="/tools/price-checker"
+            className="hidden rounded-md border-2 border-black bg-pokemon-red px-4.5 py-2.5 text-sm font-black text-white shadow-hard-sm transition-[transform,box-shadow] duration-100 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-md active:translate-x-0 active:translate-y-0 active:shadow-none sm:block"
+          >
+            Start Tracking
+          </Link>
+        </div>
       </div>
     </header>
   );
