@@ -1,0 +1,635 @@
+{
+  "crawledAt": "2026-09-07T21:47:52.766Z",
+  "source": "https://api.tcgdex.net/v2/ja",
+  "set": {
+    "id": "CP1",
+    "name": "マグマ団VSアクア団 ダブルクライシス",
+    "serie": {
+      "id": "XY",
+      "name": "XY"
+    },
+    "releaseDate": "2015-01-30",
+    "cardCount": {
+      "firstEd": 0,
+      "holo": 8,
+      "normal": 26,
+      "official": 34,
+      "reverse": 0,
+      "total": 34
+    }
+  },
+  "cards": [
+    {
+      "tcgdexId": "CP1-001",
+      "localId": "001",
+      "name": "マグマ団のドンメル",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Akira Komayama",
+      "cardmarketProductId": 563721,
+      "sourceUpdated": "2026-09-03T15:29:09.137Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 563721
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-002",
+      "localId": "002",
+      "name": "マグマ団のバクーダ",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Shin Nagasawa",
+      "cardmarketProductId": 563722,
+      "sourceUpdated": "2026-09-03T15:29:09.419Z",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 563722
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-003",
+      "localId": "003",
+      "name": "アクア団のタマザラシ",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Sanosuke Sakuma",
+      "cardmarketProductId": 563723,
+      "sourceUpdated": "2026-09-03T15:29:09.770Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 563723
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-004",
+      "localId": "004",
+      "name": "アクア団のトドグラー",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Naoki Saito",
+      "cardmarketProductId": 563724,
+      "sourceUpdated": "2026-09-03T15:29:09.925Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 563724
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-005",
+      "localId": "005",
+      "name": "アクア団のトドゼルガ",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Hitoshi Ariga",
+      "cardmarketProductId": 563725,
+      "sourceUpdated": "2026-09-03T15:29:10.587Z",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 563725
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-006",
+      "localId": "006",
+      "name": "アクア団のカイオーガEX",
+      "rarity": "Double rare",
+      "category": "Pokemon",
+      "illustrator": "nagimiso",
+      "cardmarketProductId": 563726,
+      "sourceUpdated": "2026-09-03T15:29:10.356Z",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 563726
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-007",
+      "localId": "007",
+      "name": "アクア団のベトベター",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "kawayoo",
+      "cardmarketProductId": 563727,
+      "sourceUpdated": "2026-09-03T15:29:10.921Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 563727
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-008",
+      "localId": "008",
+      "name": "アクア団のベトベトン",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Kouki Saitou",
+      "cardmarketProductId": 563728,
+      "sourceUpdated": "2026-09-03T15:29:13.484Z",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 563728
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-009",
+      "localId": "009",
+      "name": "アクア団のハブネーク",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Naoki Saito",
+      "cardmarketProductId": 563729,
+      "sourceUpdated": "2026-09-03T15:29:12.256Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 563729
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-010",
+      "localId": "010",
+      "name": "マグマ団のヤジロン",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Mitsuhiro Arita",
+      "cardmarketProductId": 563730,
+      "sourceUpdated": "2026-09-03T15:29:10.773Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 563730
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-011",
+      "localId": "011",
+      "name": "マグマ団のネンドール",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Masakazu Fukuda",
+      "cardmarketProductId": 563731,
+      "sourceUpdated": "2026-09-03T15:29:11.761Z",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 563731
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-012",
+      "localId": "012",
+      "name": "マグマ団のココドラ",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Akira Komayama",
+      "cardmarketProductId": 563732,
+      "sourceUpdated": "2026-09-03T15:29:11.328Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 563732
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-013",
+      "localId": "013",
+      "name": "マグマ団のコドラ",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Masakazu Fukuda",
+      "cardmarketProductId": 563733,
+      "sourceUpdated": "2026-09-03T15:29:11.833Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 563733
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-014",
+      "localId": "014",
+      "name": "マグマ団のボスゴドラ",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "TOKIYA",
+      "cardmarketProductId": 563734,
+      "sourceUpdated": "2026-09-03T15:29:12.293Z",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 563734
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-015",
+      "localId": "015",
+      "name": "マグマ団のグラードンEX",
+      "rarity": "Double rare",
+      "category": "Pokemon",
+      "illustrator": "nagimiso",
+      "cardmarketProductId": 563735,
+      "sourceUpdated": "2026-09-03T15:29:12.712Z",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 563735
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-016",
+      "localId": "016",
+      "name": "アクア団のポチエナ",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Kouki Saitou",
+      "cardmarketProductId": 563736,
+      "sourceUpdated": "2026-09-03T15:29:14.640Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 563736
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-017",
+      "localId": "017",
+      "name": "マグマ団のポチエナ",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "TOKIYA",
+      "cardmarketProductId": 563737,
+      "sourceUpdated": "2026-09-03T15:29:13.096Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 563737
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-018",
+      "localId": "018",
+      "name": "アクア団のグラエナ",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Mitsuhiro Arita",
+      "cardmarketProductId": 563738,
+      "sourceUpdated": "2026-09-03T15:29:13.576Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 563738
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-019",
+      "localId": "019",
+      "name": "マグマ団のグラエナ",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Hitoshi Ariga",
+      "cardmarketProductId": 563739,
+      "sourceUpdated": "2026-09-03T15:29:12.783Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 563739
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-020",
+      "localId": "020",
+      "name": "アクア団のキバニア",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Sanosuke Sakuma",
+      "cardmarketProductId": 563740,
+      "sourceUpdated": "2026-09-03T15:29:13.372Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 563740
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-021",
+      "localId": "021",
+      "name": "アクア団のサメハダー",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "kawayoo",
+      "cardmarketProductId": 563741,
+      "sourceUpdated": "2026-09-03T15:29:15.428Z",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "jr7oetx1mqug9",
+          "cardmarketProductId": 563741
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-022",
+      "localId": "022",
+      "name": "マグマ団のザングース",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Shin Nagasawa",
+      "cardmarketProductId": 563742,
+      "sourceUpdated": "2026-09-03T15:29:14.774Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 563742
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-023",
+      "localId": "023",
+      "name": "アクア団のスーパーボール",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Toyste Beach",
+      "cardmarketProductId": 563743,
+      "sourceUpdated": "2026-09-03T15:29:14.043Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 563743
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-024",
+      "localId": "024",
+      "name": "マグマ団のスーパーボール",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Toyste Beach",
+      "cardmarketProductId": 563744,
+      "sourceUpdated": "2026-09-03T15:29:15.863Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 563744
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-025",
+      "localId": "025",
+      "name": "アクアディフューザー",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Toyste Beach",
+      "cardmarketProductId": 563745,
+      "sourceUpdated": "2026-09-03T15:29:14.442Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 563745
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-026",
+      "localId": "026",
+      "name": "マグマポインター",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Toyste Beach",
+      "cardmarketProductId": 563746,
+      "sourceUpdated": "2026-09-03T15:29:14.914Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 563746
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-027",
+      "localId": "027",
+      "name": "アクア団の幹部",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "GAME FREAK inc.",
+      "cardmarketProductId": 563747,
+      "sourceUpdated": "2026-09-03T15:29:14.166Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 563747
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-028",
+      "localId": "028",
+      "name": "アクア団のしたっぱ",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "GAME FREAK inc.",
+      "cardmarketProductId": 563748,
+      "sourceUpdated": "2026-09-03T15:29:17.785Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 563748
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-029",
+      "localId": "029",
+      "name": "マグマ団の幹部",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "GAME FREAK inc.",
+      "cardmarketProductId": 563749,
+      "sourceUpdated": "2026-09-03T15:29:18.714Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 563749
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-030",
+      "localId": "030",
+      "name": "マグマ団のしたっぱ",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "GAME FREAK inc.",
+      "cardmarketProductId": 563750,
+      "sourceUpdated": "2026-09-03T15:29:17.967Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 563750
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-031",
+      "localId": "031",
+      "name": "アクア団の秘密基地",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Ryo Ueda",
+      "cardmarketProductId": 563751,
+      "sourceUpdated": "2026-09-03T15:29:17.225Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 563751
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-032",
+      "localId": "032",
+      "name": "マグマ団の秘密基地",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Ryo Ueda",
+      "cardmarketProductId": 563752,
+      "sourceUpdated": "2026-09-03T15:29:17.692Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 563752
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-033",
+      "localId": "033",
+      "name": "ダブルアクアエネルギー",
+      "rarity": "Uncommon",
+      "category": "Energy",
+      "illustrator": "5ban Graphics",
+      "cardmarketProductId": 563753,
+      "sourceUpdated": "2026-09-03T15:29:16.509Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 563753
+        }
+      ]
+    },
+    {
+      "tcgdexId": "CP1-034",
+      "localId": "034",
+      "name": "ダブルマグマエネルギー",
+      "rarity": "Uncommon",
+      "category": "Energy",
+      "illustrator": "5ban Graphics",
+      "cardmarketProductId": 563754,
+      "sourceUpdated": "2026-09-03T15:29:16.764Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "endfynwn4n10gzq",
+          "cardmarketProductId": 563754
+        }
+      ]
+    }
+  ]
+}

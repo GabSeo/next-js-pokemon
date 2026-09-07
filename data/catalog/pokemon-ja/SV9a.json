@@ -1,0 +1,1593 @@
+{
+  "crawledAt": "2026-09-07T21:53:15.854Z",
+  "source": "https://api.tcgdex.net/v2/ja",
+  "set": {
+    "id": "SV9a",
+    "name": "熱風のアリーナ",
+    "serie": {
+      "id": "SV",
+      "name": "ポケモンカードゲーム スカーレット&バイオレット"
+    },
+    "releaseDate": "2025-03-14",
+    "cardCount": {
+      "firstEd": 0,
+      "holo": 0,
+      "normal": 0,
+      "official": 63,
+      "reverse": 0,
+      "total": 92
+    }
+  },
+  "cards": [
+    {
+      "tcgdexId": "SV9a-001",
+      "localId": "001",
+      "name": "ヒビキのカイロス",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "GIDORA",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/001",
+      "sourceUpdated": "2026-09-03T15:29:09.345Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-002",
+      "localId": "002",
+      "name": "ヤンヤンマ",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "svlt",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/002",
+      "cardmarketProductId": 778391,
+      "sourceUpdated": "2026-09-03T15:29:09.912Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-003",
+      "localId": "003",
+      "name": "メガヤンマex",
+      "rarity": "Double rare",
+      "category": "Pokemon",
+      "illustrator": "takuyoa",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/003",
+      "sourceUpdated": "2026-09-03T15:29:09.664Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-004",
+      "localId": "004",
+      "name": "シロナのロゼリア",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "nisimono",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/004",
+      "sourceUpdated": "2026-09-03T15:29:09.909Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-005",
+      "localId": "005",
+      "name": "シロナのロズレイド",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "En Morikura",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/005",
+      "sourceUpdated": "2026-09-03T15:29:10.192Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-006",
+      "localId": "006",
+      "name": "シェイミ",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "tono",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/006",
+      "sourceUpdated": "2026-09-03T15:29:10.589Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-007",
+      "localId": "007",
+      "name": "イシズマイ",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Kanami Ogata",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/007",
+      "sourceUpdated": "2026-09-03T15:29:10.499Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-008",
+      "localId": "008",
+      "name": "イワパレス",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Po-Suzuki",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/008",
+      "sourceUpdated": "2026-09-03T15:29:12.808Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-009",
+      "localId": "009",
+      "name": "カジッチュ",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Tetsu Kayama",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/009",
+      "sourceUpdated": "2026-09-03T15:29:11.374Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-010",
+      "localId": "010",
+      "name": "カミッチュ",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Shigenori Negishi",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/010",
+      "sourceUpdated": "2026-09-03T15:29:10.963Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-011",
+      "localId": "011",
+      "name": "カミツオロチ",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Anesaki Dynamic",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/011",
+      "sourceUpdated": "2026-09-03T15:29:11.111Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-012",
+      "localId": "012",
+      "name": "オーガポン みどりのめん",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Tomomi Ozaki",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/012",
+      "sourceUpdated": "2026-09-03T15:29:12.149Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-013",
+      "localId": "013",
+      "name": "ポニータ",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ayako Ozaki",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/013",
+      "sourceUpdated": "2026-09-03T15:29:11.450Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-014",
+      "localId": "014",
+      "name": "ギャロップ",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "SIE NANAHARA",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/014",
+      "sourceUpdated": "2026-09-03T15:29:11.885Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-015",
+      "localId": "015",
+      "name": "ヒビキのヒノアラシ",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Susumu Maeya",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/015",
+      "sourceUpdated": "2026-09-03T15:29:15.202Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-016",
+      "localId": "016",
+      "name": "ヒビキのマグマラシ",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Souichirou Gunjima",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/016",
+      "sourceUpdated": "2026-09-03T15:29:13.744Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-017",
+      "localId": "017",
+      "name": "ヒビキのバクフーン",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "danciao",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/017",
+      "sourceUpdated": "2026-09-03T15:29:13.916Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-018",
+      "localId": "018",
+      "name": "ヒビキのマグマッグ",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Sanosuke Sakuma",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/018",
+      "sourceUpdated": "2026-09-03T15:29:13.116Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-019",
+      "localId": "019",
+      "name": "ヒビキのマグカルゴ",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "kodama",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/019",
+      "sourceUpdated": "2026-09-03T15:29:12.402Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-020",
+      "localId": "020",
+      "name": "ヒビキのホウオウex",
+      "rarity": "Double rare",
+      "category": "Pokemon",
+      "illustrator": "aky CG Works",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/020",
+      "sourceUpdated": "2026-09-03T15:29:12.949Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-021",
+      "localId": "021",
+      "name": "オーガポン かまどのめん",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "HYOGONOSUKE",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/021",
+      "sourceUpdated": "2026-09-03T15:29:15.089Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-022",
+      "localId": "022",
+      "name": "カスミのコダック",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Yuu Nishida",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/022",
+      "cardmarketProductId": 821707,
+      "sourceUpdated": "2026-09-03T15:29:14.382Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-023",
+      "localId": "023",
+      "name": "カスミのヒトデマン",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Shinya Komatsu",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/023",
+      "sourceUpdated": "2026-09-03T15:29:16.411Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-024",
+      "localId": "024",
+      "name": "カスミのスターミー",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Natsumi Yoshida",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/024",
+      "sourceUpdated": "2026-09-03T15:29:14.994Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-025",
+      "localId": "025",
+      "name": "カスミのコイキング",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Shimaris Yukichi",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/025",
+      "sourceUpdated": "2026-09-03T15:29:15.236Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-026",
+      "localId": "026",
+      "name": "カスミのギャラドス",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "GOSSAN",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/026",
+      "sourceUpdated": "2026-09-03T15:29:14.500Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-027",
+      "localId": "027",
+      "name": "カスミのラプラス",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "En Morikura",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/027",
+      "sourceUpdated": "2026-09-03T15:29:13.749Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-028",
+      "localId": "028",
+      "name": "シロナのヒンバス",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "kamonabe",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/028",
+      "sourceUpdated": "2026-09-03T15:29:17.388Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-029",
+      "localId": "029",
+      "name": "シロナのミロカロス",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "You Iribi",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/029",
+      "sourceUpdated": "2026-09-03T15:29:18.306Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-030",
+      "localId": "030",
+      "name": "ブイゼル",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Ayako Ozaki",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/030",
+      "sourceUpdated": "2026-09-03T15:29:17.541Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-031",
+      "localId": "031",
+      "name": "フローゼル",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Shibuzoh.",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/031",
+      "sourceUpdated": "2026-09-03T15:29:18.509Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-032",
+      "localId": "032",
+      "name": "ヘイラッシャex",
+      "rarity": "Double rare",
+      "category": "Pokemon",
+      "illustrator": "N-DESIGN Inc.",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/032",
+      "sourceUpdated": "2026-09-03T15:29:17.065Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-033",
+      "localId": "033",
+      "name": "オーガポン いどのめん",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "rika",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/033",
+      "sourceUpdated": "2026-09-03T15:29:17.073Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-034",
+      "localId": "034",
+      "name": "エレブー",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Amelicart",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/034",
+      "sourceUpdated": "2026-09-03T15:29:16.386Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-035",
+      "localId": "035",
+      "name": "エレキブルex",
+      "rarity": "Double rare",
+      "category": "Pokemon",
+      "illustrator": "PLANETA Mochizuki",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/035",
+      "sourceUpdated": "2026-09-03T15:29:15.679Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-036",
+      "localId": "036",
+      "name": "ヒビキのピチュー",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Narumi Sato",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/036",
+      "sourceUpdated": "2026-09-03T15:29:16.447Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-037",
+      "localId": "037",
+      "name": "ラクライ",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Narano",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/037",
+      "sourceUpdated": "2026-09-03T15:29:15.714Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-038",
+      "localId": "038",
+      "name": "ライボルト",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Izucch",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/038",
+      "sourceUpdated": "2026-09-03T15:29:21.113Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-039",
+      "localId": "039",
+      "name": "ロトム",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Yoshimi Miyoshi",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/039",
+      "cardmarketProductId": 699710,
+      "sourceUpdated": "2026-09-03T15:29:20.441Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-040",
+      "localId": "040",
+      "name": "ゼラオラ",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Ryuta Fuse",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/040",
+      "sourceUpdated": "2026-09-03T15:29:19.727Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-041",
+      "localId": "041",
+      "name": "ヒビキのウソッキー",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "OKACHEKE",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/041",
+      "sourceUpdated": "2026-09-03T15:29:19.004Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-042",
+      "localId": "042",
+      "name": "シロナのフカマル",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Tomomi Ozaki",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/042",
+      "sourceUpdated": "2026-09-03T15:29:20.046Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-043",
+      "localId": "043",
+      "name": "シロナのガバイト",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Taira Akitsu",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/043",
+      "sourceUpdated": "2026-09-03T15:29:19.256Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-044",
+      "localId": "044",
+      "name": "シロナのガブリアスex",
+      "rarity": "Double rare",
+      "category": "Pokemon",
+      "illustrator": "5ban Graphics",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/044",
+      "sourceUpdated": "2026-09-03T15:29:21.377Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-045",
+      "localId": "045",
+      "name": "ドロバンコ",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Aliya Chen",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/045",
+      "sourceUpdated": "2026-09-03T15:29:19.963Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-046",
+      "localId": "046",
+      "name": "バンバドロ",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Uta",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/046",
+      "sourceUpdated": "2026-09-03T15:29:20.561Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-047",
+      "localId": "047",
+      "name": "ペパーのノノクラゲ",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Fujimoto Gold",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/047",
+      "sourceUpdated": "2026-09-03T15:29:19.075Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-048",
+      "localId": "048",
+      "name": "ペパーのリククラゲ",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Yuya Oka",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/048",
+      "sourceUpdated": "2026-09-03T15:29:17.390Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-049",
+      "localId": "049",
+      "name": "オーガポン いしずえのめん",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "Kazumasa Yasukuni",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/049",
+      "sourceUpdated": "2026-09-03T15:29:18.246Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-050",
+      "localId": "050",
+      "name": "シロナのミカルゲ",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "illustrator": "satoma",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/050",
+      "sourceUpdated": "2026-09-03T15:29:27.596Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-051",
+      "localId": "051",
+      "name": "ペパーのオラチフ",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Mina Nakai",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/051",
+      "sourceUpdated": "2026-09-03T15:29:26.273Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-052",
+      "localId": "052",
+      "name": "ペパーのマフィティフex",
+      "rarity": "Double rare",
+      "category": "Pokemon",
+      "illustrator": "akagi",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/052",
+      "sourceUpdated": "2026-09-03T15:29:25.546Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-053",
+      "localId": "053",
+      "name": "ケンタロス",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "yuu",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/053",
+      "sourceUpdated": "2026-09-03T15:29:24.799Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-054",
+      "localId": "054",
+      "name": "ペパーのホシガリス",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "illustrator": "Oswaldo KATO",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/054",
+      "sourceUpdated": "2026-09-03T15:29:27.407Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-055",
+      "localId": "055",
+      "name": "ペパーのヨクバリス",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "illustrator": "Akira Komayama",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/055",
+      "sourceUpdated": "2026-09-03T15:29:25.694Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-056",
+      "localId": "056",
+      "name": "せいなるはい",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Eske Yoshinob",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/056",
+      "sourceUpdated": "2026-09-03T15:29:24.250Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-057",
+      "localId": "057",
+      "name": "ペパーのサンドウィッチ",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "AYUMI ODASHIMA",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/057",
+      "sourceUpdated": "2026-09-03T15:29:24.957Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-058",
+      "localId": "058",
+      "name": "ポケモンいれかえ",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Studio Bora Inc.",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/058",
+      "sourceUpdated": "2026-09-03T15:29:24.266Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-059",
+      "localId": "059",
+      "name": "ポケモンキャッチャー",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Studio Bora Inc.",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/059",
+      "sourceUpdated": "2026-09-03T15:29:23.918Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-060",
+      "localId": "060",
+      "name": "シロナのパワーウエイト",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Studio Bora Inc.",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/060",
+      "sourceUpdated": "2026-09-03T15:29:23.114Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-061",
+      "localId": "061",
+      "name": "MCの盛り上げ",
+      "rarity": "Common",
+      "category": "Trainer",
+      "illustrator": "Cona Nitanda",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/061",
+      "sourceUpdated": "2026-09-03T15:29:22.137Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-062",
+      "localId": "062",
+      "name": "ジャッジマン",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "kantaro",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/062",
+      "sourceUpdated": "2026-09-03T15:29:23.289Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-063",
+      "localId": "063",
+      "name": "ヒビキの冒険",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "illustrator": "Iori Suzuki",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/063",
+      "sourceUpdated": "2026-09-03T15:29:22.215Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-064",
+      "localId": "064",
+      "name": "ヤンヤンマ",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Ayako Ozaki",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/064",
+      "cardmarketProductId": 778391,
+      "sourceUpdated": "2026-09-03T15:29:25.035Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-065",
+      "localId": "065",
+      "name": "シロナのロズレイド",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "rika",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/065",
+      "sourceUpdated": "2026-09-03T15:29:23.810Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-066",
+      "localId": "066",
+      "name": "シェイミ",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Heisuke Kitazawa",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/066",
+      "sourceUpdated": "2026-09-03T15:29:22.394Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-067",
+      "localId": "067",
+      "name": "イワパレス",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Takumi Wada",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/067",
+      "sourceUpdated": "2026-09-03T15:29:23.079Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-068",
+      "localId": "068",
+      "name": "カミツオロチ",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Jerky",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/068",
+      "sourceUpdated": "2026-09-03T15:29:21.662Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-069",
+      "localId": "069",
+      "name": "ギャロップ",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Rond",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/069",
+      "sourceUpdated": "2026-09-03T15:29:22.410Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-070",
+      "localId": "070",
+      "name": "ヒビキのバクフーン",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "GIDORA",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/070",
+      "sourceUpdated": "2026-09-03T15:29:21.709Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-071",
+      "localId": "071",
+      "name": "カスミのコダック",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "OKACHEKE",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/071",
+      "cardmarketProductId": 821707,
+      "sourceUpdated": "2026-09-03T15:29:21.079Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-072",
+      "localId": "072",
+      "name": "カスミのラプラス",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Orca",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/072",
+      "sourceUpdated": "2026-09-03T15:29:22.035Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-073",
+      "localId": "073",
+      "name": "ラクライ",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Nakamura Ippan",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/073",
+      "sourceUpdated": "2026-09-03T15:29:38.496Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-074",
+      "localId": "074",
+      "name": "ロトム",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Taiga Kayama",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/074",
+      "cardmarketProductId": 699710,
+      "sourceUpdated": "2026-09-03T15:29:39.041Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-075",
+      "localId": "075",
+      "name": "ペパーのヨクバリス",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Natsumi Yoshida",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/075",
+      "sourceUpdated": "2026-09-03T15:29:38.476Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-076",
+      "localId": "076",
+      "name": "メガヤンマex",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "takuyoa",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/076",
+      "sourceUpdated": "2026-09-03T15:29:37.857Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-077",
+      "localId": "077",
+      "name": "ヒビキのホウオウex",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "aky CG Works",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/077",
+      "sourceUpdated": "2026-09-03T15:29:37.085Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-078",
+      "localId": "078",
+      "name": "ヘイラッシャex",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "N-DESIGN Inc.",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/078",
+      "sourceUpdated": "2026-09-03T15:29:39.682Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-079",
+      "localId": "079",
+      "name": "エレキブルex",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "PLANETA Mochizuki",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/079",
+      "sourceUpdated": "2026-09-03T15:29:38.574Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-080",
+      "localId": "080",
+      "name": "シロナのガブリアスex",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "5ban Graphics",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/080",
+      "sourceUpdated": "2026-09-03T15:29:37.279Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-081",
+      "localId": "081",
+      "name": "ペパーのマフィティフex",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "PLANETA Igarashi",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/081",
+      "sourceUpdated": "2026-09-03T15:29:37.499Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-082",
+      "localId": "082",
+      "name": "MCの盛り上げ",
+      "rarity": "None",
+      "category": "Trainer",
+      "illustrator": "Cona Nitanda",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/082",
+      "sourceUpdated": "2026-09-03T15:29:36.996Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-083",
+      "localId": "083",
+      "name": "ジャッジマン",
+      "rarity": "None",
+      "category": "Trainer",
+      "illustrator": "kantaro",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/083",
+      "sourceUpdated": "2026-09-03T15:29:36.441Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-084",
+      "localId": "084",
+      "name": "ヒビキの冒険",
+      "rarity": "None",
+      "category": "Trainer",
+      "illustrator": "Iori Suzuki",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/084",
+      "sourceUpdated": "2026-09-03T15:29:39.016Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-085",
+      "localId": "085",
+      "name": "メガヤンマex",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Tonji Matsuno",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/085",
+      "sourceUpdated": "2026-09-03T15:29:37.899Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-086",
+      "localId": "086",
+      "name": "ヒビキのホウオウex",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Atsushi Furusawa",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/086",
+      "sourceUpdated": "2026-09-03T15:29:36.948Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-087",
+      "localId": "087",
+      "name": "シロナのガブリアスex",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "HICO KIM",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/087",
+      "sourceUpdated": "2026-09-03T15:29:36.051Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-088",
+      "localId": "088",
+      "name": "ペパーのマフィティフex",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "Yuriko Akase",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/088",
+      "sourceUpdated": "2026-09-03T15:29:36.550Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-089",
+      "localId": "089",
+      "name": "ヒビキの冒険",
+      "rarity": "None",
+      "category": "Trainer",
+      "illustrator": "Kariya",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/089",
+      "sourceUpdated": "2026-09-03T15:29:36.021Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-090",
+      "localId": "090",
+      "name": "ヒビキのホウオウex",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "aky CG Works",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/090",
+      "sourceUpdated": "2026-09-03T15:29:35.490Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-091",
+      "localId": "091",
+      "name": "シロナのガブリアスex",
+      "rarity": "None",
+      "category": "Pokemon",
+      "illustrator": "5ban Graphics",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/091",
+      "sourceUpdated": "2026-09-03T15:29:35.948Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "SV9a-092",
+      "localId": "092",
+      "name": "ハッコウシティ",
+      "rarity": "None",
+      "category": "Trainer",
+      "illustrator": "MARINA Chikazawa",
+      "image": "https://assets.tcgdex.net/ja/SV/SV9a/092",
+      "sourceUpdated": "2026-09-03T15:29:35.410Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "generated"
+        }
+      ]
+    }
+  ]
+}

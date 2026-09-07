@@ -74,8 +74,33 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
-const API_BASE = "https://api.tcgdex.net/v2/en";
-const OUT_DIR = path.join(process.cwd(), "data", "catalog", "pokemon");
+/**
+ * TCGdex publishes a separate catalogue per language, and the Japanese one is
+ * not a translation of the English one — different sets, different numbering,
+ * different cards. 184 sets and 15,196 cards exist only there, including every
+ * card a Japanese-print collector actually holds.
+ *
+ * Set ids collide across the two (`neo1`…`neo4`), so the corpora live in
+ * separate directories rather than one. Everything else about the crawl is
+ * identical, which is why this is a parameter and not a second script.
+ */
+const LANGUAGES: Record<string, { api: string; dir: string }> = {
+  en: { api: "https://api.tcgdex.net/v2/en", dir: "pokemon" },
+  ja: { api: "https://api.tcgdex.net/v2/ja", dir: "pokemon-ja" },
+};
+
+const language = (() => {
+  const index = process.argv.indexOf("--language");
+  const value = index >= 0 ? process.argv[index + 1] : "en";
+  if (!LANGUAGES[value]) {
+    console.error(`Unknown --language ${value}. Use one of: ${Object.keys(LANGUAGES).join(", ")}`);
+    process.exit(1);
+  }
+  return value;
+})();
+
+const API_BASE = LANGUAGES[language].api;
+const OUT_DIR = path.join(process.cwd(), "data", "catalog", LANGUAGES[language].dir);
 
 /**
  * Deliberately outside `src/`. A 24k-card corpus that anything can `import`
@@ -107,8 +132,11 @@ function parseArgs(argv: string[]): Args {
     else if (arg === "--sets") args.sets = argv[++i]?.split(",").map((s) => s.trim()).filter(Boolean);
     else if (arg === "--limit") args.limit = Number(argv[++i]);
     else if (arg === "--concurrency") args.concurrency = Number(argv[++i]) || DEFAULT_CONCURRENCY;
+    else if (arg === "--language") i++;
     else if (arg === "--help" || arg === "-h") {
-      console.log("Usage: npx tsx scripts/catalog-crawl.mts [--sets a,b] [--limit N] [--concurrency N] [--force]");
+      console.log(
+        "Usage: npx tsx scripts/catalog-crawl.mts [--language en|ja] [--sets a,b] [--limit N] [--concurrency N] [--force]"
+      );
       process.exit(0);
     }
   }

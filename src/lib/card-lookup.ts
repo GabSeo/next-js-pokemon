@@ -73,9 +73,12 @@ function pokemonMatch(entry: CatalogEntry, detail?: string): LookupMatch {
 
   return {
     tcg: "pokemon",
-    code: card.tcgdexId,
+    code: set.language === "ja" ? `ja~${card.tcgdexId}` : card.tcgdexId,
     name: card.name,
-    origin: set.name,
+    // Named, not flagged: two sets can share a printed total and a card
+    // number, and "which one is mine" is answered by seeing that one is the
+    // Japanese release.
+    origin: set.language === "ja" ? `${set.name} (JP)` : set.name,
     image: card.image ? `${card.image}/low.webp` : undefined,
     printings: Math.max(printings, 1),
     detail: detail ?? card.rarity,
@@ -98,13 +101,36 @@ function onePieceMatch(code: string): LookupMatch | undefined {
   };
 }
 
-/** Pokémon cards carrying `localId`, in any set whose printed total is `total`. */
+/**
+ * Pokémon cards carrying `localId`, in any set whose printed total is `total`,
+ * IN EITHER LANGUAGE.
+ *
+ * WHY BOTH, and it is not a nicety. What is printed on a Pokémon card is
+ * `048/082` — a number and a set size, never the set itself, which is carried
+ * by a symbol no OCR reads. Searching English alone did not fail on a Japanese
+ * card, it answered confidently and wrongly: a photographed Japanese Gengar ex
+ * (`048/082`) resolved to Team Rocket Porygon, which really is the 48th card of
+ * an 82-card set. Complete with a price and an "I own this" button.
+ *
+ * Measured 2026-09-07: 154 of 216 English sets share their printed total with
+ * another English set, and 152 of 182 Japanese ones do. So this returns a LIST
+ * on purpose, and the caller says how many sets print that many. Narrowing it
+ * to one is the name's job, not the number's.
+ */
 function byPrintedNumber(localId: string, total: number): LookupMatch[] {
   const out: LookupMatch[] = [];
 
-  for (const set of getCatalogSets()) {
+  // ZERO PADDING DIFFERS BETWEEN THE CATALOGUES. English stores `48`, Japanese
+  // stores `048` — 9,808 of 12,781 Japanese cards are padded against 4,450 of
+  // 23,546 English ones. Comparing the strings, or normalising only one side,
+  // silently finds nothing in the other language; both are reduced to a number.
+  const wanted = Number(localId);
+
+  for (const set of getCatalogSets({ language: "all" })) {
     if (set.cardCount?.official !== total) continue;
-    const hit = getCatalogSetCards(set.id).find((entry) => entry.card.localId === localId);
+    const hit = getCatalogSetCards(set.id, set.language).find(
+      (entry) => Number(entry.card.localId) === wanted && /^\d+$/.test(entry.card.localId)
+    );
     if (hit) out.push(pokemonMatch(hit, `#${localId}/${total}`));
   }
 
@@ -208,8 +234,10 @@ export function lookupCards(raw: string, game?: LookupMatch["tcg"]): LookupResul
     }
   }
 
-  // 3. A TCGdex id, which is what our own links carry.
-  const entry = getCatalogCard(query.toLowerCase());
+  // 3. A TCGdex id, which is what our own links carry. English ids are
+  //    lowercase (`swsh12-186`) and Japanese ones are not (`PCG1-048`), so
+  //    both spellings are tried rather than assuming one.
+  const entry = getCatalogCard(query.toLowerCase()) ?? getCatalogCard(query) ?? getCatalogCard(query.toUpperCase());
   if (entry) return finish(`Pokémon card id ${entry.card.tcgdexId}`, [pokemonMatch(entry)]);
 
   // 4. A name, across both catalogues.

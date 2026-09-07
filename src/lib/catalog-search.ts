@@ -42,7 +42,10 @@ export type CatalogSearchResult = {
 
 /** Every entry in the corpus, flattened once per call. Cheap: the underlying arrays are already built and cached. */
 function allEntries(): CatalogEntry[] {
-  return getCatalogSets().flatMap((set) => getCatalogSetCards(set.id));
+  // Both catalogues: a Japanese card's name is the only thing that separates
+  // it from the English card printed at the same number in a set of the same
+  // size. Searching one language made the other invisible.
+  return getCatalogSets({ language: "all" }).flatMap((set) => getCatalogSetCards(set.id, set.language));
 }
 
 type Predicate = (entry: CatalogEntry) => boolean;

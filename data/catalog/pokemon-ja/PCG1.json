@@ -1,0 +1,1663 @@
+{
+  "crawledAt": "2026-09-07T21:47:12.577Z",
+  "source": "https://api.tcgdex.net/v2/ja",
+  "set": {
+    "id": "PCG1",
+    "name": "伝説の飛翔",
+    "serie": {
+      "id": "PCG",
+      "name": "PCG"
+    },
+    "releaseDate": "2004-04-09",
+    "cardCount": {
+      "firstEd": 0,
+      "holo": 18,
+      "normal": 146,
+      "official": 82,
+      "reverse": 0,
+      "total": 82
+    }
+  },
+  "cards": [
+    {
+      "tcgdexId": "PCG1-001",
+      "localId": "001",
+      "name": "キャタピー",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:09.197Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-002",
+      "localId": "002",
+      "name": "メタポッド",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:09.487Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-003",
+      "localId": "003",
+      "name": "蝶",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:09.625Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-004",
+      "localId": "004",
+      "name": "雑草",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:10.398Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-005",
+      "localId": "005",
+      "name": "カクナ",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:10.524Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-006",
+      "localId": "006",
+      "name": "beedrill",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:10.289Z",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50ts0ixd9ivxv6uma45"
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "4ffrmhcfiaejakhepqdkx7o"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-007",
+      "localId": "007",
+      "name": "nidoranf",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:10.847Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-008",
+      "localId": "008",
+      "name": "ニドリーナ",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:13.397Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-009",
+      "localId": "009",
+      "name": "nidoranm",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:11.950Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-010",
+      "localId": "010",
+      "name": "ニドリーノ",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:11.325Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-011",
+      "localId": "011",
+      "name": "パラ",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:11.697Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-012",
+      "localId": "012",
+      "name": "パラセクト",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:11.258Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-013",
+      "localId": "013",
+      "name": "ヴェノナト",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:11.775Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-014",
+      "localId": "014",
+      "name": "venomoth",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:12.229Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-015",
+      "localId": "015",
+      "name": "ベルスプラウト",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:12.644Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-016",
+      "localId": "016",
+      "name": "weepinbell",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:14.579Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-017",
+      "localId": "017",
+      "name": "Victreebel",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:13.035Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-018",
+      "localId": "018",
+      "name": "タンゲラ",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:13.477Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-019",
+      "localId": "019",
+      "name": "スキスター",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:12.722Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-020",
+      "localId": "020",
+      "name": "うなり声",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:13.306Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-021",
+      "localId": "021",
+      "name": "アルカニン",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:15.490Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-022",
+      "localId": "022",
+      "name": "ポニータ",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:14.707Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-023",
+      "localId": "023",
+      "name": "Rapidash",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:16.986Z",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50ts0ixd9ivxv6uma45"
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "4ffrmhcfiaejakhepqdkx7o"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-024",
+      "localId": "024",
+      "name": "Moltres ex",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:15.798Z",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50ts0ixd9ivxv6uma45"
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "4ffrmhcfiaejakhepqdkx7o"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-025",
+      "localId": "025",
+      "name": "poliwag",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:14.379Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-026",
+      "localId": "026",
+      "name": "PoliWhirl",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:14.841Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-027",
+      "localId": "027",
+      "name": "Poliwrath",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:14.098Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-028",
+      "localId": "028",
+      "name": "シール",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:17.711Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-029",
+      "localId": "029",
+      "name": "デューゴン",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:18.652Z",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50ts0ixd9ivxv6uma45"
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "4ffrmhcfiaejakhepqdkx7o"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-030",
+      "localId": "030",
+      "name": "シェルダー",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:17.904Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-031",
+      "localId": "031",
+      "name": "クロイスター",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:17.159Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-032",
+      "localId": "032",
+      "name": "クラビー",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:17.625Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-033",
+      "localId": "033",
+      "name": "キングラー",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:16.206Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-034",
+      "localId": "034",
+      "name": "Magikarp",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:16.701Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-035",
+      "localId": "035",
+      "name": "Gyarados Ex",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:16.006Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-036",
+      "localId": "036",
+      "name": "Articuno Ex",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:16.791Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-037",
+      "localId": "037",
+      "name": "ピカチュウ",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:16.064Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-038",
+      "localId": "038",
+      "name": "ライチュ",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:21.440Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-039",
+      "localId": "039",
+      "name": "マグナイト",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:20.755Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-040",
+      "localId": "040",
+      "name": "マグネトン",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:20.071Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-041",
+      "localId": "041",
+      "name": "Voltorb",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:19.334Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-042",
+      "localId": "042",
+      "name": "電極Ex",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:20.384Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-043",
+      "localId": "043",
+      "name": "Zapdos Ex",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:19.630Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-044",
+      "localId": "044",
+      "name": "slowpoke",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:18.863Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-045",
+      "localId": "045",
+      "name": "スローブロ",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:20.783Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-046",
+      "localId": "046",
+      "name": "ガストリー",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:19.309Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-047",
+      "localId": "047",
+      "name": "ハンター",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:19.679Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-048",
+      "localId": "048",
+      "name": "Gengar Ex",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:18.228Z",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50ts0ixd9ivxv6uma45"
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "4ffrmhcfiaejakhepqdkx7o"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-049",
+      "localId": "049",
+      "name": "ドロージー",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:18.571Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-050",
+      "localId": "050",
+      "name": "催眠",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:28.139Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-051",
+      "localId": "051",
+      "name": "exeggcute",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:26.879Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-052",
+      "localId": "052",
+      "name": "exeggutor",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:25.895Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-053",
+      "localId": "053",
+      "name": "Mime Ex",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:25.143Z",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50ts0ixd9ivxv6uma45"
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "4ffrmhcfiaejakhepqdkx7o"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-054",
+      "localId": "054",
+      "name": "Mime Ex",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:24.402Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-055",
+      "localId": "055",
+      "name": "nidoqueen",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:26.244Z",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50ts0ixd9ivxv6uma45"
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "4ffrmhcfiaejakhepqdkx7o"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-056",
+      "localId": "056",
+      "name": "ニドキング",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:24.784Z",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "4ffrmhcfiaejakhepqdkx7o"
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50ts0ixd9ivxv6uma45"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-057",
+      "localId": "057",
+      "name": "ディグレット",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:25.291Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-058",
+      "localId": "058",
+      "name": "Dugtrio",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:24.581Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-059",
+      "localId": "059",
+      "name": "マンキー",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:22.449Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-060",
+      "localId": "060",
+      "name": "プライム",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:23.507Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-061",
+      "localId": "061",
+      "name": "onix",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:23.281Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-062",
+      "localId": "062",
+      "name": "キューボン",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:23.672Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-063",
+      "localId": "063",
+      "name": "マロワク",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:22.797Z",
+      "variants": [
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "3a83wf50ts0ixd9ivxv6uma45"
+        },
+        {
+          "type": "holo",
+          "size": "standard",
+          "variantId": "4ffrmhcfiaejakhepqdkx7o"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-064",
+      "localId": "064",
+      "name": "pidgeot",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:25.541Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-065",
+      "localId": "065",
+      "name": "クリーフ",
+      "rarity": "Common",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:24.343Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-066",
+      "localId": "066",
+      "name": "Clefable ex",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:22.940Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-067",
+      "localId": "067",
+      "name": "Farfetch'd",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:23.620Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-068",
+      "localId": "068",
+      "name": "リキトゥン",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:22.225Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-069",
+      "localId": "069",
+      "name": "チャンジー",
+      "rarity": "Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:21.080Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-070",
+      "localId": "070",
+      "name": "カンガスハン",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:22.015Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-071",
+      "localId": "071",
+      "name": "タウロス",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:21.358Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-072",
+      "localId": "072",
+      "name": "同上",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:20.737Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-073",
+      "localId": "073",
+      "name": "ポリゴン",
+      "rarity": "Uncommon",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:21.670Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-074",
+      "localId": "074",
+      "name": "Snorlax",
+      "rarity": "Holo Rare",
+      "category": "Pokemon",
+      "sourceUpdated": "2026-09-03T15:29:38.118Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-075",
+      "localId": "075",
+      "name": "素晴らしいボール",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "sourceUpdated": "2026-09-03T15:29:38.722Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-076",
+      "localId": "076",
+      "name": "VSシーカー",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "sourceUpdated": "2026-09-03T15:29:38.109Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-077",
+      "localId": "077",
+      "name": "pokedex Handy909",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "sourceUpdated": "2026-09-03T15:29:37.431Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-078",
+      "localId": "078",
+      "name": "オーク教授の研究",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "sourceUpdated": "2026-09-03T15:29:40.189Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-079",
+      "localId": "079",
+      "name": "セリオのネットワーク",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "sourceUpdated": "2026-09-03T15:29:39.089Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-080",
+      "localId": "080",
+      "name": "ビルのメンテナンス",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "sourceUpdated": "2026-09-03T15:29:37.728Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-081",
+      "localId": "081",
+      "name": "exp。共有",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "sourceUpdated": "2026-09-03T15:29:37.716Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        }
+      ]
+    },
+    {
+      "tcgdexId": "PCG1-082",
+      "localId": "082",
+      "name": "山ムーン",
+      "rarity": "Uncommon",
+      "category": "Trainer",
+      "sourceUpdated": "2026-09-03T15:29:37.210Z",
+      "variants": [
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "2fnyg4g532wu18r396n1ly75loy"
+        },
+        {
+          "type": "normal",
+          "size": "standard",
+          "variantId": "3a83wf50tz7q114spsx7dw6v5"
+        }
+      ]
+    }
+  ]
+}

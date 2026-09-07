@@ -178,11 +178,15 @@ const nextConfig: NextConfig = {
     // directory really does contain data/ — they are listed anyway rather than
     // reasoned about per deploy, since their revalidation runs in the same
     // serverless context.
-    "/cards": ["./data/catalog/pokemon/**", "./data/prices/**"],
+    "/cards": ["./data/catalog/pokemon/**", "./data/catalog/pokemon-ja/**", "./data/prices/**"],
     // /sets is now a chooser and counts both catalogues, so it needs both.
-    "/sets": ["./data/catalog/pokemon/**", "./data/catalog/one-piece-official/**"],
-    "/sets/pokemon": ["./data/catalog/pokemon/**", "./data/prices/**"],
-    "/sets/[setId]": ["./data/catalog/pokemon/**", "./data/prices/**"],
+    "/sets": [
+      "./data/catalog/pokemon/**",
+      "./data/catalog/pokemon-ja/**",
+      "./data/catalog/one-piece-official/**",
+    ],
+    "/sets/pokemon": ["./data/catalog/pokemon/**", "./data/catalog/pokemon-ja/**", "./data/prices/**"],
+    "/sets/[setId]": ["./data/catalog/pokemon/**", "./data/catalog/pokemon-ja/**", "./data/prices/**"],
     // The One Piece browse page reads the official catalogue and nothing else —
     // no prices exist for it, because Bandai publishes what a card is rather
     // than what it sells for.
@@ -197,6 +201,7 @@ const nextConfig: NextConfig = {
     // reads, and the precomputed artwork signatures.
     "/api/scan/ocr": [
       "./data/catalog/pokemon/**",
+      "./data/catalog/pokemon-ja/**",
       "./data/catalog/one-piece-official/**",
       "./data/catalog/one-piece-optcg/**",
       "./data/catalog/one-piece-art/**",
@@ -204,6 +209,7 @@ const nextConfig: NextConfig = {
     ],
     "/api/scan/resolve": [
       "./data/catalog/pokemon/**",
+      "./data/catalog/pokemon-ja/**",
       "./data/catalog/one-piece-official/**",
       "./data/catalog/one-piece-optcg/**",
       "./data/prices/**",
@@ -215,9 +221,11 @@ const nextConfig: NextConfig = {
     // The lookup box resolves across both games at request time (searchParams),
     // so it reads both catalogues. No prices: it answers "which card", and only
     // the card page answers "which printing".
-    "/lookup": ["./data/catalog/pokemon/**", "./data/catalog/one-piece-official/**", "./data/catalog/one-piece-optcg/**"],
+    "/lookup": ["./data/catalog/pokemon/**",
+      "./data/catalog/pokemon-ja/**", "./data/catalog/one-piece-official/**", "./data/catalog/one-piece-optcg/**"],
     "/card/[tcg]/[code]": [
       "./data/catalog/pokemon/**",
+      "./data/catalog/pokemon-ja/**",
       "./data/catalog/one-piece-official/**",
       "./data/catalog/one-piece-optcg/**",
       "./data/prices/**",

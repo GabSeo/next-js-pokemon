@@ -192,6 +192,40 @@ async function rankPrintings(cards: CardView[], image: Buffer, text: string): Pr
   }
 }
 
+/** Kana and kanji. Latin-only text has none; a Japanese card face is full of them. */
+const JAPANESE_SCRIPT = /[぀-ゟ゠-ヿ一-鿿]/;
+
+/**
+ * Put the candidates written in the script Vision actually read first.
+ *
+ * WHY THIS IS NEEDED AT ALL. What is printed on a Pokemon card is `048/082` —
+ * a number and a set size, never the set, which is carried by a symbol no OCR
+ * reads. 154 of 216 English sets share their printed total with another
+ * English set, and 152 of 182 Japanese ones do, so one photographed number
+ * genuinely names several cards. A photographed Japanese Gengar ex resolves to
+ * three: Team Rocket Porygon, and two Japanese cards. The scan shows the FIRST
+ * as "your card", so the order is the answer.
+ *
+ * The evidence was already in hand and thrown away: Vision read the card face
+ * and returned kana. A card whose text is written in kana is not an English
+ * Team Rocket card, and one written only in Latin is not a Japanese release.
+ *
+ * ORDERS, DOES NOT FILTER — the same rule as the rarity boost above. Vision
+ * misreads, cards carry both scripts, and a Japanese card can be photographed
+ * beside English text. A wrong guess here costs position, which the person can
+ * see past; filtering would cost availability, which they cannot.
+ */
+function orderByScript(cards: CardView[], text: string): void {
+  const japanese = JAPANESE_SCRIPT.test(text);
+  const rank = (card: CardView) => {
+    if (card.tcg !== "pokemon") return 0;
+    const isJapanese = card.code.startsWith("ja~");
+    return isJapanese === japanese ? 0 : 1;
+  };
+  // Stable: equal ranks keep the order the catalogue gave them.
+  cards.sort((a, b) => rank(a) - rank(b));
+}
+
 export async function POST(request: Request) {
   if (!visionConfigured()) {
     // 501, not 500: nothing is broken, the feature simply is not set up. The
@@ -250,6 +284,7 @@ export async function POST(request: Request) {
       }
     }
 
+    orderByScript(cards, text);
     await rankPrintings(cards, image, text);
 
     return Response.json({ text, candidates, cards });

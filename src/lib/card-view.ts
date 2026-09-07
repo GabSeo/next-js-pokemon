@@ -74,12 +74,19 @@ function pokemonView(tcgdexId: string, prices: Map<string, CatalogPrice[]>): Car
   const { card, set } = entry;
   const byVariant = prices.get(card.tcgdexId) ?? [];
 
+  // A Japanese card keeps the qualified id so a link back to this page lands
+  // on the same card: `neo1-1` names one card in each catalogue.
+  const japanese = set.language === "ja";
+
   return {
     tcg: "pokemon",
-    code: card.tcgdexId,
+    code: japanese ? `ja~${card.tcgdexId}` : card.tcgdexId,
     name: card.name,
-    priceNote: "Cardmarket and TCGplayer, from our latest snapshot. Each printing is priced separately.",
-    prints: variantPrints(card, set.name, byVariant),
+    priceNote: japanese
+      ? "Japanese print, from TCGdex's Japanese catalogue. Cardmarket and TCGplayer index far fewer " +
+        "Japanese cards, so a missing price here usually means nobody publishes one."
+      : "Cardmarket and TCGplayer, from our latest snapshot. Each printing is priced separately.",
+    prints: variantPrints(card, japanese ? `${set.name} (JP)` : set.name, byVariant),
   };
 }
 

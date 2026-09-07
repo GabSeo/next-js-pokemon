@@ -52,8 +52,47 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
-const CATALOG_DIR = path.join(process.cwd(), "data", "catalog", "pokemon");
+/**
+ * TWO CORPORA, because TCGdex publishes one catalogue per language and the
+ * Japanese one is not a translation: 184 sets and ~18,000 cards exist only
+ * there. A Japanese card scanned against the English corpus alone did not
+ * fail — it matched an English card carrying the same printed number and
+ * answered confidently with the wrong card.
+ *
+ * English is listed first and that ordering is load-bearing: see `qualify`.
+ */
+const CATALOG_DIRS: { language: CatalogLanguage; dir: string }[] = [
+  { language: "en", dir: "pokemon" },
+  { language: "ja", dir: "pokemon-ja" },
+];
+
 const SETS_FILE = "_sets.json";
+
+export type CatalogLanguage = "en" | "ja";
+
+/**
+ * The key a card is filed under.
+ *
+ * TCGdex ids are unique WITHIN a language and not across them — measured, the
+ * set ids `neo1`…`neo4` exist in both, so `neo1-1` names two different cards.
+ * The ambiguity is upstream's, not ours: TCGdex separates the two by URL path
+ * rather than by id, so a bare id genuinely is not an address.
+ *
+ * Japanese cards are therefore also filed under `ja~<id>`, and keep the bare
+ * id as well when English does not already claim it — which is every Japanese
+ * card outside those four sets. So existing links keep working, `ja~` is
+ * available whenever a caller must be explicit, and a bare colliding id
+ * resolves to English rather than to whichever file was read last.
+ *
+ * A TILDE, NOT A COLON. The qualified id travels in a URL path segment
+ * (`/card/pokemon/ja~PCG1-048`), and a colon there is reserved — Next resolved
+ * it in `generateMetadata` and 404'd the page itself. `~` is unreserved, absent
+ * from every TCGdex id, and already the separator this codebase uses for
+ * composite print keys.
+ */
+export function qualify(language: CatalogLanguage, tcgdexId: string): string {
+  return language === "en" ? tcgdexId : `${language}~${tcgdexId}`;
+}
 
 /**
  * One printing variant of a card, and the marketplace products that price it.
@@ -111,6 +150,8 @@ export type CatalogCard = {
 
 export type CatalogSet = {
   id: string;
+  /** Which TCGdex catalogue this set came from. Absent means English, for files crawled before this existed. */
+  language?: CatalogLanguage;
   name: string;
   serie?: { id: string; name: string };
   releaseDate?: string;
@@ -147,35 +188,44 @@ function loadCatalog(): Loaded {
   const setsById = new Map<string, CatalogSet>();
   let crawledAt: string | undefined;
 
-  if (!existsSync(CATALOG_DIR)) {
+  // English first, so a bare colliding id resolves there rather than to
+  // whichever directory happened to be read last. See `qualify`.
+  for (const { language, dir } of CATALOG_DIRS) {
+    const root = path.join(process.cwd(), "data", "catalog", dir);
     // An absent corpus is an empty catalogue, not a crash. It is a build
     // artifact (see scripts/catalog-crawl.mts); a checkout that has not run
     // the crawl yet should degrade the way an upstream outage does, not fail
     // the build. Callers already handle "no match".
-    cache = { sets, entries, byTcgdexId, bySetAndNumber, setsById };
-    return cache;
+    if (!existsSync(root)) continue;
+
+    for (const file of readdirSync(root)) {
+      if (file === SETS_FILE || !file.endsWith(".json")) continue;
+      let parsed: CatalogSetFile;
+      try {
+        parsed = JSON.parse(readFileSync(path.join(root, file), "utf8")) as CatalogSetFile;
+      } catch {
+        // One unreadable set file must not take the other 400 down with it.
+        continue;
+      }
+
+      const set: CatalogSet = { ...parsed.set, language };
+      sets.push(set);
+      setsById.set(qualify(language, set.id), set);
+      if (!setsById.has(set.id)) setsById.set(set.id, set);
+      if (!crawledAt || parsed.crawledAt < crawledAt) crawledAt = parsed.crawledAt;
+
+      for (const card of parsed.cards) {
+        const entry: CatalogEntry = { card, set };
+        entries.push(entry);
+        byTcgdexId.set(qualify(language, card.tcgdexId), entry);
+        if (!byTcgdexId.has(card.tcgdexId)) byTcgdexId.set(card.tcgdexId, entry);
+        bySetAndNumber.set(qualify(language, set.id) + "\u0000" + card.localId, entry);
+        const bare = set.id + "\u0000" + card.localId;
+        if (!bySetAndNumber.has(bare)) bySetAndNumber.set(bare, entry);
+      }
+    }
   }
 
-  for (const file of readdirSync(CATALOG_DIR)) {
-    if (file === SETS_FILE || !file.endsWith(".json")) continue;
-    let parsed: CatalogSetFile;
-    try {
-      parsed = JSON.parse(readFileSync(path.join(CATALOG_DIR, file), "utf8")) as CatalogSetFile;
-    } catch {
-      // One unreadable set file must not take the other 217 down with it.
-      continue;
-    }
-    sets.push(parsed.set);
-    setsById.set(parsed.set.id, parsed.set);
-    if (!crawledAt || parsed.crawledAt < crawledAt) crawledAt = parsed.crawledAt;
-
-    for (const card of parsed.cards) {
-      const entry: CatalogEntry = { card, set: parsed.set };
-      entries.push(entry);
-      byTcgdexId.set(card.tcgdexId, entry);
-      bySetAndNumber.set(`${parsed.set.id}\u0000${card.localId}`, entry);
-    }
-  }
 
   cache = { sets, entries, byTcgdexId, bySetAndNumber, setsById, crawledAt };
   return cache;
@@ -284,8 +334,17 @@ export function isDigitalOnlySet(set: CatalogSet): boolean {
  * browse surface for physical cards. Pass `includeDigital` for the corpus as
  * crawled — `catalogStats` uses it to report what is actually held.
  */
-export function getCatalogSets(options?: { includeDigital?: boolean }): CatalogSet[] {
-  const sets = loadCatalog().sets;
+export function getCatalogSets(options?: {
+  includeDigital?: boolean;
+  /** Defaults to English. `"all"` spans both catalogues — say so deliberately. */
+  language?: CatalogLanguage | "all";
+}): CatalogSet[] {
+  // DEFAULTS TO ENGLISH ON PURPOSE. The Japanese corpus doubles the set count,
+  // and every page written before it existed asks this question expecting the
+  // catalogue it was built against. A caller that wants both says `"all"`,
+  // which makes each such decision visible in a diff.
+  const wanted = options?.language ?? "en";
+  const sets = loadCatalog().sets.filter((set) => wanted === "all" || (set.language ?? "en") === wanted);
   return options?.includeDigital ? sets : sets.filter((set) => !isDigitalOnlySet(set));
 }
 
@@ -294,8 +353,18 @@ export function getCatalogSet(setId: string): CatalogSet | undefined {
 }
 
 /** Every card in one set, in the order the crawl wrote them (TCGdex's own set order). */
-export function getCatalogSetCards(setId: string): CatalogEntry[] {
-  return loadCatalog().entries.filter((e) => e.set.id === setId);
+export function getCatalogSetCards(setId: string, language?: CatalogLanguage): CatalogEntry[] {
+  // `neo1` names a set in BOTH catalogues, so filtering on the bare id alone
+  // returns two sets' cards interleaved. A caller that knows the language says
+  // so; one that does not gets English, matching `qualify`'s rule for ids.
+  const wanted = language ?? languageOfSetId(setId);
+  const bare = setId.includes("~") ? setId.slice(setId.indexOf("~") + 1) : setId;
+  return loadCatalog().entries.filter((e) => e.set.id === bare && (e.set.language ?? "en") === wanted);
+}
+
+/** The language a possibly-qualified set id names — `ja~neo1` says so, `neo1` means English. */
+function languageOfSetId(setId: string): CatalogLanguage {
+  return setId.startsWith("ja~") ? "ja" : "en";
 }
 
 /**
@@ -382,7 +451,7 @@ export function cardmarketPriceFields(card: CatalogCard, variantType: string | u
  * cards across 218 sets" above a list of 203 is its own small lie. Pass
  * `includeDigital` for the corpus as crawled.
  */
-export function catalogStats(options?: { includeDigital?: boolean }): {
+export function catalogStats(options?: { includeDigital?: boolean; language?: CatalogLanguage | "all" }): {
   sets: number;
   cards: number;
   unresolved: number;
@@ -393,9 +462,15 @@ export function catalogStats(options?: { includeDigital?: boolean }): {
 } {
   const loaded = loadCatalog();
   const crawledAt = loaded.crawledAt;
-  const sets = options?.includeDigital ? loaded.sets : loaded.sets.filter((set) => !isDigitalOnlySet(set));
-  const included = new Set(sets.map((set) => set.id));
-  const entries = loaded.entries.filter((entry) => included.has(entry.set.id));
+  // English by default, for the same reason getCatalogSets is: a page written
+  // before the Japanese corpus existed is asking about the one it knows.
+  const wanted = options?.language ?? "en";
+  const byLanguage = loaded.sets.filter((set) => wanted === "all" || (set.language ?? "en") === wanted);
+  const sets = options?.includeDigital ? byLanguage : byLanguage.filter((set) => !isDigitalOnlySet(set));
+  const included = new Set(sets.map((set) => `${set.language ?? "en"}\u0000${set.id}`));
+  const entries = loaded.entries.filter((entry) =>
+    included.has(`${entry.set.language ?? "en"}\u0000${entry.set.id}`)
+  );
   let unresolved = 0;
   let withCardmarketPointer = 0;
   let withTcgplayerPointer = 0;
