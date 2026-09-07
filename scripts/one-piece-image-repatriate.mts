@@ -1,34 +1,39 @@
 #!/usr/bin/env -S UNUSED=1 npx tsx
 /**
- * Bring the card images only optcgapi has into this repository, once.
+ * Bring the card pictures only optcgapi has into this repository, once.
  *
- * WHY THIS EXISTS. 631 One Piece printings are known to optcgapi and absent
- * from Bandai's own card list — regional promos, judge packs, anniversary sets,
- * campaign cards. Measured on a 25-printing sample, Bandai serves the image for
- * about 7 in 25 anyway; the rest exist nowhere else public. Without them a
- * person scans a card they are holding and the grid shows them somebody else's
- * artwork, which is the failure this whole exercise is about.
+ * WHY THIS EXISTS. Hundreds of One Piece printings — regional promos, judge
+ * packs, anniversary sets, campaign cards — are absent from Bandai's own card
+ * list. Without their artwork a person scans a card they are holding and the
+ * grid shows them somebody else's picture, which is the failure this whole
+ * exercise is about.
  *
- * WHY REPATRIATE RATHER THAN PROXY. A proxy would touch optcgapi once per image
- * per deployment and cost us nothing to run, which is defensible. Downloading
- * once costs them one request per image, ever, and costs us disk. That is the
- * trade the owner of this project chose: no standing dependency on somebody
- * else's donation-supported server, and a catalogue that keeps working if that
- * project ever stops.
+ * KEYED ON THE PICTURE, NOT ON `card_image_id`. This is the correction that
+ * matters and the one an earlier version of this script got wrong. optcgapi's
+ * `card_image_id` names a FILE and is REUSED across genuinely different
+ * products: 857 rows share one with a sibling, and every one of those 857
+ * carries a different `card_image` URL. Selecting candidates by id therefore
+ * concluded "Bandai already has this" for 963 real pictures and skipped them —
+ *
+ *   ST21-014  3rd Anniversary Treasure Campaign Pack   its own artwork, skipped
+ *   OP09-061  Jumbo                                    its own artwork, skipped
+ *
+ * — so the card page showed the base printing's picture for both, which is
+ * worse than showing nothing: it answers the question wrongly rather than
+ * admitting it cannot answer. The unit of work here is a distinct PICTURE.
+ *
+ * BANDAI FIRST, ALWAYS. A picture whose filename is Bandai's own for that
+ * printing is theirs to serve: unmetered, higher resolution, already proxied.
+ * Only what Bandai genuinely lacks is taken from optcgapi, and every candidate
+ * is HEAD-checked against both Bandai hosts before the mirror is touched.
  *
  * IDEMPOTENT AND INCREMENTAL, which is what makes it runnable on every new set.
- * A printing whose file already exists is skipped without a request. So the
- * first run fetches hundreds and every run after fetches only what is new —
- * which is the point, because a new set arrives with new promos.
+ * A picture whose file already exists is skipped without a request, so the
+ * first run fetches hundreds and every run after fetches only what is new.
  *
- * BANDAI FIRST, ALWAYS. Every candidate is checked against Bandai before
- * optcgapi is touched: their images are unmetered, higher resolution, and
- * theirs to serve. Only what Bandai genuinely lacks is taken from optcgapi.
- *
- * WHERE THEY LAND. `public/card-images/one-piece/`, served straight from the
- * CDN as static files — no route, no serverless bundle weight, no request-time
- * work. Stored as webp at a single width, because a static file cannot be
- * resized per request and this is the width the card grid actually paints.
+ * WHERE THEY LAND. `public/card-images/one-piece/{pictureKey}.webp`, served
+ * straight from the CDN as static files — no route, no serverless bundle
+ * weight. One width, because a static file cannot be resized per request.
  *
  *   npm run catalog:one-piece-images
  *   npx tsx scripts/one-piece-image-repatriate.mts --dry-run
@@ -39,16 +44,12 @@ import path from "node:path";
 
 import sharp from "sharp";
 
-import { officialRowsForCode } from "../src/lib/one-piece-official";
+import { isBandaiPicture, pictureKey } from "../src/lib/one-piece-optcg";
 
 const OUT_DIR = path.join(process.cwd(), "public", "card-images", "one-piece");
 const OPTCG_DIR = path.join(process.cwd(), "data", "catalog", "one-piece-optcg");
 
-/**
- * One width, chosen rather than assumed. The card grid paints tiles at 320 CSS
- * pixels and the card page at up to 480; 480 covers both without storing a
- * second copy, and a card code needs far less detail than a card face.
- */
+/** The card grid paints at 320 CSS pixels and the card page at up to 480. */
 const WIDTH = 480;
 
 /** webp at this quality is visually clean on card art and roughly 5x lighter than the source. */
@@ -68,8 +69,7 @@ function optcgRows(): OptcgRow[] {
   for (const file of ["sets", "decks", "promos"]) {
     const p = path.join(OPTCG_DIR, `${file}.json`);
     if (!existsSync(p)) continue;
-    const parsed = JSON.parse(readFileSync(p, "utf8")) as { rows?: OptcgRow[] };
-    rows.push(...(parsed.rows ?? []));
+    rows.push(...((JSON.parse(readFileSync(p, "utf8")) as { rows?: OptcgRow[] }).rows ?? []));
   }
   return rows;
 }
@@ -101,27 +101,33 @@ async function pooled<T>(items: T[], concurrency: number, worker: (item: T) => P
   );
 }
 
-// --- what needs an image at all -------------------------------------------
+// --- one entry per distinct picture ---------------------------------------
 
 const rows = optcgRows();
-const candidates = rows.filter((row) => {
-  if (!row.imageId || !row.image) return false;
-  // Already ours, via Bandai, through the catalogue we trust for identity.
-  const known =
-    officialRowsForCode(row.code, "english").some((r) => r.card.id === row.imageId) ||
-    officialRowsForCode(row.code, "japanese").some((r) => r.card.id === row.imageId);
-  return !known;
-});
 
-const pending = candidates.filter((row) => !existsSync(path.join(OUT_DIR, `${row.imageId}.webp`)));
+type Candidate = { url: string; key: string; imageId?: string; label: string };
+
+const byPicture = new Map<string, Candidate>();
+for (const row of rows) {
+  if (!row.image) continue;
+  const key = pictureKey(row.image);
+  if (!byPicture.has(key)) byPicture.set(key, { url: row.image, key, imageId: row.imageId, label: row.name });
+}
+
+const candidates = [...byPicture.values()];
+// A picture that IS Bandai's file for its printing needs no copy: the image
+// route serves it, unmetered and larger than anything stored here.
+const mirrorOnly = candidates.filter((c) => !isBandaiPicture(c.url, c.imageId));
+const pending = mirrorOnly.filter((c) => !existsSync(path.join(OUT_DIR, `${c.key}.webp`)));
 
 console.log(`[images] optcgapi rows: ${rows.length}`);
-console.log(`[images] printings punk-records lacks, with an image: ${candidates.length}`);
-console.log(`[images] already repatriated: ${candidates.length - pending.length}`);
+console.log(`[images] distinct pictures: ${candidates.length}`);
+console.log(`[images] not simply Bandai's own file: ${mirrorOnly.length}`);
+console.log(`[images] already held: ${mirrorOnly.length - pending.length}`);
 console.log(`[images] to consider this run: ${Math.min(pending.length, limit)}\n`);
 
 if (dryRun) {
-  for (const row of pending.slice(0, 20)) console.log(`  would fetch ${row.imageId}  ${row.name.slice(0, 50)}`);
+  for (const c of pending.slice(0, 20)) console.log(`  would fetch ${c.key.slice(0, 60).padEnd(62)} ${c.label.slice(0, 44)}`);
   process.exit(0);
 }
 
@@ -135,38 +141,34 @@ let bytes = 0;
 const started = Date.now();
 
 // Modest concurrency: Bandai tolerates far more, but optcgapi is one person's
-// donation-supported server and this walks through hundreds of their images.
-await pooled(work, 6, async (row) => {
-  const printingId = row.imageId!;
-
-  if (await bandaiHas(printingId)) {
-    // Bandai has it after all — the image route will find it there, unmetered
-    // and at full resolution. Nothing to store.
+// donation-supported server and this walks through hundreds of their pictures.
+await pooled(work, 6, async (candidate) => {
+  // Even a mirror-named picture can turn out to exist at Bandai under the
+  // printing id, in which case theirs is better and free.
+  if (candidate.imageId && (await bandaiHas(candidate.key))) {
     skippedBandai++;
     return;
   }
 
   try {
-    const response = await fetch(row.image!);
+    const response = await fetch(candidate.url);
     if (!response.ok) {
       failed++;
       return;
     }
-    const source = Buffer.from(await response.arrayBuffer());
-    const out = await sharp(source)
+    const out = await sharp(Buffer.from(await response.arrayBuffer()))
       .resize({ width: WIDTH, withoutEnlargement: true })
       .webp({ quality: QUALITY })
       .toBuffer();
-    writeFileSync(path.join(OUT_DIR, `${printingId}.webp`), out);
+    writeFileSync(path.join(OUT_DIR, `${candidate.key}.webp`), out);
     saved++;
     bytes += out.length;
   } catch {
     failed++;
   }
 
-  if ((saved + skippedBandai + failed) % 50 === 0) {
-    console.log(`[images]   ${saved + skippedBandai + failed}/${work.length}…`);
-  }
+  const done = saved + skippedBandai + failed;
+  if (done % 100 === 0) console.log(`[images]   ${done}/${work.length}…`);
 });
 
 console.log(

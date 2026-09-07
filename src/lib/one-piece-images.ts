@@ -72,27 +72,17 @@ export function onePieceImageUrl(
 }
 
 /**
- * The same question for a printing Bandai's card list does not carry — where
- * the answer may honestly be "nowhere".
+ * Where to find one repatriated picture, by its key — or nothing.
  *
- * Measured 2026-09-07: of the 631 such printings, 541 were repatriated, 10 turn
- * out to be at Bandai anyway, and 80 have no picture anywhere public. Those 80
- * are real cards — `EB01-043_pr4`, the Offline Regional Participation Pack
- * Spandine — and optcgapi names them while carrying no image.
- *
- * Returning the proxy URL for those would render a broken tile; returning
- * undefined lets the page say "this printing exists, we have no picture", which
- * is both true and more useful than a 404. A printing we cannot picture and a
- * printing that does not exist are different claims — the same rule this
- * project already applies to prices.
- *
- * `upstream` is whether the mirror holds an image at all. When it does and we
- * hold no file, repatriation skipped it precisely because Bandai serves it, so
- * the proxy is the right answer.
+ * `pictureKey` names a picture optcgapi holds and Bandai does not. When the
+ * file is here we serve it; when it is not, the answer is honestly undefined.
+ * There is deliberately no fallback to the card's base image: showing a
+ * printing the wrong artwork answers the question wrongly, which is worse than
+ * admitting the gap. Measured 2026-09-07, 43 pictures are unavailable anywhere
+ * public and 139 optcgapi rows point at none at all.
  */
-export function onePieceImageUrlOrNone(printingId: string, upstream: boolean): string | undefined {
-  if (load().has(printingId)) return `${PUBLIC_PREFIX}/${encodeURIComponent(printingId)}.webp`;
-  return upstream ? onePieceImageUrl(printingId) : undefined;
+export function onePiecePictureUrl(key: string): string | undefined {
+  return load().has(key) ? `${PUBLIC_PREFIX}/${encodeURIComponent(key)}.webp` : undefined;
 }
 
 /** True when the artwork is a file we hold, so a caller knows not to append a width. */

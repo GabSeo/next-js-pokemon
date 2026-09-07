@@ -101,6 +101,46 @@ export function optcgRowsForCode(code: string): OptcgRow[] {
  * as products and appended to OP05-119 as four extra printings, on top of the
  * nine Bandai already lists with their own artwork.
  */
+/**
+ * A stable name for the PICTURE a row points at — the identity that actually
+ * matters, and the one this catalogue got wrong for a week.
+ *
+ * `card_image_id` names a FILE, not a printing, and optcgapi reuses it. Measured
+ * 2026-09-07: 857 rows share a `card_image_id` with a sibling, and **every one
+ * of those 857 carries a different `card_image` URL**. So two genuinely
+ * different products arrive under one id, each with its own artwork sitting
+ * right there:
+ *
+ *   ST21-014  base                  ->  ST21-014.jpg
+ *   ST21-014  3rd Anniversary Pack  ->  Monkey.D.Luffy_-_ST21-014_3rd_Anni…jpg
+ *   OP09-061  Jumbo                 ->  Monkey.D.Luffy_Jumbo_img.jpg
+ *
+ * Keying repatriation on the id therefore skipped 963 real pictures as
+ * "Bandai already has it", and the card page showed the base artwork for
+ * printings that look nothing like it — which is worse than showing nothing,
+ * because it answers the question wrongly instead of admitting it cannot.
+ *
+ * The URL's basename is optcgapi's own name for a picture and is unique across
+ * their corpus: 5,223 URLs, 5,223 keys, zero collisions. Two rows that share a
+ * picture share a key, which is the dedupe we want rather than a clash.
+ */
+export function pictureKey(imageUrl: string): string {
+  const base = imageUrl.split("/").pop()?.replace(/\.[a-z]+$/i, "") ?? "";
+  return base.replace(/[^A-Za-z0-9._-]/g, "-").replace(/-+/g, "-").slice(0, 110);
+}
+
+/**
+ * Whether that picture is simply Bandai's own file for this printing, mirrored.
+ *
+ * When it is, the printing is one Bandai already serves: unmetered, higher
+ * resolution, and nothing to repatriate. The trailing token guard is for
+ * optcgapi's occasional re-upload suffix (`OP01-033_p5_8AI2ZwU`).
+ */
+export function isBandaiPicture(imageUrl: string, imageId?: string): boolean {
+  if (!imageId) return false;
+  return pictureKey(imageUrl).replace(/_[A-Za-z0-9]{6,}$/, "") === imageId;
+}
+
 export function optcgParenthetical(name: string): string | undefined {
   const match = name.match(/\(([^)]+)\)\s*$/);
   return match ? match[1].trim() : undefined;

@@ -40,7 +40,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { officialRowsForCode } from "../src/lib/one-piece-official";
-import { optcgRowsForCode } from "../src/lib/one-piece-optcg";
+import { isBandaiPicture, optcgRowsForCode, pictureKey } from "../src/lib/one-piece-optcg";
 
 const ART_DIR = path.join(process.cwd(), "data", "catalog", "one-piece-art");
 const OUT = path.join(ART_DIR, "aliases.json");
@@ -91,8 +91,11 @@ for (const code of codes) {
   if (punk.length === 0) continue;
 
   for (const row of optcgRowsForCode(code)) {
-    const id = row.imageId;
-    if (!id || punk.includes(id) || pairs[id] || !signatures[id]) continue;
+    // Only pictures held HERE can duplicate a Bandai printing: one that IS
+    // Bandai's own file is that printing, not a second copy of it.
+    if (!row.image || isBandaiPicture(row.image, row.imageId)) continue;
+    const id = pictureKey(row.image);
+    if (punk.includes(id) || pairs[id] || !signatures[id]) continue;
     considered++;
 
     const best = punk
