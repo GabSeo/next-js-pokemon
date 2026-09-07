@@ -45,7 +45,14 @@ export default async function LookupPage({
   const params = await searchParams;
   const raw = params.q;
   const query = typeof raw === "string" ? raw : "";
-  const result = lookupCards(query);
+
+  // Only "pokemon" and "onepiece" mean anything; anything else is treated as no
+  // filter rather than as an error, because this arrives in a URL people edit.
+  const rawGame = typeof params.game === "string" ? params.game : undefined;
+  const game = rawGame === "pokemon" || rawGame === "onepiece" ? rawGame : undefined;
+
+  const result = lookupCards(query, game);
+  const bothGames = result.byGame.pokemon > 0 && result.byGame.onepiece > 0;
 
   return (
     <main className="mx-auto w-full max-w-[1180px] px-6 py-6 pb-24">
@@ -117,6 +124,39 @@ export default async function LookupPage({
                   result.matches.length === 1 ? "" : "s"
                 } — read as ${result.interpretation}. Pick one to see every printing of it.`}
           </p>
+
+          {/* OFFERED ONLY WHEN IT WOULD DO SOMETHING. A card code already names
+              its game, so a code search never sees these — they appear for a
+              NAME that genuinely matched both, which is the only case where a
+              person has to disambiguate. Plain links, so they work without
+              JavaScript and the filtered view stays a shareable URL. */}
+          {bothGames ? (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-black uppercase tracking-wide text-muted-text">Show</span>
+              {[
+                { id: undefined, label: "Both", count: result.byGame.pokemon + result.byGame.onepiece },
+                { id: "pokemon" as const, label: "Pokémon", count: result.byGame.pokemon },
+                { id: "onepiece" as const, label: "One Piece", count: result.byGame.onepiece },
+              ].map((chip) => {
+                const active = game === chip.id;
+                const href = chip.id
+                  ? `/lookup?q=${encodeURIComponent(result.query)}&game=${chip.id}`
+                  : `/lookup?q=${encodeURIComponent(result.query)}`;
+                return (
+                  <Link
+                    key={chip.label}
+                    href={href}
+                    aria-current={active ? "true" : undefined}
+                    className={`rounded-full border-2 border-black px-3 py-1 text-xs font-black transition-transform hover:-translate-y-0.5 ${
+                      active ? "bg-muted-surface" : "bg-white"
+                    }`}
+                  >
+                    {chip.label} <span className="font-bold text-muted-text">{chip.count}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          ) : null}
 
           {result.truncated > 0 ? (
             <p className="mt-2 text-xs text-muted-text">

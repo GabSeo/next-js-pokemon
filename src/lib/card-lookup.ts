@@ -46,6 +46,14 @@ export type LookupResult = {
   matches: LookupMatch[];
   /** Matches found beyond the limit, so the page can say "narrow it down" honestly. */
   truncated: number;
+  /**
+   * How many matched per game BEFORE any game filter was applied.
+   *
+   * The page needs this to decide whether a game filter is worth offering at
+   * all, and to label it with real counts — neither of which it could work out
+   * from `matches` once those have been filtered down to one game.
+   */
+  byGame: { pokemon: number; onepiece: number };
 };
 
 const LIMIT = 60;
@@ -133,17 +141,48 @@ function byName(text: string): LookupMatch[] {
   return [...onePiece, ...pokemon].sort((a, b) => nameRank(a.name, text) - nameRank(b.name, text));
 }
 
-export function lookupCards(raw: string): LookupResult {
+/**
+ * `game` narrows the RESULTS, never the parsing.
+ *
+ * A card code already says which game it belongs to — `OP05-119` cannot be
+ * Pokémon and `190/182` cannot be One Piece — so three of the four input forms
+ * are unambiguous before any filter is applied and the parameter changes
+ * nothing for them. It exists for the fourth: a NAME, where "Zoro" legitimately
+ * matches Zoro-Juurou and Zoroark and only the person searching knows which
+ * they meant.
+ *
+ * That is also why this is a filter rather than two routes. The scan produces a
+ * code and nothing else, so a per-game path would have to be chosen for the
+ * user from the code itself — a fork that exists only to be auto-resolved is
+ * friction wearing the costume of structure.
+ */
+export function lookupCards(raw: string, game?: LookupMatch["tcg"]): LookupResult {
   const query = raw.trim();
-  const empty: LookupResult = { query, interpretation: "", matches: [], truncated: 0 };
+  const empty: LookupResult = {
+    query,
+    interpretation: "",
+    matches: [],
+    truncated: 0,
+    byGame: { pokemon: 0, onepiece: 0 },
+  };
   if (query.length === 0) return empty;
 
-  const finish = (interpretation: string, matches: LookupMatch[]): LookupResult => ({
-    query,
-    interpretation,
-    matches: matches.slice(0, LIMIT),
-    truncated: Math.max(matches.length - LIMIT, 0),
-  });
+  const finish = (interpretation: string, all: LookupMatch[]): LookupResult => {
+    const byGame = {
+      pokemon: all.filter((m) => m.tcg === "pokemon").length,
+      onepiece: all.filter((m) => m.tcg === "onepiece").length,
+    };
+    // Filter BEFORE the limit, or asking for one game would show fewer of it
+    // than exist simply because the other game filled the first 60 places.
+    const matches = game ? all.filter((m) => m.tcg === game) : all;
+    return {
+      query,
+      interpretation,
+      matches: matches.slice(0, LIMIT),
+      truncated: Math.max(matches.length - LIMIT, 0),
+      byGame,
+    };
+  };
 
   // 1. A One Piece card code. Tried first because `OP05-119` also satisfies the
   //    looser shape of a TCGdex id, and only one of those readings is right.
