@@ -130,7 +130,7 @@ function PrintingTile({ card }: { card: OfficialCard }) {
   return (
     <Link
       href={`/card/onepiece/${encodeURIComponent(officialCode(card.id))}`}
-      className="flex h-full flex-col rounded-lg border-2 border-black bg-surface p-2 transition-transform hover:-translate-y-0.5"
+      className="flex h-full flex-col rounded-lg border-2 border-black bg-white p-2 transition-transform hover:-translate-y-0.5"
       style={{ boxShadow: "3px 3px 0 0 #000" }}
     >
       {/* THE IMAGE IS THE POINT OF THIS GRID. Every printing of a One Piece

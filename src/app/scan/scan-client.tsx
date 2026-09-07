@@ -83,7 +83,7 @@ export function ScanClient() {
     <div className="mt-6 grid gap-6 md:grid-cols-[320px_1fr]">
       <div>
         <label
-          className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-black bg-accent-surface p-6 text-center"
+          className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-black bg-muted-surface p-6 text-center"
           style={{ boxShadow: "3px 3px 0 0 #000" }}
         >
           <span className="text-2xl" aria-hidden>
@@ -136,7 +136,7 @@ export function ScanClient() {
                   <li key={candidate.value}>
                     <Link
                       href={`/lookup?q=${encodeURIComponent(candidate.value)}`}
-                      className="flex items-baseline gap-3 rounded-lg border-2 border-black bg-surface p-3 transition-transform hover:-translate-y-0.5"
+                      className="flex items-baseline gap-3 rounded-lg border-2 border-black bg-white p-3 transition-transform hover:-translate-y-0.5"
                       style={{ boxShadow: "3px 3px 0 0 #000" }}
                     >
                       <span className="font-black">{candidate.value}</span>
@@ -166,12 +166,12 @@ export function ScanClient() {
               value={typed}
               onChange={(event) => setTyped(event.target.value)}
               placeholder="OP05-119 or 190/182"
-              className="w-full rounded-lg border-2 border-black bg-surface px-3 py-2 text-sm font-bold"
+              className="w-full rounded-lg border-2 border-black bg-white px-3 py-2 text-sm font-bold"
               style={{ boxShadow: "3px 3px 0 0 #000" }}
             />
             <button
               type="submit"
-              className="shrink-0 rounded-lg border-2 border-black bg-accent-surface px-4 py-2 text-sm font-black"
+              className="shrink-0 rounded-lg border-2 border-black bg-muted-surface px-4 py-2 text-sm font-black"
               style={{ boxShadow: "3px 3px 0 0 #000" }}
             >
               Find

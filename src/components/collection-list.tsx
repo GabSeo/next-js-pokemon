@@ -97,7 +97,7 @@ export function CollectionList() {
         {parsed.map((entry) => (
           <li
             key={entry.id}
-            className="flex items-center justify-between gap-3 rounded-lg border-2 border-black bg-surface p-3"
+            className="flex items-center justify-between gap-3 rounded-lg border-2 border-black bg-white p-3"
             style={{ boxShadow: "3px 3px 0 0 #000" }}
           >
             <div className="min-w-0">
@@ -122,7 +122,7 @@ export function CollectionList() {
                 type="button"
                 onClick={() => removeEntry(entry.id)}
                 aria-label={`Remove ${entry.code ?? entry.id}`}
-                className="rounded-md border-2 border-black bg-surface px-2 py-1 text-[11px] font-black"
+                className="rounded-md border-2 border-black bg-white px-2 py-1 text-[11px] font-black"
               >
                 Remove
               </button>

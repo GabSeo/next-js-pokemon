@@ -67,12 +67,12 @@ export default async function LookupPage({
           placeholder="OP05-119, 190/182, or Charizard"
           aria-label="Card code, printed number, or name"
           autoFocus
-          className="w-full rounded-lg border-2 border-black bg-surface px-3 py-2 text-sm font-bold"
+          className="w-full rounded-lg border-2 border-black bg-white px-3 py-2 text-sm font-bold"
           style={{ boxShadow: "3px 3px 0 0 #000" }}
         />
         <button
           type="submit"
-          className="shrink-0 rounded-lg border-2 border-black bg-accent-surface px-4 py-2 text-sm font-black"
+          className="shrink-0 rounded-lg border-2 border-black bg-muted-surface px-4 py-2 text-sm font-black"
           style={{ boxShadow: "3px 3px 0 0 #000" }}
         >
           Find
@@ -95,7 +95,7 @@ export default async function LookupPage({
               <li key={example.q}>
                 <Link
                   href={`/lookup?q=${encodeURIComponent(example.q)}`}
-                  className="flex flex-col rounded-lg border-2 border-black bg-surface p-3 transition-transform hover:-translate-y-0.5"
+                  className="flex flex-col rounded-lg border-2 border-black bg-white p-3 transition-transform hover:-translate-y-0.5"
                   style={{ boxShadow: "3px 3px 0 0 #000" }}
                 >
                   <span className="font-black">{example.q}</span>
@@ -143,7 +143,7 @@ function MatchTile({ match }: { match: LookupMatch }) {
   return (
     <Link
       href={`/card/${match.tcg}/${encodeURIComponent(match.code)}`}
-      className="flex h-full flex-col rounded-lg border-2 border-black bg-surface p-2 transition-transform hover:-translate-y-0.5"
+      className="flex h-full flex-col rounded-lg border-2 border-black bg-white p-2 transition-transform hover:-translate-y-0.5"
       style={{ boxShadow: "3px 3px 0 0 #000" }}
     >
       <div className="mb-2 overflow-hidden rounded border-2 border-black bg-muted-surface">

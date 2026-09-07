@@ -49,7 +49,7 @@ export function AddToCollectionButton({
         onClick={() => toggleEntry({ id, tcg, code, printKey })}
         aria-pressed={inCollection}
         className={`w-full rounded-md border-2 border-black px-2 py-1 text-[11px] font-black transition-transform hover:-translate-y-0.5 ${
-          inCollection ? "bg-accent-surface" : "bg-surface"
+          inCollection ? "bg-muted-surface" : "bg-white"
         }`}
       >
         {inCollection ? "In collection ✓" : (label ?? "I own this")}

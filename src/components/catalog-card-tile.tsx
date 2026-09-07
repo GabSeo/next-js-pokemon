@@ -96,7 +96,7 @@ export function CatalogCardTile({
         {headlineLabel && <span className="text-[10px] text-muted-text">{headlineLabel}</span>}
         {others.map(({ price, shown }) => (
           <span key={price.variantType ?? shown} className="text-[10px] text-muted-text">
-            <span className="font-bold text-body-text">{shown}</span> {price.variantType}
+            <span className="font-bold text-foreground">{shown}</span> {price.variantType}
           </span>
         ))}
       </div>

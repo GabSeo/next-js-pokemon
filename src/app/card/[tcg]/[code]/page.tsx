@@ -118,7 +118,7 @@ function PrintTile({ print, tcg, code }: { print: CardPrint; tcg: CardView["tcg"
 
   return (
     <div
-      className="flex h-full flex-col rounded-lg border-2 border-black bg-surface p-2"
+      className="flex h-full flex-col rounded-lg border-2 border-black bg-white p-2"
       style={{ boxShadow: "3px 3px 0 0 #000" }}
     >
       <div className="mb-2 overflow-hidden rounded border-2 border-black bg-muted-surface">

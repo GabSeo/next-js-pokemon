@@ -10,6 +10,13 @@ import { SITE_NAME } from "@/lib/site";
  * This shell stays a server component, so the only JavaScript the header ships
  * is the menu's own behaviour.
  *
+ * `z-[60]`, not `z-50`, and the number is load-bearing rather than arbitrary:
+ * the chart tooltips also sit at z-50, so at equal height the later element in
+ * the DOM won and a tooltip could paint over an open menu. The menu panel
+ * inside sits higher still, but that only orders it against its siblings —
+ * a positioned ancestor caps everything it contains, so the header itself had
+ * to clear the tooltips.
+ *
  * No `relative` here, deliberately: `sticky` is already a positioned value, so
  * it is the containing block the mobile sheet measures its `absolute … top-16`
  * against. Adding `relative` would not help and would collide — both set
@@ -18,7 +25,7 @@ import { SITE_NAME } from "@/lib/site";
  */
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-50 border-b-2 border-black bg-[var(--color-nav-dark)] text-white">
+    <header className="sticky top-0 z-[60] border-b-2 border-black bg-[var(--color-nav-dark)] text-white">
       <div className="mx-auto flex h-16 max-w-[1180px] items-center justify-between gap-4 px-6">
         <Link href="/" className="flex shrink-0 items-center gap-2 text-xl font-black tracking-[-0.5px]">
           <span className="flex h-8 w-8 items-center justify-center rounded-md border-2 border-white bg-pokemon-red text-base">

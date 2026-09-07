@@ -130,8 +130,12 @@ export function SiteNav() {
                 aria-expanded={open}
                 aria-haspopup="menu"
                 onClick={() => setOpenGroup(open ? undefined : group.id)}
-                className={`flex items-center gap-1.5 rounded-md px-3 py-2 transition-opacity ${
-                  open || active ? "opacity-100" : "opacity-80 hover:opacity-100"
+                className={`flex items-center gap-1.5 rounded-md border-2 px-3 py-2 transition-colors ${
+                  open
+                    ? "border-white bg-white text-[var(--color-nav-dark)]"
+                    : active
+                      ? "border-white/60 bg-white/10 text-white"
+                      : "border-transparent text-white/85 hover:border-white/40 hover:bg-white/10 hover:text-white"
                 }`}
               >
                 {group.label}
@@ -144,7 +148,7 @@ export function SiteNav() {
                 <div
                   role="menu"
                   aria-label={group.label}
-                  className="absolute right-0 top-full z-50 mt-2 w-72 rounded-lg border-2 border-black bg-surface p-1.5 text-body-text"
+                  className="absolute right-0 top-full z-[100] mt-2 w-80 rounded-lg border-2 border-black bg-white p-2 text-foreground"
                   style={{ boxShadow: "4px 4px 0 0 #000" }}
                 >
                   {group.items.map((item) => (
@@ -154,13 +158,15 @@ export function SiteNav() {
                       role="menuitem"
                       aria-current={isCurrent(pathname, item.href) ? "page" : undefined}
                       onClick={() => setOpenGroup(undefined)}
-                      className={`block rounded-md px-3 py-2 transition-colors hover:bg-muted-surface ${
-                        isCurrent(pathname, item.href) ? "bg-muted-surface" : ""
+                      className={`block rounded-md border-2 px-3 py-2.5 transition-colors ${
+                        isCurrent(pathname, item.href)
+                          ? "border-black bg-muted-surface"
+                          : "border-transparent hover:border-black hover:bg-muted-surface"
                       }`}
                     >
                       <span className="block text-sm font-black">{item.label}</span>
                       {item.hint ? (
-                        <span className="mt-0.5 block text-[11px] font-normal text-muted-text">{item.hint}</span>
+                        <span className="mt-0.5 block text-xs font-medium text-muted-text">{item.hint}</span>
                       ) : null}
                     </Link>
                   ))}
@@ -188,11 +194,11 @@ export function SiteNav() {
         <nav
           id="mobile-nav"
           aria-label="Primary"
-          className="absolute left-0 right-0 top-16 z-50 max-h-[calc(100vh-4rem)] overflow-y-auto border-b-2 border-black bg-surface p-4 text-body-text md:hidden"
+          className="absolute left-0 right-0 top-16 z-[100] max-h-[calc(100vh-4rem)] overflow-y-auto border-b-2 border-black bg-white p-4 text-foreground md:hidden"
         >
           {GROUPS.map((group) => (
             <div key={group.id} className="mb-4 last:mb-0">
-              <p className="px-1 text-[11px] font-black uppercase tracking-wide text-muted-text">{group.label}</p>
+              <p className="border-b-2 border-black px-1 pb-1 text-xs font-black uppercase tracking-wide">{group.label}</p>
               <div className="mt-1.5">
                 {group.items.map((item) => (
                   <Link
@@ -200,13 +206,13 @@ export function SiteNav() {
                     href={item.href}
                     aria-current={isCurrent(pathname, item.href) ? "page" : undefined}
                     onClick={() => setMobileOpen(false)}
-                    className={`block rounded-md px-3 py-2.5 ${
-                      isCurrent(pathname, item.href) ? "bg-muted-surface" : ""
+                    className={`block rounded-md border-2 px-3 py-3 ${
+                      isCurrent(pathname, item.href) ? "border-black bg-muted-surface" : "border-transparent"
                     }`}
                   >
                     <span className="block text-sm font-black">{item.label}</span>
                     {item.hint ? (
-                      <span className="mt-0.5 block text-[11px] text-muted-text">{item.hint}</span>
+                      <span className="mt-0.5 block text-xs font-medium text-muted-text">{item.hint}</span>
                     ) : null}
                   </Link>
                 ))}
