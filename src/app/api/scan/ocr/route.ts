@@ -1,8 +1,7 @@
-import { artDistance, artSignature, rarityFromText } from "@/lib/art-rank";
+import { artDistance, artSignature, rarityFromText, referenceSignatures } from "@/lib/art-rank";
 import { extractCardCodes } from "@/lib/card-code-ocr";
 import { lookupCards } from "@/lib/card-lookup";
 import { getCardView, type CardPrint, type CardView } from "@/lib/card-view";
-import { officialImageUrl } from "@/lib/one-piece-official";
 import { readTextFromImage, visionConfigured, VisionNotConfiguredError } from "@/lib/vision";
 
 /**
@@ -131,26 +130,25 @@ async function rankPrintings(cards: CardView[], image: Buffer, text: string): Pr
   if (!photo) return;
 
   const rarity = rarityFromText(text);
+  const english = referenceSignatures("english");
+  const japanese = referenceSignatures("japanese");
+  if (english.size === 0 && japanese.size === 0) return;
 
   for (const card of cards) {
     if (card.tcg !== "onepiece") continue;
     if (card.prints.length < 2 || card.prints.length > MAX_RANKED_PRINTINGS) continue;
 
+    // Precomputed, read from disk once per process. This used to fetch and hash
+    // each reference image per scan -- seven sequential 250 KB downloads for a
+    // seven-printing card, which was the entire "works great but very slow".
     const scored: { print: CardPrint; distance: number }[] = [];
     for (const print of card.prints) {
-      const url = officialImageUrl(print.key, "english") ?? officialImageUrl(print.key, "japanese");
-      if (!url) return;
-      try {
-        // Bandai is unmetered and these are immutable, so the fetch is cached
-        // for a year rather than repeated per scan.
-        const response = await fetch(url, { cache: "force-cache" });
-        if (!response.ok) return;
-        const signature = await artSignature(Buffer.from(await response.arrayBuffer()), true);
-        if (!signature) return;
-        scored.push({ print, distance: artDistance(photo, signature) });
-      } catch {
-        return;
-      }
+      const signature = english.get(print.key) ?? japanese.get(print.key);
+      // A printing with no stored signature leaves the whole card unranked
+      // rather than sorted against a partial set, which would quietly promote
+      // whichever printings happened to be covered.
+      if (!signature) return;
+      scored.push({ print, distance: artDistance(photo, signature) });
     }
 
     // Rarity BOOSTS, it does not filter, and the difference matters. Vision read

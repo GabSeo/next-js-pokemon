@@ -1,3 +1,6 @@
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
+
 import sharp from "sharp";
 
 /**
@@ -107,6 +110,59 @@ export async function artSignature(image: Buffer, alreadyCardShaped = false): Pr
     // falls back to catalogue order.
     return undefined;
   }
+}
+
+const SIGNATURE_DIR = path.join(process.cwd(), "data", "catalog", "one-piece-art");
+
+type StoredSignature = { c: [number, number, number]; h: string };
+type SignatureFile = { computedAt?: string; signatures?: Record<string, StoredSignature> };
+
+const loaded = new Map<string, Map<string, ArtSignature>>();
+
+function fromHex(hex: string): number[] {
+  const bits: number[] = [];
+  for (const character of hex) {
+    const nibble = parseInt(character, 16);
+    bits.push((nibble >> 3) & 1, (nibble >> 2) & 1, (nibble >> 1) & 1, nibble & 1);
+  }
+  return bits;
+}
+
+/**
+ * Reference signatures, precomputed by scripts/one-piece-art-signatures.mts.
+ *
+ * The scan used to derive these at request time: for a card with seven
+ * printings, seven sequential fetches of a ~250 KB image from Bandai, each
+ * decoded and hashed. At 250–600 ms per fetch that is two to four seconds spent
+ * re-deriving something that never changes, and it was the whole of the "works
+ * great but very slow" report.
+ *
+ * A printing's artwork is immutable — Bandai issues a new id rather than
+ * repainting one — so it belongs on disk. Cached per language after the first
+ * read; the file is a few hundred kilobytes.
+ *
+ * Missing file means missing map, not an error: the ranking then leaves the
+ * printings in catalogue order, which is what it did before any of this existed.
+ */
+export function referenceSignatures(language: string): Map<string, ArtSignature> {
+  const cached = loaded.get(language);
+  if (cached) return cached;
+
+  const map = new Map<string, ArtSignature>();
+  const file = path.join(SIGNATURE_DIR, `${language}.json`);
+  if (existsSync(file)) {
+    try {
+      const parsed = JSON.parse(readFileSync(file, "utf8")) as SignatureFile;
+      for (const [id, stored] of Object.entries(parsed.signatures ?? {})) {
+        map.set(id, { chroma: stored.c, bits: fromHex(stored.h) });
+      }
+    } catch {
+      // A corrupt file behaves as an absent one.
+    }
+  }
+
+  loaded.set(language, map);
+  return map;
 }
 
 /** Lower is more alike. Unbounded in principle, ~0.0 to ~1.5 in practice. */
