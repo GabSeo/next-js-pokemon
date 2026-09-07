@@ -79,6 +79,14 @@ export default async function LookupPage({
         </button>
       </form>
 
+      <p className="mt-3 text-xs text-muted-text">
+        Have the card in hand?{" "}
+        <Link href="/scan" className="font-black underline underline-offset-4">
+          Scan it instead
+        </Link>{" "}
+        — the photo is read on your device and lands right back here.
+      </p>
+
       {query.length === 0 ? (
         <div className="mt-8">
           <p className="text-xs font-black uppercase tracking-wide text-muted-text">Try one of these</p>

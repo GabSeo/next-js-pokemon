@@ -8,6 +8,7 @@ const NAV_LINKS = [
   // BOTH games and resolves to one card's printings — it is the scan's
   // interaction without the camera. /cards is the Pokémon browse surface, with
   // facets and sorting, for when you do not know what you are looking for.
+  { href: "/scan", label: "Scan a Card" },
   { href: "/lookup", label: "Find a Card" },
   { href: "/cards", label: "Search Cards" },
   // Points at the real set catalogues. It used to send people to

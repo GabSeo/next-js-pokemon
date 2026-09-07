@@ -505,13 +505,70 @@ honest place for a number.
 **What this leaves for Phase 5**: only capture and read. The camera fills this
 same field, and a bad photo degrades to typing rather than to an error.
 
-### Phase 5 — Scan
+### Phase 5 — Scan ✅ *done*
 
-- Camera capture → client-side OCR → extract code → same route as Phase 3.
-- On low confidence, show the text field pre-filled with the best guess.
+`/scan` photographs a card, reads its code on the device, and hands the string
+to `/lookup` exactly as if it had been typed. Deliberately the thinnest phase of
+the seven: Phase 4 already shipped *match → choose*, so all this adds is
+*capture* and *read*.
 
-**Exit criteria**: scanning a card lands on its printing grid; a failed read
-degrades to typing, never to an error.
+**The server does nothing.** The page is a static shell around a client
+component; the photo never leaves the device and no request is made on its
+behalf. That is what makes the scan free — GCP Vision's 1,000 units/month is
+about 33 scans a day across all users (§4), which cannot serve a free tier at
+all. Tesseract runs on the visitor's machine, so capacity scales with users
+rather than against them. The engine is imported lazily into its own 16 KB
+chunk, so nobody pays for wasm to read the instructions.
+
+**The testable core is `src/lib/card-code-ocr.ts`**, kept pure and free of DOM.
+A camera, a wasm engine and a browser can all be swapped; what decides whether a
+scan works is whether the right code comes out of noisy text, and that is
+answerable in a script.
+
+**Digit/letter confusion is the whole difficulty**, repaired POSITIONALLY —
+`0`→`O` in a slot that must be a letter, `O`→`0` in one that must be a digit.
+Globally would turn `OP05` into `0P05`. Verified with the real engine against
+rendered card corners:
+
+| printed | OCR read | extracted | resolved |
+|---|---|---|---|
+| `OP05-119` | `OP05-119 llius. Studio ©2024` | `OP05-119` | Monkey.D.Luffy |
+| `P-033` | `P-033 llius. Studio ©2024` | `P-033` | Monkey.D.Luffy |
+| `190/182` | `190/182 llius. Studio ©2024` | `190/182` | 2 cards |
+| `4/102` | `4/102 llius. Studio ©2024` | `4/102` | 2 cards |
+
+The engine misread "Illus." as "llius." in every one, and no false code came out
+of it. Hand-written noise repairs too: `0P05-119`, `OPO5—1I9`, `19O/1B2`.
+
+**Two bugs found by writing the tests first:**
+
+1. **Secret rares were being rejected.** The extractor refused any `N/M` where
+   `N > M`, on the intuition that a card cannot outnumber its set. That is
+   exactly what a secret rare IS — and `190/182`, the example this feature was
+   specified against, is one.
+2. **A word boundary does not fire between a digit and an underscore**, so
+   `OP05-119_p2` matched nothing at all. It now ends on a negative lookahead for
+   a digit, which keeps the guard that matters without blinding it to a printing
+   suffix.
+
+**One false positive kept on purpose.** Body text like "2/3 of remaining damage"
+survives as a candidate, because no lower bound on the denominator is honest —
+measured, real official set totals include 1, 5, 6, 7, 8 and 9. It ranks last,
+resolves to nothing, and the page falls back to typing.
+
+**Failure is a designed state, not an error path.** No photo, an unreadable
+photo, a code matching nothing, an engine that will not load — every exit lands
+on the same text field, present at every stage.
+
+**Budget**: `check-free-tier` reports **57 routes, 28 free**. Build 395 pages in
+2.8s. `/scan` has no data loader in its import graph at all.
+
+**Not verified, stated plainly**: a real browser, a real camera, a real card.
+Everything above is the engine and the extractor under test; the last mile is
+photograph quality and only a phone can answer it. Tesseract also fetches its
+wasm core and trained data from a public CDN at first use — free, and not our
+bandwidth, but a runtime dependency we do not control. Its failure path is the
+one already handled: the reader does not start, and typing still works.
 
 ### Phase 6 — Collection (free)
 
