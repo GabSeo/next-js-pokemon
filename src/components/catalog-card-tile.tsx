@@ -49,6 +49,7 @@ export function CatalogCardTile({
   prices,
   setName,
   label,
+  imageUrl,
 }: {
   card: CatalogCard;
   /** Every priced printing, headline first — see getCatalogPricesByVariant. */
@@ -63,6 +64,14 @@ export function CatalogCardTile({
    * already Latin, which is every English card.
    */
   label?: string;
+  /**
+   * The artwork URL, already resolved. Passed in for the same reason `label`
+   * is: a Japanese card's picture may come from the official Japanese data
+   * rather than from TCGdex, and working that out needs the catalogue on disk,
+   * which a client component cannot read. Absent falls back to the card's own
+   * TCGdex image, which is every English card.
+   */
+  imageUrl?: string;
 }) {
   const priced = (prices ?? []).map((price) => ({ price, shown: money(price) })).filter((row) => row.shown);
   const headline = priced[0];
@@ -79,10 +88,10 @@ export function CatalogCardTile({
       className="flex h-full flex-col overflow-hidden rounded-lg border-2 border-black bg-card-surface shadow-hard-sm transition-transform hover:-translate-y-0.5"
     >
       <div className="bg-muted-surface p-2">
-        {card.image ? (
+        {imageUrl ?? card.image ? (
           /* eslint-disable-next-line @next/next/no-img-element -- TCGdex asset host: the URL needs a quality/extension suffix appended, which next/image's loader would not produce */
           <img
-            src={`${card.image}/low.webp`}
+            src={imageUrl ?? `${card.image}/low.webp`}
             alt={label ?? card.name}
             loading="lazy"
             className="aspect-[300/420] w-full rounded object-contain"

@@ -13,6 +13,7 @@
  * and the whole catalogue can be ordered.
  */
 import { latinCardLabel } from "@/lib/card-label";
+import { japaneseImageUrl } from "@/lib/pokemon-ja-official";
 import { cardmarketProductIdFor, getCatalogSets, getCatalogSetCards, type CatalogEntry } from "@/lib/catalog";
 import {
   PAGE_SIZE,
@@ -40,6 +41,12 @@ export type CatalogSearchResult = {
    */
   priceSortPending: boolean;
 };
+
+/** Whether anything can render this card: TCGdex's own asset, or the official Japanese picture. */
+function hasPicture(entry: CatalogEntry): boolean {
+  if (entry.card.image) return true;
+  return entry.set.language === "ja" && japaneseImageUrl(entry.set.id, entry.card.localId) !== undefined;
+}
 
 /** Every entry in the corpus, flattened once per call. Cheap: the underlying arrays are already built and cached. */
 function allEntries(): CatalogEntry[] {
@@ -104,12 +111,23 @@ function facetCounts(
     .sort((a, b) => b.count - a.count || a.value.localeCompare(b.value));
 }
 
+/**
+ * The name a row is SORTED by is the name it SHOWS.
+ *
+ * A Japanese card is labelled in Latin — `Klink` for `ギアル` — so ordering on
+ * the catalogue's own name produced a list that was alphabetical in a spelling
+ * nobody could see: `Trainer 061` landed before `Klink`.
+ */
+function sortName(entry: CatalogEntry): string {
+  return latinCardLabel(entry.card, entry.set.id, entry.set.language === "ja");
+}
+
 function compare(sort: SortId, a: CatalogEntry, b: CatalogEntry): number {
   switch (sort) {
     case "name":
-      return a.card.name.localeCompare(b.card.name) || a.set.id.localeCompare(b.set.id);
+      return sortName(a).localeCompare(sortName(b)) || a.set.id.localeCompare(b.set.id);
     case "name-desc":
-      return b.card.name.localeCompare(a.card.name) || a.set.id.localeCompare(b.set.id);
+      return sortName(b).localeCompare(sortName(a)) || a.set.id.localeCompare(b.set.id);
     case "newest":
       return (b.set.releaseDate ?? "").localeCompare(a.set.releaseDate ?? "") || a.card.name.localeCompare(b.card.name);
     case "oldest":
@@ -145,7 +163,15 @@ export function searchCatalogCards(query: CatalogQuery): CatalogSearchResult {
   const sort: SortId = query.sort && isSortId(query.sort) ? query.sort : "name";
   const wantsPriceSort = sortNeedsPrices(sort);
 
-  const sorted = [...matched].sort((a, b) => compare(sort, a, b));
+  // A CARD NOBODY PICTURES SORTS LAST, whatever the sort — the same rule this
+  // file already applies to prices, for the same reason. 4,330 Japanese cards
+  // are pictured nowhere public, they cluster in the oldest sets, and
+  // alphabetical order put a screenful of them on page one: the catalogue
+  // looked broken rather than incomplete. They stay reachable, at the end.
+  const sorted = [...matched].sort((a, b) => {
+    const pictured = Number(hasPicture(b)) - Number(hasPicture(a));
+    return pictured !== 0 ? pictured : compare(sort, a, b);
+  });
 
   const pageCount = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
   const page = Math.min(Math.max(1, query.page ?? 1), pageCount);
