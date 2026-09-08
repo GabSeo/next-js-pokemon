@@ -27,10 +27,13 @@
     "catalog:pokemon-ja-official": "npx tsx scripts/pokemon-ja-official-crawl.mts",
     "catalog:pokemon-species": "npx tsx scripts/pokemon-species-crawl.mts",
     "check:hygiene": "npx tsx scripts/check-source-hygiene.mts",
-    "catalog:pokemon-art": "npx tsx scripts/pokemon-art-signatures.mts"
+    "catalog:pokemon-art": "npx tsx scripts/pokemon-art-signatures.mts",
+    "catalog:pokemon-clip": "npx tsx scripts/pokemon-clip-embed.mts",
+    "clip:match": "npx tsx scripts/clip-match.mts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
+    "@huggingface/transformers": "^4.2.0",
     "@modelcontextprotocol/server": "^2.0.0",
     "@number-flow/react": "^0.6.2",
     "@visx/event": "^4.0.1-alpha.0",
@@ -68,5 +71,12 @@
     "eslint-config-next": "16.3.1",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "allowScripts": {
+    "onnxruntime-node@1.24.3": true,
+    "protobufjs@7.6.6": true,
+    "sharp@0.34.5": true,
+    "sharp@0.35.4": true,
+    "unrs-resolver@1.12.2": true
   }
 }
