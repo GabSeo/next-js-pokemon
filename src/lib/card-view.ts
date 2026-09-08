@@ -69,6 +69,18 @@ export type CardView = {
 };
 
 
+/**
+ * Where a Pokemon card's artwork comes from.
+ *
+ * TCGdex first; then the official Japanese data, which pictures thousands of
+ * cards TCGdex has none for. Undefined when neither does — those cards are
+ * pictured nowhere public, and saying so beats showing another card's artwork.
+ */
+function image(card: CatalogCard, japaneseSetId?: string): string | undefined {
+  if (card.image) return `${card.image}/high.webp`;
+  return japaneseSetId ? japaneseImageUrl(japaneseSetId, card.localId, 480) : undefined;
+}
+
 /** Pokémon: one card, its variants, each variant's own figures. */
 function pokemonView(tcgdexId: string, prices: Map<string, CatalogPrice[]>): CardView | undefined {
   const entry = getCatalogCard(tcgdexId);
@@ -132,6 +144,25 @@ function variantPrints(
   const seen = new Set<string>();
   const prints: CardPrint[] = [];
 
+  // A CARD WITH NO VARIANT DATA STILL EXISTS. 2,247 Japanese cards come from
+  // the official mirror, for sets TCGdex declares and does not deliver, and it
+  // publishes what a card IS without saying how many ways it was printed. An
+  // empty `variants` array used to render an empty card page — no tile, no
+  // picture, no set name — which reads as a broken page rather than a card we
+  // know less about. One unlabelled printing is the honest floor: the card, its
+  // set, its artwork, and no claim about finishes we have not been told.
+  if (card.variants.length === 0) {
+    return [
+      {
+        key: "unknown",
+        origin: setName,
+        rarity: card.rarity,
+        image: image(card, japaneseSetId),
+        price: byVariant[0],
+      },
+    ];
+  }
+
   for (const variant of card.variants) {
     const key = variant.type ?? "unknown";
     if (seen.has(key)) continue;
@@ -142,14 +173,7 @@ function variantPrints(
       label: variant.type,
       origin: setName,
       rarity: card.rarity,
-      // TCGdex first; then the official Japanese data, which pictures 4,569
-      // cards TCGdex has none for. Undefined when neither does — 4,330 are
-      // pictured nowhere public, and saying so beats another card's artwork.
-      image: card.image
-        ? `${card.image}/high.webp`
-        : japaneseSetId
-          ? japaneseImageUrl(japaneseSetId, card.localId, 480)
-          : undefined,
+      image: image(card, japaneseSetId),
       price: byVariant.find((p) => p.variantType === variant.type),
     });
   }

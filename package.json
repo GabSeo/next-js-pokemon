@@ -29,7 +29,8 @@
     "check:hygiene": "npx tsx scripts/check-source-hygiene.mts",
     "catalog:pokemon-art": "npx tsx scripts/pokemon-art-signatures.mts",
     "catalog:pokemon-clip": "npx tsx scripts/pokemon-clip-embed.mts",
-    "clip:match": "npx tsx scripts/clip-match.mts"
+    "clip:match": "npx tsx scripts/clip-match.mts",
+    "catalog:pokemon-ja-fill": "npx tsx scripts/pokemon-ja-fill.mts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
