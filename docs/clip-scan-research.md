@@ -55,16 +55,53 @@ What survives from that run, and matters: on any SINGLE degradation both
 approaches do well. It is the combination that separates them, and a real
 photograph is always a combination.
 
-### What is still unmeasured
+### Then you sent photographs, and they change the conclusion
 
-**Your phone.** Every degradation above is synthetic — written to be plausible,
-not sampled from reality. Real sensor noise, real motion blur and real foil
-behave differently, and I have no way to know how differently.
+17 real photographs, 8 of them with a card I could identify with certainty.
+Searched against the catalogue for their own language.
 
-`scripts/clip-match.mts` exists so you can settle this in five minutes: put
-photographs in a folder, name each file after the card it shows
-(`base1-4.jpg`), and run it. It prints the top matches, the margin, and the
-top-1 rate.
+| | top-1 | margin |
+| --- | --- | --- |
+| clean publisher scans (synthetic test above) | 8/8 | 0.091 |
+| **your photographs, as shot** | **2/8** | — |
+| your photographs, centre-cropped to 90% | 2/8 | — |
+| your photographs, **centre-cropped to 80%** | **4/8** | 0.006–0.083 |
+| your photographs, centre-cropped to 70% | 3/8 | — |
+
+**Half, at best, and on margins ten times thinner than a clean scan.** That is
+not a working scanner.
+
+**THE MODEL IS NOT THE PROBLEM — THE FRAMING IS.** Look at what a real
+photograph contains: `flarean-3-64.jpeg` is a 1st Edition Jungle Flareon held
+in a hand, filling about half the frame, tilted, in a dim hallway, with a
+shelving unit and a doorway behind it. CLIP is being asked to embed a hallway
+and is doing it faithfully.
+
+Cropping that photo BY HAND to the card moves the right answer from nowhere to
+second place. Which is the proof, and it also exposed a second thing:
+
+### Cross-language artwork collision
+
+Hand-cropped, the top match for the English Jungle Flareon was `B2-018` — the
+**Japanese** printing of the same card — at 0.8382, with the English `base2-3`
+second at 0.8282.
+
+This is §3's rule appearing again one level up: the artwork identifies the
+CARD, and an English card and its Japanese release share it exactly. No
+embedding can separate them, because the difference is the text.
+
+Every number in the table above therefore scopes the search to one language.
+The site already works this way — one catalogue at a time, never both — so
+this costs nothing, but it must stay true of the scan.
+
+### What this does to the plan
+
+`docs/live-scan-plan.md` had OpenCV rectification as step 3, after shipping the
+index and measuring browser inference. **That ordering is wrong.** Until the
+card is isolated from the room, the model quality is irrelevant — it is
+answering a different question well.
+
+Detection and rectification is now step 1, and everything else waits on it.
 
 ## 2. Where CLIP should run — and why your prompt's architecture would not fit
 

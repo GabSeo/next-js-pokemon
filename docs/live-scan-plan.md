@@ -93,6 +93,20 @@ and script because neither Japanese candidate has a picture for anyone.
 
 ---
 
+## 3b. Corrected 2026-09-09 — the ordering below is wrong
+
+Real photographs arrived and were measured (`docs/clip-scan-research.md` §1).
+Against the cards in them, matched by artwork with the search scoped to one
+language:
+
+  clean publisher scans     8/8, margin 0.091
+  the same photographs      2/8 as shot, 4/8 centre-cropped, margins ~0.01
+
+The model is not the limit. A photograph contains a hand, a hallway and a
+shelving unit, and the card fills half the frame; the embedding is faithful to
+all of it. **Detection and rectification (§4.2) is step 1, not step 3.**
+Everything downstream is answering a different question until it exists.
+
 ## 4. What a live scan actually needs
 
 Four steps per frame. Only one is unsolved.
