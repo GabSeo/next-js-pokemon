@@ -88,7 +88,7 @@ function pokemonView(tcgdexId: string, prices: Map<string, CatalogPrice[]>): Car
     // `Gengar Ex` for PCG1-048, `ナゾノクサ` for SV4a-001 — so the species name
     // derived from the card's Pokedex number fills the gap. The name as printed
     // stays in the backend, where the scan reads it off a photograph.
-    name: latinCardLabel(card, set.id),
+    name: latinCardLabel(card, set.id, japanese),
     priceNote: japanese
       ? "Japanese print. Cardmarket and TCGplayer index far fewer Japanese cards, so a missing " +
         "price here usually means nobody publishes one."

@@ -12,6 +12,7 @@
  * live request; with the snapshot (lib/catalog-prices.ts) it is a map lookup
  * and the whole catalogue can be ordered.
  */
+import { latinCardLabel } from "@/lib/card-label";
 import { cardmarketProductIdFor, getCatalogSets, getCatalogSetCards, type CatalogEntry } from "@/lib/catalog";
 import {
   PAGE_SIZE,
@@ -53,7 +54,16 @@ type Predicate = (entry: CatalogEntry) => boolean;
 function predicatesFor(query: CatalogQuery): Record<string, Predicate> {
   const needle = query.q?.trim().toLowerCase();
   return {
-    q: (e) => !needle || e.card.name.toLowerCase().includes(needle) || e.card.localId.toLowerCase() === needle,
+    // SEARCH WHAT IS SHOWN. A Japanese card is labelled in Latin — `Charizard`
+    // for `リザードン` — so matching only the catalogue's own name meant typing
+    // the label a person is reading found nothing. Both are tested: the label
+    // for what they see, the raw name because the Japanese spelling is also
+    // worth being findable by someone who can type it.
+    q: (e) =>
+      !needle ||
+      e.card.name.toLowerCase().includes(needle) ||
+      latinCardLabel(e.card, e.set.id, e.set.language === "ja").toLowerCase().includes(needle) ||
+      e.card.localId.toLowerCase() === needle,
     serie: (e) => !query.serie || e.set.serie?.name === query.serie,
     // The QUALIFIED id: `neo1` names a set in each catalogue, so the bare one
     // would silently mix two sets' cards under one filter.

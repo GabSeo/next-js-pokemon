@@ -30,14 +30,46 @@ import { speciesInJapaneseName, speciesName } from "@/lib/pokemon-species";
  */
 
 const JAPANESE_SCRIPT = /[぀-ゟ゠-ヿ一-鿿]/;
-const SUFFIX = /(?:VMAX|VSTAR|V-UNION|BREAK|LEGEND|GX|EX|ex|V)/g;
+/**
+ * The mechanic a card carries, written in Latin even on a Japanese face.
+ *
+ * Matched case-insensitively and then CANONICALISED, because the same mechanic
+ * is spelled three ways across the catalogues — `EX`, `ex` and `Ex` all appear,
+ * and an exact-case list silently dropped the third: `Aggron Ex` came out as
+ * plain `Aggron`.
+ */
+const SUFFIX = /(?<![A-Za-z])(?:VMAX|VSTAR|V-UNION|BREAK|LEGEND|GX|EX|V)(?![A-Za-z])/gi;
 
-export function latinCardLabel(card: CatalogCard, setId: string): string {
-  if (!JAPANESE_SCRIPT.test(card.name)) return card.name;
+/** `ex` lower-case is the modern spelling; the rest are upper. */
+const CANONICAL: Record<string, string> = {
+  ex: "ex",
+  gx: "GX",
+  v: "V",
+  vmax: "VMAX",
+  vstar: "VSTAR",
+  "v-union": "V-UNION",
+  break: "BREAK",
+  legend: "LEGEND",
+};
 
+function suffixesOf(name: string): string[] {
+  const found = (name.match(SUFFIX) ?? []).map((token) => CANONICAL[token.toLowerCase()] ?? token);
+  return [...new Set(found)];
+}
+
+export function latinCardLabel(card: CatalogCard, setId: string, japanese = true): string {
+  // English cards are named by their own catalogue and nothing else.
+  if (!japanese) return card.name;
+
+  // THE SPECIES WINS ON A JAPANESE CARD, even when the catalogue already spells
+  // the name in Latin. TCGdex's Latin spellings on that side are unreliable
+  // where they exist at all — `aipom` in lower case, `a` for a card whose name
+  // did not survive — and a card labelled `a` is worse than one labelled from
+  // its Pokedex number. The catalogue name is kept only when nothing else can
+  // name the card.
   const species = speciesName(card.dexId);
   if (species) {
-    const suffixes = [...new Set(card.name.match(SUFFIX) ?? [])];
+    const suffixes = suffixesOf(card.name);
     return suffixes.length > 0 ? `${species} ${suffixes.join(" ")}` : species;
   }
 
@@ -45,13 +77,17 @@ export function latinCardLabel(card: CatalogCard, setId: string): string {
   // none for them either — but the species is still written in the name.
   const named = speciesInJapaneseName(card.name);
   if (named) {
-    const suffixes = [...new Set(card.name.match(SUFFIX) ?? [])];
+    const suffixes = suffixesOf(card.name);
     const mega = /^mega|^メガ/i.test(card.name) ? "M " : "";
     return `${mega}${named}${suffixes.length > 0 ? ` ${suffixes.join(" ")}` : ""}`;
   }
 
   const official = japaneseEnglishLabel(setId, card.localId);
   if (official) return official;
+
+  // Nothing named it. A Latin name from the catalogue, however scruffy, still
+  // beats a category — but a Japanese one does not.
+  if (!JAPANESE_SCRIPT.test(card.name)) return card.name;
 
   const kind = card.category?.trim();
   return kind ? `${kind} ${card.localId}` : card.localId;

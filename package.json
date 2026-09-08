@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:e2e": "playwright test",
-    "prebuild": "npx tsx scripts/check-free-tier.mts && npx tsx scripts/check-image-urls.mts && npx tsx scripts/check-one-piece-vocabulary.mts && npx tsx scripts/price-refresh.mts",
+    "prebuild": "npx tsx scripts/check-free-tier.mts && npx tsx scripts/check-image-urls.mts && npx tsx scripts/check-source-hygiene.mts && npx tsx scripts/check-one-piece-vocabulary.mts && npx tsx scripts/price-refresh.mts",
     "prices": "npx tsx scripts/price-refresh.mts",
     "catalog": "npx tsx scripts/catalog-crawl.mts",
     "catalog:one-piece": "npx tsx scripts/one-piece-official-crawl.mts",
@@ -25,7 +25,8 @@
     "check:image-urls": "npx tsx scripts/check-image-urls.mts",
     "catalog:pokemon-ja": "npx tsx scripts/catalog-crawl.mts --language ja",
     "catalog:pokemon-ja-official": "npx tsx scripts/pokemon-ja-official-crawl.mts",
-    "catalog:pokemon-species": "npx tsx scripts/pokemon-species-crawl.mts"
+    "catalog:pokemon-species": "npx tsx scripts/pokemon-species-crawl.mts",
+    "check:hygiene": "npx tsx scripts/check-source-hygiene.mts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

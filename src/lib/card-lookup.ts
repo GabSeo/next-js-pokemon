@@ -80,7 +80,7 @@ function pokemonMatch(entry: CatalogEntry, detail?: string): LookupMatch {
     tcg: "pokemon",
     code: japanese ? `ja~${card.tcgdexId}` : card.tcgdexId,
     // Latin, always — the same four-source rule card-view.ts documents.
-    name: latinCardLabel(card, set.id),
+    name: latinCardLabel(card, set.id, japanese),
     // The set CODE for Japanese sets: `SV4a (JP)` reads and searches where the
     // Japanese title does not.
     origin: japanese ? `${set.id} (JP)` : set.name,

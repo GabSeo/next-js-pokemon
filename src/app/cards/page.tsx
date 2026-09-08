@@ -114,6 +114,7 @@ export default async function CardsPage({ searchParams }: PageProps) {
           basePath="/cards"
           total={result.total}
           placeholder="Search by card name or number…"
+          showLanguage
           filter={{
             param: "set",
             label: "Set",
@@ -136,7 +137,7 @@ export default async function CardsPage({ searchParams }: PageProps) {
                 <li key={entry.card.tcgdexId}>
                   <CatalogCardTile
                     card={entry.card}
-                    label={latinCardLabel(entry.card, entry.set.id)}
+                    label={latinCardLabel(entry.card, entry.set.id, entry.set.language === "ja")}
                     setName={entry.set.language === "ja" ? `${entry.set.id} (JP)` : entry.set.name}
                     prices={prices.get(entry.card.tcgdexId)}
                   />

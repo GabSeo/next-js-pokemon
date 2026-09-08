@@ -752,7 +752,7 @@ async function runSearch(
     // because the other 6 were US-located resellers. That measurement is
     // about what this rule MISSES, not about it being wrong. It is a floor,
     // not a filter, and it complements the title check in titleMatchesCard
-    // (`japanese|jp`) rather than replacing it: one reads what the
+    // (`\bjapanese\b|\bjp\b`) rather than replacing it: one reads what the
     // seller wrote, this reads where the parcel starts.
     //
     // The cost is a Japanese seller shipping a genuine English print, which

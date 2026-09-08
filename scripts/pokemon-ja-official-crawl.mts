@@ -179,7 +179,7 @@ function key(setId: string, number: string): string {
 }
 
 /** `ex`, `EX`, `GX`, `V`, `VMAX`, `VSTAR`, `BREAK`, `LEGEND` — written in Latin even on a Japanese card. */
-const SUFFIX = /(?:VMAX|VSTAR|V-UNION|BREAK|LEGEND|GX|EX|ex|V)/g;
+const SUFFIX = /(?<![A-Za-z])(?:VMAX|VSTAR|V-UNION|BREAK|LEGEND|GX|EX|V)(?![A-Za-z])/gi;
 
 async function speciesNames(): Promise<Map<number, string>> {
   const names = new Map<number, string>();
