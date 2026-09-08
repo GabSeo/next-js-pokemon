@@ -48,12 +48,21 @@ export function CatalogCardTile({
   card,
   prices,
   setName,
+  label,
 }: {
   card: CatalogCard;
   /** Every priced printing, headline first — see getCatalogPricesByVariant. */
   prices?: CatalogPrice[];
   /** Shown only where the grid mixes sets — the set page already says which set this is. */
   setName?: string;
+  /**
+   * The Latin label for the card, from lib/card-label.
+   *
+   * Passed in rather than derived here: this is a client component and the
+   * label needs the catalogue on disk. Absent means the card's own name is
+   * already Latin, which is every English card.
+   */
+  label?: string;
 }) {
   const priced = (prices ?? []).map((price) => ({ price, shown: money(price) })).filter((row) => row.shown);
   const headline = priced[0];
@@ -74,7 +83,7 @@ export function CatalogCardTile({
           /* eslint-disable-next-line @next/next/no-img-element -- TCGdex asset host: the URL needs a quality/extension suffix appended, which next/image's loader would not produce */
           <img
             src={`${card.image}/low.webp`}
-            alt={card.name}
+            alt={label ?? card.name}
             loading="lazy"
             className="aspect-[300/420] w-full rounded object-contain"
           />
@@ -83,8 +92,8 @@ export function CatalogCardTile({
         )}
       </div>
       <div className="flex flex-1 flex-col gap-0.5 border-t-2 border-black p-2">
-        <span className="truncate text-xs font-bold" title={card.name}>
-          {card.name}
+        <span className="truncate text-xs font-bold" title={label ?? card.name}>
+          {label ?? card.name}
         </span>
         <span className="truncate text-[10px] text-muted-text" title={setName}>
           {setName ? `${setName} · ` : ""}#{card.localId}

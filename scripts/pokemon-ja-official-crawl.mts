@@ -49,6 +49,26 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 const REPO = "https://github.com/type-null/PTCG-database.git";
+
+/**
+ * Every Pokemon species name in English, in ONE request.
+ *
+ * WHY THIS IS NEEDED. TCGdex romanises SOME Japanese card names and not others
+ * — `Gengar Ex` for PCG1-048, `ナゾノクサ` for SV4a-001 — so a Japanese card's
+ * label was Japanese about half the time. The labels on this site are Latin;
+ * the Japanese spelling belongs in the backend, where the scan reads it off a
+ * photograph.
+ *
+ * The official data carries `pokedex_number`, which is the same integer in
+ * every language, so the species name is a lookup rather than a translation.
+ * PokeAPI answers all 1,025 of them in a single unauthenticated call, and the
+ * result is stored beside the cards — nothing at request time touches it.
+ *
+ * A species name is not a card name: `リザードンex` is Charizard with a suffix.
+ * The suffix is Latin on the card itself, so it is carried across from the
+ * Japanese name rather than invented.
+ */
+const SPECIES_URL = "https://pokeapi.co/api/v2/pokemon-species/?limit=1100";
 const OUT_DIR = path.join(process.cwd(), "data", "catalog", "pokemon-ja-official");
 
 const args = process.argv.slice(2);
@@ -158,7 +178,45 @@ function key(setId: string, number: string): string {
   return Number.isFinite(digits) && /^\d+$/.test(String(number)) ? `${setId}#${digits}` : `${setId}#${number}`;
 }
 
+/** `ex`, `EX`, `GX`, `V`, `VMAX`, `VSTAR`, `BREAK`, `LEGEND` — written in Latin even on a Japanese card. */
+const SUFFIX = /(?:VMAX|VSTAR|V-UNION|BREAK|LEGEND|GX|EX|ex|V)/g;
+
+async function speciesNames(): Promise<Map<number, string>> {
+  const names = new Map<number, string>();
+  try {
+    const response = await fetch(SPECIES_URL, { headers: { Accept: "application/json" } });
+    if (!response.ok) throw new Error(String(response.status));
+    const parsed = (await response.json()) as { results?: { name?: string }[] };
+    (parsed.results ?? []).forEach((entry, index) => {
+      const slug = entry.name;
+      if (!slug) return;
+      // `mr-mime` -> `Mr Mime`, `nidoran-f` -> `Nidoran F`.
+      const title = slug
+        .split("-")
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(" ");
+      names.set(index + 1, title);
+    });
+  } catch (error) {
+    // Optional: without it a Japanese card keeps whatever TCGdex spells it,
+    // which is the behaviour before this existed rather than a failure.
+    console.warn(`[pokemon-ja] species names unavailable (${error}) — labels fall back to TCGdex.`);
+  }
+  return names;
+}
+
+/** The card's English label: the species, plus the Latin suffix the Japanese name already carries. */
+function englishLabel(record: Record_, species: Map<number, string>): string | undefined {
+  const dex = record.pokedex_number;
+  if (typeof dex !== "number") return undefined;
+  const base = species.get(dex);
+  if (!base) return undefined;
+  const suffixes = [...new Set((record.name ?? "").match(SUFFIX) ?? [])];
+  return suffixes.length > 0 ? `${base} ${suffixes.join(" ")}` : base;
+}
+
 const started = Date.now();
+const species = await speciesNames();
 const { dir, temporary } = clone();
 
 try {
@@ -171,7 +229,15 @@ try {
   const files = walk(root);
   const cards: Record<
     string,
-    { jpId: string; name: string; img: string; total?: number; url?: string; fp?: Record<string, unknown> }
+    {
+      jpId: string;
+      name: string;
+      en?: string;
+      img: string;
+      total?: number;
+      url?: string;
+      fp?: Record<string, unknown>;
+    }
   > = {};
   let skipped = 0;
 
@@ -195,6 +261,7 @@ try {
     cards[id] = {
       jpId: String(jpId ?? ""),
       name,
+      en: englishLabel(record, species),
       img,
       total: record.set_total && record.set_total > 0 ? record.set_total : undefined,
       url: record.url,
@@ -215,9 +282,11 @@ try {
 
   const count = Object.keys(cards).length;
   const fingerprinted = Object.values(cards).filter((card) => card.fp).length;
+  const labelled = Object.values(cards).filter((card) => card.en).length;
   console.log(
     `[pokemon-ja] ${files.length} records read, ${count} keyed by (set, number), ${skipped} incomplete, ` +
-      `${fingerprinted} with a cross-language fingerprint — ${((Date.now() - started) / 1000).toFixed(0)}s`
+      `${fingerprinted} with a cross-language fingerprint, ${labelled} with an English label — ` +
+      `${((Date.now() - started) / 1000).toFixed(0)}s`
   );
 } finally {
   if (temporary) rmSync(dir, { recursive: true, force: true });

@@ -24,7 +24,8 @@
     "catalog:one-piece-aliases": "npx tsx scripts/one-piece-print-aliases.mts",
     "check:image-urls": "npx tsx scripts/check-image-urls.mts",
     "catalog:pokemon-ja": "npx tsx scripts/catalog-crawl.mts --language ja",
-    "catalog:pokemon-ja-official": "npx tsx scripts/pokemon-ja-official-crawl.mts"
+    "catalog:pokemon-ja-official": "npx tsx scripts/pokemon-ja-official-crawl.mts",
+    "catalog:pokemon-species": "npx tsx scripts/pokemon-species-crawl.mts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

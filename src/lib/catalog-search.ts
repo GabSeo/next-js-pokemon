@@ -42,10 +42,10 @@ export type CatalogSearchResult = {
 
 /** Every entry in the corpus, flattened once per call. Cheap: the underlying arrays are already built and cached. */
 function allEntries(): CatalogEntry[] {
-  // ENGLISH ONLY. The Japanese corpus is a recognition aid, not a surface: the
-  // frontend shows the English print of a card, which is the one with a market
-  // behind it. Searching Japanese here would offer cards no page will render.
-  return getCatalogSets({ language: "en" }).flatMap((set) => getCatalogSetCards(set.id, "en"));
+  // Both corpora are loaded; the QUERY picks one. A search never spans them —
+  // see CatalogQuery.language — because a result list mixing two catalogues
+  // makes "which of these is the card in my hand" harder, not easier.
+  return getCatalogSets({ language: "all" }).flatMap((set) => getCatalogSetCards(set.id, set.language));
 }
 
 type Predicate = (entry: CatalogEntry) => boolean;

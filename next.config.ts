@@ -182,6 +182,7 @@ const nextConfig: NextConfig = {
       "./data/catalog/pokemon/**",
       "./data/catalog/pokemon-ja/**",
       "./data/catalog/pokemon-ja-official/**",
+      "./data/catalog/pokemon-species.json",
       "./data/prices/**",
     ],
     // /sets is now a chooser and counts both catalogues, so it needs both.
@@ -189,18 +190,21 @@ const nextConfig: NextConfig = {
       "./data/catalog/pokemon/**",
       "./data/catalog/pokemon-ja/**",
       "./data/catalog/pokemon-ja-official/**",
+      "./data/catalog/pokemon-species.json",
       "./data/catalog/one-piece-official/**",
     ],
     "/sets/pokemon": [
       "./data/catalog/pokemon/**",
       "./data/catalog/pokemon-ja/**",
       "./data/catalog/pokemon-ja-official/**",
+      "./data/catalog/pokemon-species.json",
       "./data/prices/**",
     ],
     "/sets/[setId]": [
       "./data/catalog/pokemon/**",
       "./data/catalog/pokemon-ja/**",
       "./data/catalog/pokemon-ja-official/**",
+      "./data/catalog/pokemon-species.json",
       "./data/prices/**",
     ],
     // The One Piece browse page reads the official catalogue and nothing else —
@@ -215,6 +219,9 @@ const nextConfig: NextConfig = {
     // catalogue, at request time by definition — the id arrives in the path, so
     // there is no build step at which this could have been read instead.
     "/api/one-piece-image/[printingId]": ["./data/catalog/one-piece-official/**"],
+    // Same shape for Japanese Pokemon: the key arrives in the path and resolves
+    // to an official URL through the mirrored index.
+    "/api/pokemon-ja-image/[cardKey]": ["./data/catalog/pokemon-ja-official/**", "./data/catalog/pokemon-species.json"],
     // The scan resolves scanned codes to cards and ranks their printings by
     // artwork, so it needs both catalogues, the price snapshot the card view
     // reads, and the precomputed artwork signatures.
@@ -222,6 +229,7 @@ const nextConfig: NextConfig = {
       "./data/catalog/pokemon/**",
       "./data/catalog/pokemon-ja/**",
       "./data/catalog/pokemon-ja-official/**",
+      "./data/catalog/pokemon-species.json",
       "./data/catalog/one-piece-official/**",
       "./data/catalog/one-piece-optcg/**",
       "./data/catalog/one-piece-art/**",
@@ -231,6 +239,7 @@ const nextConfig: NextConfig = {
       "./data/catalog/pokemon/**",
       "./data/catalog/pokemon-ja/**",
       "./data/catalog/pokemon-ja-official/**",
+      "./data/catalog/pokemon-species.json",
       "./data/catalog/one-piece-official/**",
       "./data/catalog/one-piece-optcg/**",
       "./data/prices/**",
@@ -242,13 +251,19 @@ const nextConfig: NextConfig = {
     // The lookup box resolves across both games at request time (searchParams),
     // so it reads both catalogues. No prices: it answers "which card", and only
     // the card page answers "which printing".
-    "/lookup": ["./data/catalog/pokemon/**",
+    "/lookup": [
+      "./data/catalog/pokemon/**",
       "./data/catalog/pokemon-ja/**",
-      "./data/catalog/pokemon-ja-official/**", "./data/catalog/one-piece-official/**", "./data/catalog/one-piece-optcg/**"],
+      "./data/catalog/pokemon-ja-official/**",
+      "./data/catalog/pokemon-species.json",
+      "./data/catalog/one-piece-official/**",
+      "./data/catalog/one-piece-optcg/**",
+    ],
     "/card/[tcg]/[code]": [
       "./data/catalog/pokemon/**",
       "./data/catalog/pokemon-ja/**",
       "./data/catalog/pokemon-ja-official/**",
+      "./data/catalog/pokemon-species.json",
       "./data/catalog/one-piece-official/**",
       "./data/catalog/one-piece-optcg/**",
       "./data/prices/**",

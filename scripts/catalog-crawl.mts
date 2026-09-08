@@ -169,6 +169,8 @@ type TcgdexCardDetail = {
   id: string;
   localId: string;
   name: string;
+  /** National Pokedex numbers. An array because a few cards depict two Pokemon. */
+  dexId?: number[];
   rarity?: string;
   category?: string;
   illustrator?: string;
@@ -209,6 +211,8 @@ type CatalogCard = {
   tcgdexId: string;
   localId: string;
   name: string;
+  /** The National Pokedex number — see lib/catalog.ts on why it is kept. */
+  dexId?: number;
   rarity?: string;
   category?: string;
   illustrator?: string;
@@ -285,6 +289,11 @@ function toCatalogCard(detail: TcgdexCardDetail): CatalogCard {
     tcgdexId: detail.id,
     localId: detail.localId,
     name: detail.name,
+    // The Pokedex number, which is the same integer in every language. It is
+    // what lets a Japanese card be LABELLED in English without translating
+    // anything: TCGdex romanises only some Japanese names, so the species name
+    // fills the rest. Kept for both languages because it costs a field.
+    dexId: detail.dexId?.[0],
     rarity: detail.rarity,
     category: detail.category,
     illustrator: detail.illustrator,

@@ -124,6 +124,15 @@ export type CatalogCard = {
   tcgdexId: string;
   localId: string;
   name: string;
+  /**
+   * The National Pokedex number, which is the same integer in every language.
+   *
+   * It is what lets a Japanese card be LABELLED in English without translating
+   * anything: TCGdex romanises only some Japanese names (`Gengar Ex`, but
+   * `ナゾノクサ`), and every label on this site is Latin. Absent on Trainer and
+   * Energy cards, which depict no Pokemon.
+   */
+  dexId?: number;
   rarity?: string;
   category?: string;
   illustrator?: string;

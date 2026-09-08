@@ -6,6 +6,7 @@ import { EyebrowTitle } from "@/components/retro/eyebrow-title";
 import { catalogStats, getCatalogSets } from "@/lib/catalog";
 import { getCatalogPriceValues, getCatalogPricesByVariant, priceSnapshotDate } from "@/lib/catalog-prices";
 import { PAGE_SIZE, isSortId, searchCatalogCards, type CatalogQuery } from "@/lib/catalog-search";
+import { latinCardLabel } from "@/lib/card-label";
 
 /**
  * Search the whole physical catalogue, filtered and sorted server-side.
@@ -45,25 +46,27 @@ function one(value: string | string[] | undefined): string | undefined {
 export default async function CardsPage({ searchParams }: PageProps) {
   const raw = await searchParams;
   const sort = one(raw.sort);
+  // ONE LANGUAGE, NEVER BOTH, defaulting to English — see SearchControls.
+  const language = one(raw.lang) === "ja" ? "ja" : "en";
   const query: CatalogQuery = {
     q: one(raw.q),
     set: one(raw.set),
-    // English only — see catalog-search's allEntries. The set filter is the one
-    // control that survived; see SearchControls on why the other four went.
-    language: "en",
+    language,
     sort: isSortId(sort) ? sort : undefined,
     page: Number(one(raw.page)) || 1,
   };
 
   const result = searchCatalogCards(query);
-  const stats = catalogStats({ language: "en" });
+  const stats = catalogStats({ language });
 
   // The picker shows names, the URL carries qualified ids. Built here because
   // this is the layer that holds the catalogue; the filter panel is a client
   // component and must not read it.
   const setNames: Record<string, string> = {};
-  for (const set of getCatalogSets({ language: "en" })) {
-    setNames[`en~${set.id}`] = set.name;
+  for (const set of getCatalogSets({ language })) {
+    // The set CODE for Japanese sets: `SV4a (JP)` reads and searches where the
+    // Japanese title does not.
+    setNames[`${language}~${set.id}`] = language === "ja" ? `${set.id} (JP)` : set.name;
   }
   const pricedAt = priceSnapshotDate();
 
@@ -133,7 +136,8 @@ export default async function CardsPage({ searchParams }: PageProps) {
                 <li key={entry.card.tcgdexId}>
                   <CatalogCardTile
                     card={entry.card}
-                    setName={entry.set.name}
+                    label={latinCardLabel(entry.card, entry.set.id)}
+                    setName={entry.set.language === "ja" ? `${entry.set.id} (JP)` : entry.set.name}
                     prices={prices.get(entry.card.tcgdexId)}
                   />
                 </li>

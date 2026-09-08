@@ -2,6 +2,8 @@ import { getCatalogCard, getCatalogSetCards, getCatalogSets, type CatalogEntry }
 import { searchCatalogCards } from "@/lib/catalog-search";
 import { officialCode, officialRowsForCode, officialSearchByName } from "@/lib/one-piece-official";
 import { onePieceImageUrl } from "@/lib/one-piece-images";
+import { japaneseImageUrl } from "@/lib/pokemon-ja-official";
+import { latinCardLabel } from "@/lib/card-label";
 
 /**
  * Resolve whatever a person types into candidate CARDS, across both games.
@@ -65,18 +67,28 @@ const OP_CODE = /^([A-Z]{1,4}\d{2}-\d{3}|P-\d{3})(_[A-Za-z0-9]+)?$/i;
 /** The number printed on a Pokémon card: `190/182`. */
 const PRINTED_NUMBER = /^(\d+)\s*\/\s*(\d+)$/;
 
+
 function pokemonMatch(entry: CatalogEntry, detail?: string): LookupMatch {
   const { card, set } = entry;
   // One per variant TYPE, matching what the card page renders — see
   // card-view.ts on why Base Set Charizard's four `holo` variants are one.
   const printings = new Set(card.variants.map((v) => v.type ?? "unknown")).size;
 
+  const japanese = set.language === "ja";
+
   return {
     tcg: "pokemon",
-    code: card.tcgdexId,
-    name: card.name,
-    origin: set.language === "ja" ? `${set.name} (JP)` : set.name,
-    image: card.image ? `${card.image}/low.webp` : undefined,
+    code: japanese ? `ja~${card.tcgdexId}` : card.tcgdexId,
+    // Latin, always — the same four-source rule card-view.ts documents.
+    name: latinCardLabel(card, set.id),
+    // The set CODE for Japanese sets: `SV4a (JP)` reads and searches where the
+    // Japanese title does not.
+    origin: japanese ? `${set.id} (JP)` : set.name,
+    image: card.image
+      ? `${card.image}/low.webp`
+      : japanese
+        ? japaneseImageUrl(set.id, card.localId, 320)
+        : undefined,
     printings: Math.max(printings, 1),
     detail: detail ?? card.rarity,
   };
@@ -123,9 +135,9 @@ function byPrintedNumber(localId: string, total: number): LookupMatch[] {
   // silently finds nothing in the other language; both are reduced to a number.
   const wanted = Number(localId);
 
-  for (const set of getCatalogSets({ language: "en" })) {
+  for (const set of getCatalogSets({ language: "all" })) {
     if (set.cardCount?.official !== total) continue;
-    const hit = getCatalogSetCards(set.id, "en").find(
+    const hit = getCatalogSetCards(set.id, set.language).find(
       (entry) => Number(entry.card.localId) === wanted && /^\d+$/.test(entry.card.localId)
     );
     if (hit) out.push(pokemonMatch(hit, `#${localId}/${total}`));

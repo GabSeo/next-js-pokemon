@@ -54,8 +54,8 @@ function build(): Index {
   // carrying it, and the caller resolves that through its own lookup.
   const seen = new Set<string>();
   const english: [string, string][] = [];
-  for (const set of getCatalogSets({ language: "en" })) {
-    for (const { card } of getCatalogSetCards(set.id, "en")) {
+  for (const set of getCatalogSets({ language: "all" })) {
+    for (const { card } of getCatalogSetCards(set.id, set.language)) {
       const name = card.name?.trim();
       if (!name || name.length < MIN_LATIN || seen.has(name.toLowerCase())) continue;
       seen.add(name.toLowerCase());

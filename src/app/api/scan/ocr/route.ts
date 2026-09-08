@@ -1,6 +1,7 @@
 import { artDistance, artSignature, rarityFromText, referenceSignatures } from "@/lib/art-rank";
 import { extractCardCodes } from "@/lib/card-code-ocr";
 import { namesInText } from "@/lib/card-name-match";
+import { japaneseName } from "@/lib/pokemon-ja-official";
 import { lookupCards } from "@/lib/card-lookup";
 import { getCardView, type CardPrint, type CardView } from "@/lib/card-view";
 import { readTextFromImage, visionConfigured, VisionNotConfiguredError } from "@/lib/vision";
@@ -197,44 +198,59 @@ async function rankPrintings(cards: CardView[], image: Buffer, text: string): Pr
 const JAPANESE_SCRIPT = /[぀-ゟ゠-ヿ一-鿿]/;
 
 /**
- * Order the candidates, and drop the ones a Japanese photo cannot be.
+ * Put the candidate that best matches what Vision actually read first.
  *
- * WHY ANY OF THIS. What is printed on a Pokemon card is `048/082` — a number
- * and a set size, never the set, which is carried by a symbol no OCR reads.
- * 154 of 216 English sets share their printed total with another English set,
- * so one photographed number genuinely names several cards, and the scan shows
- * the FIRST as "your card".
+ * WHY ORDERING IS THE ANSWER. What is printed on a Pokemon card is `048/082` —
+ * a number and a set size, never the set, which is carried by a symbol no OCR
+ * reads. 154 of 216 English sets share their printed total with another English
+ * set and 152 of 182 Japanese ones do, so one photographed number genuinely
+ * names several cards. The scan shows the FIRST as "your card", so the order is
+ * the answer, and both signals below were already in hand and thrown away.
  *
- * THE NAME ORDERS THEM. A candidate whose name appears in the text Vision
- * returned is the card, not a card with the same number.
+ * THE NAME, the stronger of the two: a candidate whose name appears in the text
+ * Vision returned is the card, not a card with the same number. The Japanese
+ * corpus holds names AS PRINTED for exactly this — the labels on screen stay
+ * romanised, but `ゲンガーex` is what the camera sees.
  *
- * THE SCRIPT DISQUALIFIES, and this one is a filter rather than a nudge — the
- * only one here. A card face written in kana is not an English card, so an
- * English candidate that matched a Japanese photo matched on a number the two
- * share by coincidence. That is how a photographed Japanese Gengar ex became
- * Team Rocket Porygon, complete with a price and an "I own this" button.
- * Showing nothing is worse for exactly one scan; showing the wrong card is
- * worse for every one after it, because it makes the right answers unbelievable
- * too.
+ * THE SCRIPT, for the 4,330 Japanese cards no source names in Japanese: a card
+ * face written in kana is not an English Team Rocket card.
  *
- * Japanese cards are never candidates themselves: they are catalogued to
- * recognise what somebody is holding, and the English print is what this app
- * shows, tracks and prices. Turning a recognised Japanese card into its English
- * counterpart is the next piece of work and is not done here.
+ * ORDERS, NEVER FILTERS — the same rule as the rarity boost. Vision misreads,
+ * cards carry both scripts, and a card can be photographed beside other text. A
+ * wrong guess costs position, which a person can see past; filtering would cost
+ * availability, which they cannot.
  */
-function orderCandidates(cards: CardView[], text: string): CardView[] {
+function orderCandidates(cards: CardView[], text: string): void {
   const japanese = JAPANESE_SCRIPT.test(text);
   const haystack = text.toLowerCase();
 
-  const named = (card: CardView) => {
+  const rank = (card: CardView): number => {
+    // 0 — the name Vision read is this card's name, in either spelling.
+    const printed = card.tcg === "pokemon" ? japanesePrintedName(card.code) : undefined;
+    if (printed && text.includes(printed)) return 0;
     const name = card.name?.trim();
-    return Boolean(name && name.length >= 2 && (text.includes(name) || haystack.includes(name.toLowerCase())));
+    if (name && name.length >= 2 && (text.includes(name) || haystack.includes(name.toLowerCase()))) return 0;
+    if (card.tcg !== "pokemon") return 1;
+    // 1 — written in the script Vision read. 2 — written in the other one.
+    return card.code.startsWith("ja~") === japanese ? 1 : 2;
   };
 
-  const kept = japanese ? cards.filter((card) => card.tcg !== "pokemon" || named(card)) : cards;
-
   // Stable: equal ranks keep the order the catalogue gave them.
-  return [...kept].sort((a, b) => Number(named(b)) - Number(named(a)));
+  cards.sort((a, b) => rank(a) - rank(b));
+}
+
+/**
+ * The name printed on a Japanese card, for a `ja~<tcgdexId>` code.
+ *
+ * The catalogue romanises it and the UI keeps that romanisation; this is the
+ * spelling the camera actually sees, and it lives here rather than on screen.
+ */
+function japanesePrintedName(code: string): string | undefined {
+  if (!code.startsWith("ja~")) return undefined;
+  const id = code.slice(3);
+  const dash = id.lastIndexOf("-");
+  if (dash <= 0) return undefined;
+  return japaneseName(id.slice(0, dash), id.slice(dash + 1));
 }
 
 export async function POST(request: Request) {
@@ -311,10 +327,10 @@ export async function POST(request: Request) {
       }
     }
 
-    const ordered = orderCandidates(cards, text);
-    await rankPrintings(ordered, image, text);
+    orderCandidates(cards, text);
+    await rankPrintings(cards, image, text);
 
-    return Response.json({ text, candidates, cards: ordered });
+    return Response.json({ text, candidates, cards });
   } catch (error) {
     if (error instanceof VisionNotConfiguredError) {
       return Response.json({ error: "Vision is not configured." }, { status: 501 });
