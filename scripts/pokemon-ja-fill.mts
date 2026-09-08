@@ -28,8 +28,18 @@
  * the same official index — so the picture resolves through the path that
  * already exists rather than a second one.
  *
- * WHAT IT DOES NOT FIX: 3,349 cards in sets neither source carries, ADV1-ADV5
- * among them. Nothing free reaches those today.
+ * IT ALSO CREATES THE SETS TCGdex DOES NOT KNOW AT ALL, which is the larger
+ * half. TCGdex publishes 184 Japanese sets; the official mirror covers 308.
+ * The 197 it does not list hold 8,891 cards and EVERY ONE OF THEM HAS AN IMAGE
+ * — 20th, BKR, BGS, the BW-era decks, a long tail of campaign sets. Our set
+ * list was simply the narrowest of the sources we hold.
+ *
+ * A created set is named by its CODE, because that is all the mirror gives and
+ * it is what Japanese sets already display (`SV4a (JP)`). Its declared size is
+ * the largest `set_total` its cards report.
+ *
+ * WHAT IT DOES NOT FIX: sets neither source carries, ADV1-ADV5 among them.
+ * Nothing free reaches those today.
  *
  *   npm run catalog:pokemon-ja-fill
  *   npx tsx scripts/pokemon-ja-fill.mts --dry-run
@@ -72,8 +82,25 @@ for (const [key, card] of Object.entries(official)) {
 
 let filesTouched = 0;
 let added = 0;
+let created = 0;
 let stillMissing = 0;
 const report: string[] = [];
+
+/** One card, in the shape lib/catalog.ts reads. */
+function toCatalogCard(setId: string, number: string, card: OfficialCard): CatalogCard {
+  // Zero-padded to three, matching how TCGdex writes Japanese numbers, so every
+  // downstream comparison sees one convention.
+  const localId = /^\d+$/.test(number) ? number.padStart(3, "0") : number;
+  return {
+    tcgdexId: `${setId}-${localId}`,
+    localId,
+    name: card.name,
+    dexId: card.fp?.dex,
+    category: card.fp?.dex === undefined ? "Trainer" : "Pokemon",
+    variants: [],
+    source: "official-jp",
+  };
+}
 
 for (const file of readdirSync(CATALOG_DIR)) {
   if (!file.endsWith(".json") || file === "_sets.json") continue;
@@ -102,18 +129,7 @@ for (const file of readdirSync(CATALOG_DIR)) {
   if (missing.length === 0) continue;
 
   for (const { number, card } of missing) {
-    // Zero-padded to three, matching how TCGdex writes Japanese numbers, so
-    // every downstream comparison sees one convention.
-    const localId = /^\d+$/.test(number) ? number.padStart(3, "0") : number;
-    parsed.cards.push({
-      tcgdexId: `${parsed.set.id}-${localId}`,
-      localId,
-      name: card.name,
-      dexId: card.fp?.dex,
-      category: card.fp?.dex === undefined ? "Trainer" : "Pokemon",
-      variants: [],
-      source: "official-jp",
-    });
+    parsed.cards.push(toCatalogCard(parsed.set.id, number, card));
     added++;
   }
 
@@ -129,9 +145,50 @@ for (const file of readdirSync(CATALOG_DIR)) {
   if (!dryRun) writeFileSync(full, JSON.stringify(parsed));
 }
 
+// --- sets TCGdex does not list at all -------------------------------------
+
+const known = new Set(
+  readdirSync(CATALOG_DIR)
+    .filter((f) => f.endsWith(".json") && f !== "_sets.json")
+    .map((f) => {
+      try {
+        return (JSON.parse(readFileSync(path.join(CATALOG_DIR, f), "utf8")) as SetFile).set.id;
+      } catch {
+        return "";
+      }
+    })
+);
+
+for (const [setId, cards] of bySet) {
+  if (known.has(setId)) continue;
+
+  // The declared size is the largest total its own cards report — the mirror
+  // records it per card rather than per set.
+  const declared = Math.max(...cards.map(({ card }) => Number((card as { total?: number }).total ?? 0)), cards.length);
+
+  const file: SetFile = {
+    crawledAt: new Date().toISOString(),
+    source: "official-jp",
+    set: { id: setId, cardCount: { official: declared } },
+    cards: cards
+      .map(({ number, card }) => toCatalogCard(setId, number, card))
+      .sort((a, b) => Number(a.localId) - Number(b.localId) || a.localId.localeCompare(b.localId)),
+  };
+
+  // `name` is the code: it is all the mirror gives, and Japanese sets already
+  // display their code rather than their title.
+  (file.set as { id: string; name?: string }).name = setId;
+
+  added += file.cards.length;
+  created++;
+  if (!dryRun) writeFileSync(path.join(CATALOG_DIR, `${encodeURIComponent(setId)}.json`), JSON.stringify(file));
+}
+
 for (const line of report.slice(0, 15)) console.log("   " + line);
 if (report.length > 15) console.log(`   … and ${report.length - 15} more sets`);
 console.log(
-  `\n[fill] ${dryRun ? "would add" : "added"} ${added} cards across ${filesTouched} sets; ` +
+  `
+[fill] ${dryRun ? "would add" : "added"} ${added} cards — ` +
+    `${filesTouched} sets filled in, ${created} sets created from scratch; ` +
     `${stillMissing} still missing, in sets neither source carries`
 );
