@@ -233,6 +233,7 @@ const nextConfig: NextConfig = {
       "./data/catalog/one-piece-official/**",
       "./data/catalog/one-piece-optcg/**",
       "./data/catalog/one-piece-art/**",
+      "./data/catalog/pokemon-art/**",
       "./data/prices/**",
     ],
     "/api/scan/resolve": [

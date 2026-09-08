@@ -26,7 +26,8 @@
     "catalog:pokemon-ja": "npx tsx scripts/catalog-crawl.mts --language ja",
     "catalog:pokemon-ja-official": "npx tsx scripts/pokemon-ja-official-crawl.mts",
     "catalog:pokemon-species": "npx tsx scripts/pokemon-species-crawl.mts",
-    "check:hygiene": "npx tsx scripts/check-source-hygiene.mts"
+    "check:hygiene": "npx tsx scripts/check-source-hygiene.mts",
+    "catalog:pokemon-art": "npx tsx scripts/pokemon-art-signatures.mts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

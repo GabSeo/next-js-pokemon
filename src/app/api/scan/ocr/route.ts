@@ -2,6 +2,7 @@ import { artDistance, artSignature, rarityFromText, referenceSignatures } from "
 import { extractCardCodes } from "@/lib/card-code-ocr";
 import { namesInText } from "@/lib/card-name-match";
 import { japaneseName } from "@/lib/pokemon-ja-official";
+import { pokemonSignature } from "@/lib/pokemon-art";
 import { lookupCards } from "@/lib/card-lookup";
 import { getCardView, type CardPrint, type CardView } from "@/lib/card-view";
 import { readTextFromImage, visionConfigured, VisionNotConfiguredError } from "@/lib/vision";
@@ -253,6 +254,50 @@ function japanesePrintedName(code: string): string | undefined {
   return japaneseName(id.slice(0, dash), id.slice(dash + 1));
 }
 
+/**
+ * Order the Pokemon candidates by how much each LOOKS like the photograph.
+ *
+ * WHY THIS IS THE RIGHT SIGNAL. What is printed on a Pokemon card is `048/082`
+ * — a number and a set size, never the set, which is carried by a symbol no OCR
+ * reads. 154 of 216 English sets share their printed total with another English
+ * set, so one photographed number genuinely names several cards. Until now the
+ * only thing separating them was the script the text was written in, which
+ * answers "which catalogue" and not "which card".
+ *
+ * ALL OR NOTHING, like the One Piece ranker and for the same reason: a
+ * candidate with no signature cannot lose a comparison it never entered, so
+ * ranking a partial set would quietly promote whichever cards happen to be
+ * covered. 4,330 Japanese cards are pictured nowhere public; when one of them
+ * is a candidate, the whole group keeps the order the name and script gave it.
+ *
+ * THE CARD, NEVER THE PRINTING. 0 of 10,110 multi-variant Pokemon cards have a
+ * distinct image, so this cannot tell a normal from its reverse holo. That is
+ * Vision's job, once, on confirmation.
+ */
+async function rankPokemonCards(cards: CardView[], image: Buffer): Promise<void> {
+  const pokemon = cards.filter((card) => card.tcg === "pokemon");
+  if (pokemon.length < 2) return;
+
+  // Every candidate first: one unsigned card leaves the whole group alone.
+  const signatures = pokemon.map((card) => pokemonSignature(card.code));
+  if (signatures.some((signature) => signature === undefined)) return;
+
+  const photo = await artSignature(image);
+  if (!photo) return;
+
+  const scored = pokemon
+    .map((card, index) => ({ card, distance: artDistance(photo, signatures[index]!) }))
+    .sort((a, b) => a.distance - b.distance);
+
+  // Rewrite only the Pokemon slots, in place, so One Piece candidates keep the
+  // position `orderCandidates` gave them.
+  const ordered = scored.map((entry) => entry.card);
+  let next = 0;
+  for (let i = 0; i < cards.length; i++) {
+    if (cards[i].tcg === "pokemon") cards[i] = ordered[next++];
+  }
+}
+
 export async function POST(request: Request) {
   if (!visionConfigured()) {
     // 501, not 500: nothing is broken, the feature simply is not set up. The
@@ -328,6 +373,7 @@ export async function POST(request: Request) {
     }
 
     orderCandidates(cards, text);
+    await rankPokemonCards(cards, image);
     await rankPrintings(cards, image, text);
 
     return Response.json({ text, candidates, cards });

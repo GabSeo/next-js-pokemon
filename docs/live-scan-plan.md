@@ -54,29 +54,42 @@ matters; irrelevant to the camera.
 
 ---
 
-## 3. What we are missing
+## 3. Signatures — was the gap, now closed
 
-One thing, and it is the whole project:
-
-> **We hold artwork signatures for One Piece and none at all for Pokémon.**
+When this was written we held artwork signatures for One Piece and **none at
+all** for Pokémon, which is why the scan could rank One Piece printings by
+looking at them and could only order Pokémon candidates by the script they were
+printed in.
 
 | corpus | cards | signatures |
 | --- | --- | --- |
 | One Piece (en + ja) | 10,828 printings | **10,828** |
-| Pokémon English | 21,066 (21,829 with an image) | **0** |
-| Pokémon Japanese | 12,781 (8,451 with an image) | **0** |
+| Pokémon English | 23,546 | **21,762** (92%) |
+| Pokémon Japanese | 12,781 | **8,449** (66%) |
 
-`scripts/one-piece-art-signatures.mts` already does exactly this job for One
-Piece: fetch each image once, hash it, store 64 bits plus three colour floats.
-It runs incrementally and skips what it has. Pointing the same pass at TCGdex
-would produce ~30,000 Pokémon signatures.
+**Done 2026-09-08.** `scripts/pokemon-art-signatures.mts`, 30,211 signatures,
+1.8 MB, ~9 minutes. The Japanese ceiling is image availability, not the script:
+4,330 of those cards are pictured nowhere public.
 
-Estimated cost, from the One Piece run (10,828 images in ~10 minutes at
-concurrency 12): **30–40 minutes, once**, then seconds per new set. TCGdex has
-no quota ceiling in `lib/api-budget.ts`. Output would be roughly 1 MB.
+`scripts/pokemon-art-signatures.mts` does for Pokémon what the One Piece pass
+already did: fetch each image once, hash it, store 64 bits plus three colour
+floats, skip anything already signed. Two sources, matching where the
+catalogue's pictures come from — TCGdex's asset host, and the official Japanese
+card site for the 4,569 cards only the mirrored official data pictures.
 
-**This is the single highest-value thing to build next**, and it is a script we
-have already written once.
+`lib/pokemon-art.ts` reads them, and the scan uses them: when EVERY Pokémon
+candidate is signed, the group is ordered by how much each looks like the
+photograph. All-or-nothing, like the One Piece ranker — a candidate with no
+signature cannot lose a comparison it never entered, so a partial set would
+quietly promote whichever cards happen to be covered.
+
+Measured against a real card image: a photo of Base Set Charizard scores
+**0.000** against itself and **0.673** / **0.808** against the other cards
+printed `004/102`.
+
+The remaining ceiling is not the script. 4,330 Japanese cards are pictured
+nowhere public, and `048/082` — the Japanese Gengar — is still ordered by name
+and script because neither Japanese candidate has a picture for anyone.
 
 ---
 
@@ -158,7 +171,8 @@ than what we do now, and it makes the live view free.
 | tool | for |
 | --- | --- |
 | `lib/art-rank.ts` | chroma + dHash, thresholds measured against real photographs |
-| `scripts/one-piece-art-signatures.mts` | incremental signature generation, needs pointing at Pokémon |
+| `scripts/one-piece-art-signatures.mts`, `scripts/pokemon-art-signatures.mts` | incremental signature generation, both games |
+| `lib/pokemon-art.ts` | 30,211 Pokémon signatures, by TCGdex id |
 | `sharp` | server-side image work; not needed on the client path |
 | Google Vision | the printed number and name, once per confirmed scan |
 
@@ -186,11 +200,13 @@ than what we do now, and it makes the live view free.
 
 Each step is independently useful, and each is verifiable before the next.
 
-1. **Pokémon artwork signatures.** Point the existing script at TCGdex, both
-   languages. ~30–40 minutes of crawling, ~1 MB stored. *Immediately* improves
-   the current photo scan, which today cannot rank Pokémon candidates at all —
-   that is why a Japanese Gengar and a Team Rocket Porygon are ordered by
-   script rather than by looking at them.
+1. ~~**Pokémon artwork signatures.**~~ **Done.** 30,211 signatures, 1.8 MB.
+   The scan now ranks Pokémon candidates by artwork when every candidate is
+   signed: measured, a photo of Base Set Charizard scores 0.000 against itself
+   and 0.673 / 0.808 against the other cards printed `004/102`. When one
+   candidate is unsigned the whole group keeps the name-and-script order, which
+   is still what happens to the Japanese Gengar — neither Japanese candidate
+   for `048/082` is pictured anywhere public.
 2. **Ship the index to the browser.** One static file, 469 KB, cached
    immutably. Verify the same match happens client-side as server-side.
 3. **Re-measure the threshold against photographs**, not scans. Take 20 photos
