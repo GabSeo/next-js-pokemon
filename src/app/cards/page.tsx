@@ -4,8 +4,7 @@ import { SearchControls } from "@/components/search-controls";
 import { CatalogCardTile } from "@/components/catalog-card-tile";
 import { EyebrowTitle } from "@/components/retro/eyebrow-title";
 import { catalogStats, getCatalogSets } from "@/lib/catalog";
-import { getCatalogPriceValues, getCatalogPricesByVariant, priceSnapshotDate } from "@/lib/catalog-prices";
-import { PAGE_SIZE, isSortId, searchCatalogCards, type CatalogQuery } from "@/lib/catalog-search";
+import { isSortId, searchCatalogCards, type CatalogQuery } from "@/lib/catalog-search";
 import { latinCardLabel } from "@/lib/card-label";
 import { japaneseImageUrl } from "@/lib/pokemon-ja-official";
 
@@ -20,19 +19,20 @@ import { japaneseImageUrl } from "@/lib/pokemon-ja-official";
  * WHAT COSTS ANYTHING, AND WHAT DOES NOT:
  *
  *   filtering / sorting / facet counts   0 requests — pure, over tier 1
- *   prices for the 60 cards on screen    map lookups against the snapshot
- *   prices for a price SORT              map lookups for the whole result set
+ *   rendering a page of results          the catalogue, and nothing else
  *
  * Nothing here touches the network in the normal case, which is what makes a
  * request-time page acceptable at this size — it was 0.35-1.26s per page of
- * unseen cards when each price was fetched live. No metered quota is reachable
+ * unseen cards when each price was fetched live. NO PRICES AT ALL NOW: browsing
+ * is for finding a card, and a figure per tile is a question the card page
+ * answers per printing. No metered quota is reachable
  * from this page at all either: the only client in its import graph is
  * lib/catalog-prices.ts, which reads a file and, for a card the snapshot
  * lacks, talks to TCGdex and nothing else.
  */
 export const metadata: Metadata = {
   title: "Search Pokémon cards",
-  description: "Search every Pokémon TCG card by name, set, rarity and printing, with live market prices.",
+  description: "Search every Pokémon TCG card by name, in English or Japanese, filtered by set.",
   alternates: { canonical: "/cards" },
 };
 
@@ -69,33 +69,7 @@ export default async function CardsPage({ searchParams }: PageProps) {
     // Japanese title does not.
     setNames[`${language}~${set.id}`] = language === "ja" ? `${set.id} (JP)` : set.name;
   }
-  const pricedAt = priceSnapshotDate();
-
-  // A price sort must order the WHOLE result set, so it reads one comparable
-  // figure per row (getCatalogPriceValues) rather than building a full price
-  // object for every match — the difference between 1.31s and a few tens of ms
-  // on a whole-catalogue sort. Full prices are then resolved only for the page
-  // that will actually be rendered.
-  let entries = result.entries;
-  if (result.priceSortPending) {
-    const values = getCatalogPriceValues(result.matched.map((e) => e.card));
-    const direction = query.sort === "price-low" ? 1 : -1;
-    // Unpriced cards sort to the end in BOTH directions rather than counting
-    // as zero — "we have no price" is not "this card is free", and a low-to-
-    // high sort led by cards with no price would be actively misleading.
-    entries = [...result.matched]
-      .sort((a, b) => {
-        const av = values.get(a.card.tcgdexId);
-        const bv = values.get(b.card.tcgdexId);
-        if (av === undefined && bv === undefined) return 0;
-        if (av === undefined) return 1;
-        if (bv === undefined) return -1;
-        return (av - bv) * direction;
-      })
-      .slice((result.page - 1) * PAGE_SIZE, (result.page - 1) * PAGE_SIZE + PAGE_SIZE);
-  }
-
-  const prices = await getCatalogPricesByVariant(entries.map((e) => e.card));
+  const entries = result.entries;
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6">
@@ -103,7 +77,7 @@ export default async function CardsPage({ searchParams }: PageProps) {
       <h1 className="mt-2 text-3xl font-black tracking-tight">Search Pokémon cards</h1>
       <p className="mt-2 text-sm text-muted-text">
         {stats.cards.toLocaleString("en-US")} cards across {stats.sets} sets. Identity is read from our own snapshot;
-        prices are from our latest snapshot{pricedAt ? `, taken ${pricedAt.slice(0, 10)}` : ""}.{" "}
+        every printing of it is one click away.{" "}
         <Link href="/sets/pokemon" className="font-bold underline underline-offset-4">
           Browse by set
         </Link>
@@ -147,7 +121,6 @@ export default async function CardsPage({ searchParams }: PageProps) {
                           : undefined
                     }
                     setName={entry.set.language === "ja" ? `${entry.set.id} (JP)` : entry.set.name}
-                    prices={prices.get(entry.card.tcgdexId)}
                   />
                 </li>
               ))}

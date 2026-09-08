@@ -1,59 +1,35 @@
 import Link from "next/link";
 
 import type { CatalogCard } from "@/lib/catalog";
-import { primaryVariantType, type CatalogPrice } from "@/lib/catalog-prices";
 
 /**
  * One catalogue card in a grid — the set page and the search page share this.
  *
- * Shows the Cardmarket average when there is one and the TCGplayer market
- * price otherwise, NEVER both and never a figure derived from the other. The
- * site-wide rule holds here as everywhere else: Cardmarket is EUR, TCGplayer
- * is USD, and no conversion exists between them (lib/market-views.ts).
+ * NO PRICES, deliberately, and this tile used to be full of them.
  *
- * EVERY PRICED PRINTING IS SHOWN, headline first, each labelled. A grid tile
- * used to have room for exactly one number and took the headline, which was
- * honest — it said which printing it quoted — but left the others unreachable.
- * That is most of the card's value for a reverse holo: 79.3% of snapshot rows
- * carry a distinct reverse figure, a median 3.36x from the normal one (Venonat
- * swsh12-001 is EUR 0.04 against EUR 0.18). Extra printings render smaller than
- * the headline, so the tile still reads as one price at a glance.
+ * Browsing is for FINDING a card. A figure on a tile answers a different
+ * question, and it could not answer it honestly at this size: a Pokemon card's
+ * reverse holo is a median 3.36x its normal twin and 79.3% of snapshot rows
+ * carry a distinct reverse figure, so one number per tile is either the wrong
+ * printing or a claim the tile has no room to qualify. /card/[tcg]/[code]
+ * answers it per printing, which is the only place it can be answered at all.
  *
- * LINKS TO /card/pokemon/[tcgdexId], which it did not used to. The old comment
- * here argued the tile should NOT be a link, because the only card page was
- * /products/[slug] — a premium surface needing price history (apitcg,
- * 1,000/month), a graded market (eBay, 8 searches per card) and JP/FR prints
- * (PokéWallet, 100/hour), none of which can be paid 21,066 times. Linking a
- * tile to a thin imitation of it would have advertised the premium surface and
- * then not delivered.
+ * It was also the expensive half of a page of results. Rendering a grid now
+ * reads the catalogue and nothing else — no price snapshot, no per-variant
+ * resolution, no whole-corpus pass for a price sort — which is what a search
+ * meant to keep up with a camera needs.
  *
- * That reasoning held until there was a real free destination. There is now:
- * /card/[tcg]/[code] renders every printing of a card from disk, costs no
- * metered call, and is the page a scan will land on. The premium split is
- * unchanged — it moved from "do not link" to "link to the free page".
+ * WHY LINKING HERE IS FINE, unchanged: /card/[tcg]/[code] renders every
+ * printing from disk and costs no metered call. The premium split moved from
+ * "do not link" to "link to the free page".
  */
-/**
- * The one figure a tile quotes for a printing: Cardmarket's average when there
- * is one, TCGplayer's market price otherwise. Never both, never converted.
- */
-function money(price: CatalogPrice): string | undefined {
-  const cm = price.cardmarket?.avg;
-  if (cm !== undefined) return new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR" }).format(cm);
-  const tp = price.tcgplayer?.market;
-  if (tp !== undefined) return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(tp);
-  return undefined;
-}
-
 export function CatalogCardTile({
   card,
-  prices,
   setName,
   label,
   imageUrl,
 }: {
   card: CatalogCard;
-  /** Every priced printing, headline first — see getCatalogPricesByVariant. */
-  prices?: CatalogPrice[];
   /** Shown only where the grid mixes sets — the set page already says which set this is. */
   setName?: string;
   /**
@@ -67,20 +43,12 @@ export function CatalogCardTile({
   /**
    * The artwork URL, already resolved. Passed in for the same reason `label`
    * is: a Japanese card's picture may come from the official Japanese data
-   * rather than from TCGdex, and working that out needs the catalogue on disk,
-   * which a client component cannot read. Absent falls back to the card's own
-   * TCGdex image, which is every English card.
+   * rather than from TCGdex, and working that out needs the catalogue on disk.
+   * Absent falls back to the card's own TCGdex image.
    */
   imageUrl?: string;
 }) {
-  const priced = (prices ?? []).map((price) => ({ price, shown: money(price) })).filter((row) => row.shown);
-  const headline = priced[0];
-  const others = priced.slice(1);
-
-  // Labelled only when the card really has several printings; on a
-  // single-printing card the type is noise.
-  const multi = card.variants.length > 1;
-  const headlineLabel = multi ? (headline?.price.variantType ?? primaryVariantType(card)) : undefined;
+  const src = imageUrl ?? (card.image ? `${card.image}/low.webp` : undefined);
 
   return (
     <Link
@@ -88,16 +56,18 @@ export function CatalogCardTile({
       className="flex h-full flex-col overflow-hidden rounded-lg border-2 border-black bg-card-surface shadow-hard-sm transition-transform hover:-translate-y-0.5"
     >
       <div className="bg-muted-surface p-2">
-        {imageUrl ?? card.image ? (
-          /* eslint-disable-next-line @next/next/no-img-element -- TCGdex asset host: the URL needs a quality/extension suffix appended, which next/image's loader would not produce */
+        {src ? (
+          /* eslint-disable-next-line @next/next/no-img-element -- TCGdex asset host and our own Japanese proxy both serve pre-sized files; next/image would re-optimize on a metered quota */
           <img
-            src={imageUrl ?? `${card.image}/low.webp`}
+            src={src}
             alt={label ?? card.name}
             loading="lazy"
             className="aspect-[300/420] w-full rounded object-contain"
           />
         ) : (
-          <div className="aspect-[300/420] w-full rounded bg-card-surface" />
+          <div className="flex aspect-[300/420] w-full items-center justify-center rounded bg-card-surface p-2 text-center text-[10px] text-muted-text">
+            No picture published
+          </div>
         )}
       </div>
       <div className="flex flex-1 flex-col gap-0.5 border-t-2 border-black p-2">
@@ -108,15 +78,6 @@ export function CatalogCardTile({
           {setName ? `${setName} · ` : ""}#{card.localId}
           {card.rarity ? ` · ${card.rarity}` : ""}
         </span>
-        <span className="mt-auto pt-1 text-xs font-black">
-          {headline?.shown ?? <span className="font-bold text-muted-text">No price</span>}
-        </span>
-        {headlineLabel && <span className="text-[10px] text-muted-text">{headlineLabel}</span>}
-        {others.map(({ price, shown }) => (
-          <span key={price.variantType ?? shown} className="text-[10px] text-muted-text">
-            <span className="font-bold text-foreground">{shown}</span> {price.variantType}
-          </span>
-        ))}
       </div>
     </Link>
   );

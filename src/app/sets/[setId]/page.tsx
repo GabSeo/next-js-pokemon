@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { EyebrowTitle } from "@/components/retro/eyebrow-title";
 import { CatalogCardTile } from "@/components/catalog-card-tile";
 import { getCatalogSet, getCatalogSetCards, getCatalogSets, isDigitalOnlySet } from "@/lib/catalog";
-import { getCatalogPricesByVariant, priceSnapshotDate } from "@/lib/catalog-prices";
 import { absoluteUrl } from "@/lib/site";
 
 /**
@@ -14,7 +13,6 @@ import { absoluteUrl } from "@/lib/site";
  * reason this page is affordable:
  *
  *   identity  — lib/catalog.ts, off disk, 0 requests, instant
- *   prices    — lib/catalog-prices.ts, live TCGdex, ~1.2s for 120 cards
  *
  * Neither half spends metered quota. TCGdex is keyless and is not a bucket in
  * lib/api-budget.ts, so a 300-card set costs nothing against the four budgets
@@ -68,8 +66,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const set = servableSet(setId);
   if (!set) return {};
   return {
-    title: `${set.name} — card list and prices`,
-    description: `Every card in ${set.name}${set.serie?.name ? ` (${set.serie.name})` : ""}, with live Cardmarket and TCGplayer prices.`,
+    title: `${set.name} — every card`,
+    description: `Every card in ${set.name}${set.serie?.name ? ` (${set.serie.name})` : ""}, with its artwork, number and rarity.`,
     alternates: { canonical: `/sets/${set.id}` },
   };
 }
@@ -81,14 +79,6 @@ export default async function SetPage({ params }: PageProps) {
 
   const entries = getCatalogSetCards(set.id);
   const cards = entries.map((e) => e.card);
-
-  // Map lookups against the price snapshot — no network in the normal case.
-  // See lib/catalog-prices.ts for the per-card live fallback and why it is
-  // per-card rather than per-file.
-  const prices = await getCatalogPricesByVariant(cards);
-
-  const pricedCount = prices.size;
-  const pricedAt = priceSnapshotDate();
 
   const itemListJsonLd = {
     "@context": "https://schema.org",
@@ -122,28 +112,15 @@ export default async function SetPage({ params }: PageProps) {
         </div>
       </div>
 
-      {/* A stated absence rather than an empty grid. Coverage is 95.4% of
-          physical cards but genuinely uneven — Trainer kits sit at 48%, and a
-          card can carry a marketplace pointer while that marketplace publishes
-          no figures (the whole Gym series does exactly this, see
-          docs/pokemon-catalogue.md). A reader deserves to know they are
-          looking at a real gap rather than a page that failed to load. */}
-      <p className="mt-6 rounded-lg border-2 border-black bg-muted-surface p-3 text-xs">
-        {pricedCount === 0 ? (
-          <>No marketplace prices are available for this set. Our sources carry no Cardmarket or TCGplayer product for these cards.</>
-        ) : (
-          <>
-            Prices for {pricedCount} of {cards.length} cards
-            {pricedAt ? `, as of ${pricedAt.slice(0, 10)}` : ""}. Cardmarket figures are EUR, TCGplayer USD, and neither
-            is ever converted into the other.
-          </>
-        )}
-      </p>
+      {/* No prices here any more: browsing is for finding a card, and a figure
+          per tile could not be qualified at that size — a reverse holo is a
+          median 3.36x its normal twin. /card/[tcg]/[code] answers it per
+          printing, which is the only place it can be answered honestly. */}
 
       <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {entries.map(({ card }) => (
           <li key={card.tcgdexId}>
-            <CatalogCardTile card={card} prices={prices.get(card.tcgdexId)} />
+            <CatalogCardTile card={card} />
           </li>
         ))}
       </ul>

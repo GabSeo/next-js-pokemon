@@ -5,7 +5,6 @@ import { SearchControls } from "@/components/search-controls";
 import { isSortId, PAGE_SIZE, type SortId } from "@/lib/catalog-query";
 import { officialCardsInPack, officialCode, officialPacks } from "@/lib/one-piece-official";
 import { onePieceImageUrl, onePieceSrc, onePieceSrcSet } from "@/lib/one-piece-images";
-import { optcgPriceRange } from "@/lib/one-piece-optcg";
 
 /**
  * Search the One Piece catalogue — the same surface as /cards, one game over.
@@ -22,9 +21,9 @@ import { optcgPriceRange } from "@/lib/one-piece-optcg";
  * for; its printings differ by picture and by as much as 200x in price, and the
  * card page is where they are compared side by side. So a row shows the RANGE.
  *
- * PRICES ARE optcgapi's, in USD, as of the last crawl — the figures Bandai does
- * not publish because it does not sell singles. A card with no price sorts to
- * the end in BOTH directions: "we have no price" is not "this is free".
+ * NO PRICES. Browsing is for finding a card; a One Piece code spans as much as
+ * 200x across its printings, so one figure on a tile would be the exact claim
+ * this project refuses to make. The card page shows them per printing.
  *
  * FREE AND REQUEST-TIME. Reading searchParams makes this dynamic, and it costs
  * nothing — the whole answer is two files on disk.
@@ -33,7 +32,7 @@ import { optcgPriceRange } from "@/lib/one-piece-optcg";
 export const metadata: Metadata = {
   title: "Search One Piece cards",
   description:
-    "Search every One Piece card by name or code, filtered by pack and sorted by price. " +
+    "Search every One Piece card by name or code, filtered by pack. " +
     "Every printing of a code, side by side.",
 };
 
@@ -43,14 +42,7 @@ function one(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
-type Row = {
-  code: string;
-  name: string;
-  pack: string;
-  printings: number;
-  low?: number;
-  high?: number;
-};
+type Row = { code: string; name: string; pack: string; printings: number };
 
 export default async function OnePieceSearchPage({
   searchParams,
@@ -81,53 +73,29 @@ export default async function OnePieceSearchPage({
       if (seen.has(code)) continue;
       if (needle && !card.name.toLowerCase().includes(needle) && !code.toLowerCase().includes(needle)) continue;
       seen.add(code);
-      const range = optcgPriceRange(code);
       rows.push({
         code,
         name: card.name,
         pack: p.label ?? p.title,
         printings: cards.filter((c) => officialCode(c.id) === code).length,
-        low: range?.low,
-        high: range?.high,
       });
     }
   }
 
-  // Unpriced rows sort to the end in BOTH directions rather than counting as
-  // zero — a low-to-high list led by cards we cannot price would be actively
-  // misleading, which is the same rule /cards applies.
-  const byPrice = (direction: 1 | -1) => (a: Row, b: Row) => {
-    const av = direction === 1 ? a.low : a.high;
-    const bv = direction === 1 ? b.low : b.high;
-    if (av === undefined && bv === undefined) return a.name.localeCompare(b.name);
-    if (av === undefined) return 1;
-    if (bv === undefined) return -1;
-    return (av - bv) * direction;
-  };
-
   if (sort === "name-desc") rows.sort((a, b) => b.name.localeCompare(a.name) || a.code.localeCompare(b.code));
-  else if (sort === "price-high") rows.sort(byPrice(-1));
-  else if (sort === "price-low") rows.sort(byPrice(1));
   else rows.sort((a, b) => a.name.localeCompare(b.name) || a.code.localeCompare(b.code));
 
   const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const current = Math.min(page, pageCount);
   const entries = rows.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
 
-  const money = (value: number) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
-
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8">
       <EyebrowTitle tone="blue">Catalogue</EyebrowTitle>
       <h1 className="mt-2 text-3xl font-black tracking-tight">Search One Piece cards</h1>
       <p className="mt-2 text-sm text-muted-text">
-        {seen.size.toLocaleString("en-US")} cards across {packs.length} packs. Identity is Bandai&apos;s; prices are
-        optcgapi&apos;s mirror in USD, as of our last crawl.{" "}
+        {seen.size.toLocaleString("en-US")} cards across {packs.length} packs. Identity is Bandai&apos;s;
+every printing of a code is one click away.{" "}
         <Link href="/sets/onepiece" className="font-bold underline underline-offset-4">
           Browse by pack
         </Link>
@@ -186,16 +154,7 @@ export default async function OnePieceSearchPage({
                         <span className="truncate text-[10px] text-muted-text" title={row.pack}>
                           {row.pack} · {row.code}
                         </span>
-                        <span className="mt-auto pt-1 text-xs font-black">
-                          {row.high === undefined ? (
-                            <span className="font-bold text-muted-text">No price</span>
-                          ) : row.low !== undefined && row.low !== row.high ? (
-                            `${money(row.low)} – ${money(row.high)}`
-                          ) : (
-                            money(row.high)
-                          )}
-                        </span>
-                        <span className="text-[10px] text-muted-text">
+                        <span className="mt-auto pt-1 text-[10px] text-muted-text">
                           {row.printings} printing
                           {row.printings === 1 ? "" : "s"} in this pack
                         </span>
