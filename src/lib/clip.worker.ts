@@ -32,6 +32,8 @@ const SIDE = 256;
 
 let vision: VisionModel | undefined;
 let Tensor: TensorCtor | undefined;
+/** Which backend actually loaded, reported so it can be seen rather than assumed. */
+let backend: "webgpu" | "wasm" = "wasm";
 let index: ClipIndex | undefined;
 let indexKey: string | undefined;
 
@@ -56,18 +58,59 @@ type MatchMessage = {
 };
 type Incoming = InitMessage | MatchMessage;
 
+/**
+ * Load the model, on the GPU if this browser has one.
+ *
+ * WHY IT IS WORTH TRYING. WASM runs the same ~450 ms on a laptop and on a phone,
+ * which is the signature of a runtime rather than of a processor — a faster
+ * device does not help. WebGPU is a different execution path, not a faster one
+ * of the same kind.
+ *
+ * AND WHY IT MATTERS MORE SINCE THE DECISION CHANGED. The live view accumulates
+ * evidence across frames, so frames per second and confidence are now the same
+ * quantity: at 2 fps three frames take a second and a half, at 8 fps they take
+ * four hundred milliseconds. Speed here buys correctness, not just smoothness.
+ *
+ * THE FALLBACK IS NOT OPTIONAL. WebGPU is absent on most iOS, behind a flag in
+ * places, and can fail at adapter request even where the API exists. Every one
+ * of those must land on WASM rather than on a broken scanner, so the attempt is
+ * wrapped and the result reported rather than assumed.
+ */
 async function ensureModel(): Promise<void> {
   if (vision) return;
   const transformers = await import("@huggingface/transformers");
   transformers.env.allowLocalModels = false;
-  vision = (await transformers.CLIPVisionModelWithProjection.from_pretrained("Xenova/mobileclip_s2", {
-    dtype: "fp16",
-    progress_callback: (report: { status?: string; progress?: number }) => {
-      if (report?.status === "progress" && typeof report.progress === "number") {
-        self.postMessage({ type: "progress", stage: "model", ratio: report.progress / 100 });
-      }
-    },
-  })) as unknown as VisionModel;
+
+  const onProgress = (report: { status?: string; progress?: number }) => {
+    if (report?.status === "progress" && typeof report.progress === "number") {
+      self.postMessage({ type: "progress", stage: "model", ratio: report.progress / 100 });
+    }
+  };
+
+  const hasGpu = typeof navigator !== "undefined" && "gpu" in navigator;
+  if (hasGpu) {
+    try {
+      vision = (await transformers.CLIPVisionModelWithProjection.from_pretrained("Xenova/mobileclip_s2", {
+        dtype: "fp16",
+        device: "webgpu",
+        progress_callback: onProgress,
+      })) as unknown as VisionModel;
+      backend = "webgpu";
+    } catch {
+      // An adapter that would not come up, or an operator this export uses that
+      // the backend does not implement. Neither is a reason to have no scanner.
+      vision = undefined;
+    }
+  }
+
+  if (!vision) {
+    vision = (await transformers.CLIPVisionModelWithProjection.from_pretrained("Xenova/mobileclip_s2", {
+      dtype: "fp16",
+      progress_callback: onProgress,
+    })) as unknown as VisionModel;
+    backend = "wasm";
+  }
+
   Tensor = transformers.Tensor as unknown as TensorCtor;
 }
 
@@ -140,7 +183,7 @@ self.onmessage = async (event: MessageEvent<Incoming>) => {
     if (message.type === "init") {
       await ensureModel();
       await ensureIndex(message.key);
-      self.postMessage({ type: "ready" });
+      self.postMessage({ type: "ready", backend });
       return;
     }
 
@@ -185,6 +228,7 @@ self.onmessage = async (event: MessageEvent<Incoming>) => {
         hits: result.hits,
         margin: result.margin,
         elapsed: performance.now() - started,
+        backend,
         // Sent back so the view can draw what was actually read, rather than a
         // box the person is asked to line up with.
         corners,

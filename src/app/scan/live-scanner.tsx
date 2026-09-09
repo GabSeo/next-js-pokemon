@@ -91,6 +91,8 @@ type Reading =
       verdict: ClipVerdict;
       fps?: number;
       /** Votes gathered for the current best card, out of `AGREEING_FRAMES`. */
+      /** Which backend is running the model — the difference between 2 fps and 8. */
+      backend?: "webgpu" | "wasm";
       /** 0..1, how close the accumulated evidence is to naming a card. */
       progress?: number;
       /** The card currently ahead, shown before it is settled so the view looks alive. */
@@ -362,6 +364,7 @@ export function LiveScanner({
             state: "scanning",
             verdict,
             fps: result.elapsed > 0 ? 1000 / result.elapsed : undefined,
+            backend: result.backend,
             // How close the leader is to being called, 0..1 — so a scan that is
             // one frame away looks different from one that is stuck.
             progress: leader
@@ -513,7 +516,9 @@ export function LiveScanner({
           <div className="pointer-events-none absolute inset-x-0 bottom-0 p-6 pb-8 text-center">
             <p className="text-base font-black text-white drop-shadow">{hint}</p>
             <p className="mt-1 text-[11px] text-white/70">
-              {reading.fps ? `${reading.fps.toFixed(1)} frames a second · ` : ""}nothing leaves your phone
+              {reading.fps ? `${reading.fps.toFixed(1)} frames a second` : ""}
+              {reading.backend ? ` · ${reading.backend === "webgpu" ? "GPU" : "CPU"}` : ""} · nothing leaves your
+              phone
             </p>
             {/* The vote, visible. Without it a scanner that is one frame from an
                 answer looks identical to one that is stuck. */}

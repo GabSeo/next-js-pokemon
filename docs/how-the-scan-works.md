@@ -308,8 +308,8 @@ what a failure count cannot.
 | One Piece EN / JA | 5,809 / 5,019 |
 | index size on the wire | 2.5 – 10 MB each |
 | search across 20k vectors | ~8 ms, plain JS |
-| match end to end | ~500 ms warm |
-| live frame rate | **2.1 fps** |
+| match end to end | **70 ms** (WebGPU) · 530 ms (WASM) |
+| live frame rate | **11.8 fps** (WebGPU) · 2.1 (WASM) |
 | main-thread delay while scanning | **0 ms median, 0.1 ms p95** |
 | metered calls on the fast path | **0** |
 
@@ -332,10 +332,25 @@ was Chrome throttling timers in a hidden tab to roughly one a second. A
 measurement taken through a throttled clock says nothing about the thing being
 measured.
 
-**2. Speed, which is not a device problem.** Same ~500 ms on desktop and on a
-phone. That is the signature of a WASM runtime, not of a CPU — the fix is
-**WebGPU**, which transformers.js supports and which nothing here has tried. A
-faster phone will not help; a different backend might, by a lot.
+**2. ~~Speed~~ — done, and it was worth more than expected.** The same ~500 ms on
+desktop and phone was the signature of a WASM runtime rather than a CPU, and
+WebGPU is a different execution path rather than a faster one of the same kind:
+
+```
+              per match     frames / second
+  WASM          530 ms          2.1
+  WebGPU         70 ms         11.8
+```
+
+**And speed is accuracy here, not just smoothness.** The live view accumulates
+evidence across frames, so frames per second and confidence are the same
+quantity — three frames of evidence took a second and a half and now take a
+quarter of one.
+
+Verified alongside: the GPU's vectors still match an index built on a CPU (the
+card identifies), and an empty scene still names nothing (the thresholds behave
+the same). WASM remains the fallback — WebGPU is absent on most iOS and can fail
+at adapter request even where the API exists.
 
 **3. Index size, at about 4× from here.** 20k × 512 int8 is 10 MB and searches in
 8 ms. Both scale linearly, so 200k cards is 100 MB and 80 ms — the download breaks

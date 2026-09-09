@@ -80,6 +80,8 @@ export type ClipMatch = ClipResult & {
    * ran instead.
    */
   corners?: Quad;
+  /** Which backend ran it. Worth showing: it is the difference between 2 fps and 8. */
+  backend?: "webgpu" | "wasm";
 };
 
 /**
@@ -155,9 +157,9 @@ export function cardRectInView(
 type Pending = { resolve: (match: ClipMatch) => void; reject: (error: Error) => void };
 
 type WorkerReply =
-  | { type: "ready" }
+  | { type: "ready"; backend?: "webgpu" | "wasm" }
   | { type: "progress"; stage: "model" | "index"; ratio?: number }
-  | { type: "match"; id: number; hits: ClipHit[]; margin: number; elapsed: number; corners?: Quad }
+  | { type: "match"; id: number; hits: ClipHit[]; margin: number; elapsed: number; corners?: Quad; backend?: "webgpu" | "wasm" }
   | { type: "error"; id?: number; message: string };
 
 let worker: Worker | undefined;
@@ -196,7 +198,13 @@ function getWorker(): Worker | undefined {
     if (reply.type === "match") {
       const waiting = pending.get(reply.id);
       pending.delete(reply.id);
-      waiting?.resolve({ hits: reply.hits, margin: reply.margin, elapsed: reply.elapsed, corners: reply.corners });
+      waiting?.resolve({
+        hits: reply.hits,
+        margin: reply.margin,
+        elapsed: reply.elapsed,
+        corners: reply.corners,
+        backend: reply.backend,
+      });
       return;
     }
     if (reply.type === "error" && reply.id !== undefined) {
