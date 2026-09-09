@@ -49,6 +49,7 @@ import path from "node:path";
 import sharp from "sharp";
 
 import { getCatalogEntries, type CatalogLanguage } from "../src/lib/catalog";
+import { limitlessImageUrl } from "../src/lib/limitless";
 import { japaneseOfficialCard } from "../src/lib/pokemon-ja-official";
 
 const OUT_DIR = path.join(process.cwd(), "data", "catalog", "pokemon-clip");
@@ -196,6 +197,21 @@ for (const language of languages) {
       targets.push({ id: card.tcgdexId, urls: [official.img], publisher: true });
       continue;
     }
+
+    // THIRD AND LAST, so nothing already covered costs Limitless a request.
+    // 2,521 cards reach this line and no other source pictures any of them —
+    // Crown Zenith's Galarian Gallery, SM Black Star Promos, and the whole
+    // 2025-26 Japanese Mega block including all 774 of Battle Collection.
+    //
+    // THE THUMBNAIL, NOT THE FULL SIZE. Theirs is 274x381 at 59 KB against
+    // 144 KB, and this model sees 256px. Asking for two and a half times the
+    // bytes to throw them away is rude in a way that is easy not to notice.
+    const fromLimitless = limitlessImageUrl(set, card.localId, language);
+    if (fromLimitless) {
+      targets.push({ id: card.tcgdexId, urls: [fromLimitless], publisher: true });
+      continue;
+    }
+
     unpictured++;
   }
 

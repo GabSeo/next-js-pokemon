@@ -8,7 +8,7 @@ import {
 import { searchCatalogCards } from "@/lib/catalog-search";
 import { officialCode, officialRowsForCode, officialSearchByName } from "@/lib/one-piece-official";
 import { onePieceImageUrl } from "@/lib/one-piece-images";
-import { japaneseImageUrl } from "@/lib/pokemon-ja-official";
+import { pokemonImageUrl } from "@/lib/pokemon-image";
 import { latinCardLabel } from "@/lib/card-label";
 
 /**
@@ -90,11 +90,7 @@ function pokemonMatch(entry: CatalogEntry, detail?: string): LookupMatch {
     // The set CODE for Japanese sets: `SV4a (JP)` reads and searches where the
     // Japanese title does not.
     origin: japanese ? `${set.id} (JP)` : set.name,
-    image: card.image
-      ? `${card.image}/low.webp`
-      : japanese
-        ? japaneseImageUrl(set.id, card.localId, 320)
-        : undefined,
+    image: pokemonImageUrl(card, set, 320),
     printings: Math.max(printings, 1),
     detail: detail ?? card.rarity,
   };

@@ -1,5 +1,5 @@
-import { getCatalogCard, type CatalogCard } from "@/lib/catalog";
-import { japaneseImageUrl } from "@/lib/pokemon-ja-official";
+import { getCatalogCard, type CatalogCard, type CatalogSet } from "@/lib/catalog";
+import { pokemonImageUrl } from "@/lib/pokemon-image";
 import { latinCardLabel } from "@/lib/card-label";
 import { getCatalogPricesByVariant, type CatalogPrice } from "@/lib/catalog-prices";
 import { officialCode, officialRowsForCode } from "@/lib/one-piece-official";
@@ -69,16 +69,9 @@ export type CardView = {
 };
 
 
-/**
- * Where a Pokemon card's artwork comes from.
- *
- * TCGdex first; then the official Japanese data, which pictures thousands of
- * cards TCGdex has none for. Undefined when neither does — those cards are
- * pictured nowhere public, and saying so beats showing another card's artwork.
- */
-function image(card: CatalogCard, japaneseSetId?: string): string | undefined {
-  if (card.image) return `${card.image}/high.webp`;
-  return japaneseSetId ? japaneseImageUrl(japaneseSetId, card.localId, 480) : undefined;
+/** Where a Pokemon card's artwork comes from — see lib/pokemon-image.ts, which decides. */
+function image(card: CatalogCard, set: CatalogSet): string | undefined {
+  return pokemonImageUrl(card, set, 480);
 }
 
 /** Pokémon: one card, its variants, each variant's own figures. */
@@ -107,7 +100,7 @@ function pokemonView(tcgdexId: string, prices: Map<string, CatalogPrice[]>): Car
       : "Cardmarket and TCGplayer, from our latest snapshot. Each printing is priced separately.",
     // The set CODE rather than its title, for the same reason: `SV4a (JP)`
     // reads and searches, `レイジングサーフ` does not.
-    prints: variantPrints(card, japanese ? `${set.id} (JP)` : set.name, byVariant, japanese ? set.id : undefined),
+    prints: variantPrints(card, japanese ? `${set.id} (JP)` : set.name, byVariant, set),
   };
 }
 
@@ -139,7 +132,7 @@ function variantPrints(
   card: CatalogCard,
   setName: string,
   byVariant: CatalogPrice[],
-  japaneseSetId?: string
+  set: CatalogSet
 ): CardPrint[] {
   const seen = new Set<string>();
   const prints: CardPrint[] = [];
@@ -157,7 +150,7 @@ function variantPrints(
         key: "unknown",
         origin: setName,
         rarity: card.rarity,
-        image: image(card, japaneseSetId),
+        image: image(card, set),
         price: byVariant[0],
       },
     ];
@@ -173,7 +166,7 @@ function variantPrints(
       label: variant.type,
       origin: setName,
       rarity: card.rarity,
-      image: image(card, japaneseSetId),
+      image: image(card, set),
       price: byVariant.find((p) => p.variantType === variant.type),
     });
   }

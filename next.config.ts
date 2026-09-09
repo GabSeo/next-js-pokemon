@@ -182,6 +182,7 @@ const nextConfig: NextConfig = {
       "./data/catalog/pokemon/**",
       "./data/catalog/pokemon-ja/**",
       "./data/catalog/pokemon-ja-official/**",
+      "./data/catalog/limitless/**",
       "./data/catalog/pokemon-species.json",
       "./data/prices/**",
     ],
@@ -190,6 +191,7 @@ const nextConfig: NextConfig = {
       "./data/catalog/pokemon/**",
       "./data/catalog/pokemon-ja/**",
       "./data/catalog/pokemon-ja-official/**",
+      "./data/catalog/limitless/**",
       "./data/catalog/pokemon-species.json",
       "./data/catalog/one-piece-official/**",
     ],
@@ -197,6 +199,7 @@ const nextConfig: NextConfig = {
       "./data/catalog/pokemon/**",
       "./data/catalog/pokemon-ja/**",
       "./data/catalog/pokemon-ja-official/**",
+      "./data/catalog/limitless/**",
       "./data/catalog/pokemon-species.json",
       "./data/prices/**",
     ],
@@ -204,6 +207,7 @@ const nextConfig: NextConfig = {
       "./data/catalog/pokemon/**",
       "./data/catalog/pokemon-ja/**",
       "./data/catalog/pokemon-ja-official/**",
+      "./data/catalog/limitless/**",
       "./data/catalog/pokemon-species.json",
       "./data/prices/**",
     ],
@@ -221,7 +225,11 @@ const nextConfig: NextConfig = {
     "/api/one-piece-image/[printingId]": ["./data/catalog/one-piece-official/**"],
     // Same shape for Japanese Pokemon: the key arrives in the path and resolves
     // to an official URL through the mirrored index.
-    "/api/pokemon-ja-image/[cardKey]": ["./data/catalog/pokemon-ja-official/**", "./data/catalog/pokemon-species.json"],
+    "/api/pokemon-ja-image/[cardKey]": [
+      "./data/catalog/pokemon-ja-official/**",
+      "./data/catalog/limitless/**",
+      "./data/catalog/pokemon-species.json",
+    ],
     // The scan resolves scanned codes to cards and ranks their printings by
     // artwork, so it needs both catalogues, the price snapshot the card view
     // reads, and the precomputed artwork signatures.
@@ -229,6 +237,7 @@ const nextConfig: NextConfig = {
       "./data/catalog/pokemon/**",
       "./data/catalog/pokemon-ja/**",
       "./data/catalog/pokemon-ja-official/**",
+      "./data/catalog/limitless/**",
       "./data/catalog/pokemon-species.json",
       "./data/catalog/one-piece-official/**",
       "./data/catalog/one-piece-optcg/**",
@@ -240,6 +249,7 @@ const nextConfig: NextConfig = {
       "./data/catalog/pokemon/**",
       "./data/catalog/pokemon-ja/**",
       "./data/catalog/pokemon-ja-official/**",
+      "./data/catalog/limitless/**",
       "./data/catalog/pokemon-species.json",
       "./data/catalog/one-piece-official/**",
       "./data/catalog/one-piece-optcg/**",
@@ -256,6 +266,7 @@ const nextConfig: NextConfig = {
       "./data/catalog/pokemon/**",
       "./data/catalog/pokemon-ja/**",
       "./data/catalog/pokemon-ja-official/**",
+      "./data/catalog/limitless/**",
       "./data/catalog/pokemon-species.json",
       "./data/catalog/one-piece-official/**",
       "./data/catalog/one-piece-optcg/**",
@@ -264,6 +275,7 @@ const nextConfig: NextConfig = {
       "./data/catalog/pokemon/**",
       "./data/catalog/pokemon-ja/**",
       "./data/catalog/pokemon-ja-official/**",
+      "./data/catalog/limitless/**",
       "./data/catalog/pokemon-species.json",
       "./data/catalog/one-piece-official/**",
       "./data/catalog/one-piece-optcg/**",

@@ -6,7 +6,7 @@ import { EyebrowTitle } from "@/components/retro/eyebrow-title";
 import { catalogStats, getCatalogSets } from "@/lib/catalog";
 import { isSortId, searchCatalogCards, type CatalogQuery } from "@/lib/catalog-search";
 import { latinCardLabel } from "@/lib/card-label";
-import { japaneseImageUrl } from "@/lib/pokemon-ja-official";
+import { pokemonImageUrl } from "@/lib/pokemon-image";
 
 /**
  * Search the whole physical catalogue, filtered and sorted server-side.
@@ -113,13 +113,7 @@ export default async function CardsPage({ searchParams }: PageProps) {
                   <CatalogCardTile
                     card={entry.card}
                     label={latinCardLabel(entry.card, entry.set.id, entry.set.language === "ja")}
-                    imageUrl={
-                      entry.card.image
-                        ? undefined
-                        : entry.set.language === "ja"
-                          ? japaneseImageUrl(entry.set.id, entry.card.localId, 320)
-                          : undefined
-                    }
+                    imageUrl={entry.card.image ? undefined : pokemonImageUrl(entry.card, entry.set, 320)}
                     setName={entry.set.language === "ja" ? `${entry.set.id} (JP)` : entry.set.name}
                   />
                 </li>

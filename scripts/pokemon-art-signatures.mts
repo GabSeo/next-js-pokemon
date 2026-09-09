@@ -43,6 +43,7 @@ import path from "node:path";
 
 import { artSignature } from "../src/lib/art-rank";
 import { getCatalogEntries, type CatalogLanguage } from "../src/lib/catalog";
+import { limitlessImageUrl } from "../src/lib/limitless";
 import { japaneseOfficialCard } from "../src/lib/pokemon-ja-official";
 
 const OUT_DIR = path.join(process.cwd(), "data", "catalog", "pokemon-art");
@@ -111,6 +112,14 @@ for (const language of languages) {
     const official = language === "ja" ? japaneseOfficialCard(set.id, card.localId) : undefined;
     if (official?.img) {
       targets.push({ key, url: official.img, publisher: true });
+      continue;
+    }
+
+    // Third and last — 2,521 cards nothing else pictures. Their thumbnail is
+    // 274x381, which is far more than a 9x8 hash grid needs.
+    const fromLimitless = limitlessImageUrl(set, card.localId, language);
+    if (fromLimitless) {
+      targets.push({ key, url: fromLimitless, publisher: true });
       continue;
     }
 
