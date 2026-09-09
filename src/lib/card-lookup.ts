@@ -9,6 +9,7 @@ import { searchCatalogCards } from "@/lib/catalog-search";
 import { officialCode, officialRowsForCode, officialSearchByName } from "@/lib/one-piece-official";
 import { onePieceImageUrl } from "@/lib/one-piece-images";
 import { pokemonImageUrl } from "@/lib/pokemon-image";
+import { pokemonSetLabel } from "@/lib/pokemon-set-label";
 import { latinCardLabel } from "@/lib/card-label";
 
 /**
@@ -87,9 +88,8 @@ function pokemonMatch(entry: CatalogEntry, detail?: string): LookupMatch {
     code: japanese ? `ja~${card.tcgdexId}` : card.tcgdexId,
     // Latin, always — the same four-source rule card-view.ts documents.
     name: latinCardLabel(card, set.id, japanese),
-    // The set CODE for Japanese sets: `SV4a (JP)` reads and searches where the
-    // Japanese title does not.
-    origin: japanese ? `${set.id} (JP)` : set.name,
+    // Latin, always — lib/pokemon-set-label.ts owns the rule.
+    origin: pokemonSetLabel(set),
     image: pokemonImageUrl(card, set, 320),
     printings: Math.max(printings, 1),
     detail: detail ?? card.rarity,

@@ -3,7 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EyebrowTitle } from "@/components/retro/eyebrow-title";
 import { CatalogCardTile } from "@/components/catalog-card-tile";
-import { getCatalogSet, getCatalogSetCards, getCatalogSets, isDigitalOnlySet } from "@/lib/catalog";
+import { getCatalogSet, getCatalogSetCards, getCatalogSets, isDigitalOnlySet, qualify } from "@/lib/catalog";
+import { pokemonImageUrl } from "@/lib/pokemon-image";
+import { pokemonSeriesLabel, pokemonSetLabel, pokemonSetShortLabel } from "@/lib/pokemon-set-label";
 import { absoluteUrl } from "@/lib/site";
 
 /**
@@ -38,7 +40,11 @@ import { absoluteUrl } from "@/lib/site";
 export const revalidate = 31536000;
 
 export function generateStaticParams() {
-  return getCatalogSets().map((set) => ({ setId: set.id }));
+  // BOTH CATALOGUES. The Japanese sets were reachable by URL and prerendered
+  // for neither, so every one of them was a runtime miss.
+  return getCatalogSets({ language: "all" }).map((set) => ({
+    setId: qualify(set.language ?? "en", set.id),
+  }));
 }
 
 type PageProps = { params: Promise<{ setId: string }> };
@@ -66,8 +72,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const set = servableSet(setId);
   if (!set) return {};
   return {
-    title: `${set.name} — every card`,
-    description: `Every card in ${set.name}${set.serie?.name ? ` (${set.serie.name})` : ""}, with its artwork, number and rarity.`,
+    title: `${pokemonSetLabel(set)} — every card`,
+    description: `Every card in ${pokemonSetLabel(set)} (${pokemonSeriesLabel(set)}), with its artwork, number and rarity.`,
     alternates: { canonical: `/sets/${set.id}` },
   };
 }
@@ -77,13 +83,16 @@ export default async function SetPage({ params }: PageProps) {
   const set = servableSet(setId);
   if (!set) notFound();
 
-  const entries = getCatalogSetCards(set.id);
+  // THE LANGUAGE, PASSED. Without it `getCatalogSetCards` infers English from
+  // a bare id, so every Japanese set page rendered "0 cards" over a set that
+  // has hundreds.
+  const entries = getCatalogSetCards(set.id, set.language ?? "en");
   const cards = entries.map((e) => e.card);
 
   const itemListJsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    name: set.name,
+    name: pokemonSetLabel(set),
     url: absoluteUrl(`/sets/${set.id}`),
     numberOfItems: cards.length,
   };
@@ -102,8 +111,8 @@ export default async function SetPage({ params }: PageProps) {
           <img src={`${set.logo}.png`} alt="" className="hidden h-16 w-auto object-contain sm:block" />
         )}
         <div>
-          <EyebrowTitle tone="blue">{set.serie?.name ?? "Set"}</EyebrowTitle>
-          <h1 className="mt-2 text-3xl font-black tracking-tight">{set.name}</h1>
+          <EyebrowTitle tone="blue">{pokemonSeriesLabel(set)}</EyebrowTitle>
+          <h1 className="mt-2 text-3xl font-black tracking-tight">{pokemonSetLabel(set)}</h1>
           <p className="mt-1 text-xs text-muted-text">
             {cards.length} cards
             {set.releaseDate ? ` · released ${set.releaseDate}` : ""}
@@ -118,9 +127,18 @@ export default async function SetPage({ params }: PageProps) {
           printing, which is the only place it can be answered honestly. */}
 
       <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        {entries.map(({ card }) => (
+        {/* THE SAME RULES THE SEARCH GRID USES. This page predates both and
+            rendered `card.name` and TCGdex's image directly — so a Japanese set
+            showed kana names over "No picture published" for cards Limitless
+            pictures perfectly well. */}
+        {entries.map(({ card, label }) => (
           <li key={card.tcgdexId}>
-            <CatalogCardTile card={card} />
+            <CatalogCardTile
+              card={card}
+              label={label}
+              imageUrl={card.image ? undefined : pokemonImageUrl(card, set, 320)}
+              setName={pokemonSetShortLabel(set)}
+            />
           </li>
         ))}
       </ul>

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SetsBrowser, type BrowseSet } from "@/components/sets-browser";
-import { catalogStats, getCatalogSets, getCatalogSetCards } from "@/lib/catalog";
+import { catalogStats, getCatalogSets, getCatalogSetCards, qualify } from "@/lib/catalog";
+import { pokemonSeriesLabel, pokemonSetLabel } from "@/lib/pokemon-set-label";
 import { absoluteUrl } from "@/lib/site";
 
 /**
@@ -27,23 +28,42 @@ export const metadata: Metadata = {
 };
 
 export default function SetsIndexPage() {
-  const stats = catalogStats();
+  // Both catalogues, because the page now lists both. Counting only English
+  // here while the grid offers 584 sets would put two numbers on one screen
+  // that cannot both be right.
+  const stats = catalogStats({ language: "all" });
 
-  const browse: BrowseSet[] = getCatalogSets()
-    .map((set) => ({
-      id: set.id,
-      name: set.name,
-      serie: set.serie?.name ?? "Other",
-      releaseDate: set.releaseDate,
-      cardCount: getCatalogSetCards(set.id).length,
-      logo: set.logo,
-    }))
+  // BOTH CATALOGUES, filtered to one at a time by the browser. The Japanese
+  // half was simply absent from this page — 381 sets and 23,919 cards that
+  // exist in the corpus, are pictured, are embedded for the scan, and could
+  // not be browsed. `getCatalogSets` defaults to English, which is why.
+  const browse: BrowseSet[] = getCatalogSets({ language: "all" })
+    .map((set) => {
+      const language = set.language ?? "en";
+      return {
+        id: set.id,
+        // `neo1` exists in both catalogues, so the Japanese one needs the
+        // qualifier its cards already use.
+        slug: qualify(language, set.id),
+        // Latin, always — and for a Japanese set that means the English name
+        // Limitless publishes rather than the publisher's code.
+        name: pokemonSetLabel(set),
+        language,
+        serie: pokemonSeriesLabel(set),
+        releaseDate: set.releaseDate,
+        cardCount: getCatalogSetCards(set.id, language).length,
+        logo: set.logo,
+      };
+    })
     .sort((a, b) => (b.releaseDate ?? "").localeCompare(a.releaseDate ?? ""));
 
   const newest = browse[0];
 
   // Eras in the order their newest set appears, so the filter reads
   // newest-first the way the grid does.
+  // Both catalogues' eras, in one list. The browser shows one language at a
+  // time and resets the era filter when that changes, so a Japanese series
+  // never sits over an English grid.
   const eras: string[] = [];
   for (const set of browse) if (!eras.includes(set.serie)) eras.push(set.serie);
 
@@ -56,7 +76,7 @@ export default function SetsIndexPage() {
     itemListElement: browse.slice(0, 50).map((set, index) => ({
       "@type": "ListItem",
       position: index + 1,
-      url: absoluteUrl(`/sets/${set.id}`),
+      url: absoluteUrl(`/sets/${set.slug ?? set.id}`),
       name: set.name,
     })),
   };
@@ -71,12 +91,13 @@ export default function SetsIndexPage() {
         </Link>
         <h1 className="mt-3 text-[32px] font-black tracking-[-0.8px]">Pokémon Sets</h1>
         <p className="mt-1 text-sm text-muted-text">
-          Every Pokémon TCG set, from the 1999 Base Set to the latest drop — pick one to see every card inside it.
+          Every Pokémon TCG set in both catalogues — the international releases and the Japanese ones they came
+          from. Pick a language, then a set, to see every card inside it.
         </p>
       </div>
 
       <div className="mb-6 grid grid-cols-2 gap-6 lg:grid-cols-4">
-        <Stat label="Total Sets" value={String(browse.length)} sub="Catalogued & priced" accent />
+        <Stat label="Total Sets" value={String(browse.length)} sub="English and Japanese" accent />
         <Stat label="Total Cards" value={stats.cards.toLocaleString("en-US")} sub="Across all sets" />
         <Stat
           label="Newest Set"
@@ -116,7 +137,7 @@ export default function SetsIndexPage() {
               card our sources reach.
             </p>
             <Link
-              href={`/sets/${newest.id}`}
+              href={`/sets/${encodeURIComponent(newest.slug ?? newest.id)}`}
               className="mt-5 inline-block rounded-md border-2 border-black bg-[#0a0a0a] px-5 py-3 text-sm font-black text-white shadow-[4px_4px_0px_0px_rgba(255,255,255,0.85)] transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5"
             >
               Browse this set →

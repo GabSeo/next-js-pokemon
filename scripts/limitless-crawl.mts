@@ -100,6 +100,29 @@ async function fetchText(url: string): Promise<string | undefined> {
   return undefined;
 }
 
+/**
+ * HTML entities, decoded — because this is scraped markup, not text.
+ *
+ * Stripping tags is not the same as decoding, and forgetting the second step
+ * stored 47 set names with the escape still in them: `Sword &amp; Shield`,
+ * `Champion&#039;s Path`. Those went straight into a dropdown, where they were
+ * visible to anyone reading and invisible to any test that only counted rows.
+ *
+ * A small explicit table rather than a DOM parse: five entities cover every
+ * name on both indexes, and the numeric form catches the rest.
+ */
+function decodeEntities(text: string): string {
+  return text
+    .replace(/&#(\d+);/g, (_, code: string) => String.fromCharCode(Number(code)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, code: string) => String.fromCharCode(parseInt(code, 16)))
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    // LAST, ALWAYS. Decoding `&amp;` first would turn `&amp;lt;` into `<`.
+    .replace(/&amp;/g, "&");
+}
+
 const MONTHS = "jan feb mar apr may jun jul aug sep oct nov dec".split(" ");
 
 /** `19 Dec 25` -> `2025-12-19`, so it sorts like every other date we hold. */
@@ -131,7 +154,7 @@ function parseIndex(html: string, prefix: string): Omit<LimitlessSet, "cards">[]
     const count = row.match(/<td class="md-only"><a[^>]*>(\d+)\s/);
     sets.push({
       code: head[1],
-      name: head[2].replace(/<[^>]+>/g, "").trim(),
+      name: decodeEntities(head[2].replace(/<[^>]+>/g, "")).trim(),
       releaseDate: date ? isoDate(date[1]) : undefined,
       cardCount: count ? Number(count[1]) : undefined,
     });

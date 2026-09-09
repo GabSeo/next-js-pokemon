@@ -7,6 +7,7 @@ import { catalogStats, getCatalogSets } from "@/lib/catalog";
 import { isSortId, searchCatalogCards, type CatalogQuery } from "@/lib/catalog-search";
 import { latinCardLabel } from "@/lib/card-label";
 import { pokemonImageUrl } from "@/lib/pokemon-image";
+import { pokemonSetLabel, pokemonSetShortLabel } from "@/lib/pokemon-set-label";
 
 /**
  * Search the whole physical catalogue, filtered and sorted server-side.
@@ -65,9 +66,9 @@ export default async function CardsPage({ searchParams }: PageProps) {
   // component and must not read it.
   const setNames: Record<string, string> = {};
   for (const set of getCatalogSets({ language })) {
-    // The set CODE for Japanese sets: `SV4a (JP)` reads and searches where the
+    // Latin, always — lib/pokemon-set-label.ts owns the rule. The
     // Japanese title does not.
-    setNames[`${language}~${set.id}`] = language === "ja" ? `${set.id} (JP)` : set.name;
+    setNames[`${language}~${set.id}`] = pokemonSetLabel(set);
   }
   const entries = result.entries;
 
@@ -114,7 +115,7 @@ export default async function CardsPage({ searchParams }: PageProps) {
                     card={entry.card}
                     label={latinCardLabel(entry.card, entry.set.id, entry.set.language === "ja")}
                     imageUrl={entry.card.image ? undefined : pokemonImageUrl(entry.card, entry.set, 320)}
-                    setName={entry.set.language === "ja" ? `${entry.set.id} (JP)` : entry.set.name}
+                    setName={pokemonSetShortLabel(entry.set)}
                   />
                 </li>
               ))}

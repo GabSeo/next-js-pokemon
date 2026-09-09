@@ -44,7 +44,12 @@ export function pokemonImageUrl(
   }
 
   const limitless = limitlessImageUrl(set, card.localId, japanese ? "ja" : "en");
-  // Their thumbnail is 274 wide; past that, the full-size file is the same
-  // picture at 274x381 -> 600x838.
-  return limitless ? (width > 274 ? limitlessLargeUrl(limitless) : limitless) : undefined;
+  if (!limitless) return undefined;
+
+  // THEIR TWO SIZES ARE 274x381 (59 KB) AND 600x838 (144 KB), and the switch
+  // sits at 320 rather than at 274 on purpose. A grid tile asks for 320 and
+  // renders nearer 180; serving the large file there costs 2.4x the bytes for
+  // an upscale nobody can see — 16 MB against 6.7 MB on a 113-card set page.
+  // The card page asks for 480, where the detail is actually looked at.
+  return width > 320 ? limitlessLargeUrl(limitless) : limitless;
 }

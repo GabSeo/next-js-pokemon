@@ -1,5 +1,6 @@
 import { getCatalogCard, type CatalogCard, type CatalogSet } from "@/lib/catalog";
 import { pokemonImageUrl } from "@/lib/pokemon-image";
+import { pokemonSetLabel } from "@/lib/pokemon-set-label";
 import { latinCardLabel } from "@/lib/card-label";
 import { getCatalogPricesByVariant, type CatalogPrice } from "@/lib/catalog-prices";
 import { officialCode, officialRowsForCode } from "@/lib/one-piece-official";
@@ -98,9 +99,8 @@ function pokemonView(tcgdexId: string, prices: Map<string, CatalogPrice[]>): Car
       ? "Japanese print. Cardmarket and TCGplayer index far fewer Japanese cards, so a missing " +
         "price here usually means nobody publishes one."
       : "Cardmarket and TCGplayer, from our latest snapshot. Each printing is priced separately.",
-    // The set CODE rather than its title, for the same reason: `SV4a (JP)`
-    // reads and searches, `レイジングサーフ` does not.
-    prints: variantPrints(card, japanese ? `${set.id} (JP)` : set.name, byVariant, set),
+    // Latin, always — lib/pokemon-set-label.ts owns the rule.
+    prints: variantPrints(card, pokemonSetLabel(set), byVariant, set),
   };
 }
 

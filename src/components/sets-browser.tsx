@@ -27,7 +27,21 @@ import { useMemo, useState } from "react";
 
 export type BrowseSet = {
   id: string;
+  /**
+   * The URL segment for this set, when it differs from the id.
+   *
+   * `neo1` names a set in BOTH catalogues, so a Japanese set links as
+   * `ja~neo1` — the same qualifier a Japanese card id already carries. The id
+   * itself stays bare, because the tile's lettered fallback is built from it
+   * and `ja` is not a set's initials.
+   */
+  slug?: string;
   name: string;
+  /**
+   * Which catalogue this set belongs to. Absent means English, for the One
+   * Piece browser and anything written before the Japanese sets were listed.
+   */
+  language?: "en" | "ja";
   serie: string;
   releaseDate?: string;
   cardCount: number;
@@ -91,11 +105,29 @@ export function SetsBrowser({
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortId>("newest");
   const [era, setEra] = useState<string | null>(null);
+  /**
+   * ONE LANGUAGE AT A TIME, never both. A Japanese set and the English set it
+   * became are the same cards released twice — listing them together doubles
+   * the grid with near-duplicates and makes "which Stellar Crown is this"
+   * a question the reader has to answer instead of the page.
+   */
+  const [language, setLanguage] = useState<"en" | "ja">("en");
+
+  // Only offered when there is something to switch to, so the One Piece
+  // browser — which passes no languages — does not grow a control for a
+  // choice it does not have.
+  const bilingual = useMemo(() => sets.some((s) => s.language === "ja"), [sets]);
 
   const grouped = useMemo(() => {
     const needle = query.trim().toLowerCase();
     const filtered = sets.filter(
-      (s) => (!needle || s.name.toLowerCase().includes(needle)) && (!era || s.serie === era)
+      (s) =>
+        (!bilingual || (s.language ?? "en") === language) &&
+        // The id is searchable alongside the name because 157 Japanese sets
+        // have no published English name and are labelled by their code — the
+        // only handle a reader has on those.
+        (!needle || s.name.toLowerCase().includes(needle) || s.id.toLowerCase().includes(needle)) &&
+        (!era || s.serie === era)
     );
     filtered.sort((a, b) => {
       switch (sort) {
@@ -122,13 +154,41 @@ export function SetsBrowser({
       byEra.set(s.serie, list);
     }
     return [...byEra.entries()].map(([name, list]) => ({ era: name, sets: list }));
-  }, [sets, query, sort, era]);
+  }, [sets, query, sort, era, language, bilingual]);
 
   const total = grouped.reduce((n, g) => n + g.sets.length, 0);
 
   return (
     <>
       <div className="mb-8 flex flex-wrap items-center gap-3">
+        {bilingual ? (
+          <div className="flex overflow-hidden rounded-full border-2 border-black shadow-hard-sm">
+            {(
+              [
+                ["en", "English"],
+                ["ja", "Japanese"],
+              ] as const
+            ).map(([value, name]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => {
+                  setLanguage(value);
+                  // The eras are different on each side — "Sword & Shield"
+                  // does not name a Japanese series — so a filter carried
+                  // across would silently empty the grid.
+                  setEra(null);
+                }}
+                aria-pressed={language === value}
+                className={`px-4 py-2 text-[13px] font-black ${
+                  language === value ? "bg-foreground text-white" : "bg-card-surface"
+                }`}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+        ) : null}
         <input
           type="search"
           value={query}
@@ -189,7 +249,7 @@ export function SetsBrowser({
             )}
             <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {group.sets.map((set, i) => (
-                <SetCard key={set.id} set={set} index={i} hrefBase={hrefBase} />
+                <SetCard key={`${set.language ?? "en"}~${set.id}`} set={set} index={i} hrefBase={hrefBase} />
               ))}
             </ul>
           </section>
@@ -220,7 +280,7 @@ function SetCard({ set, index, hrefBase }: { set: BrowseSet; index: number; href
       style={animated ? { animationDelay: `${index * 0.06}s` } : undefined}
     >
       <Link
-        href={`${hrefBase}/${set.id}`}
+        href={`${hrefBase}/${encodeURIComponent(set.slug ?? set.id)}`}
         className="group relative flex h-full flex-col overflow-hidden rounded-lg border-2 border-black bg-card-surface p-5 shadow-hard-md transition-[transform,box-shadow] duration-150 hover:-translate-x-[3px] hover:-translate-y-[3px] hover:shadow-hard-lg"
       >
         {/* The logo sits unboxed and left-aligned: a set logo is already a
