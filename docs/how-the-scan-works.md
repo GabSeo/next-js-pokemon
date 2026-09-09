@@ -163,10 +163,11 @@ and only four real corners fix that.
   hands move and focus hunts. `AGREEING_FRAMES = 2` costs about a second and
   removes the class of bug where a card flashes up because one blurred frame
   landed near something.
-- **A 60 ms breath between frames.** Inference runs on the main thread, so a
-  ~450 ms match is a ~450 ms block. Looping without a gap starves paint and input
-  entirely — driving it from a test harness at full tilt made the page
-  unresponsive to the point that tooling could not read it.
+- **The match runs on another thread.** The first version ran it where React
+  runs, and the camera preview stuttered — reported from a real phone as
+  "everything seems laggy". A 60 ms yield between frames was tried and did not
+  help, because the block is the 450 ms match itself, not the gap between
+  matches. The main thread now decodes one bitmap per frame and waits.
 - **Found means stop.** Leaving the camera running behind a result keeps the phone
   warm and invites the next frame to overwrite an answer someone is still reading.
 
@@ -241,6 +242,7 @@ two catalogues in one search is two chances to be confidently wrong.
 | search across 20k vectors | ~8 ms, plain JS |
 | match end to end | ~500 ms warm |
 | live frame rate | **2.1 fps** |
+| main-thread delay while scanning | **0 ms median, 0.1 ms p95** |
 | metered calls on the fast path | **0** |
 
 Verified in a browser: photo scan, tie chooser, live camera, and all three live
@@ -250,10 +252,17 @@ states.
 
 ## 10. How to scale with it — in the order that will actually bite
 
-**1. The main thread.** Inference blocks it. At 2 fps with a 60 ms breath the page
-survives, but scrolling during a scan is not smooth and never will be while the
-model runs where React does. **Move inference to a Web Worker.** This is the next
-thing to do and the only one that is purely mechanical.
+**1. ~~The main thread~~ — done.** Inference used to block it; it now runs in a
+Web Worker (`lib/clip.worker.ts`). Measured on the page with a MessageChannel
+probe, 388,087 samples over five seconds while the loop ran: **median main-thread
+delay 0 ms, p95 0.1 ms**. One 634 ms outlier, which is the worker's first model
+load rather than a per-frame cost.
+
+A note on how that was nearly measured wrong: the same probe using `setTimeout`
+reported a 683 ms median, which looked exactly like the bug still being there. It
+was Chrome throttling timers in a hidden tab to roughly one a second. A
+measurement taken through a throttled clock says nothing about the thing being
+measured.
 
 **2. Speed, which is not a device problem.** Same ~500 ms on desktop and on a
 phone. That is the signature of a WASM runtime, not of a CPU — the fix is

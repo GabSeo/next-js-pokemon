@@ -29,15 +29,12 @@ import { clipTied, clipVerdict, CLIP_MAX_TIED, type ClipVerdict } from "@/lib/cl
  * timer instead would queue work faster than it completes and the view would
  * fall further behind the camera every second it ran.
  *
- * IT YIELDS BETWEEN FRAMES, and that is not politeness. Inference runs on the
- * main thread — ONNX Runtime's WASM backend has no worker here — so a ~500 ms
- * match is a ~500 ms block. Looping without a gap starves paint and input
- * entirely: driving this from a test harness at full tilt made the page
- * unresponsive to the point that the tooling could not read it. `BREATH_MS`
- * costs a tenth of a frame and gives the browser a turn.
- *
- * The real fix is a worker, and it is not this. Documented rather than hidden:
- * see docs/how-the-scan-works.md.
+ * THE MATCH RUNS ON ANOTHER THREAD, which is what makes the preview watchable.
+ * The first version ran it here and the camera stuttered — reported from a real
+ * phone as "everything seems laggy". A 60 ms yield between frames was tried and
+ * did not help, because the block is the 450 ms match itself, not the gap
+ * between matches. lib/clip-client.ts posts each frame to a worker now, so this
+ * loop only decodes a bitmap and waits.
  *
  * AND IT DOES NOT ANSWER ON ONE FRAME. A single frame's verdict flickers as
  * hands move and focus hunts. An answer has to hold for `AGREEING_FRAMES` in a
@@ -54,15 +51,6 @@ import { clipTied, clipVerdict, CLIP_MAX_TIED, type ClipVerdict } from "@/lib/cl
  * if real use shows wrong answers slipping through, and the reason it is named.
  */
 const AGREEING_FRAMES = 2;
-
-/**
- * A turn for the event loop between frames, so the page stays alive.
- *
- * Long enough for a paint and a tap to be handled, short against a ~500 ms
- * match. Not a frame rate limiter — the loop is already limited by how fast the
- * device can embed.
- */
-const BREATH_MS = 60;
 
 type Reading =
   | { state: "starting" }
@@ -170,11 +158,6 @@ export function LiveScanner({
           await new Promise((resolve) => setTimeout(resolve, 200));
           continue;
         }
-        if (!loop.current.running || cancelled) break;
-
-        // Give the browser a turn before doing anything with the result — this
-        // is the only point in the cycle where the main thread is free.
-        await new Promise((resolve) => setTimeout(resolve, BREATH_MS));
         if (!loop.current.running || cancelled) break;
 
         const verdict = clipVerdict(result);
