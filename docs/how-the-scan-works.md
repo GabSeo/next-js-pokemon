@@ -158,10 +158,15 @@ diagonal, and a few percent is all the embedding tolerates.
 
 The next thing to try is line-based (Hough) rather than blob-based: a card has
 four long straight edges, and intersecting dominant lines does not care about a
-border broken by glare or a background object touching it. Trained detectors are
-the other route, and the datasets available are cards **lying flat, often
-slabbed** — a real dataset for a different situation than a card held up to a
-phone.
+border broken by glare or a background object touching it.
+
+**And an assumption behind all of this was wrong.** The detector was built and
+graded against photographs of cards HELD UP to a camera, tilted — because that
+is what the test photographs are. Real use here is cards laid **flat, in graded
+slabs**. That inverts two conclusions: there is little perspective to correct,
+so the homography buys less than the ceiling measurement suggested; and the
+available trained datasets, which are flat and slabbed, are a match for the
+situation rather than a mismatch. They were dismissed for the wrong reason.
 
 That is not a placeholder so much as the honest version of the same job. From the
 table above: a card filling a fifth of the frame scores 0.759 with a margin of
@@ -259,7 +264,27 @@ two catalogues in one search is two chances to be confidently wrong.
 
 ---
 
-## 9. Where this is now
+## 9. What real use says, and it is not what the tests said
+
+Twenty real cards, laid flat in slabs, on a phone: **one match**. Against
+synthetic frames the same pipeline is near-perfect. That gap is the finding —
+the tests were not testing the thing.
+
+What differs in real use and is not in any test here: a phone camera's exposure
+and white balance, autofocus hunting, glare on slab plastic, and a crop that may
+be framing a plastic case rather than a card. Reasoning about which of those it
+is, from here, is guessing.
+
+So the live view now SHOWS what it embedded — the exact crop as a thumbnail,
+with the score, the margin and the card it is leaning toward — and the guide is
+resizable, because a card inside a slab occupies a different fraction of the
+frame than a bare one and no fixed number fits both. The next move is a
+screenshot of that panel with a real card in frame, which answers in one glance
+what a failure count cannot.
+
+---
+
+## 10. Where this is now
 
 | | |
 |---|---|
@@ -278,7 +303,7 @@ states.
 
 ---
 
-## 10. How to scale with it — in the order that will actually bite
+## 11. How to scale with it — in the order that will actually bite
 
 **1. ~~The main thread~~ — done.** Inference used to block it; it now runs in a
 Web Worker (`lib/clip.worker.ts`). Measured on the page with a MessageChannel

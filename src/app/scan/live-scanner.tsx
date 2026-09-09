@@ -56,7 +56,13 @@ type Reading =
   | { state: "starting" }
   | { state: "denied"; reason: string }
   | { state: "loading"; progress?: ClipProgress }
-  | { state: "scanning"; verdict: ClipVerdict; fps?: number }
+  | {
+      state: "scanning";
+      verdict: ClipVerdict;
+      fps?: number;
+      /** What the matcher thinks it is looking at, whether or not it will say so. */
+      peek?: { id: string; score: number; margin: number };
+    }
   | { state: "found"; cards: CardView[]; tied: number; elapsed: number };
 
 export function LiveScanner({
@@ -95,6 +101,33 @@ export function LiveScanner({
   const [guide, setGuide] = useState<{ width: number; height: number } | undefined>();
 
   /**
+   * SHOW WHAT THE MATCHER SEES, not what the camera sees.
+   *
+   * Measured on synthetic frames this worked; measured on twenty real cards it
+   * found one. That gap is not a threshold to nudge — it means the crop being
+   * embedded is not the picture anyone thinks it is, and no amount of reasoning
+   * about it from here beats looking at it. A slabbed card laid flat, framed to
+   * fill the guide, puts a plastic border and a grading label inside the crop;
+   * whether that is what is happening is a question a thumbnail answers in one
+   * glance.
+   */
+  const peekRef = useRef<HTMLCanvasElement>(null);
+
+  /**
+   * How much of the frame the guide covers, adjustable.
+   *
+   * A FIXED FRACTION CANNOT FIT BOTH CASES. A bare card fills the guide at 82%;
+   * the same card inside a graded slab sits in maybe two thirds of the case, so
+   * framing the CASE at 82% puts a plastic border and a label inside the crop
+   * and framing the CARD means the case overflows the screen. The person can
+   * see which they have; the code cannot.
+   *
+   * Read by both the crop and the drawn rectangle, so they stay the same
+   * rectangle at every setting.
+   */
+  const [fill, setFill] = useState(0.82);
+
+  /**
    * Everything the loop mutates lives in a ref, not in state.
    *
    * The loop runs across renders and must not restart when one happens —
@@ -104,6 +137,15 @@ export function LiveScanner({
    */
   const loop = useRef({ running: false, lastId: "", agreed: 0 });
 
+  // The loop outlives a re-render, so it reads the current fill through a ref
+  // rather than closing over the value it started with. Written in an effect,
+  // not during render: a render can be discarded, and a ref written by a
+  // discarded render keeps the value anyway.
+  const fillRef = useRef(0.82);
+  useEffect(() => {
+    fillRef.current = fill;
+  }, [fill]);
+
   // Recomputed on mount and on rotation. A ResizeObserver rather than a resize
   // listener, because the box also changes when the result sheet opens under it.
   useEffect(() => {
@@ -112,7 +154,7 @@ export function LiveScanner({
     const measure = () => {
       const box = video.getBoundingClientRect();
       if (box.width > 0 && box.height > 0) {
-        const rect = cardRect(box.width, box.height);
+        const rect = cardRect(box.width, box.height, fill);
         setGuide({ width: rect.width, height: rect.height });
       }
     };
@@ -120,7 +162,7 @@ export function LiveScanner({
     const observer = new ResizeObserver(measure);
     observer.observe(video);
     return () => observer.disconnect();
-  }, [attempt]);
+  }, [attempt, fill]);
 
   const stop = useCallback(() => {
     loop.current.running = false;
@@ -196,12 +238,17 @@ export function LiveScanner({
           // The rectangle the guide DRAWS, not the one a full frame implies —
           // `object-cover` crops the video, so the two are different questions.
           const box = video.getBoundingClientRect();
-          result = await matchCard(
-            video,
-            cardRectInView(width, height, box.width, box.height),
-            indexKey,
-            { limit: 8 }
-          );
+          const rect = cardRectInView(width, height, box.width, box.height, fillRef.current);
+          result = await matchCard(video, rect, indexKey, { limit: 8 });
+
+          // Paint the SAME rectangle into the on-screen thumbnail. Same source,
+          // same numbers — if the preview shows a label or a table, that is
+          // literally what was embedded.
+          const peek = peekRef.current;
+          const peekCtx = peek?.getContext("2d");
+          if (peek && peekCtx) {
+            peekCtx.drawImage(video, rect.x, rect.y, rect.width, rect.height, 0, 0, peek.width, peek.height);
+          }
         } catch {
           // A frame the browser could not read is not a reason to stop.
           await new Promise((resolve) => setTimeout(resolve, 200));
@@ -246,6 +293,9 @@ export function LiveScanner({
             state: "scanning",
             verdict,
             fps: result.elapsed > 0 ? 1000 / result.elapsed : undefined,
+            peek: result.hits[0]
+              ? { id: result.hits[0].id, score: result.hits[0].score, margin: result.margin }
+              : undefined,
           });
         }
       }
@@ -264,7 +314,10 @@ export function LiveScanner({
       : reading.verdict === "empty"
         ? "Point the camera at a card"
         : reading.verdict === "unsure"
-          ? "Hold steady — fill the frame with the card"
+          // IN A SLAB, THE CARD IS NOT THE OBJECT. A graded case carries a
+          // label and a plastic border, and filling the guide with the CASE
+          // puts both inside the crop. The guide wants the card's own edges.
+          ? "Line the card's own edges up with the box — not the case"
           : "Got it…";
 
   return (
@@ -317,6 +370,33 @@ export function LiveScanner({
 
         {/* Close sits top-right, where a full-screen view is expected to put it
             and where a thumb reaches without crossing the viewfinder. */}
+        {/* SIZE THE BOX TO THE CARD, wherever the card actually is. Two taps
+            rather than a slider: a slider on a viewfinder is a thing to fight
+            while holding a phone over a table. */}
+        {reading.state === "scanning" ? (
+          <div className="absolute bottom-24 left-1/2 flex -translate-x-1/2 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setFill((f) => Math.max(0.45, +(f - 0.07).toFixed(2)))}
+              aria-label="Smaller box"
+              className="h-11 w-11 rounded-full border-2 border-white/70 bg-black/50 text-lg font-black text-white backdrop-blur"
+            >
+              −
+            </button>
+            <span className="rounded-full bg-black/50 px-3 py-1 text-[11px] font-black text-white/80 backdrop-blur">
+              box {Math.round(fill * 100)}%
+            </span>
+            <button
+              type="button"
+              onClick={() => setFill((f) => Math.min(0.98, +(f + 0.07).toFixed(2)))}
+              aria-label="Bigger box"
+              className="h-11 w-11 rounded-full border-2 border-white/70 bg-black/50 text-lg font-black text-white backdrop-blur"
+            >
+              +
+            </button>
+          </div>
+        ) : null}
+
         <button
           type="button"
           onClick={onClose}
@@ -325,6 +405,33 @@ export function LiveScanner({
         >
           Close
         </button>
+
+        {/* WHAT IT IS ACTUALLY LOOKING AT. Small, out of the way, and the
+            single most useful thing on this screen when a scan is not working:
+            a crop full of grading label or table says so instantly, where a
+            failure count says nothing at all. */}
+        {reading.state === "scanning" ? (
+          <div className="pointer-events-none absolute left-4 top-4 flex items-start gap-2">
+            <canvas
+              ref={peekRef}
+              width={96}
+              height={96}
+              className="h-24 w-24 rounded-md border-2 border-white/70 bg-black object-cover"
+            />
+            <div className="rounded-md bg-black/55 px-2 py-1.5 text-[10px] leading-relaxed text-white/85 backdrop-blur">
+              <div className="font-black uppercase tracking-wide text-white/60">What it reads</div>
+              {reading.peek ? (
+                <>
+                  <div className="tabular-nums">score {reading.peek.score.toFixed(3)}</div>
+                  <div className="tabular-nums">margin {reading.peek.margin.toFixed(3)}</div>
+                  <div className="max-w-[7rem] truncate">{reading.peek.id}</div>
+                </>
+              ) : (
+                <div>…</div>
+              )}
+            </div>
+          </div>
+        ) : null}
 
         {reading.state === "scanning" ? (
           <div className="pointer-events-none absolute inset-x-0 bottom-0 p-6 pb-8 text-center">
