@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { CardView } from "@/lib/card-view";
 import { cardRect, cardRectInView, matchCard, prepareMatcher, type ClipIndexKey, type ClipProgress } from "@/lib/clip-client";
-import { clipTied, clipVerdict, CLIP_MAX_TIED, type ClipVerdict } from "@/lib/clip-search";
+import { clipVerdict, CLIP_MAX_TIED, type ClipVerdict } from "@/lib/clip-search";
 
 /**
  * Point the camera at a card and see what it is, without pressing anything.
@@ -44,23 +44,43 @@ import { clipTied, clipVerdict, CLIP_MAX_TIED, type ClipVerdict } from "@/lib/cl
  */
 
 /**
- * How many of the recent frames must name the same card before it is shown.
+ * EVIDENCE ADDS UP ACROSS FRAMES. No single frame has to be confident.
  *
- * A VOTE OVER A WINDOW, NOT A RUN OF CONSECUTIVE FRAMES. The first version
- * required two in a row and was reported, correctly, as impossible to use:
- * two in a row at two frames a second is a full second of perfect stillness,
- * with a phone held over a table and a box to line up. One blurred frame in the
- * middle — from a breath, a focus hunt, a hand — reset the count to zero, so the
- * requirement in practice was "never move", not "move a little".
+ * THE THREE VERSIONS BEFORE THIS ONE all asked the same wrong question — does
+ * THIS frame, alone, clear both thresholds? First two consecutive frames had to;
+ * then two of the last six. Both were still a conjunction of two rare events on
+ * a moving camera: a frame sharp enough to clear the score floor AND separated
+ * enough to clear the margin. Handheld over a table, a frame rarely does both,
+ * so the answer never came and the scan read as broken.
  *
- * Counting across a window forgives the blurred frame. The bad frames simply do
- * not vote: they score below the floor and are never candidates in the first
- * place, so a wrong answer still cannot accumulate.
+ * The margin is the part that does not survive live video. It was calibrated on
+ * five still photographs; a frame with any motion in it has its top two
+ * candidates within noise of each other, whichever card is really there.
+ *
+ * So: every frame adds each candidate's similarity to a running total, and the
+ * card that is actually in front of the camera pulls ahead over a second or two
+ * even though no single frame ever settled it. Noise does not accumulate —
+ * a blurred frame's spurious best is a different card each time, and scattered
+ * votes cancel where a consistent one compounds.
  */
-const AGREEING_FRAMES = 2;
 
-/** How many recent frames the vote looks at. At ~2 fps this is a few seconds. */
-const WINDOW = 6;
+/** Frames before any answer, whatever the evidence says. At ~2 fps, about 1.5 s. */
+const MIN_FRAMES = 3;
+
+/**
+ * How far ahead the leader must be, per frame, to be called.
+ *
+ * An AVERAGE lead rather than a single frame's margin — 0.008 sustained across
+ * four frames is a far stronger claim than 0.015 in one, because the noise that
+ * produces a lucky margin does not repeat and a real card does.
+ */
+const ACCEPT_LEAD = 0.008;
+
+/** Below this score a frame is not looking at a card and contributes nothing. */
+const VOTE_FLOOR = 0.45;
+
+/** Older evidence fades, so pointing at a second card does not wait out the first. */
+const DECAY = 0.85;
 
 type Reading =
   | { state: "starting" }
@@ -71,7 +91,10 @@ type Reading =
       verdict: ClipVerdict;
       fps?: number;
       /** Votes gathered for the current best card, out of `AGREEING_FRAMES`. */
-      votes?: number;
+      /** 0..1, how close the accumulated evidence is to naming a card. */
+      progress?: number;
+      /** The card currently ahead, shown before it is settled so the view looks alive. */
+      leading?: string;
       /** The quadrilateral the detector found, in the downscaled frame's pixels. */
       found?: { corners: number[][]; width: number };
       /** What the matcher thinks it is looking at, whether or not it will say so. */
@@ -149,7 +172,11 @@ export function LiveScanner({
    * down and build a new one on every frame, and two loops racing one camera is
    * a bug that looks like the matcher being wrong.
    */
-  const loop = useRef<{ running: boolean; window: string[] }>({ running: false, window: [] });
+  const loop = useRef<{ running: boolean; frames: number; tally: Map<string, { sum: number; seen: number }> }>({
+    running: false,
+    frames: 0,
+    tally: new Map(),
+  });
 
   // The loop outlives a re-render, so it reads the current fill through a ref
   // rather than closing over the value it started with. Written in an effect,
@@ -235,7 +262,7 @@ export function LiveScanner({
       video.srcObject = stream;
       await video.play().catch(() => undefined);
 
-      loop.current = { running: true, window: [] };
+      loop.current = { running: true, frames: 0, tally: new Map() };
       setReading({ state: "scanning", verdict: "empty" });
 
       while (loop.current.running && !cancelled) {
@@ -273,17 +300,42 @@ export function LiveScanner({
         if (!loop.current.running || cancelled) break;
 
         const verdict = clipVerdict(result);
-        const top = result.hits[0]?.id ?? "";
 
-        // Only a frame that cleared BOTH thresholds gets a vote. A blurred or
-        // empty frame contributes nothing rather than resetting everything.
-        loop.current.window.push(verdict === "identified" ? top : "");
-        if (loop.current.window.length > WINDOW) loop.current.window.shift();
-        const votes = loop.current.window.filter((id) => id && id === top).length;
+        // EVERY CANDIDATE THIS FRAME SAW gets its similarity added, not just the
+        // winner. A card that comes second in every frame and first in none is
+        // still the card in front of the camera, and per-frame winner-takes-all
+        // threw that away.
+        const tally = loop.current.tally;
+        if (verdict !== "empty") {
+          for (const [, entry] of tally) {
+            entry.sum *= DECAY;
+            entry.seen *= DECAY;
+          }
+          for (const hit of result.hits) {
+            if (hit.score < VOTE_FLOOR) continue;
+            const entry = tally.get(hit.id) ?? { sum: 0, seen: 0 };
+            entry.sum += hit.score;
+            entry.seen += 1;
+            tally.set(hit.id, entry);
+          }
+          loop.current.frames++;
+        }
 
-        if (verdict === "identified" && votes >= AGREEING_FRAMES) {
-          const tied = clipTied(result).slice(0, CLIP_MAX_TIED);
-          const ids = tied.map((hit) => (indexKey === "ja" ? `ja~${hit.id}` : hit.id));
+        const ranked = [...tally.entries()].sort((a, b) => b[1].sum - a[1].sum);
+        const leader = ranked[0];
+        const runnerUp = ranked[1];
+        const lead = leader ? (leader[1].sum - (runnerUp?.[1].sum ?? 0)) / Math.max(1, loop.current.frames) : 0;
+        const settled = Boolean(leader && loop.current.frames >= MIN_FRAMES && leader[1].seen >= 2 && lead >= ACCEPT_LEAD);
+
+        if (settled && leader) {
+          // A REPRINT STILL SHOWS BOTH. Two cards with the same artwork run
+          // neck and neck forever, so anything inside the accept threshold of
+          // the leader is offered alongside it rather than waited out.
+          const tied = ranked
+            .filter(([, entry]) => (leader[1].sum - entry.sum) / Math.max(1, loop.current.frames) < ACCEPT_LEAD)
+            .slice(0, CLIP_MAX_TIED)
+            .map(([id]) => id);
+          const ids = tied.map((id) => (indexKey === "ja" ? `ja~${id}` : id));
           try {
             const response = await fetch("/api/scan/resolve", {
               method: "POST",
@@ -294,8 +346,8 @@ export function LiveScanner({
             if (cards && cards.length > 0) {
               if (cancelled) break;
               // FOUND MEANS STOP. Leaving the camera running behind a result
-              // keeps the phone warm, keeps the loop working, and invites the
-              // next frame to overwrite an answer the reader is still reading.
+              // keeps the phone warm and invites the next frame to overwrite an
+              // answer the reader is still reading.
               stop();
               setReading({ state: "found", cards, tied: cards.length, elapsed: result.elapsed });
               return;
@@ -303,13 +355,19 @@ export function LiveScanner({
           } catch {
             // The catalogue was unreachable; keep scanning rather than stop.
           }
-          loop.current.window = [];
+          loop.current.tally.clear();
+          loop.current.frames = 0;
         } else {
           setReading({
             state: "scanning",
             verdict,
             fps: result.elapsed > 0 ? 1000 / result.elapsed : undefined,
-            votes,
+            // How close the leader is to being called, 0..1 — so a scan that is
+            // one frame away looks different from one that is stuck.
+            progress: leader
+              ? Math.min(1, (loop.current.frames / MIN_FRAMES) * 0.5 + Math.min(1, lead / ACCEPT_LEAD) * 0.5)
+              : 0,
+            leading: leader?.[0],
             found: result.corners ? { corners: result.corners, width: 640 } : undefined,
             peek: result.hits[0]
               ? { id: result.hits[0].id, score: result.hits[0].score, margin: result.margin }
@@ -331,12 +389,9 @@ export function LiveScanner({
       ? ""
       : reading.verdict === "empty"
         ? "Point the camera at a card"
-        : reading.verdict === "unsure"
-          // IN A SLAB, THE CARD IS NOT THE OBJECT. A graded case carries a
-          // label and a plastic border, and filling the guide with the CASE
-          // puts both inside the crop. The guide wants the card's own edges.
-          ? "Line the card's own edges up with the box — not the case"
-          : "Got it…";
+        // "Unsure" no longer means "do something differently" — evidence is
+        // accumulating and the honest thing to say is that it is working.
+        : "Reading…";
 
   return (
     /* FULL SCREEN, NOT A PANEL IN A COLUMN. A scanner is a viewfinder: the frame
@@ -462,14 +517,14 @@ export function LiveScanner({
             </p>
             {/* The vote, visible. Without it a scanner that is one frame from an
                 answer looks identical to one that is stuck. */}
-            <div className="mx-auto mt-2 flex w-24 gap-1">
-              {Array.from({ length: AGREEING_FRAMES }, (_, i) => (
-                <span
-                  key={i}
-                  className="h-1 flex-1 rounded-full transition-colors"
-                  style={{ background: (reading.votes ?? 0) > i ? "#3ddc84" : "rgba(255,255,255,.25)" }}
-                />
-              ))}
+            {/* One continuous bar, not a row of pips. Evidence arrives by
+                degrees now, and a bar that creeps forward while the camera
+                moves is the difference between "working" and "stuck". */}
+            <div className="mx-auto mt-2 h-1 w-32 overflow-hidden rounded-full bg-white/25">
+              <div
+                className="h-full rounded-full bg-[#3ddc84] transition-[width] duration-200"
+                style={{ width: `${Math.round((reading.progress ?? 0) * 100)}%` }}
+              />
             </div>
           </div>
         ) : null}

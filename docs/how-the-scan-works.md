@@ -170,6 +170,26 @@ matcher cannot be tested on grey pictures. The stretch also means a card in it
 has an aspect near 1.0, so the shape test has to be switched off to measure at
 all, which the grader does explicitly rather than by quietly widening a default.
 
+### Someone else walked this exact path and ended up somewhere else
+
+From ankush.one's write-up of building a Pokémon scanner:
+
+> the opencv rectangle contour thingie to crop out cards works okay for still
+> images, [but] it failed drastically for video streams … so I ended up training
+> a YOLO11n model on a pokemon cards dataset, and it worked pretty well and
+> really fast, while also being around 5mb
+
+That is the same split this measured from the other side: **90% on still
+images**, and a live view that could not hold an answer. Stills and video are
+not the same problem, and grading on a dataset of stills cannot tell you which
+one you have.
+
+So a small trained detector is very likely the answer. One caveat that decides
+*which* one: **YOLO11 is Ultralytics, and Ultralytics is AGPL-3.0** — viral
+across a network service, which this is. RF-DETR, RT-DETR, D-FINE and YOLOX are
+Apache-2.0 and do the same job. The dataset is CC BY 4.0 either way, so the
+licence question is entirely about the model, not the data.
+
 ### The guide is still there, as the fallback
 
 The detector declines on about one frame in ten, and the centre crop is a better
@@ -181,10 +201,16 @@ lines up a rectangle that nothing is reading.
 - **One frame at a time.** The loop reads a frame only when the previous match has
   finished, so it self-paces. Firing on a timer would queue work faster than it
   completes and fall further behind the camera every second.
-- **Two agreeing frames before an answer.** A single frame's verdict flickers as
-  hands move and focus hunts. `AGREEING_FRAMES = 2` costs about a second and
-  removes the class of bug where a card flashes up because one blurred frame
-  landed near something.
+- **Evidence accumulates; no single frame has to be confident.** Three versions
+  before this one asked whether THIS frame, alone, cleared both thresholds —
+  first two consecutive frames had to, then two of the last six. Both were a
+  conjunction of two rare events on a moving camera: sharp enough to clear the
+  score floor AND separated enough to clear the margin. Reported as impossible
+  to use, and it was. Every frame now adds each candidate's similarity to a
+  running total, and the card actually present pulls ahead over a second or two
+  without any frame ever settling it. Noise does not accumulate: a blurred
+  frame's spurious best is a different card each time, and scattered votes
+  cancel where a consistent one compounds.
 - **The match runs on another thread.** The first version ran it where React
   runs, and the camera preview stuttered — reported from a real phone as
   "everything seems laggy". A 60 ms yield between frames was tried and did not
