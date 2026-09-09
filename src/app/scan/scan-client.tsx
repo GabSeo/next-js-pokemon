@@ -250,6 +250,18 @@ export function ScanClient() {
    * and asks the reader to break a tie the picture cannot break.
    */
   const [language, setLanguage] = useState<ClipLanguage>("en");
+  /**
+   * WHICH GAME, ASKED RATHER THAN GUESSED — and it has to be asked because the
+   * on-device matcher only knows one of them.
+   *
+   * There is a MobileCLIP index for Pokemon and none for One Piece, so a
+   * photographed Luffy was embedded, searched against 41,500 Pokemon vectors,
+   * and confidently returned a Koffing. That is the exact failure this codebase
+   * refuses everywhere else: a real, loading, wrong answer given with
+   * conviction. One Piece went straight to the code reader before the matcher
+   * existed and worked; it does again.
+   */
+  const [game, setGame] = useState<"pokemon" | "onepiece">("pokemon");
   const objectUrl = useRef<string | undefined>(undefined);
 
   async function onFile(event: React.ChangeEvent<HTMLInputElement>) {
@@ -260,21 +272,23 @@ export function ScanClient() {
     objectUrl.current = URL.createObjectURL(file);
     setPreview(objectUrl.current);
 
-    // THE ARTWORK FIRST, ON THE DEVICE. It costs no quota, sends no photograph
-    // anywhere, and answers in milliseconds once the model is warm. Cloud
-    // Vision is now the fallback rather than the first move — which is the
-    // whole point of shipping the index to the client.
-    setStatus({ phase: "matching" });
-    try {
-      const local = await matchLocally(file, language);
-      if (local) {
-        setStatus({ phase: "done", candidates: [], cards: local.cards, route: local.route });
-        return;
+    // THE ARTWORK FIRST, ON THE DEVICE — but only where there is an index to
+    // search. It costs no quota, sends no photograph anywhere, and answers in
+    // milliseconds once the model is warm. One Piece has no index yet, so it
+    // skips straight to the reader that can read its code.
+    if (game === "pokemon") {
+      setStatus({ phase: "matching" });
+      try {
+        const local = await matchLocally(file, language);
+        if (local) {
+          setStatus({ phase: "done", candidates: [], cards: local.cards, route: local.route });
+          return;
+        }
+      } catch {
+        // No WebGPU, a failed model download, an image this browser will not
+        // decode. None of that should cost the visitor their scan — fall
+        // through to the reader that runs on a server.
       }
-    } catch {
-      // No WebGPU, a failed model download, an image this browser will not
-      // decode. None of that should cost the visitor their scan — fall through
-      // to the reader that runs on a server.
     }
 
     setStatus({ phase: "reading" });
@@ -328,28 +342,28 @@ export function ScanClient() {
           <input type="file" accept="image/*" capture="environment" onChange={onFile} className="hidden" />
         </label>
 
-        {/* WHICH CATALOGUE TO SEARCH, asked rather than guessed. The artwork
-            matcher has no text to infer a language from — an English card and
-            its Japanese release are the same picture — so this is the one thing
-            it needs from the reader and cannot work out for itself. */}
+        {/* WHAT THE SCANNER CANNOT WORK OUT FOR ITSELF, asked rather than
+            guessed. Both answers change which catalogue is searched, and
+            neither is recoverable from the picture: the artwork matcher has no
+            text to read a language off, and it has no index at all for One
+            Piece — so left to guess it answered a photographed Luffy with a
+            Koffing. */}
         <fieldset className="mt-3 rounded-lg border-2 border-black bg-white p-2">
-          <legend className="px-1 text-[10px] font-black uppercase tracking-wide text-muted-text">
-            Card language
-          </legend>
+          <legend className="px-1 text-[10px] font-black uppercase tracking-wide text-muted-text">Game</legend>
           <div className="flex gap-1">
             {(
               [
-                ["en", "English"],
-                ["ja", "Japanese"],
+                ["pokemon", "Pokémon"],
+                ["onepiece", "One Piece"],
               ] as const
             ).map(([value, name]) => (
               <button
                 key={value}
                 type="button"
-                onClick={() => setLanguage(value)}
-                aria-pressed={language === value}
+                onClick={() => setGame(value)}
+                aria-pressed={game === value}
                 className={`flex-1 rounded border-2 border-black px-2 py-1.5 text-xs font-black transition-colors ${
-                  language === value ? "bg-black text-white" : "bg-muted-surface hover:bg-white"
+                  game === value ? "bg-black text-white" : "bg-muted-surface hover:bg-white"
                 }`}
               >
                 {name}
@@ -357,6 +371,42 @@ export function ScanClient() {
             ))}
           </div>
         </fieldset>
+
+        {/* POKEMON ONLY, because it is the only catalogue we hold twice. One
+            Piece is read from its printed code, which carries no language, so
+            offering the choice there would be a control that does nothing. */}
+        {game === "pokemon" ? (
+          <fieldset className="mt-2 rounded-lg border-2 border-black bg-white p-2">
+            <legend className="px-1 text-[10px] font-black uppercase tracking-wide text-muted-text">
+              Card language
+            </legend>
+            <div className="flex gap-1">
+              {(
+                [
+                  ["en", "English"],
+                  ["ja", "Japanese"],
+                ] as const
+              ).map(([value, name]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setLanguage(value)}
+                  aria-pressed={language === value}
+                  className={`flex-1 rounded border-2 border-black px-2 py-1.5 text-xs font-black transition-colors ${
+                    language === value ? "bg-black text-white" : "bg-muted-surface hover:bg-white"
+                  }`}
+                >
+                  {name}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+        ) : (
+          <p className="mt-2 rounded-lg border-2 border-black bg-muted-surface p-2 text-[11px] text-muted-text">
+            One Piece cards are read from the code in the bottom corner —{" "}
+            <b>ST21-014</b>. Artwork matching is Pokémon-only for now.
+          </p>
+        )}
 
         {preview ? (
           /* eslint-disable-next-line @next/next/no-img-element -- a local object URL for a file the visitor just chose; there is no remote asset to optimize */
@@ -383,8 +433,12 @@ export function ScanClient() {
           <p className="rounded-lg border-2 border-black bg-muted-surface p-3 text-sm font-bold">
             Reading the card…
             <span className="mt-1 block text-xs font-normal text-muted-text">
-              The artwork was not a clear enough match, so the printed number is being read instead. The
-              photo is sent once, read, and not stored.
+              {/* WHY the photo is being sent differs by game, and saying the
+                  wrong reason is worse than saying none. One Piece never had a
+                  local attempt to fail. */}
+              {game === "onepiece"
+                ? "One Piece cards are read from their printed code. The photo is sent once, read, and not stored."
+                : "The artwork was not a clear enough match, so the printed number is being read instead. The photo is sent once, read, and not stored."}
             </span>
           </p>
         ) : null}
