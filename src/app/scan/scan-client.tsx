@@ -5,6 +5,8 @@ import { useRef, useState } from "react";
 import { AddToCollectionButton } from "@/components/add-to-collection-button";
 import type { CodeCandidate } from "@/lib/card-code-ocr";
 import type { CardView } from "@/lib/card-view";
+import { bitmapOf, matchCard, type ClipLanguage } from "@/lib/clip-client";
+import { CLIP_CONFIDENT_MARGIN } from "@/lib/clip-search";
 import { onePieceSrc } from "@/lib/one-piece-image-url";
 
 /**
@@ -47,10 +49,20 @@ import { onePieceSrc } from "@/lib/one-piece-image-url";
  * an unexplained blank.
  */
 
+/**
+ * How the card was identified, which the reader deserves to be told.
+ *
+ * `artwork` never left the device and cost nothing. `text` went to Google
+ * Vision. They are different promises about privacy and about what could go
+ * wrong, so they are not collapsed into one "scanned" state.
+ */
+type Route = { via: "artwork"; margin: number; elapsed: number } | { via: "text" };
+
 type Status =
   | { phase: "idle" }
+  | { phase: "matching" }
   | { phase: "reading" }
-  | { phase: "done"; candidates: CodeCandidate[]; cards: CardView[]; note?: string };
+  | { phase: "done"; candidates: CodeCandidate[]; cards: CardView[]; note?: string; route?: Route };
 
 /** Long edge in pixels. Comfortably more detail than a card code needs. */
 const UPLOAD_MAX_EDGE = 1600;
@@ -76,10 +88,54 @@ async function uploadable(file: File): Promise<Blob> {
   }
 }
 
+/**
+ * Ask the artwork matcher, on this device.
+ *
+ * Returns the card only when the margin clears `CLIP_CONFIDENT_MARGIN`. A
+ * near-tie is not a weak answer to show with a caveat — it is the matcher
+ * saying it cannot tell two cards apart, and the honest response is to escalate
+ * to the reader that can look at the printed number instead.
+ */
+async function matchLocally(
+  file: File,
+  language: ClipLanguage
+): Promise<{ cards: CardView[]; route: Route } | undefined> {
+  const { source, width, height } = await bitmapOf(file);
+  try {
+    const result = await matchCard(source, { width, height }, language);
+    const best = result.hits[0];
+    if (!best || result.margin < CLIP_CONFIDENT_MARGIN) return undefined;
+
+    // The matcher decided WHICH card; the resolver only has to fetch it. The
+    // Japanese catalogue is addressed with a `ja~` prefix, the same qualifier
+    // every other link on the site uses.
+    const id = language === "ja" ? `ja~${best.id}` : best.id;
+    const response = await fetch("/api/scan/resolve", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: [id] }),
+    });
+    if (!response.ok) return undefined;
+
+    const { cards } = (await response.json()) as { cards?: CardView[] };
+    if (!cards || cards.length === 0) return undefined;
+
+    return { cards, route: { via: "artwork", margin: result.margin, elapsed: result.elapsed } };
+  } finally {
+    source.close();
+  }
+}
+
 export function ScanClient() {
   const [status, setStatus] = useState<Status>({ phase: "idle" });
   const [preview, setPreview] = useState<string | undefined>();
   const [typed, setTyped] = useState("");
+  /**
+   * ONE LANGUAGE, NEVER BOTH. An English card and its Japanese release share
+   * artwork exactly, so a search across both returns two answers for one card
+   * and asks the reader to break a tie the picture cannot break.
+   */
+  const [language, setLanguage] = useState<ClipLanguage>("en");
   const objectUrl = useRef<string | undefined>(undefined);
 
   async function onFile(event: React.ChangeEvent<HTMLInputElement>) {
@@ -89,6 +145,24 @@ export function ScanClient() {
     if (objectUrl.current) URL.revokeObjectURL(objectUrl.current);
     objectUrl.current = URL.createObjectURL(file);
     setPreview(objectUrl.current);
+
+    // THE ARTWORK FIRST, ON THE DEVICE. It costs no quota, sends no photograph
+    // anywhere, and answers in milliseconds once the model is warm. Cloud
+    // Vision is now the fallback rather than the first move — which is the
+    // whole point of shipping the index to the client.
+    setStatus({ phase: "matching" });
+    try {
+      const local = await matchLocally(file, language);
+      if (local) {
+        setStatus({ phase: "done", candidates: [], cards: local.cards, route: local.route });
+        return;
+      }
+    } catch {
+      // No WebGPU, a failed model download, an image this browser will not
+      // decode. None of that should cost the visitor their scan — fall through
+      // to the reader that runs on a server.
+    }
+
     setStatus({ phase: "reading" });
 
     let candidates: CodeCandidate[] = [];
@@ -120,7 +194,7 @@ export function ScanClient() {
       note = "Could not reach the card reader. Check your connection, or type the code below.";
     }
 
-    setStatus({ phase: "done", candidates, cards, note });
+    setStatus({ phase: "done", candidates, cards, note, route: { via: "text" } });
   }
 
   return (
@@ -140,6 +214,36 @@ export function ScanClient() {
           <input type="file" accept="image/*" capture="environment" onChange={onFile} className="hidden" />
         </label>
 
+        {/* WHICH CATALOGUE TO SEARCH, asked rather than guessed. The artwork
+            matcher has no text to infer a language from — an English card and
+            its Japanese release are the same picture — so this is the one thing
+            it needs from the reader and cannot work out for itself. */}
+        <fieldset className="mt-3 rounded-lg border-2 border-black bg-white p-2">
+          <legend className="px-1 text-[10px] font-black uppercase tracking-wide text-muted-text">
+            Card language
+          </legend>
+          <div className="flex gap-1">
+            {(
+              [
+                ["en", "English"],
+                ["ja", "Japanese"],
+              ] as const
+            ).map(([value, name]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setLanguage(value)}
+                aria-pressed={language === value}
+                className={`flex-1 rounded border-2 border-black px-2 py-1.5 text-xs font-black transition-colors ${
+                  language === value ? "bg-black text-white" : "bg-muted-surface hover:bg-white"
+                }`}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+
         {preview ? (
           /* eslint-disable-next-line @next/next/no-img-element -- a local object URL for a file the visitor just chose; there is no remote asset to optimize */
           <img
@@ -151,11 +255,22 @@ export function ScanClient() {
       </div>
 
       <div>
+        {status.phase === "matching" ? (
+          <p className="rounded-lg border-2 border-black bg-muted-surface p-3 text-sm font-bold">
+            Looking at the artwork…
+            <span className="mt-1 block text-xs font-normal text-muted-text">
+              This runs on your device and the photo does not leave it. The first card of a session also
+              downloads the matcher, which takes a moment; every one after is instant.
+            </span>
+          </p>
+        ) : null}
+
         {status.phase === "reading" ? (
           <p className="rounded-lg border-2 border-black bg-muted-surface p-3 text-sm font-bold">
             Reading the card…
             <span className="mt-1 block text-xs font-normal text-muted-text">
-              The photo is sent once, read, and not stored.
+              The artwork was not a clear enough match, so the printed number is being read instead. The
+              photo is sent once, read, and not stored.
             </span>
           </p>
         ) : null}
@@ -172,6 +287,16 @@ export function ScanClient() {
               <p className="text-xs font-black uppercase tracking-wide text-muted-text">
                 {status.cards.length === 1 ? "Your card" : "Which of these is yours?"}
               </p>
+
+              {/* HOW IT WAS FOUND, said plainly. One route kept the photo on the
+                  device and one sent it to Google — that difference belongs to
+                  the person who took the picture, not in a log. */}
+              {status.route?.via === "artwork" ? (
+                <p className="mt-1 text-[11px] text-muted-text">
+                  Matched by artwork on your device in {Math.round(status.route.elapsed)} ms · margin{" "}
+                  {status.route.margin.toFixed(3)} · the photo was not uploaded
+                </p>
+              ) : null}
 
               {/* THE PRINTINGS, not just the code. A code names a card; a card
                   is several printings and they are not worth the same — a

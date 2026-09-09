@@ -245,10 +245,30 @@ one-afternoon change, and it should follow a measurement rather than precede one
 - EN↔JP set bridge: 83 English sets mapped to a Japanese origin
 - Matching verified: 120/120 sampled Limitless matches name the same card
 
-**Built but not wired in.** The MobileCLIP index exists and nothing in `src/` reads
-it. The live scan still runs Google Vision OCR → printed number → 64-bit artwork
-hash. Connecting the index is the next real step, and it is the one that turns a
-photograph into an answer without spending OCR quota.
+**Wired in, and verified in a real browser.** The MobileCLIP index is now served to
+the client (`/api/scan/index/<lang>.{json,i8}`) and the match happens on the device.
+Measured end to end on localhost, driving the page's own file input:
+
+```
+swsh12-001  Venonat     matched  621 ms   margin 0.179
+swsh12-150  Fletchling  matched  499 ms   margin 0.072
+```
+
+`/api/scan/ocr` was never called. Google Vision is now the fallback for a picture
+the artwork cannot place, not the first move — which takes the only metered call in
+the product off the critical path and means the photograph never leaves the device
+on the common path.
+
+**Browser inference is no longer an estimate.** ~500 ms per frame once the model is
+warm, on a desktop CPU. That is ~2 fps: enough for a photo scan, not yet enough for
+a video feed. WebGPU and a smaller input are the obvious levers, and both should
+follow a measurement on a real phone rather than precede one.
+
+**One number that is still a hypothesis.** `CLIP_CONFIDENT_MARGIN` is 0.015,
+separating three correct answers (0.018, 0.036, 0.072) from two wrong ones (0.006,
+0.007). That is n=5. It is exported from `lib/clip-search.ts` so it can be fitted
+properly once there are enough labelled photographs, and so a caller can see what
+it is trusting.
 
 **Measured on real photographs**, with corners read by hand — the output a perfect
 detector would produce:
@@ -267,9 +287,11 @@ So a card detector is worth building, and that is measured rather than assumed.
    cards held in a hand or lying flat on a desk.
 2. **2,694 Japanese cards from 1996–2005** are pictured by no public source.
 3. **771 English cards**, almost all Trainer Kit reprints.
-4. **Browser inference time is still an estimate** scaled from Node, not measured
-   on a phone.
+4. **~500 ms per frame is a desktop number.** Nothing has been measured on a phone,
+   and a video feed needs roughly ten times better.
 
 **The endgoal.** The fastest live scan on the market, on the best data we can
-collect legally and for free. The data half is in good shape. The camera half has
-not started.
+collect legally and for free. The data half is in good shape, and the matcher now
+runs where it has to run — on the device. What is left is the camera: a detector
+that finds the four corners of a card in a frame, and the speed to do it thirty
+times a second.

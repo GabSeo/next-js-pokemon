@@ -35,9 +35,9 @@ const MAX_CODES = 8;
 const MAX_CARDS_PER_CODE = 6;
 
 export async function POST(request: Request) {
-  let payload: { codes?: unknown };
+  let payload: { codes?: unknown; ids?: unknown };
   try {
-    payload = (await request.json()) as { codes?: unknown };
+    payload = (await request.json()) as { codes?: unknown; ids?: unknown };
   } catch {
     return Response.json({ error: "Expected JSON." }, { status: 400 });
   }
@@ -46,9 +46,30 @@ export async function POST(request: Request) {
     ? payload.codes.filter((c): c is string => typeof c === "string").slice(0, MAX_CODES)
     : [];
 
+  // IDS ARE A SECOND, STRONGER KIND OF QUESTION. A code is a printed number and
+  // names more than one card half the time, so `codes` fans out through a
+  // lookup. An id came from the artwork matcher, which already decided WHICH
+  // card — there is nothing left to disambiguate, so it resolves directly.
+  // Both live here because the answer is the same shape and the caller mixes
+  // them: the client matches locally, then falls back to OCR when unsure.
+  const ids = Array.isArray(payload.ids)
+    ? payload.ids.filter((c): c is string => typeof c === "string").slice(0, MAX_CODES)
+    : [];
+
   const real: string[] = [];
   const cards: CardView[] = [];
   const seen = new Set<string>();
+
+  for (const id of ids) {
+    const key = `pokemon:${id}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const view = await getCardView("pokemon", id);
+    if (view) {
+      real.push(id);
+      cards.push(view);
+    }
+  }
 
   for (const code of codes) {
     const matches = lookupCards(code).matches.slice(0, MAX_CARDS_PER_CODE);

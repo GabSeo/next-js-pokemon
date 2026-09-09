@@ -16,7 +16,9 @@ import { ScanClient } from "@/app/scan/scan-client";
  * no data loader in its import graph at all — the client component posts a
  * photo and renders what comes back.
  *
- * The photo is downscaled in the browser, sent once, read, and not stored.
+ * The artwork is matched in the browser against 41,500 reference vectors and the
+ * photo never leaves the device. Only an unclear picture is downscaled, sent
+ * once to be read for its printed code, and not stored.
  */
 
 // One year. The page is a shell; nothing in it is data.
@@ -25,7 +27,7 @@ export const revalidate = 31536000;
 export const metadata: Metadata = {
   title: "Scan a card",
   description:
-    "Photograph a Pokémon or One Piece card, we read its code, and you get every printing of it.",
+    "Photograph a Pokémon or One Piece card, we recognise it on your device, and you get every printing of it.",
   alternates: { canonical: "/scan" },
 };
 
@@ -35,14 +37,16 @@ export default function ScanPage() {
       <div className="mb-2">
         <h1 className="text-[32px] font-black tracking-[-0.8px]">Scan a card</h1>
         <p className="mt-1 text-sm text-muted-text">
-          Photograph the card and we read its code. The photo is sent once, read, and not kept.
+          Photograph the card and we recognise its artwork on your device. Nothing is uploaded unless the
+          picture is too unclear to place.
         </p>
       </div>
 
       <p className="mt-4 rounded-lg border-2 border-black bg-muted-surface p-3 text-xs">
-        Get the <b>bottom corner</b> in frame — that is where the code sits. One Piece cards carry something like{" "}
-        <b>OP05-119</b>; Pokémon cards carry a printed number like <b>190/182</b>. The photo is sent once, read, and
-        not stored. You can always{" "}
+        Fill the frame with the card and keep it flat to the camera — the whole picture is what gets matched. If the
+        artwork cannot be placed, we fall back to reading the printed code in the <b>bottom corner</b>{" "}
+        (<b>OP05-119</b> on a One Piece card, <b>190/182</b> on a Pokémon one), and only then is the photo sent
+        anywhere. You can always{" "}
         <Link href="/lookup" className="font-black underline underline-offset-4">
           type the code instead
         </Link>
