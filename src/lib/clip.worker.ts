@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
 
+import { detectCard, rectify, type Quad } from "@/lib/card-detect";
 import { CLIP_DIM, clipIndexFrom, clipSearch, type ClipIndex } from "@/lib/clip-search";
 
 /**
@@ -38,7 +39,21 @@ let indexKey: string | undefined;
 let canvas: OffscreenCanvas | undefined;
 
 type InitMessage = { type: "init"; key: string };
-type MatchMessage = { type: "match"; id: number; bitmap: ImageBitmap; limit: number };
+type MatchMessage = {
+  type: "match";
+  id: number;
+  bitmap: ImageBitmap;
+  limit: number;
+  /**
+   * Find the card in the frame rather than trusting the caller's crop.
+   *
+   * When set, the bitmap is a WHOLE FRAME and this side locates the card,
+   * straightens it, and embeds that. When absent the bitmap is already the
+   * region to read — which is what the photo upload sends, because a person
+   * framed it when they took it.
+   */
+  detect?: boolean;
+};
 type Incoming = InitMessage | MatchMessage;
 
 async function ensureModel(): Promise<void> {
@@ -73,29 +88,40 @@ async function ensureIndex(key: string): Promise<void> {
   indexKey = key;
 }
 
-/** The ingestion recipe, on this side of the thread boundary. */
-function pixelsOf(bitmap: ImageBitmap): Float32Array {
-  if (!canvas) canvas = new OffscreenCanvas(SIDE, SIDE);
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  if (!ctx) throw new Error("no offscreen 2d context");
-
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = "high";
-  // The bitmap arrives already cropped to the card region — `createImageBitmap`
-  // on the main thread takes the source rectangle, so no framing decision is
-  // repeated here and the two cannot drift apart.
-  ctx.drawImage(bitmap, 0, 0, SIDE, SIDE);
-
-  const { data } = ctx.getImageData(0, 0, SIDE, SIDE);
+/** The ingestion recipe: an RGBA square becomes the tensor the model wants. */
+function pixelsFrom(rgba: Uint8ClampedArray): Float32Array {
   const pixels = new Float32Array(3 * SIDE * SIDE);
   const plane = SIDE * SIDE;
   for (let i = 0; i < plane; i++) {
     const at = i * 4;
-    pixels[i] = data[at] / 255;
-    pixels[plane + i] = data[at + 1] / 255;
-    pixels[2 * plane + i] = data[at + 2] / 255;
+    pixels[i] = rgba[at] / 255;
+    pixels[plane + i] = rgba[at + 1] / 255;
+    pixels[2 * plane + i] = rgba[at + 2] / 255;
   }
   return pixels;
+}
+
+/** Stretch a bitmap to the model's square. Used when the caller already cropped. */
+function squareOf(bitmap: ImageBitmap): Uint8ClampedArray {
+  if (!canvas) canvas = new OffscreenCanvas(SIDE, SIDE);
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) throw new Error("no offscreen 2d context");
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(bitmap, 0, 0, SIDE, SIDE);
+  return ctx.getImageData(0, 0, SIDE, SIDE).data;
+}
+
+/** A frame at its own size, for the detector to look at. */
+let frameCanvas: OffscreenCanvas | undefined;
+function frameOf(bitmap: ImageBitmap): { rgba: Uint8ClampedArray; width: number; height: number } {
+  if (!frameCanvas || frameCanvas.width !== bitmap.width || frameCanvas.height !== bitmap.height) {
+    frameCanvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+  }
+  const ctx = frameCanvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) throw new Error("no offscreen 2d context");
+  ctx.drawImage(bitmap, 0, 0);
+  return { rgba: ctx.getImageData(0, 0, bitmap.width, bitmap.height).data, width: bitmap.width, height: bitmap.height };
 }
 
 function normalise(raw: Float32Array): Float32Array {
@@ -121,7 +147,29 @@ self.onmessage = async (event: MessageEvent<Incoming>) => {
     if (message.type === "match") {
       await ensureModel();
       const started = performance.now();
-      const pixels = pixelsOf(message.bitmap);
+
+      // FIND THE CARD, or fall back to what was sent. Graded on 1,341 annotated
+      // photographs (scripts/detect-grade.mts): it locates a quadrilateral in
+      // 90% of them, median IoU 0.784 against the outline a person drew. When
+      // it declines, the centre of the frame is a better guess than nothing —
+      // that is what the manual guide was.
+      let square: Uint8ClampedArray;
+      let corners: Quad | undefined;
+      if (message.detect) {
+        const frame = frameOf(message.bitmap);
+        const found = detectCard(frame.rgba, frame.width, frame.height);
+        const straight = found ? rectify(frame.rgba, frame.width, frame.height, found.corners, SIDE) : undefined;
+        if (found && straight) {
+          corners = found.corners;
+          square = straight;
+        } else {
+          square = squareOf(message.bitmap);
+        }
+      } else {
+        square = squareOf(message.bitmap);
+      }
+      const pixels = pixelsFrom(square);
+
       // A bitmap is a resource, not a value: leaving them unclosed at two a
       // second is a leak the tab notices within a minute.
       message.bitmap.close();
@@ -137,6 +185,9 @@ self.onmessage = async (event: MessageEvent<Incoming>) => {
         hits: result.hits,
         margin: result.margin,
         elapsed: performance.now() - started,
+        // Sent back so the view can draw what was actually read, rather than a
+        // box the person is asked to line up with.
+        corners,
       });
     }
   } catch (error) {

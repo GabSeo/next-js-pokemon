@@ -72,6 +72,8 @@ type Reading =
       fps?: number;
       /** Votes gathered for the current best card, out of `AGREEING_FRAMES`. */
       votes?: number;
+      /** The quadrilateral the detector found, in the downscaled frame's pixels. */
+      found?: { corners: number[][]; width: number };
       /** What the matcher thinks it is looking at, whether or not it will say so. */
       peek?: { id: string; score: number; margin: number };
     }
@@ -251,7 +253,9 @@ export function LiveScanner({
           // `object-cover` crops the video, so the two are different questions.
           const box = video.getBoundingClientRect();
           const rect = cardRectInView(width, height, box.width, box.height, fillRef.current);
-          result = await matchCard(video, rect, indexKey, { limit: 8 });
+          // FIND THE CARD RATHER THAN ASK FOR IT. `rect` is still the fallback
+          // for the frames the detector declines.
+          result = await matchCard(video, rect, indexKey, { limit: 8, detect: true });
 
           // Paint the SAME rectangle into the on-screen thumbnail. Same source,
           // same numbers — if the preview shows a label or a table, that is
@@ -306,6 +310,7 @@ export function LiveScanner({
             verdict,
             fps: result.elapsed > 0 ? 1000 / result.elapsed : undefined,
             votes,
+            found: result.corners ? { corners: result.corners, width: 640 } : undefined,
             peek: result.hits[0]
               ? { id: result.hits[0].id, score: result.hits[0].score, margin: result.margin }
               : undefined,
@@ -359,16 +364,19 @@ export function LiveScanner({
           className="absolute inset-0 h-full w-full object-cover"
         />
 
-        {/* THE GUIDE IS THE CROP, drawn at the same 63:88 and the same 82% the
-            matcher reads. If the two ever disagree the person is framing one
-            rectangle while the model looks at another. */}
+        {/* THE GUIDE IS NOW THE FALLBACK, not the instruction. The detector
+            finds the card on about nine frames in ten; the box is what gets
+            read on the tenth, so it stays on screen and fades when the detector
+            is answering — otherwise a person lines up a rectangle that nothing
+            is using. */}
         {reading.state === "scanning" ? (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
             <div
-              className="rounded-lg border-[3px] transition-colors duration-200"
+              className="rounded-lg border-[3px] transition-all duration-300"
               style={{
                 width: guide?.width ?? 0,
                 height: guide?.height ?? 0,
+                opacity: reading.found ? 0.18 : 1,
                 borderColor:
                   reading.verdict === "empty"
                     ? "rgba(255,255,255,.55)"

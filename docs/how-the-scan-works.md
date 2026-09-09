@@ -129,63 +129,52 @@ both above                      the card
 
 ---
 
-## 5. Framing is the whole game, and automatic detection measured worse
+## 5. Finding the card
 
-Nothing on the fast path finds the four corners of a card. A card-shaped guide is
-drawn on screen and only that region is read — **the person holding the phone is
-the detector.**
+The live view locates the card itself: gradient, threshold, convex hull,
+simplify to four points, then a homography that straightens it. No model, no
+download, no licence — `lib/card-detect.ts`.
 
-### An automatic detector was built and is not wired in
+### It was graded properly, and that changed it
 
-`lib/card-detect.ts` finds a card classically: gradient, threshold, convex hull,
-simplify to four points, then the same homography the ceiling lab uses. No model,
-no download, no licence. It was graded against the corners read off real
-photographs by hand (`scripts/detect-lab.mts`):
+The first two versions were built and graded on **four** photographs with
+corners read off by eye, and both measured worse than doing nothing. That is a
+useful result at n=4 and not a trustworthy one.
 
-| | cards identified |
-|---|---|
-| no detector at all | **3/4** |
-| automatic, hull of all edges | 2/4 |
-| automatic, largest connected component | 1/4 |
-| corners read by hand | **4/4** |
+"Pokemon Card Detection 3" (Roboflow Universe, **CC BY 4.0**) is 1,509 images
+with a `Card` polygon on each — the same ground truth, three hundred times over.
+`scripts/detect-grade.mts` scores the found quadrilateral against the annotated
+one by IoU, over every image including the ones it declines.
 
-**It is worse than doing nothing**, so it does not ship. The failure is visible
-in the corners rather than mysterious: on the Dark Charizard photograph it
-returns a quadrilateral covering 73% of the frame around a card covering 55% —
-the hull of edge pixels is the hull of the *scene*, because a photograph also
-contains a hand, a table and a room. Corner error ran 8–19% of the card's
-diagonal, and a few percent is all the embedding tolerates.
+**The single most useful thing it produced was proving a hypothesis backwards.**
+A card's border is under 1% of a frame's pixels, so the obvious move was to keep
+fewer and stronger edges. Every step that way made it worse:
 
-The next thing to try is line-based (Hough) rather than blob-based: a card has
-four long straight edges, and intersecting dominant lines does not care about a
-border broken by glare or a background object touching it.
+| edge pixels kept | found a quad | IoU ≥ 0.8 | IoU ≥ 0.5 | median |
+|---|---|---|---|---|
+| 1% | 3% | 0% | 0% | 0.374 |
+| 10% *(the original guess)* | 69% | 27% | 47% | 0.689 |
+| **24%** | **91%** | **45%** | **81%** | **0.804** |
+| 50% | 95% | 20% | 69% | 0.594 |
 
-**And an assumption behind all of this was wrong.** The detector was built and
-graded against photographs of cards HELD UP to a camera, tilted — because that
-is what the test photographs are. Real use here is cards laid **flat, in graded
-slabs**. That inverts two conclusions: there is little perspective to correct,
-so the homography buys less than the ceiling measurement suggested; and the
-available trained datasets, which are flat and slabbed, are a match for the
-situation rather than a mismatch. They were dismissed for the wrong reason.
+More edge pixels give a more complete hull, and a complete hull is what the
+corner search needs. Confirmed on the held-out `test` split at the tuned value:
+**90% found, 71% IoU ≥ 0.5, median 0.784** — close enough to the tuning split to
+say it generalises rather than memorises.
 
-That is not a placeholder so much as the honest version of the same job. From the
-table above: a card filling a fifth of the frame scores 0.759 with a margin of
-0.0012 — recognisable as a card, impossible to name. Cropping is what closes that
-gap; a detector would do it automatically rather than better.
+### What the export can and cannot say
 
-What a real detector would buy, measured by hand-annotating four corners on real
-photographs and rectifying with a homography (`scripts/rectify-ceiling-lab.mts`):
+Every image is stretched to 432×432 and converted to greyscale. So it grades
+**corner-finding** and can say nothing about **identification** — a colour
+matcher cannot be tested on grey pictures. The stretch also means a card in it
+has an aspect near 1.0, so the shape test has to be switched off to measure at
+all, which the grader does explicitly rather than by quietly widening a default.
 
-```
-as shot          3/4
-hand-rectified   4/4
-```
+### The guide is still there, as the fallback
 
-The guide already captures most of that, because the guide IS the crop. What it
-cannot do is correct perspective: a card tilted toward the camera is a trapezoid,
-and only four real corners fix that.
-
----
+The detector declines on about one frame in ten, and the centre crop is a better
+guess than nothing on those. It fades when the detector is answering, so nobody
+lines up a rectangle that nothing is reading.
 
 ## 6. What the live view does per frame
 

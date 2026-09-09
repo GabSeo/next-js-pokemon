@@ -36,8 +36,29 @@ export type Quad = [Point, Point, Point, Point];
  */
 const WORK_EDGE = 240;
 
-/** Gradient pixels kept, as a fraction of the frame. Above this is "an edge". */
-const EDGE_FRACTION = 0.1;
+/**
+ * Gradient pixels kept, as a fraction of the frame. Above this is "an edge".
+ *
+ * 0.24, ARRIVED AT BY SWEEPING IT AGAINST 110 ANNOTATED PHOTOGRAPHS rather than
+ * by reasoning. The reasoning would have been wrong in the exact opposite
+ * direction: a card's border is under 1% of a frame's pixels, so the obvious
+ * move was to keep FEWER and stronger edges, and every step that way made it
+ * worse (at 1% the detector found a quadrilateral in 3% of images). More edge
+ * pixels give a more complete hull, and a complete hull is what the corner
+ * search needs; a sparse one is a fragment of an outline.
+ *
+ *   edge %    found   IoU>=.8   IoU>=.5   median
+ *   1.0        3%       0%        0%       0.374
+ *   10.0      69%      27%       47%       0.689
+ *   22.0      86%      49%       75%       0.831
+ *   24.0      91%      45%       81%       0.804
+ *   50.0      95%      20%       69%       0.594
+ *
+ * 24 over 22 because finding the card at all is worth more downstream than a
+ * tighter crop: the embedding tolerates a loose border and cannot do anything
+ * with a frame the detector declined to answer on.
+ */
+const EDGE_FRACTION = 0.24;
 
 /** A quad smaller than this fraction of the frame is a detail, not the subject. */
 const MIN_AREA_FRACTION = 0.12;
@@ -174,7 +195,7 @@ function quadArea(quad: Quad): number {
  * different lengths, and averaging them is what makes the test survive the very
  * perspective the corners exist to correct.
  */
-function cardShaped(quad: Quad): boolean {
+function cardShaped(quad: Quad, tolerance: number): boolean {
   const top = Math.hypot(quad[1][0] - quad[0][0], quad[1][1] - quad[0][1]);
   const bottom = Math.hypot(quad[2][0] - quad[3][0], quad[2][1] - quad[3][1]);
   const left = Math.hypot(quad[3][0] - quad[0][0], quad[3][1] - quad[0][1]);
@@ -182,7 +203,7 @@ function cardShaped(quad: Quad): boolean {
   const shortSide = (top + bottom) / 2;
   const longSide = (left + right) / 2;
   if (shortSide < 8 || longSide < 8) return false;
-  return Math.abs(shortSide / longSide - CARD_ASPECT) <= ASPECT_TOLERANCE;
+  return Math.abs(shortSide / longSide - CARD_ASPECT) <= tolerance;
 }
 
 export type Detection = {
@@ -199,7 +220,21 @@ export type Detection = {
  * quadrilateral, and returning a guess there would put a card on screen because
  * someone pointed a phone at a wall.
  */
-export function detectCard(rgba: Uint8ClampedArray, width: number, height: number): Detection | undefined {
+export function detectCard(
+  rgba: Uint8ClampedArray,
+  width: number,
+  height: number,
+  /**
+   * `aspectTolerance` exists for grading, not for tuning. The Roboflow set is
+   * exported STRETCHED to 432x432, so a card in it has an aspect near 1.0 and
+   * the shape test rejects every one — measuring the corner-finding on that data
+   * means switching the test off, and saying so rather than quietly widening the
+   * default until the numbers look better.
+   */
+  options?: { aspectTolerance?: number; edgeFraction?: number }
+): Detection | undefined {
+  const aspectTolerance = options?.aspectTolerance ?? ASPECT_TOLERANCE;
+  const edgeFraction = options?.edgeFraction ?? EDGE_FRACTION;
   // 1. Downscale to the working size, in grey. Nearest-neighbour on purpose:
   //    an edge is a step, and smoothing it before measuring gradients is
   //    throwing away the thing being measured.
@@ -237,7 +272,7 @@ export function detectCard(rgba: Uint8ClampedArray, width: number, height: numbe
   // 3. Keep the strongest EDGE_FRACTION of pixels. A RELATIVE threshold, not an
   //    absolute one — a card under a lamp and a card in a dim room have wildly
   //    different gradients and the same outline.
-  const wanted = Math.max(64, Math.floor(w * h * EDGE_FRACTION));
+  const wanted = Math.max(64, Math.floor(w * h * edgeFraction));
   const histogram = new Int32Array(257);
   const scaleToBucket = 256 / biggest;
   for (let i = 0; i < magnitude.length; i++) histogram[Math.min(256, Math.floor(magnitude[i] * scaleToBucket))]++;
@@ -345,7 +380,7 @@ export function detectCard(rgba: Uint8ClampedArray, width: number, height: numbe
     const ordered = orderCorners(candidate);
     const coverage = quadArea(ordered) / (w * h);
     if (coverage < MIN_AREA_FRACTION) continue;
-    if (!cardShaped(ordered)) continue;
+    if (!cardShaped(ordered, aspectTolerance)) continue;
     if (!best || coverage > best.coverage) best = { corners: ordered, coverage };
   }
   if (!best) return undefined;

@@ -1,3 +1,4 @@
+import type { Quad } from "@/lib/card-detect";
 import { CLIP_DIM, clipIndexFrom, clipSearch, type ClipHit, type ClipIndex, type ClipResult } from "@/lib/clip-search";
 
 /**
@@ -46,6 +47,9 @@ import { CLIP_DIM, clipIndexFrom, clipSearch, type ClipHit, type ClipIndex, type
 
 const SIDE = 256;
 
+/** What a frame is downscaled to before the detector sees it. */
+const DETECT_WIDTH = 640;
+
 /**
  * WHICH INDEX TO SEARCH — a catalogue, not a language.
  *
@@ -70,6 +74,12 @@ export type ClipProgress = {
 export type ClipMatch = ClipResult & {
   /** Milliseconds spent embedding and searching, once everything is loaded. */
   elapsed: number;
+  /**
+   * Where the card was found, in the source's own pixels. Absent when the
+   * caller supplied the crop, or when the detector declined and the fallback
+   * ran instead.
+   */
+  corners?: Quad;
 };
 
 /**
@@ -147,7 +157,7 @@ type Pending = { resolve: (match: ClipMatch) => void; reject: (error: Error) => 
 type WorkerReply =
   | { type: "ready" }
   | { type: "progress"; stage: "model" | "index"; ratio?: number }
-  | { type: "match"; id: number; hits: ClipHit[]; margin: number; elapsed: number }
+  | { type: "match"; id: number; hits: ClipHit[]; margin: number; elapsed: number; corners?: Quad }
   | { type: "error"; id?: number; message: string };
 
 let worker: Worker | undefined;
@@ -186,7 +196,7 @@ function getWorker(): Worker | undefined {
     if (reply.type === "match") {
       const waiting = pending.get(reply.id);
       pending.delete(reply.id);
-      waiting?.resolve({ hits: reply.hits, margin: reply.margin, elapsed: reply.elapsed });
+      waiting?.resolve({ hits: reply.hits, margin: reply.margin, elapsed: reply.elapsed, corners: reply.corners });
       return;
     }
     if (reply.type === "error" && reply.id !== undefined) {
@@ -365,7 +375,19 @@ export async function matchCard(
   /** The region to read. Pass the whole image for a photo, `cardRect` for a frame. */
   rect: SourceRect,
   key: ClipIndexKey,
-  options?: { limit?: number; onProgress?: (p: ClipProgress) => void }
+  options?: {
+    limit?: number;
+    onProgress?: (p: ClipProgress) => void;
+    /**
+     * Let the matcher find the card itself instead of trusting `rect`.
+     *
+     * `rect` is still passed and still used — as the fallback when the detector
+     * declines, which it does on about a tenth of frames. The live view sets
+     * this; the photo upload does not, because a person framed that shot
+     * deliberately and second-guessing them is not an improvement.
+     */
+    detect?: boolean;
+  }
 ): Promise<ClipMatch> {
   const limit = options?.limit ?? 5;
   const active = getWorker();
@@ -380,18 +402,29 @@ export async function matchCard(
       // main thread and hands back exactly the region the guide draws. Sending
       // the whole frame and cropping in the worker would transfer several times
       // the bytes for the same answer.
-      const bitmap = await createImageBitmap(
-        source,
-        Math.round(rect.x),
-        Math.round(rect.y),
-        Math.round(rect.width),
-        Math.round(rect.height)
-      );
+      // WHOLE FRAME WHEN DETECTING, cropped when not. The detector needs to see
+      // what is around the card to find its edges; sending it a crop would ask
+      // it to find a card that already fills the picture.
+      const bitmap = options?.detect
+        ? await createImageBitmap(source, {
+            // Downscaled on the way in: the detector works at 240px internally
+            // and the rectify samples from this, so a full 1280px frame is
+            // bytes moved for detail nothing reads.
+            resizeWidth: DETECT_WIDTH,
+            resizeQuality: "high",
+          })
+        : await createImageBitmap(
+            source,
+            Math.round(rect.x),
+            Math.round(rect.y),
+            Math.round(rect.width),
+            Math.round(rect.height)
+          );
 
       const id = nextRequest++;
       return await new Promise<ClipMatch>((resolve, reject) => {
         pending.set(id, { resolve, reject });
-        active.postMessage({ type: "match", id, bitmap, limit }, [bitmap]);
+        active.postMessage({ type: "match", id, bitmap, limit, detect: options?.detect }, [bitmap]);
       });
     } catch {
       // The worker refused this frame. Fall through rather than lose the scan;
