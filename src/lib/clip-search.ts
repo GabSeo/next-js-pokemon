@@ -66,6 +66,40 @@ export type ClipResult = {
 export const CLIP_CONFIDENT_MARGIN = 0.015;
 
 /**
+ * Above this many indistinguishable cards, the matcher has not found a tie — it
+ * has found nothing. Two or three cards sharing one artwork is a reprint; eight
+ * is a photograph the model could not read at all, and offering eight cards is
+ * worse than admitting that.
+ */
+export const CLIP_MAX_TIED = 3;
+
+/**
+ * The cards the matcher genuinely cannot tell apart.
+ *
+ * WHY THIS EXISTS. Refusing on a small margin was the right instinct and the
+ * wrong action. Measured on the full Japanese index, 28% of cards have a
+ * near-twin closer than `CLIP_CONFIDENT_MARGIN` — 4% in English — because
+ * Japanese sets reprint aggressively and a reprint is the SAME ARTWORK under a
+ * new number. `SM12a-052` is `SM11-029` repainted not at all; searching with
+ * that card's own official reference image ranks the other one first, by 0.0015.
+ *
+ * So a small margin usually does not mean "bad photograph". It means "these two
+ * cards look identical because they ARE identical", and no camera will ever
+ * separate them. Showing both is the honest answer and the only one that can be
+ * given; showing nothing throws away a correct result because it came with a
+ * companion.
+ *
+ * One returned hit is a confident answer. Two or three is a real tie to put in
+ * front of a person. More than `CLIP_MAX_TIED` is noise, and the caller should
+ * treat it as no match.
+ */
+export function clipTied(result: ClipResult): ClipHit[] {
+  const best = result.hits[0];
+  if (!best) return [];
+  return result.hits.filter((hit) => best.score - hit.score < CLIP_CONFIDENT_MARGIN);
+}
+
+/**
  * Top matches for one query vector.
  *
  * A partial selection rather than a sort: `limit` is 5 and the index is 20,000+,

@@ -6,7 +6,7 @@ import { AddToCollectionButton } from "@/components/add-to-collection-button";
 import type { CodeCandidate } from "@/lib/card-code-ocr";
 import type { CardView } from "@/lib/card-view";
 import { bitmapOf, matchCard, type ClipLanguage } from "@/lib/clip-client";
-import { CLIP_CONFIDENT_MARGIN } from "@/lib/clip-search";
+import { CLIP_MAX_TIED, clipTied } from "@/lib/clip-search";
 import { onePieceSrc } from "@/lib/one-piece-image-url";
 
 /**
@@ -56,7 +56,11 @@ import { onePieceSrc } from "@/lib/one-piece-image-url";
  * Vision. They are different promises about privacy and about what could go
  * wrong, so they are not collapsed into one "scanned" state.
  */
-type Route = { via: "artwork"; margin: number; elapsed: number } | { via: "text" };
+type Route =
+  | { via: "artwork"; margin: number; elapsed: number }
+  /** Several cards share one artwork and no photograph can separate them. */
+  | { via: "artwork-tie"; tied: number; elapsed: number }
+  | { via: "text" };
 
 type Status =
   | { phase: "idle" }
@@ -91,10 +95,20 @@ async function uploadable(file: File): Promise<Blob> {
 /**
  * Ask the artwork matcher, on this device.
  *
- * Returns the card only when the margin clears `CLIP_CONFIDENT_MARGIN`. A
- * near-tie is not a weak answer to show with a caveat — it is the matcher
- * saying it cannot tell two cards apart, and the honest response is to escalate
- * to the reader that can look at the printed number instead.
+ * A TIE IS AN ANSWER, NOT A FAILURE — this is the correction that matters here.
+ * The first version refused whenever the margin was small and escalated to the
+ * server-side reader. Measured afterwards: 28% of Japanese cards and 4% of
+ * English ones have a near-twin inside that margin, because a reprint carries
+ * the SAME artwork under a new number. `SM12a-052` is `SM11-029` unchanged, and
+ * that card's own official scan ranks the other one first by 0.0015.
+ *
+ * Escalating there was doubly wrong. It threw away a correct result for having
+ * a companion — and it escalated to something the live camera view will not
+ * have, because the printed-number reader is a metered per-image API call that
+ * cannot run thirty times a second.
+ *
+ * So: one candidate is an answer, two or three are an answer with a question,
+ * and only a diffuse spread falls through.
  */
 async function matchLocally(
   file: File,
@@ -102,25 +116,33 @@ async function matchLocally(
 ): Promise<{ cards: CardView[]; route: Route } | undefined> {
   const { source, width, height } = await bitmapOf(file);
   try {
-    const result = await matchCard(source, { width, height }, language);
-    const best = result.hits[0];
-    if (!best || result.margin < CLIP_CONFIDENT_MARGIN) return undefined;
+    // More hits than we can show, so "everything I asked for is tied" is
+    // distinguishable from "three things are tied".
+    const result = await matchCard(source, { width, height }, language, { limit: 8 });
+    const tied = clipTied(result);
+    if (tied.length === 0 || tied.length > CLIP_MAX_TIED) return undefined;
 
-    // The matcher decided WHICH card; the resolver only has to fetch it. The
+    // The matcher decided WHICH cards; the resolver only fetches them. The
     // Japanese catalogue is addressed with a `ja~` prefix, the same qualifier
     // every other link on the site uses.
-    const id = language === "ja" ? `ja~${best.id}` : best.id;
+    const ids = tied.map((hit) => (language === "ja" ? `ja~${hit.id}` : hit.id));
     const response = await fetch("/api/scan/resolve", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids: [id] }),
+      body: JSON.stringify({ ids }),
     });
     if (!response.ok) return undefined;
 
     const { cards } = (await response.json()) as { cards?: CardView[] };
     if (!cards || cards.length === 0) return undefined;
 
-    return { cards, route: { via: "artwork", margin: result.margin, elapsed: result.elapsed } };
+    return {
+      cards,
+      route:
+        cards.length === 1
+          ? { via: "artwork", margin: result.margin, elapsed: result.elapsed }
+          : { via: "artwork-tie", tied: cards.length, elapsed: result.elapsed },
+    };
   } finally {
     source.close();
   }
@@ -288,6 +310,20 @@ export function ScanClient() {
                 {status.cards.length === 1 ? "Your card" : "Which of these is yours?"}
               </p>
 
+              {/* WHY THERE ARE TWO, said out loud. Without this the screen
+                  reads as the scanner hedging. It is not hedging: these cards
+                  carry the identical picture, so nothing a camera can see will
+                  ever separate them, and the number in the corner is the only
+                  thing that does. Telling someone what to look at beats
+                  apologising for not knowing. */}
+              {status.route?.via === "artwork-tie" ? (
+                <p className="mt-1 text-[11px] text-muted-text">
+                  These {status.route.tied} cards share the same artwork — one is a reprint of the other. Check
+                  the number in the bottom corner of your card to tell them apart. Matched on your device in{" "}
+                  {Math.round(status.route.elapsed)} ms; the photo was not uploaded.
+                </p>
+              ) : null}
+
               {/* HOW IT WAS FOUND, said plainly. One route kept the photo on the
                   device and one sent it to Google — that difference belongs to
                   the person who took the picture, not in a log. */}
@@ -314,6 +350,13 @@ export function ScanClient() {
                       <div className="min-w-0">
                         <div className="truncate text-sm font-black">{card.name}</div>
                         <div className="text-[11px] text-muted-text">
+                          {/* THE SET, not just the code. `print.origin` carries
+                              it but only renders when a printing has no variant
+                              name, which for Pokemon is never — so two cards
+                              tied on identical artwork showed as two identical
+                              lines, and the set is the thing that tells them
+                              apart. */}
+                          {card.prints[0]?.origin ? `${card.prints[0].origin} · ` : ""}
                           {card.code} · {card.prints.length} printing{card.prints.length === 1 ? "" : "s"}
                         </div>
                       </div>

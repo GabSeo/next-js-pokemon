@@ -135,6 +135,15 @@ will confidently return the wrong card roughly half the time.
 Pokémon cards, zero have a distinct image per variant. So artwork can tell you
 *which card*; it can never tell you whether you are holding the reverse holo.
 
+**And often it cannot tell you which card either, because reprints exist.**
+Sampled 250 cards per language against the full index: **28% of Japanese cards
+and 4% of English ones** have a near-twin closer than the confidence threshold.
+Japanese sets reprint aggressively — `SM12a-052` is `SM11-029` with the artwork
+unchanged, and searching with that card's own official scan ranks the *other*
+one first, by 0.0015. No camera will ever separate them; only the printed number
+or the set symbol does. The scan therefore shows the tied cards rather than
+refusing, and says why.
+
 **An English card and its Japanese release share artwork exactly.** Which is why
 the scan searches one language at a time and never both — the same photograph
 matches in both indexes.
