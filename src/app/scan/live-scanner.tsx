@@ -37,20 +37,30 @@ import { clipTied, clipVerdict, CLIP_MAX_TIED, type ClipVerdict } from "@/lib/cl
  * loop only decodes a bitmap and waits.
  *
  * AND IT DOES NOT ANSWER ON ONE FRAME. A single frame's verdict flickers as
- * hands move and focus hunts. An answer has to hold for `AGREEING_FRAMES` in a
- * row before it is shown, which costs about a second and removes the class of
- * bug where a card flashes up because one blurred frame happened to land near
- * something.
+ * hands move and focus hunts, so the same card has to win `AGREEING_FRAMES` of
+ * the last `WINDOW` frames. Requiring them CONSECUTIVELY was the first version
+ * and was reported as impossible to use — see the constant for why a window
+ * forgives a shaky hand where a run does not.
  */
 
 /**
- * How many consecutive frames must agree before an answer is shown.
+ * How many of the recent frames must name the same card before it is shown.
  *
- * Two is enough to kill the flicker and cheap at ~500 ms a frame. Three would
- * be steadier and would make the view feel slow — this is the number to raise
- * if real use shows wrong answers slipping through, and the reason it is named.
+ * A VOTE OVER A WINDOW, NOT A RUN OF CONSECUTIVE FRAMES. The first version
+ * required two in a row and was reported, correctly, as impossible to use:
+ * two in a row at two frames a second is a full second of perfect stillness,
+ * with a phone held over a table and a box to line up. One blurred frame in the
+ * middle — from a breath, a focus hunt, a hand — reset the count to zero, so the
+ * requirement in practice was "never move", not "move a little".
+ *
+ * Counting across a window forgives the blurred frame. The bad frames simply do
+ * not vote: they score below the floor and are never candidates in the first
+ * place, so a wrong answer still cannot accumulate.
  */
 const AGREEING_FRAMES = 2;
+
+/** How many recent frames the vote looks at. At ~2 fps this is a few seconds. */
+const WINDOW = 6;
 
 type Reading =
   | { state: "starting" }
@@ -60,6 +70,8 @@ type Reading =
       state: "scanning";
       verdict: ClipVerdict;
       fps?: number;
+      /** Votes gathered for the current best card, out of `AGREEING_FRAMES`. */
+      votes?: number;
       /** What the matcher thinks it is looking at, whether or not it will say so. */
       peek?: { id: string; score: number; margin: number };
     }
@@ -135,7 +147,7 @@ export function LiveScanner({
    * down and build a new one on every frame, and two loops racing one camera is
    * a bug that looks like the matcher being wrong.
    */
-  const loop = useRef({ running: false, lastId: "", agreed: 0 });
+  const loop = useRef<{ running: boolean; window: string[] }>({ running: false, window: [] });
 
   // The loop outlives a re-render, so it reads the current fill through a ref
   // rather than closing over the value it started with. Written in an effect,
@@ -221,7 +233,7 @@ export function LiveScanner({
       video.srcObject = stream;
       await video.play().catch(() => undefined);
 
-      loop.current = { running: true, lastId: "", agreed: 0 };
+      loop.current = { running: true, window: [] };
       setReading({ state: "scanning", verdict: "empty" });
 
       while (loop.current.running && !cancelled) {
@@ -259,13 +271,13 @@ export function LiveScanner({
         const verdict = clipVerdict(result);
         const top = result.hits[0]?.id ?? "";
 
-        // AGREEMENT, NOT A SINGLE FRAME. Anything other than a repeat of the
-        // last identified card resets the count, so a flicker cannot accumulate.
-        if (verdict === "identified" && top === loop.current.lastId) loop.current.agreed++;
-        else loop.current.agreed = verdict === "identified" ? 1 : 0;
-        loop.current.lastId = verdict === "identified" ? top : "";
+        // Only a frame that cleared BOTH thresholds gets a vote. A blurred or
+        // empty frame contributes nothing rather than resetting everything.
+        loop.current.window.push(verdict === "identified" ? top : "");
+        if (loop.current.window.length > WINDOW) loop.current.window.shift();
+        const votes = loop.current.window.filter((id) => id && id === top).length;
 
-        if (verdict === "identified" && loop.current.agreed >= AGREEING_FRAMES) {
+        if (verdict === "identified" && votes >= AGREEING_FRAMES) {
           const tied = clipTied(result).slice(0, CLIP_MAX_TIED);
           const ids = tied.map((hit) => (indexKey === "ja" ? `ja~${hit.id}` : hit.id));
           try {
@@ -287,12 +299,13 @@ export function LiveScanner({
           } catch {
             // The catalogue was unreachable; keep scanning rather than stop.
           }
-          loop.current.agreed = 0;
+          loop.current.window = [];
         } else {
           setReading({
             state: "scanning",
             verdict,
             fps: result.elapsed > 0 ? 1000 / result.elapsed : undefined,
+            votes,
             peek: result.hits[0]
               ? { id: result.hits[0].id, score: result.hits[0].score, margin: result.margin }
               : undefined,
@@ -439,6 +452,17 @@ export function LiveScanner({
             <p className="mt-1 text-[11px] text-white/70">
               {reading.fps ? `${reading.fps.toFixed(1)} frames a second · ` : ""}nothing leaves your phone
             </p>
+            {/* The vote, visible. Without it a scanner that is one frame from an
+                answer looks identical to one that is stuck. */}
+            <div className="mx-auto mt-2 flex w-24 gap-1">
+              {Array.from({ length: AGREEING_FRAMES }, (_, i) => (
+                <span
+                  key={i}
+                  className="h-1 flex-1 rounded-full transition-colors"
+                  style={{ background: (reading.votes ?? 0) > i ? "#3ddc84" : "rgba(255,255,255,.25)" }}
+                />
+              ))}
+            </div>
           </div>
         ) : null}
 
