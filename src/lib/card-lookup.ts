@@ -1,4 +1,10 @@
-import { getCatalogCard, getCatalogSetCards, getCatalogSets, type CatalogEntry } from "@/lib/catalog";
+import {
+  getCatalogCard,
+  getCatalogSetCards,
+  getCatalogSets,
+  type CatalogEntry,
+  type CatalogLanguage,
+} from "@/lib/catalog";
 import { searchCatalogCards } from "@/lib/catalog-search";
 import { officialCode, officialRowsForCode, officialSearchByName } from "@/lib/one-piece-official";
 import { onePieceImageUrl } from "@/lib/one-piece-images";
@@ -126,7 +132,7 @@ function onePieceMatch(code: string): LookupMatch | undefined {
  * on purpose, and the caller says how many sets print that many. Narrowing it
  * to one is the name's job, not the number's.
  */
-function byPrintedNumber(localId: string, total: number): LookupMatch[] {
+function byPrintedNumber(localId: string, total: number, language?: CatalogLanguage): LookupMatch[] {
   const out: LookupMatch[] = [];
 
   // ZERO PADDING DIFFERS BETWEEN THE CATALOGUES. English stores `48`, Japanese
@@ -135,7 +141,7 @@ function byPrintedNumber(localId: string, total: number): LookupMatch[] {
   // silently finds nothing in the other language; both are reduced to a number.
   const wanted = Number(localId);
 
-  for (const set of getCatalogSets({ language: "all" })) {
+  for (const set of getCatalogSets({ language: language ?? "all" })) {
     if (set.cardCount?.official !== total) continue;
     const hit = getCatalogSetCards(set.id, set.language).find(
       (entry) => Number(entry.card.localId) === wanted && /^\d+$/.test(entry.card.localId)
@@ -190,7 +196,12 @@ function byName(text: string): LookupMatch[] {
  * user from the code itself — a fork that exists only to be auto-resolved is
  * friction wearing the costume of structure.
  */
-export function lookupCards(raw: string, game?: LookupMatch["tcg"]): LookupResult {
+export function lookupCards(
+  raw: string,
+  game?: LookupMatch["tcg"],
+  /** The catalogue to search, when the caller can tell. See byPrintedNumber. */
+  language?: CatalogLanguage
+): LookupResult {
   const query = raw.trim();
   const empty: LookupResult = {
     query,
@@ -231,7 +242,7 @@ export function lookupCards(raw: string, game?: LookupMatch["tcg"]): LookupResul
   const printed = query.match(PRINTED_NUMBER);
   if (printed) {
     const [, localId, total] = printed;
-    const matches = byPrintedNumber(String(Number(localId)), Number(total));
+    const matches = byPrintedNumber(String(Number(localId)), Number(total), language);
     if (matches.length > 0) {
       const note =
         matches.length === 1

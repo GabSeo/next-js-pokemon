@@ -344,10 +344,18 @@ export async function POST(request: Request) {
     // Resolve to real cards here rather than in a second round trip: the photo
     // is already uploaded, and asking the client to send it twice to rank the
     // printings would double the slowest part of the scan.
+    // THE SCRIPT PICKS THE CATALOGUE. Vision read the card face; a face written
+    // in kana is not an English card. Scoping the lookup halves the candidates
+    // and removes a whole class of wrong answer — a photographed Japanese Lugia
+    // was returning Kangaskhan, because S12 and SV10 both declare 98 cards and
+    // both have a 110. 53% of English and 57% of Japanese printed numbers name
+    // more than one card, so this is not an edge case.
+    const language = JAPANESE_SCRIPT.test(text) ? "ja" : "en";
+
     const cards: CardView[] = [];
     const seen = new Set<string>();
     for (const candidate of candidates) {
-      for (const match of lookupCards(candidate.value).matches.slice(0, 6)) {
+      for (const match of lookupCards(candidate.value, undefined, language).matches.slice(0, 6)) {
         const id = `${match.tcg}:${match.code}`;
         if (seen.has(id)) continue;
         seen.add(id);
@@ -362,7 +370,7 @@ export async function POST(request: Request) {
     // order those candidates rather than to invent more.
     if (cards.length === 0) {
       for (const hit of namesInText(text)) {
-        for (const match of lookupCards(hit.name).matches.slice(0, 6)) {
+        for (const match of lookupCards(hit.name, undefined, language).matches.slice(0, 6)) {
           const id = `${match.tcg}:${match.code}`;
           if (seen.has(id)) continue;
           seen.add(id);
