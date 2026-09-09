@@ -162,6 +162,45 @@ us to the rule you stated, and it is the most important sentence in your brief.
 
 ---
 
+## 1b. What a perfect detector would buy — measured
+
+Before training anything, the ceiling. The four corners of the card were read
+off four of your photographs BY HAND — that is the output a perfect detector
+would produce — rectified with a homography, and put through the same pipeline.
+`scripts/rectify-ceiling-lab.mts`.
+
+| card | as shot | rectified by hand |
+| --- | --- | --- |
+| S12-110 Lugia V | HIT, margin 0.018 | HIT, **margin 0.042** |
+| base5-4 Dark Charizard | **miss** (dp5-3), margin 0.006 | **HIT**, margin 0.023 |
+| ecard3-32 Umbreon | HIT, margin 0.158 | HIT, **margin 0.177** |
+| swsh12.5gg-GG68 Dialga | miss | miss |
+
+**2/4 → 3/4, and the margins roughly double.** The margin is the number that
+matters: it is what a live view thresholds on to say "not sure", and doubling it
+is the difference between a guess and an answer.
+
+**The fourth is not a detection failure.** `swsh12.5gg-GG68` has no image URL in
+our catalogue at all, so it was never embedded — the card is in your hand and
+our reference has no picture of it. On the cards that are actually findable the
+ceiling is 3/3.
+
+That settles it: **a detector is worth building.** It converts misses into hits
+and thin margins into usable ones, and the pipeline behind it already works.
+
+It also names the next data gap: **1,558 English cards (7%) carry no image**,
+concentrated in `swsh4.5sv` (122), `mep` (89), `sm3.5` (78), `sm7.5` (78),
+`swsh12.5gg` (70). Those cards cannot be scanned by anyone, however good the
+camera pipeline gets.
+
+### The warp needs no dependency
+
+sharp has no perspective transform, and OpenCV would be 8 MB for one. A
+homography is eight unknowns from four point correspondences, solved by
+Gaussian elimination and applied backwards per destination pixel with bilinear
+sampling — fifty lines, in the lab script. Whatever produces the corners, the
+straightening is ours.
+
 ## 2b. Which model — and why not MobileCLIP2
 
 **Shipped: MobileCLIP-S2 (v1), fp16.** Measured against CLIP ViT-B/32 on the
