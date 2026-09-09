@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SetsBrowser, type BrowseSet } from "@/components/sets-browser";
 import { catalogStats, getCatalogSets, getCatalogSetCards, qualify } from "@/lib/catalog";
+import { pokemonSetLogo } from "@/lib/pokemon-image";
 import { pokemonSeriesLabel, pokemonSetLabel } from "@/lib/pokemon-set-label";
 import { absoluteUrl } from "@/lib/site";
 
@@ -40,6 +41,10 @@ export default function SetsIndexPage() {
   const browse: BrowseSet[] = getCatalogSets({ language: "all" })
     .map((set) => {
       const language = set.language ?? "en";
+      // TCGdex has a logo for 146 of 203 English sets and none of the 381
+      // Japanese ones, so the mark comes through the same fallback rule the
+      // card images do.
+      const mark = pokemonSetLogo(set);
       return {
         id: set.id,
         // `neo1` exists in both catalogues, so the Japanese one needs the
@@ -52,7 +57,8 @@ export default function SetsIndexPage() {
         serie: pokemonSeriesLabel(set),
         releaseDate: set.releaseDate,
         cardCount: getCatalogSetCards(set.id, language).length,
-        logo: set.logo,
+        logo: mark?.url,
+        logoKind: mark?.kind,
       };
     })
     .sort((a, b) => (b.releaseDate ?? "").localeCompare(a.releaseDate ?? ""));
@@ -146,7 +152,7 @@ export default function SetsIndexPage() {
           <div className="relative z-10 flex h-[120px] w-[120px] flex-shrink-0 items-center justify-center overflow-hidden rounded-lg border-2 border-black bg-white shadow-hard-md">
             {newest.logo ? (
               /* eslint-disable-next-line @next/next/no-img-element -- see SetsBrowser's own note: TCGdex serves a bare URL that needs an extension appended, which next/image's loader does not produce */
-              <img src={`${newest.logo}.webp`} alt="" className="h-full w-full object-contain p-2" />
+              <img src={newest.logo} alt="" className="h-full w-full object-contain p-2" />
             ) : (
               <span className="text-[56px]">⚡</span>
             )}

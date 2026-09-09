@@ -72,6 +72,16 @@ type LimitlessSet = {
   name: string;
   releaseDate?: string;
   cardCount?: number;
+  /**
+   * Their set symbol, ~1.5 KB.
+   *
+   * Worth capturing because TCGdex publishes a logo for 146 of 203 English sets
+   * and ZERO of 381 Japanese ones — so every Japanese tile on the browse page
+   * falls back to a lettered square. This is a symbol rather than a wordmark,
+   * which is a smaller thing than the English logo, but it is the set's own
+   * mark instead of its initials.
+   */
+  symbol?: string;
   /** `localId` -> thumbnail URL, exactly as the set page gives it. */
   cards: Record<string, string>;
 };
@@ -144,8 +154,11 @@ function isoDate(text: string): string | undefined {
  */
 function parseIndex(html: string, prefix: string): Omit<LimitlessSet, "cards">[] {
   const sets: Omit<LimitlessSet, "cards">[] = [];
+  // The symbol's `src` sits between `<img class="set"` and the name, so it is
+  // captured here rather than fetched separately — it was already crossing this
+  // pattern and being discarded.
   const rowPattern = new RegExp(
-    `href="/cards/${prefix}([A-Za-z0-9.\\-]+)"><img class="set"[^>]*>\\s*([\\s\\S]*?)\\s*<span class="code`
+    `href="/cards/${prefix}([A-Za-z0-9.\\-]+)"><img class="set"[^>]*?src="([^"]+)"[^>]*>\\s*([\\s\\S]*?)\\s*<span class="code`
   );
   for (const row of html.match(/<tr>[\s\S]*?<\/tr>/g) ?? []) {
     const head = row.match(rowPattern);
@@ -154,7 +167,8 @@ function parseIndex(html: string, prefix: string): Omit<LimitlessSet, "cards">[]
     const count = row.match(/<td class="md-only"><a[^>]*>(\d+)\s/);
     sets.push({
       code: head[1],
-      name: decodeEntities(head[2].replace(/<[^>]+>/g, "")).trim(),
+      symbol: head[2],
+      name: decodeEntities(head[3].replace(/<[^>]+>/g, "")).trim(),
       releaseDate: date ? isoDate(date[1]) : undefined,
       cardCount: count ? Number(count[1]) : undefined,
     });

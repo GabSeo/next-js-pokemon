@@ -46,6 +46,8 @@ export type LimitlessSet = {
   name: string;
   releaseDate?: string;
   cardCount?: number;
+  /** Their set symbol, ~1.5 KB. See `pokemonSetLogo` on why it matters. */
+  symbol?: string;
   cards: Record<string, string>;
 };
 

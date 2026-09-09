@@ -1,5 +1,5 @@
 import type { CatalogCard, CatalogSet } from "@/lib/catalog";
-import { limitlessImageUrl, limitlessLargeUrl } from "@/lib/limitless";
+import { limitlessImageUrl, limitlessLargeUrl, limitlessSet } from "@/lib/limitless";
 import { japaneseImageUrl } from "@/lib/pokemon-ja-official";
 
 /**
@@ -52,4 +52,28 @@ export function pokemonImageUrl(
   // an upscale nobody can see — 16 MB against 6.7 MB on a 113-card set page.
   // The card page asks for 480, where the detail is actually looked at.
   return width > 320 ? limitlessLargeUrl(limitless) : limitless;
+}
+
+/**
+ * The mark shown on a set's tile — its logo, or failing that its symbol.
+ *
+ * WHY A SECOND SOURCE IS NEEDED HERE TOO. TCGdex publishes a logo for 146 of
+ * 203 English sets and for ZERO of 381 Japanese ones, so listing the Japanese
+ * catalogue turned the browse page into a wall of lettered squares. Limitless
+ * carries a symbol for all 414 sets it holds, at about 1.5 KB each.
+ *
+ * A SYMBOL IS NOT A LOGO, and the difference is worth stating rather than
+ * hiding: TCGdex's is a wordmark that fills a tile, Limitless's is the small
+ * expansion mark printed on the card itself. The tile renders whichever it
+ * gets. A set's own mark beats its initials; it does not beat its wordmark,
+ * which is why TCGdex still goes first.
+ */
+export function pokemonSetLogo(set: CatalogSet): { url: string; kind: "logo" | "symbol" } | undefined {
+  // TCGdex serves this as a bare URL with the extension appended by the caller;
+  // `.webp` is 40 KB against `logo.png`'s 131 KB.
+  if (set.logo) return { url: `${set.logo}.webp`, kind: "logo" };
+
+  const language = (set.language ?? "en") === "ja" ? "ja" : "en";
+  const symbol = limitlessSet(set, language)?.symbol;
+  return symbol ? { url: symbol, kind: "symbol" } : undefined;
 }

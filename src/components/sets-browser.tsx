@@ -20,9 +20,14 @@ import { useMemo, useState } from "react";
  * them before anything was on screen.
  *
  * `logo.webp` is the right asset twice over: it exists for most sets, and it is
- * 40KB against `logo.png`'s 131KB. Roughly a third of sets have no logo at all,
- * so `onError` swaps in a lettered tile rather than leaving a broken image —
- * which is also why these cards are a client component.
+ * 40KB against `logo.png`'s 131KB. THE URL ARRIVES COMPLETE now — resolving
+ * which host and which extension is lib/pokemon-image.ts's job, because a
+ * Japanese set has no TCGdex logo at all and takes its mark from Limitless
+ * instead. Appending an extension here appended it to that one too, and
+ * `M6.png.webp` is a 404 nobody sees until they look at the page.
+ *
+ * Sets with no mark anywhere still get `onError` and a lettered tile rather
+ * than a broken image — which is also why these cards are a client component.
  */
 
 export type BrowseSet = {
@@ -45,8 +50,14 @@ export type BrowseSet = {
   serie: string;
   releaseDate?: string;
   cardCount: number;
-  /** TCGdex logo base URL, extension appended here. Absent for sets that have none. */
+  /** The full URL of the set's mark. Absent for sets that have none anywhere. */
   logo?: string;
+  /**
+   * A wordmark or the small expansion symbol — they need different sizes.
+   * TCGdex's logo fills the tile's width; Limitless's symbol is ~1.5 KB and
+   * would be a blurry smear stretched to the same box.
+   */
+  logoKind?: "logo" | "symbol";
 };
 
 type SortId = "newest" | "oldest" | "cards" | "name";
@@ -117,6 +128,28 @@ export function SetsBrowser({
   // browser — which passes no languages — does not grow a control for a
   // choice it does not have.
   const bilingual = useMemo(() => sets.some((s) => s.language === "ja"), [sets]);
+
+  /**
+   * THE ERAS OF THE LANGUAGE ON SCREEN, not of the whole corpus.
+   *
+   * The `eras` prop is built server-side from every set the page holds, and
+   * with both catalogues in one list that offered "Trainer kits" and
+   * "McDonald's Collection" while the Japanese grid was showing — choices that
+   * could only ever empty it. An option that cannot match anything is not a
+   * filter, it is a trap.
+   *
+   * Derived from the sets themselves so it cannot fall out of step, in the
+   * order the grid already sorts them (newest first) so the list reads the same
+   * way the page does.
+   */
+  const visibleEras = useMemo(() => {
+    const seen: string[] = [];
+    for (const set of sets) {
+      if (bilingual && (set.language ?? "en") !== language) continue;
+      if (!seen.includes(set.serie)) seen.push(set.serie);
+    }
+    return seen.length > 0 ? seen : eras;
+  }, [sets, eras, language, bilingual]);
 
   const grouped = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -224,7 +257,7 @@ export function SetsBrowser({
           className="rounded-md border-2 border-black bg-card-surface px-3.5 py-2.5 text-[13px] font-bold shadow-hard-sm"
         >
           <option value="">All eras</option>
-          {eras.map((e) => (
+          {visibleEras.map((e) => (
             <option key={e} value={e}>
               {e}
             </option>
@@ -289,13 +322,17 @@ function SetCard({ set, index, hrefBase }: { set: BrowseSet; index: number; href
             A set with NO logo still needs a shape to occupy the same space,
             so only the fallback keeps the tile. */}
         {set.logo && !logoFailed ? (
-          /* eslint-disable-next-line @next/next/no-img-element -- TCGdex needs an extension appended to a bare URL, which next/image's loader does not produce; lazy + onError are what this needs and next/image cannot express the fallback */
+          /* eslint-disable-next-line @next/next/no-img-element -- two upstream hosts serving pre-sized files; lazy + onError are what this needs and next/image cannot express the fallback */
           <img
-            src={`${set.logo}.webp`}
+            src={set.logo}
             alt=""
             loading="lazy"
             decoding="async"
-            className="mb-4 h-14 w-auto max-w-[70%] self-start object-contain object-left"
+            className={
+              set.logoKind === "symbol"
+                ? "mb-4 h-14 w-14 self-start object-contain object-left"
+                : "mb-4 h-14 w-auto max-w-[70%] self-start object-contain object-left"
+            }
             onError={() => setLogoFailed(true)}
           />
         ) : (
