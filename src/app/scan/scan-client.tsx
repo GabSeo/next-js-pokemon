@@ -148,6 +148,98 @@ async function matchLocally(
   }
 }
 
+/**
+ * The chooser for cards that share one artwork.
+ *
+ * WHY IT IS NOT THE NORMAL RESULT LIST. That list is a reading layout — one
+ * full-width block per card, its printings below, priced and expandable. It is
+ * right for an answer and wrong for a question: stacked, it turns two identical
+ * Mewtwos into two screens of scrolling, and seeing them at the same time is
+ * the entire task.
+ *
+ * So this is a comparison instead: equal tiles, side by side, in one window.
+ * What DIFFERS between the candidates is on the tile; what does not — prices,
+ * other printings, the full breakdown — is one tap away rather than doubling
+ * the height of a choice.
+ *
+ * THE NUMBER GETS THE EMPHASIS, because it is the only thing that separates
+ * them. The pictures are identical by definition and the names usually are too,
+ * so the number printed in the card's bottom corner is the answer, and it is
+ * what the line above sends the reader to go and look at.
+ */
+function TiedCards({ cards }: { cards: CardView[] }) {
+  return (
+    <ul
+      className="mt-3 grid gap-3"
+      style={{
+        // AUTO-FILL WITH A FLOOR, not a fixed track count. A count-based grid
+        // puts three tiles side by side on a phone at 110px each, which is too
+        // small to compare two pictures — the one thing this view is for. This
+        // fits as many 150px tracks as there is room for, so a phone wraps to
+        // two and the third goes below.
+        gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
+        // And a ceiling, so two candidates on a wide screen become two
+        // readable tiles rather than two enormous ones.
+        maxWidth: `${Math.min(cards.length, 3) * 230}px`,
+      }}
+    >
+      {cards.map((card) => {
+        const print = card.prints[0];
+        // `ja~SM12a-052` -> `052`, which is what is printed on the card.
+        const number = card.code.slice(card.code.lastIndexOf("-") + 1);
+
+        return (
+          <li
+            key={`${card.tcg}:${card.code}`}
+            className="flex flex-col rounded-lg border-2 border-black bg-white p-2.5"
+            style={{ boxShadow: "3px 3px 0 0 #000" }}
+          >
+            {print?.image ? (
+              /* eslint-disable-next-line @next/next/no-img-element -- both sources are pre-sized; see docs/free-tier-catalogue.md §7 */
+              <img
+                src={card.tcg === "onepiece" ? onePieceSrc(print.image, 320) : print.image}
+                alt={card.name}
+                loading="lazy"
+                className="aspect-[300/420] w-full rounded object-contain"
+              />
+            ) : (
+              <div className="flex aspect-[300/420] w-full items-center justify-center rounded bg-muted-surface p-2 text-center text-[10px] text-muted-text">
+                No picture published
+              </div>
+            )}
+
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="shrink-0 rounded border-2 border-black bg-pokemon-yellow px-1.5 py-0.5 text-[13px] font-black tabular-nums text-black">
+                {number}
+              </span>
+              <span className="min-w-0 flex-1 truncate text-[13px] font-black" title={card.name}>
+                {card.name}
+              </span>
+            </div>
+
+            <div className="mt-0.5 truncate text-[11px] text-muted-text" title={print?.origin}>
+              {print?.origin ?? card.code}
+            </div>
+
+            <div className="mt-auto pt-2.5">
+              {print ? (
+                <AddToCollectionButton tcg={card.tcg} code={card.code} printKey={print.key} size="sm" />
+              ) : null}
+              <Link
+                href={`/card/${card.tcg}/${encodeURIComponent(card.code)}`}
+                className="mt-1.5 block text-[11px] font-black underline underline-offset-4"
+              >
+                Full page
+                {card.prints.length > 1 ? ` · ${card.prints.length} printings` : ""}
+              </Link>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 export function ScanClient() {
   const [status, setStatus] = useState<Status>({ phase: "idle" });
   const [preview, setPreview] = useState<string | undefined>();
@@ -334,11 +426,24 @@ export function ScanClient() {
                 </p>
               ) : null}
 
-              {/* THE PRINTINGS, not just the code. A code names a card; a card
-                  is several printings and they are not worth the same — a
-                  reverse holo is a median 3.4x its normal twin. Showing them
-                  here is what lets someone finish in one place: read, recognise,
-                  and record which one is actually in their hand. */}
+              {/* TWO LAYOUTS, BECAUSE THERE ARE TWO DIFFERENT JOBS. Several
+                  candidates is a COMPARISON — equal tiles, side by side, one
+                  window, nothing to scroll past. One card is a READING — its
+                  printings, their prices, the button that records which is in
+                  your hand.
+
+                  Using the reading layout for a comparison is what turned two
+                  identical Mewtwos into two screens of scrolling, and comparing
+                  two things you cannot see at once is the one thing the reader
+                  actually has to do here. */}
+              {status.cards.length > 1 ? (
+                <TiedCards cards={status.cards} />
+              ) : (
+              /* THE PRINTINGS, not just the code. A code names a card; a card
+                 is several printings and they are not worth the same — a
+                 reverse holo is a median 3.4x its normal twin. Showing them
+                 here is what lets someone finish in one place: read, recognise,
+                 and record which one is actually in their hand. */
               <div className="mt-3 grid gap-4">
                 {status.cards.map((card) => (
                   <div
@@ -469,6 +574,7 @@ export function ScanClient() {
                   </div>
                 ))}
               </div>
+              )}
 
               {/* The codes are still worth showing when they did not all resolve
                   to a card — it is the difference between "unreadable" and
