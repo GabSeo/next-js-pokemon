@@ -74,6 +74,53 @@ export const CLIP_CONFIDENT_MARGIN = 0.015;
 export const CLIP_MAX_TIED = 3;
 
 /**
+ * Below this SCORE there is no card in front of the camera.
+ *
+ * WHY A SECOND THRESHOLD, WHEN THE MARGIN ALREADY EXISTS. A cosine search always
+ * returns a nearest neighbour. Point a phone at a grey wall and the index names
+ * its closest card and hands back a number; nothing in the arithmetic says
+ * "that was a wall". A photo scan hid this, because a person only presses the
+ * button when a card is in frame. A video feed runs whether or not anything is
+ * there.
+ *
+ * And the margin cannot do this job. Measured (scripts/clip-floor-lab.mts)
+ * against the full English index:
+ *
+ *   flat grey         score 0.3568   margin 0.0231   <- CLEARS the margin test
+ *   flat dark         score 0.3668   margin 0.0060
+ *   random noise      score 0.3642   margin 0.0009
+ *   card, blurred     score 0.6774   margin 0.0286
+ *   card, in frame    score 0.9985   margin 0.0772
+ *
+ * A flat grey wall passes `CLIP_CONFIDENT_MARGIN` outright. Without a score
+ * floor a live view would name a card, confidently, at a wall.
+ *
+ * 0.50 sits between the noise ceiling (0.367) and a badly blurred real card
+ * (0.677), deliberately nearer the card side: the floor only decides whether
+ * something card-shaped is present, and the margin still decides whether it can
+ * be named. Being generous here costs a "hold steady", not a wrong answer.
+ */
+export const CLIP_CARD_FLOOR = 0.5;
+
+/**
+ * The three things a live view can honestly say, in order of how much it knows.
+ *
+ * `empty`      nothing card-like in frame — say so, do not guess
+ * `unsure`     a card is there and cannot be named yet: too far, too blurred,
+ *              or genuinely tied with a reprint. Measured: a card filling a
+ *              fifth of the frame scores 0.759 with a margin of 0.0012, which
+ *              is exactly this state and exactly the moment to say "move closer"
+ * `identified` above both thresholds
+ */
+export type ClipVerdict = "empty" | "unsure" | "identified";
+
+export function clipVerdict(result: ClipResult): ClipVerdict {
+  const best = result.hits[0];
+  if (!best || best.score < CLIP_CARD_FLOOR) return "empty";
+  return result.margin >= CLIP_CONFIDENT_MARGIN ? "identified" : "unsure";
+}
+
+/**
  * The cards the matcher genuinely cannot tell apart.
  *
  * WHY THIS EXISTS. Refusing on a small margin was the right instinct and the

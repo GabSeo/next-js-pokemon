@@ -126,7 +126,7 @@ async function loadIndex(key: ClipIndexKey): Promise<ClipIndex> {
  * ratio here would be a different transform and would put the query in a
  * different space from the references.
  */
-function pixelsOf(source: CanvasImageSource, width: number, height: number): Float32Array {
+function pixelsOf(source: CanvasImageSource, rect: SourceRect): Float32Array {
   const canvas = document.createElement("canvas");
   canvas.width = SIDE;
   canvas.height = SIDE;
@@ -135,7 +135,7 @@ function pixelsOf(source: CanvasImageSource, width: number, height: number): Flo
 
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
-  ctx.drawImage(source, 0, 0, width, height, 0, 0, SIDE, SIDE);
+  ctx.drawImage(source, rect.x, rect.y, rect.width, rect.height, 0, 0, SIDE, SIDE);
 
   const { data } = ctx.getImageData(0, 0, SIDE, SIDE);
   const pixels = new Float32Array(3 * SIDE * SIDE);
@@ -166,6 +166,34 @@ export type ClipMatch = ClipResult & {
 };
 
 /**
+ * The part of the source to look at.
+ *
+ * WHY IT IS NOT ALWAYS THE WHOLE FRAME. A camera frame is 4:3 or 16:9 and a
+ * card is 300:420, so matching the whole thing feeds the model mostly room.
+ * Measured (scripts/clip-floor-lab.mts): a card filling a fifth of the frame
+ * scores 0.759 with a margin of 0.0012 — recognisable as a card, impossible to
+ * name. Cropping to a card-shaped region is what a detector will eventually do
+ * automatically, and until one exists a guide drawn on screen lets the person
+ * holding the phone do it instead.
+ */
+export type SourceRect = { x: number; y: number; width: number; height: number };
+
+/** A card's proportions: 63 x 88 mm. */
+export const CARD_ASPECT = 63 / 88;
+
+/**
+ * The largest card-shaped rectangle inside a frame, centred, at `fill` of the
+ * dimension that binds. This is the region the on-screen guide draws.
+ */
+export function cardRect(width: number, height: number, fill = 0.82): SourceRect {
+  const byHeight = height * fill;
+  const byWidth = (width * fill) / CARD_ASPECT;
+  const h = Math.min(byHeight, byWidth);
+  const w = h * CARD_ASPECT;
+  return { x: (width - w) / 2, y: (height - h) / 2, width: w, height: h };
+}
+
+/**
  * Embed one image and search one catalogue's index.
  *
  * ONE CATALOGUE, NEVER TWO — the same rule the OCR path follows, for the same
@@ -175,7 +203,8 @@ export type ClipMatch = ClipResult & {
  */
 export async function matchCard(
   source: CanvasImageSource,
-  size: { width: number; height: number },
+  /** The region to read. Pass the whole image for a photo, `cardRect` for a frame. */
+  rect: SourceRect,
   key: ClipIndexKey,
   options?: { limit?: number; onProgress?: (p: ClipProgress) => void }
 ): Promise<ClipMatch> {
@@ -191,7 +220,7 @@ export async function matchCard(
   onProgress?.({ stage: "ready" });
 
   const started = performance.now();
-  const pixels = pixelsOf(source, size.width, size.height);
+  const pixels = pixelsOf(source, rect);
   const output = await vision({ pixel_values: new Tensor("float32", pixels, [1, 3, SIDE, SIDE]) });
   const query = normalise(output.image_embeds.data);
   if (query.length !== CLIP_DIM) throw new Error(`model returned ${query.length} dimensions, expected ${CLIP_DIM}`);

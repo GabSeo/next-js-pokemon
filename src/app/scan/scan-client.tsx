@@ -7,6 +7,7 @@ import type { CodeCandidate } from "@/lib/card-code-ocr";
 import type { CardView } from "@/lib/card-view";
 import { bitmapOf, matchCard, type ClipIndexKey } from "@/lib/clip-client";
 import { CLIP_MAX_TIED, clipTied } from "@/lib/clip-search";
+import { LiveScanner } from "@/app/scan/live-scanner";
 import { onePieceSrc } from "@/lib/one-piece-image-url";
 
 /**
@@ -119,7 +120,10 @@ async function matchLocally(
   try {
     // More hits than we can show, so "everything I asked for is tied" is
     // distinguishable from "three things are tied".
-    const result = await matchCard(source, { width, height }, key, { limit: 8 });
+    // THE WHOLE PICTURE for an uploaded photo — the person framed it when they
+    // took it. The live view crops to a guide instead, because a camera frame
+    // is mostly room.
+    const result = await matchCard(source, { x: 0, y: 0, width, height }, key, { limit: 8 });
     const tied = clipTied(result);
     if (tied.length === 0 || tied.length > CLIP_MAX_TIED) return undefined;
 
@@ -276,6 +280,14 @@ export function ScanClient() {
    * languages, all in the same embedding space and all searched the same way.
    */
   const indexKey: ClipIndexKey = game === "pokemon" ? language : language === "ja" ? "op-ja" : "op-en";
+  /**
+   * The live camera, off until asked for.
+   *
+   * NOT THE DEFAULT, and that is a decision rather than an omission: opening it
+   * on page load asks for a camera permission before anyone has said they want
+   * one, and downloads 68 MB to a visitor who may only have come to read.
+   */
+  const [live, setLive] = useState(false);
   const objectUrl = useRef<string | undefined>(undefined);
 
   async function onFile(event: React.ChangeEvent<HTMLInputElement>) {
@@ -354,6 +366,18 @@ export function ScanClient() {
           <input type="file" accept="image/*" capture="environment" onChange={onFile} className="hidden" />
         </label>
 
+        <button
+          type="button"
+          onClick={() => setLive((on) => !on)}
+          aria-pressed={live}
+          className={`mt-3 w-full rounded-lg border-2 border-black px-3 py-2.5 text-sm font-black transition-colors ${
+            live ? "bg-foreground text-white" : "bg-card-surface hover:bg-muted-surface"
+          }`}
+          style={{ boxShadow: "3px 3px 0 0 #000" }}
+        >
+          {live ? "Close the live camera" : "Scan live with the camera"}
+        </button>
+
         {/* WHAT THE SCANNER CANNOT WORK OUT FOR ITSELF, asked rather than
             guessed. Both answers change which catalogue is searched, and
             neither is recoverable from the picture: the artwork matcher has no
@@ -424,7 +448,14 @@ export function ScanClient() {
       </div>
 
       <div>
-        {status.phase === "matching" ? (
+        {/* THE LIVE VIEW OWNS THE RIGHT COLUMN while it is open. Running it
+            above a stale photo result invites reading one and acting on the
+            other. */}
+        {live ? (
+          <LiveScanner indexKey={indexKey} tcg={game} onClose={() => setLive(false)} />
+        ) : null}
+
+        {!live && status.phase === "matching" ? (
           <p className="rounded-lg border-2 border-black bg-muted-surface p-3 text-sm font-bold">
             Looking at the artwork…
             <span className="mt-1 block text-xs font-normal text-muted-text">
@@ -434,7 +465,7 @@ export function ScanClient() {
           </p>
         ) : null}
 
-        {status.phase === "reading" ? (
+        {!live && status.phase === "reading" ? (
           <p className="rounded-lg border-2 border-black bg-muted-surface p-3 text-sm font-bold">
             Reading the card…
             <span className="mt-1 block text-xs font-normal text-muted-text">
@@ -447,7 +478,7 @@ export function ScanClient() {
           </p>
         ) : null}
 
-        {status.phase === "done" ? (
+        {!live && status.phase === "done" ? (
           status.cards.length === 0 && status.candidates.length === 0 ? (
             <p className="rounded-lg border-2 border-black bg-muted-surface p-3 text-sm">
               No card code found in that photo. The code sits in a bottom corner — <b>OP05-119</b> on a One Piece
