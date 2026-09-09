@@ -93,9 +93,11 @@ for (const language of languages) {
   const signatures: Record<string, StoredSignature> = { ...previous };
 
   const targets: Target[] = [];
+  const current = new Set<string>();
   let unpictured = 0;
 
   for (const { card, set } of getCatalogEntries(language)) {
+    current.add(card.tcgdexId);
     // Keyed on the TCGdex id, which is what a CardView's print carries, so the
     // scan can look a signature up without knowing where the picture came from.
     const key = card.tcgdexId;
@@ -157,12 +159,22 @@ for (const language of languages) {
   await pooled(cdn, CDN_CONCURRENCY, sign);
   await pooled(publisher, PUBLISHER_CONCURRENCY, sign);
 
+  // Self-cleaning, for the same reason the CLIP index is: a signature for a
+  // card the catalogue no longer offers is a candidate nobody can act on.
+  let pruned = 0;
+  for (const id of Object.keys(signatures)) {
+    if (!current.has(id)) {
+      delete signatures[id];
+      pruned++;
+    }
+  }
+
   mkdirSync(OUT_DIR, { recursive: true });
   writeFileSync(file, JSON.stringify({ computedAt: new Date().toISOString(), language, signatures }));
 
   const size = JSON.stringify(signatures).length;
   console.log(
-    `[art] ${language}: ${Object.keys(signatures).length} signatures, ${failed} unreadable, ` +
+    `[art] ${language}: ${Object.keys(signatures).length} signatures, ${failed} unreadable, ${pruned} pruned, ` +
       `${((Date.now() - started) / 1000).toFixed(0)}s, ${(size / 1024).toFixed(0)} KB\n`
   );
 }

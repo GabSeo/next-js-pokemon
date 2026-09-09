@@ -1,20 +1,19 @@
 #!/usr/bin/env -S UNUSED=1 npx tsx
 /**
- * A CLIP embedding for every Pokemon card we have a picture of.
+ * A visual embedding for every Pokemon card we have a picture of.
  *
- * WHY, MEASURED. The 64-bit perceptual hash we ship identifies a card from a
- * publisher scan and falls apart on a photograph. Run against 498 real card
- * scans with the query degraded the way a phone degrades it — keystone, hand
- * shake, a band of glare, tungsten white balance, a clipped border, all at once
- * — the right card was ranked first:
+ * WHY, MEASURED ON REAL PHOTOGRAPHS. The 64-bit perceptual hash we also ship
+ * identifies a card from a publisher scan and falls apart on a phone photo.
+ * Against the eight photographs whose card is known for certain, searched
+ * within one language:
  *
- *   perceptual hash   6 of 15   (40%)
- *   CLIP ViT-B/32    11 of 15   (73%)
+ *   clean publisher scans      8/8
+ *   the same cards, photographed   2/8 as shot, 4/8 centre-cropped
  *
- * On any single degradation both are near-perfect; it is the COMBINATION, which
- * is what a real photograph is, that separates them. See
- * `scripts/clip-vs-hash-lab.mts`, which is the experiment, and
- * `docs/live-scan-plan.md` for what it does and does not prove.
+ * The model is not the limit there — the framing is; a photograph contains a
+ * hand and a hallway, and the embedding is faithful to all of it. Detection and
+ * rectification is the step that unlocks the rest, and it does not exist yet.
+ * See docs/clip-scan-research.md for the whole measurement.
  *
  * WHY NODE AND NOT PYTHON. `@huggingface/transformers` runs the same ONNX
  * weights here and in a browser, so the vector this script writes and the
@@ -54,14 +53,34 @@ import { japaneseOfficialCard } from "../src/lib/pokemon-ja-official";
 
 const OUT_DIR = path.join(process.cwd(), "data", "catalog", "pokemon-clip");
 
-/** The vision tower of CLIP ViT-B/32. `q8` is 3x faster than fp32 and a third the size. */
-const MODEL = "Xenova/clip-vit-base-patch32";
-const DTYPE = "q8" as const;
+/**
+ * MobileCLIP-S2, not CLIP ViT-B/32.
+ *
+ * MEASURED on the eight photographs whose card is known for certain, both
+ * models indexing the SAME 2,500-card pool (`scripts/clip-model-lab.mts`):
+ *
+ *   CLIP ViT-B/32 (q8)     4/8   average margin 0.0518
+ *   MobileCLIP-S2 (fp16)   5/8   average margin 0.0864
+ *
+ * The margin matters more than the hit count at n=8: 67% wider is what makes a
+ * confidence threshold possible, and it is the number a live view would refuse
+ * on. MobileCLIP also caught the Japanese Lugia and the Jungle Flareon that
+ * CLIP missed. It agrees with the author of mypokemonscanner, who tried SigLIP,
+ * OpenCLIP and several ViTs before settling on the same model for the same job.
+ *
+ * fp16, not int8: int8 breaks this export (a known problem with it, and the
+ * same one that author hit). Ingestion is 3x slower than CLIP q8 on a CPU —
+ * 24 images a second against 185 — because S2 is built for a mobile NPU rather
+ * than for this. That cost lands here, once, and not on a phone.
+ *
+ * ITS PREPROCESSING IS NOT CLIP'S, and reusing CLIP's would have been silently
+ * wrong. From its own `preprocessor_config.json`: 256 px, and `do_normalize` is
+ * FALSE — rescale to 0..1 and nothing else. No channel means, no deviations.
+ */
+const MODEL = "Xenova/mobileclip_s2";
+const DTYPE = "fp16" as const;
 
-/** CLIP's own preprocessing constants. Not ours to choose. */
-const MEAN = [0.48145466, 0.4578275, 0.40821073];
-const STD = [0.26862954, 0.2613026, 0.27577711];
-const SIDE = 224;
+const SIDE = 256;
 const DIM = 512;
 
 const CDN_CONCURRENCY = 10;
@@ -78,13 +97,14 @@ const { CLIPVisionModelWithProjection, Tensor } = await import("@huggingface/tra
 const vision = await CLIPVisionModelWithProjection.from_pretrained(MODEL, { dtype: DTYPE });
 
 /**
- * CLIP preprocessing, done with OUR sharp.
+ * Preprocessing, done with OUR sharp.
  *
  * The library's own image path routes through the sharp bundled inside it,
  * which fails on TCGdex's webp with "colourspace: parameter space not set" — on
- * decode and again on resize. The four steps are not a mystery: resize to 224,
- * rescale to 0..1, subtract the channel means, divide by the deviations. A
- * browser will do exactly this on canvas pixels, which is the point.
+ * decode and again on resize. The steps are not a mystery: resize to the
+ * model's side and rescale to 0..1. A browser will do exactly this on canvas
+ * pixels, which is the point — the vector this writes and the vector a phone
+ * computes must come from one recipe.
  */
 async function embed(image: Buffer): Promise<Float32Array | undefined> {
   try {
@@ -94,9 +114,10 @@ async function embed(image: Buffer): Promise<Float32Array | undefined> {
       .raw()
       .toBuffer({ resolveWithObject: true });
 
+    // Rescale only — see MODEL on why there is no normalisation here.
     const pixels = new Float32Array(3 * SIDE * SIDE);
     for (let i = 0; i < SIDE * SIDE; i++) {
-      for (let c = 0; c < 3; c++) pixels[c * SIDE * SIDE + i] = (data[i * 3 + c] / 255 - MEAN[c]) / STD[c];
+      for (let c = 0; c < 3; c++) pixels[c * SIDE * SIDE + i] = data[i * 3 + c] / 255;
     }
 
     const output = await vision({ pixel_values: new Tensor("float32", pixels, [1, 3, SIDE, SIDE]) });
@@ -114,7 +135,18 @@ async function embed(image: Buffer): Promise<Float32Array | undefined> {
   }
 }
 
-type Target = { id: string; url: string; publisher: boolean };
+type Target = { id: string; urls: string[]; publisher: boolean };
+
+/**
+ * TCGdex quality tiers, best first.
+ *
+ * `high` does not exist for every set — the Pokemon TCG Pocket sets (A1, A2,
+ * B1 and friends) serve `low` only, and asking for `high` there is a 404. That
+ * cost 7,207 English cards on the first MobileCLIP pass before this fallback
+ * existed. A 64-bit hash needs no resolution and a 256px embedding needs very
+ * little, so `low` is not a compromise worth avoiding.
+ */
+const QUALITIES = ["high", "low"] as const;
 
 async function pooled<T>(items: T[], concurrency: number, worker: (item: T) => Promise<void>): Promise<void> {
   let next = 0;
@@ -149,17 +181,19 @@ for (const language of languages) {
   }
 
   const targets: Target[] = [];
+  const current = new Set<string>();
   let unpictured = 0;
 
   for (const { card, set } of getCatalogEntries(language)) {
+    current.add(card.tcgdexId);
     if (held.has(card.tcgdexId)) continue;
     if (card.image) {
-      targets.push({ id: card.tcgdexId, url: `${card.image}/high.webp`, publisher: false });
+      targets.push({ id: card.tcgdexId, urls: QUALITIES.map((q) => `${card.image}/${q}.webp`), publisher: false });
       continue;
     }
     const official = language === "ja" ? japaneseOfficialCard(set.id, card.localId) : undefined;
     if (official?.img) {
-      targets.push({ id: card.tcgdexId, url: official.img, publisher: true });
+      targets.push({ id: card.tcgdexId, urls: [official.img], publisher: true });
       continue;
     }
     unpictured++;
@@ -176,12 +210,19 @@ for (const language of languages) {
 
   const run = async (target: Target) => {
     try {
-      const response = await fetch(target.url, { headers: { Accept: "image/webp,image/jpeg,*/*" } });
-      if (!response.ok) {
+      let bytes: Buffer | undefined;
+      for (const url of target.urls) {
+        const response = await fetch(url, { headers: { Accept: "image/webp,image/jpeg,*/*" } });
+        if (response.ok) {
+          bytes = Buffer.from(await response.arrayBuffer());
+          break;
+        }
+      }
+      if (!bytes) {
         failed++;
         return;
       }
-      const vector = await embed(Buffer.from(await response.arrayBuffer()));
+      const vector = await embed(bytes);
       if (!vector) {
         failed++;
         return;
@@ -211,6 +252,18 @@ for (const language of languages) {
     run
   );
 
+  // SELF-CLEANING. A card the catalogue no longer offers must not stay in the
+  // index: Pokemon TCG Pocket cards were embedded before `getCatalogEntries`
+  // learned to exclude digital-only sets, and a vector for an unownable card is
+  // a candidate the scan can return and the user can never do anything with.
+  let pruned = 0;
+  for (const id of [...held.keys()]) {
+    if (!current.has(id)) {
+      held.delete(id);
+      pruned++;
+    }
+  }
+
   const ids = [...held.keys()].sort();
   const blob = new Int8Array(ids.length * DIM);
   ids.forEach((id, index) => blob.set(held.get(id)!, index * DIM));
@@ -223,7 +276,7 @@ for (const language of languages) {
   );
 
   console.log(
-    `[clip] ${language}: ${ids.length} vectors, ${failed} unusable, ` +
+    `[clip] ${language}: ${ids.length} vectors, ${failed} unusable, ${pruned} pruned, ` +
       `${((Date.now() - started) / 1000).toFixed(0)}s, ${(blob.length / 1048576).toFixed(1)} MB\n`
   );
 }

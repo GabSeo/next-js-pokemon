@@ -28,10 +28,10 @@ import sharp from "sharp";
 import { getCatalogCard, type CatalogLanguage } from "../src/lib/catalog";
 
 const CLIP_DIR = path.join(process.cwd(), "data", "catalog", "pokemon-clip");
-const MODEL = "Xenova/clip-vit-base-patch32";
-const MEAN = [0.48145466, 0.4578275, 0.40821073];
-const STD = [0.26862954, 0.2613026, 0.27577711];
-const SIDE = 224;
+/** Kept in step with scripts/pokemon-clip-embed.mts — a different recipe is a different space. */
+const MODEL = "Xenova/mobileclip_s2";
+const DTYPE = "fp16" as const;
+const SIDE = 256;
 const DIM = 512;
 
 const args = process.argv.slice(2);
@@ -68,9 +68,9 @@ console.log(`[match] ${indexes.reduce((n, i) => n + i.ids.length, 0).toLocaleStr
 // --- the model ------------------------------------------------------------
 
 const { CLIPVisionModelWithProjection, Tensor } = await import("@huggingface/transformers");
-const vision = await CLIPVisionModelWithProjection.from_pretrained(MODEL, { dtype: "q8" });
+const vision = await CLIPVisionModelWithProjection.from_pretrained(MODEL, { dtype: DTYPE });
 
-/** CLIP's preprocessing, done with our sharp — see pokemon-clip-embed.mts on why. */
+/** The model's preprocessing, done with our sharp — see pokemon-clip-embed.mts on why. */
 async function embed(image: Buffer): Promise<Float32Array | undefined> {
   try {
     const { data } = await sharp(image)
@@ -79,9 +79,10 @@ async function embed(image: Buffer): Promise<Float32Array | undefined> {
       .raw()
       .toBuffer({ resolveWithObject: true });
 
+    // Rescale only: MobileCLIP's `do_normalize` is false.
     const pixels = new Float32Array(3 * SIDE * SIDE);
     for (let i = 0; i < SIDE * SIDE; i++) {
-      for (let c = 0; c < 3; c++) pixels[c * SIDE * SIDE + i] = (data[i * 3 + c] / 255 - MEAN[c]) / STD[c];
+      for (let c = 0; c < 3; c++) pixels[c * SIDE * SIDE + i] = data[i * 3 + c] / 255;
     }
 
     const output = await vision({ pixel_values: new Tensor("float32", pixels, [1, 3, SIDE, SIDE]) });

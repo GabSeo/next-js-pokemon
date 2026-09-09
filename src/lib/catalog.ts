@@ -405,9 +405,23 @@ export function getCatalogSetCards(setId: string, language?: CatalogLanguage): C
   return loadCatalog().bySetKey.get(qualify(wanted, bare)) ?? [];
 }
 
-/** Every entry in one catalogue, already grouped — the search's starting point. */
-export function getCatalogEntries(language: CatalogLanguage): CatalogEntry[] {
-  return loadCatalog().byLanguage.get(language) ?? [];
+/**
+ * Every entry in one catalogue, already grouped — the search's starting point.
+ *
+ * DIGITAL-ONLY SETS ARE EXCLUDED BY DEFAULT, the same rule `getCatalogSets`
+ * has always applied and for the same reason: Pokemon TCG Pocket cards cannot
+ * be owned, graded, sold or priced, so on a surface for collectors they are
+ * noise. This function is newer than that rule and did not inherit it, which
+ * quietly put 2,480 unownable cards back into search results, scan candidates
+ * and both artwork indexes.
+ *
+ * `includeDigital` is there for a caller that genuinely wants the whole corpus;
+ * the crawler still stores everything, because a set dropped at crawl time is a
+ * judgement baked where nobody can revisit it.
+ */
+export function getCatalogEntries(language: CatalogLanguage, options?: { includeDigital?: boolean }): CatalogEntry[] {
+  const all = loadCatalog().byLanguage.get(language) ?? [];
+  return options?.includeDigital ? all : all.filter((entry) => !isDigitalOnlySet(entry.set));
 }
 
 /** The language a possibly-qualified set id names — `ja~neo1` says so, `neo1` means English. */
