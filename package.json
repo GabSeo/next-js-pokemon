@@ -34,7 +34,8 @@
     "catalog:limitless": "npx tsx scripts/limitless-crawl.mts",
     "limitless:coverage": "npx tsx scripts/limitless-coverage.mts",
     "limitless:verify": "npx tsx scripts/limitless-verify.mts",
-    "catalog:limitless-bridge": "npx tsx scripts/limitless-bridge.mts"
+    "catalog:limitless-bridge": "npx tsx scripts/limitless-bridge.mts",
+    "catalog:provenance": "npx tsx scripts/catalog-provenance.mts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
