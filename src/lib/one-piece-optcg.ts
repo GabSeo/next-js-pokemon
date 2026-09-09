@@ -91,6 +91,41 @@ export function optcgRowsForCode(code: string): OptcgRow[] {
   return load().byCode.get(code) ?? [];
 }
 
+/** Built on first use, and only for callers that ask the question backwards. */
+let byPicture: Map<string, string> | undefined;
+
+/**
+ * WHICH CARD a picture belongs to — `pictureKey` run in reverse.
+ *
+ * The artwork matcher indexes One Piece by PICTURE, because every One Piece
+ * printing has its own and that is the most precise thing it can name. But a
+ * picture key is a filename: `Monkey.D.Luffy_-_ST21-014_3rd_Anniversary…`. It
+ * addresses nothing. `getCardView` wants the card code that owns the picture,
+ * and asked with a filename it silently returns nothing — a match that found
+ * the right card and then lost it on the way to the screen.
+ *
+ * The code is visible inside most of those filenames and reading it out with a
+ * pattern would work most of the time, which is the problem: optcgapi names its
+ * files however it likes, and "most of the time" here means occasionally
+ * showing someone a different card. This is the same join the repatriation runs
+ * on, in the other direction, so it is right by construction rather than by
+ * resemblance.
+ */
+export function codeForPicture(key: string): string | undefined {
+  if (!byPicture) {
+    byPicture = new Map();
+    for (const row of load().rows) {
+      if (!row.image) continue;
+      const picture = pictureKey(row.image);
+      // FIRST WRITER WINS. 5,223 URLs give 5,223 keys with zero collisions, so
+      // a repeat here means two rows share one picture — and they share a card
+      // code too, since that is what sharing a picture means.
+      if (!byPicture.has(picture)) byPicture.set(picture, row.code);
+    }
+  }
+  return byPicture.get(key);
+}
+
 /**
  * The parenthetical a row ends with, or undefined when there is none.
  *

@@ -37,16 +37,17 @@ export default function ScanPage() {
       <div className="mb-2">
         <h1 className="text-[32px] font-black tracking-[-0.8px]">Scan a card</h1>
         <p className="mt-1 text-sm text-muted-text">
-          Photograph the card and we recognise its artwork on your device. Pokémon cards stay on your phone
-          unless the picture is too unclear to place; One Piece is read from its printed code.
+          Photograph the card and we recognise its artwork on your device. Nothing is uploaded unless the
+          picture is too unclear to place.
         </p>
       </div>
 
       <p className="mt-4 rounded-lg border-2 border-black bg-muted-surface p-3 text-xs">
-        Pick the game first — artwork matching is Pokémon-only for now. Fill the frame with the card and keep it
-        flat to the camera; the whole picture is what gets matched. When the artwork cannot be placed, we fall back
-        to reading the printed code in the <b>bottom corner</b> (<b>ST21-014</b> on a One Piece card,{" "}
-        <b>190/182</b> on a Pokémon one), and only then is the photo sent anywhere. You can always{" "}
+        Pick the game and the language first — nothing in a photograph says which catalogue to search. Then fill
+        the frame with the card and keep it flat to the camera; the whole picture is what gets matched. When the
+        artwork cannot be placed, we fall back to reading the printed code in the <b>bottom corner</b>{" "}
+        (<b>ST21-014</b> on a One Piece card, <b>190/182</b> on a Pokémon one), and only then is the photo sent
+        anywhere. You can always{" "}
         <Link href="/lookup" className="font-black underline underline-offset-4">
           type the code instead
         </Link>

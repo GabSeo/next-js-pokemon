@@ -247,7 +247,7 @@ const nextConfig: NextConfig = {
     ],
     // The matcher index is served to the browser by this route, so the files
     // have to travel with it.
-    "/api/scan/index/[file]": ["./data/catalog/pokemon-clip/**"],
+    "/api/scan/index/[file]": ["./data/catalog/pokemon-clip/**", "./data/catalog/one-piece-clip/**"],
     "/api/scan/resolve": [
       "./data/catalog/pokemon/**",
       "./data/catalog/pokemon-ja/**",

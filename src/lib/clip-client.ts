@@ -32,7 +32,19 @@ import { CLIP_DIM, clipIndexFrom, clipSearch, type ClipIndex, type ClipResult } 
 
 const SIDE = 256;
 
-export type ClipLanguage = "en" | "ja";
+/**
+ * WHICH INDEX TO SEARCH — a catalogue, not a language.
+ *
+ * It began as a language because there was one game. There are two now, keyed
+ * differently on purpose: Pokemon on the CARD (0 of 10,110 multi-variant cards
+ * have a distinct image per variant) and One Piece on the PRINTING (945 of 945
+ * multi-printing codes do). Calling this a language would have made the One
+ * Piece indexes look like Japanese ones.
+ */
+export type ClipIndexKey = "en" | "ja" | "op-en" | "op-ja";
+
+/** @deprecated Kept so existing callers keep compiling; `ClipIndexKey` is the shape. */
+export type ClipLanguage = ClipIndexKey;
 
 export type ClipProgress = {
   /** `model` while weights download, `index` while vectors do, `ready` after. */
@@ -44,7 +56,7 @@ export type ClipProgress = {
 type VisionModel = (input: { pixel_values: unknown }) => Promise<{ image_embeds: { data: Float32Array } }>;
 
 let modelPromise: Promise<{ vision: VisionModel; Tensor: new (t: string, d: Float32Array, dims: number[]) => unknown }> | undefined;
-const indexPromises = new Map<ClipLanguage, Promise<ClipIndex>>();
+const indexPromises = new Map<ClipIndexKey, Promise<ClipIndex>>();
 
 /**
  * The model, downloaded once per browser.
@@ -81,27 +93,27 @@ async function loadModel(onProgress?: (p: ClipProgress) => void) {
   return modelPromise;
 }
 
-/** One language's vectors, downloaded once per browser and cached immutably by the route. */
-async function loadIndex(language: ClipLanguage): Promise<ClipIndex> {
-  let held = indexPromises.get(language);
+/** One catalogue's vectors, downloaded once per browser and cached immutably by the route. */
+async function loadIndex(key: ClipIndexKey): Promise<ClipIndex> {
+  let held = indexPromises.get(key);
   if (!held) {
     held = (async () => {
       const [manifest, blob] = await Promise.all([
-        fetch(`/api/scan/index/${language}.json`).then((r) => {
+        fetch(`/api/scan/index/${key}.json`).then((r) => {
           if (!r.ok) throw new Error(`index manifest ${r.status}`);
           return r.json() as Promise<{ ids?: string[] }>;
         }),
-        fetch(`/api/scan/index/${language}.i8`).then((r) => {
+        fetch(`/api/scan/index/${key}.i8`).then((r) => {
           if (!r.ok) throw new Error(`index vectors ${r.status}`);
           return r.arrayBuffer();
         }),
       ]);
       return clipIndexFrom(manifest, blob);
     })().catch((error) => {
-      indexPromises.delete(language);
+      indexPromises.delete(key);
       throw error;
     });
-    indexPromises.set(language, held);
+    indexPromises.set(key, held);
   }
   return held;
 }
@@ -154,9 +166,9 @@ export type ClipMatch = ClipResult & {
 };
 
 /**
- * Embed one image and search one language's index.
+ * Embed one image and search one catalogue's index.
  *
- * ONE LANGUAGE, NEVER BOTH — the same rule the OCR path follows, for the same
+ * ONE CATALOGUE, NEVER TWO — the same rule the OCR path follows, for the same
  * measured reason: an English card and its Japanese release share artwork
  * exactly, so searching both returns two answers for one card and forces the
  * reader to break the tie with information the picture does not contain.
@@ -164,7 +176,7 @@ export type ClipMatch = ClipResult & {
 export async function matchCard(
   source: CanvasImageSource,
   size: { width: number; height: number },
-  language: ClipLanguage,
+  key: ClipIndexKey,
   options?: { limit?: number; onProgress?: (p: ClipProgress) => void }
 ): Promise<ClipMatch> {
   const { onProgress } = options ?? {};
@@ -173,7 +185,7 @@ export async function matchCard(
     loadModel(onProgress),
     (async () => {
       onProgress?.({ stage: "index" });
-      return loadIndex(language);
+      return loadIndex(key);
     })(),
   ]);
   onProgress?.({ stage: "ready" });
@@ -194,8 +206,8 @@ export async function bitmapOf(file: Blob): Promise<{ source: ImageBitmap; width
   return { source, width: source.width, height: source.height };
 }
 
-/** Warm the model and one index before the user takes a picture. */
-export async function prepareMatcher(language: ClipLanguage, onProgress?: (p: ClipProgress) => void): Promise<void> {
-  await Promise.all([loadModel(onProgress), loadIndex(language)]);
+/** Warm the model and one catalogue before the user takes a picture. */
+export async function prepareMatcher(index: ClipIndexKey, onProgress?: (p: ClipProgress) => void): Promise<void> {
+  await Promise.all([loadModel(onProgress), loadIndex(index)]);
   onProgress?.({ stage: "ready" });
 }

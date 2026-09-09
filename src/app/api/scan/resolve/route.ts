@@ -1,5 +1,19 @@
 import { getCardView, type CardView } from "@/lib/card-view";
 import { lookupCards } from "@/lib/card-lookup";
+import { codeForPicture } from "@/lib/one-piece-optcg";
+
+/**
+ * The card code behind whatever the One Piece matcher returned.
+ *
+ * Bandai's printing ids carry the code with a suffix; optcgapi's filenames do
+ * not carry it reliably at all, so those go through the picture join. Falling
+ * back to the id itself keeps a plain code working unchanged.
+ */
+function onePieceCardCode(id: string): string {
+  const stripped = id.replace(/_(?:p|pr|r)\d+$/, "");
+  if (/^[A-Z]+\d*-\d+$/i.test(stripped) || /^P-\d+$/i.test(stripped)) return stripped;
+  return codeForPicture(id) ?? stripped;
+}
 
 /**
  * Turn scanned codes into the actual cards, with every printing of each.
@@ -35,9 +49,9 @@ const MAX_CODES = 8;
 const MAX_CARDS_PER_CODE = 6;
 
 export async function POST(request: Request) {
-  let payload: { codes?: unknown; ids?: unknown };
+  let payload: { codes?: unknown; ids?: unknown; tcg?: unknown };
   try {
-    payload = (await request.json()) as { codes?: unknown; ids?: unknown };
+    payload = (await request.json()) as { codes?: unknown; ids?: unknown; tcg?: unknown };
   } catch {
     return Response.json({ error: "Expected JSON." }, { status: 400 });
   }
@@ -56,15 +70,31 @@ export async function POST(request: Request) {
     ? payload.ids.filter((c): c is string => typeof c === "string").slice(0, MAX_CODES)
     : [];
 
+  /**
+   * WHICH GAME THE IDS BELONG TO, sent rather than guessed. It defaulted to
+   * Pokemon while Pokemon was the only indexed game, and a One Piece printing
+   * id put through `getCardView("pokemon", …)` resolves to nothing at all —
+   * a silent empty result rather than a visible error.
+   */
+  const tcg: "pokemon" | "onepiece" = payload.tcg === "onepiece" ? "onepiece" : "pokemon";
+
   const real: string[] = [];
   const cards: CardView[] = [];
   const seen = new Set<string>();
 
   for (const id of ids) {
-    const key = `pokemon:${id}`;
+    // A ONE PIECE MATCH NAMES A PICTURE, and pictures come in two shapes: a
+    // Bandai printing id like `ST21-014_p2`, and — for the 970 printings Bandai
+    // does not publish — an optcgapi filename like
+    // `Monkey.D.Luffy_-_ST21-014_3rd_Anniversary_Treasure_Campaign_Pack_img`.
+    // The card view is keyed on the CARD that owns the picture, so both are
+    // translated here. Nothing is lost: the view lists every printing and ranks
+    // them by the same artwork.
+    const code = tcg === "onepiece" ? onePieceCardCode(id) : id;
+    const key = `${tcg}:${code}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    const view = await getCardView("pokemon", id);
+    const view = await getCardView(tcg, code);
     if (view) {
       real.push(id);
       cards.push(view);

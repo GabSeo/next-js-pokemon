@@ -20,7 +20,13 @@ import path from "node:path";
  * margins agreeing to within 0.003. So the client can resize however it likes
  * and still be comparing like with like.
  *
- * TWO FILES, NOT ONE. `<lang>.json` is the ids, `<lang>.i8` is the vectors.
+ * TWO GAMES, FOUR INDEXES. Pokemon is keyed on the CARD, because 0 of 10,110
+ * multi-variant Pokemon cards have a distinct image per variant. One Piece is
+ * keyed on the PRINTING, because 945 of 945 multi-printing codes do. Same
+ * format, same model, same space — which is what lets a later version search
+ * both and stop asking which game.
+ *
+ * TWO FILES EACH, NOT ONE. `<key>.json` is the ids, `<key>.i8` is the vectors.
  * 20 MB of numbers as JSON would be ~120 MB and parse in seconds; as a typed
  * array it is one allocation. They are versioned together — a manifest whose id
  * count disagrees with the blob length is a truncated download, and
@@ -40,27 +46,41 @@ export const runtime = "nodejs";
  */
 export const revalidate = 31536000;
 
-const DIR = path.join(process.cwd(), "data", "catalog", "pokemon-clip");
+const CATALOG = path.join(process.cwd(), "data", "catalog");
 
-/** Exactly what may be served. A path segment is not a filename until it is on this list. */
-const ALLOWED = new Set(["en.json", "en.i8", "ja.json", "ja.i8"]);
+/**
+ * Exactly what may be served, and where each one lives.
+ *
+ * AN ALLOWLIST THAT IS ALSO THE ROUTING TABLE. This segment reaches the
+ * filesystem, and the set of things worth serving is eight strings — so naming
+ * them is both the simplest implementation and the one with no traversal to
+ * reason about. It doubles as the mapping from the short key the browser asks
+ * for to the directory the ingestion writes, which differ because the two games
+ * name their languages differently (`ja` against `japanese`).
+ */
+const ALLOWED: Record<string, string> = {
+  "en.json": "pokemon-clip/en.json",
+  "en.i8": "pokemon-clip/en.i8",
+  "ja.json": "pokemon-clip/ja.json",
+  "ja.i8": "pokemon-clip/ja.i8",
+  "op-en.json": "one-piece-clip/english.json",
+  "op-en.i8": "one-piece-clip/english.i8",
+  "op-ja.json": "one-piece-clip/japanese.json",
+  "op-ja.i8": "one-piece-clip/japanese.i8",
+};
 
 export async function GET(request: Request, { params }: { params: Promise<{ file: string }> }) {
   const { file } = await params;
 
-  // AN ALLOWLIST, NOT A SANITISER. This segment reaches the filesystem, and the
-  // set of things worth serving is four strings — so naming them is both the
-  // simplest implementation and the one with no traversal to reason about.
-  if (!ALLOWED.has(file)) {
+  const relative = ALLOWED[file];
+  if (!relative) {
     return Response.json({ error: "No such index" }, { status: 404 });
   }
 
-  const full = path.join(DIR, file);
+  const full = path.join(CATALOG, relative);
   if (!existsSync(full)) {
-    return Response.json(
-      { error: `${file} has not been built — run npm run catalog:pokemon-clip` },
-      { status: 503 }
-    );
+    const build = relative.startsWith("one-piece") ? "catalog:one-piece-clip" : "catalog:pokemon-clip";
+    return Response.json({ error: `${file} has not been built — run npm run ${build}` }, { status: 503 });
   }
 
   let bytes: Buffer;
