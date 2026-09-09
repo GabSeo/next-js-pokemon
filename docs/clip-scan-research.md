@@ -162,6 +162,37 @@ us to the rule you stated, and it is the most important sentence in your brief.
 
 ---
 
+## 2b. Which model — and why not MobileCLIP2
+
+**Shipped: MobileCLIP-S2 (v1), fp16.** Measured against CLIP ViT-B/32 on the
+same 2,500-card pool and the same eight known photographs: 5/8 against 4/8, and
+an average margin of 0.0864 against 0.0518. The margin is the number that
+matters — 67% wider is what makes a confidence threshold possible.
+
+**MobileCLIP2 (S0 through S4) is ruled out, on licence.** Apple ships it under
+the Apple Machine Learning Research Model licence, which defines its own scope:
+
+> "Research Purposes" means **non-commercial** scientific research and academic
+> development activities
+
+That is disqualifying for a product with a paid tier, whatever it scores.
+
+Two further obstacles, either of which would also have stopped it:
+
+- **No ONNX export exists.** `apple/MobileCLIP2-S4` ships one file,
+  `mobileclip2_s4.pt` — a PyTorch checkpoint. Exporting it ourselves would need
+  Python and Apple's own library, and would break the property this whole
+  architecture rests on: one ONNX file running in Node AND in the browser, so
+  the vector this repo writes and the vector a phone computes come from one
+  implementation.
+- **S4 is the largest of the family**, so even exported it would be a heavier
+  download and slower inference on a phone — the opposite of what a live view
+  needs.
+
+**MobileCLIP v1 is under a permissive Apple Software licence** — use, reproduce,
+modify and redistribute, with attribution retained. That is the one we can
+actually ship.
+
 ## 3. The artwork identifies the card, never the printing
 
 Measured in this repo and already load-bearing elsewhere: **0 of 10,110
