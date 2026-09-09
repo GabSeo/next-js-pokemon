@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { CardView } from "@/lib/card-view";
-import { cardRect, matchCard, prepareMatcher, type ClipIndexKey, type ClipProgress } from "@/lib/clip-client";
+import { cardRect, cardRectInView, matchCard, prepareMatcher, type ClipIndexKey, type ClipProgress } from "@/lib/clip-client";
 import { clipTied, clipVerdict, CLIP_MAX_TIED, type ClipVerdict } from "@/lib/clip-search";
 
 /**
@@ -72,6 +72,29 @@ export function LiveScanner({
   const [reading, setReading] = useState<Reading>({ state: "starting" });
 
   /**
+   * Bumped to run the whole effect again after a result.
+   *
+   * "Scan another" has to reopen the camera, because finding a card stops it —
+   * and re-entering the effect is the only way to do that which cannot leave a
+   * half-torn-down loop behind. A boolean would not retrigger on the second
+   * press.
+   */
+  const [attempt, setAttempt] = useState(0);
+
+  /**
+   * The guide's size in screen pixels, computed rather than styled.
+   *
+   * CSS COULD NOT EXPRESS THIS. `aspect-ratio` with `height: 82%` overflows a
+   * tall screen — measured at 477px wide inside 375 — and adding `max-width`
+   * clamps the width while leaving the height, so the box stops being
+   * card-shaped (0.462 against 0.716). What is wanted is `min` of both
+   * constraints, which is exactly what `cardRect` computes for the crop. Using
+   * the same function for both is the only way the drawn rectangle and the read
+   * rectangle cannot drift apart.
+   */
+  const [guide, setGuide] = useState<{ width: number; height: number } | undefined>();
+
+  /**
    * Everything the loop mutates lives in a ref, not in state.
    *
    * The loop runs across renders and must not restart when one happens —
@@ -80,6 +103,24 @@ export function LiveScanner({
    * a bug that looks like the matcher being wrong.
    */
   const loop = useRef({ running: false, lastId: "", agreed: 0 });
+
+  // Recomputed on mount and on rotation. A ResizeObserver rather than a resize
+  // listener, because the box also changes when the result sheet opens under it.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const measure = () => {
+      const box = video.getBoundingClientRect();
+      if (box.width > 0 && box.height > 0) {
+        const rect = cardRect(box.width, box.height);
+        setGuide({ width: rect.width, height: rect.height });
+      }
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(video);
+    return () => observer.disconnect();
+  }, [attempt]);
 
   const stop = useCallback(() => {
     loop.current.running = false;
@@ -152,7 +193,15 @@ export function LiveScanner({
 
         let result;
         try {
-          result = await matchCard(video, cardRect(width, height), indexKey, { limit: 8 });
+          // The rectangle the guide DRAWS, not the one a full frame implies —
+          // `object-cover` crops the video, so the two are different questions.
+          const box = video.getBoundingClientRect();
+          result = await matchCard(
+            video,
+            cardRectInView(width, height, box.width, box.height),
+            indexKey,
+            { limit: 8 }
+          );
         } catch {
           // A frame the browser could not read is not a reason to stop.
           await new Promise((resolve) => setTimeout(resolve, 200));
@@ -207,7 +256,7 @@ export function LiveScanner({
       cancelled = true;
       stop();
     };
-  }, [indexKey, tcg, stop]);
+  }, [indexKey, tcg, stop, attempt]);
 
   const hint =
     reading.state !== "scanning"
@@ -219,23 +268,29 @@ export function LiveScanner({
           : "Got it…";
 
   return (
-    <div className="mt-3 rounded-lg border-2 border-black bg-white p-3" style={{ boxShadow: "3px 3px 0 0 #000" }}>
-      <div className="flex items-baseline justify-between gap-3">
-        <span className="text-xs font-black uppercase tracking-wide text-muted-text">Live camera</span>
-        <button type="button" onClick={onClose} className="text-[11px] font-black underline underline-offset-4">
-          Stop
-        </button>
-      </div>
+    /* FULL SCREEN, NOT A PANEL IN A COLUMN. A scanner is a viewfinder: the frame
+       has to be big enough to fill with a card, and a card small in a panel is
+       the exact state that scores 0.759 and cannot be named. Everything else on
+       the page is irrelevant while the camera is open, so it is covered rather
+       than competed with. `fixed inset-0` also survives the page scrolling
+       underneath, which a sticky panel does not.
 
-      <div className="relative mt-2 overflow-hidden rounded-md border-2 border-black bg-black">
+       `z-[70]`, and the number is load-bearing: the site header sits at
+       `z-[60]` and is sticky, so anything below that renders UNDER the nav bar
+       — which looked like the viewfinder being clipped rather than like a
+       stacking mistake. See components/site-header.tsx, where the 60 is
+       likewise explained rather than chosen. */
+    <div className="fixed inset-0 z-[70] flex flex-col bg-black">
+      {/* The video fills the screen and the chrome floats over it. */}
+      <div className="relative flex-1 overflow-hidden">
         <video
           ref={videoRef}
           playsInline
           muted
-          // `object-cover` on a fixed aspect keeps the guide and the crop in
-          // agreement — a letterboxed video would put black inside the region
-          // the matcher reads.
-          className="block aspect-[3/4] w-full object-cover"
+          // `object-cover` keeps the guide and the crop in agreement — a
+          // letterboxed video would put black inside the region the matcher
+          // reads.
+          className="absolute inset-0 h-full w-full object-cover"
         />
 
         {/* THE GUIDE IS THE CROP, drawn at the same 63:88 and the same 82% the
@@ -244,32 +299,54 @@ export function LiveScanner({
         {reading.state === "scanning" ? (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
             <div
-              className="rounded-md border-[3px] transition-colors duration-200"
+              className="rounded-lg border-[3px] transition-colors duration-200"
               style={{
-                aspectRatio: "63 / 88",
-                height: "82%",
+                width: guide?.width ?? 0,
+                height: guide?.height ?? 0,
                 borderColor:
-                  reading.verdict === "empty" ? "rgba(255,255,255,.55)" : reading.verdict === "unsure" ? "#f5c518" : "#3ddc84",
-                boxShadow: "0 0 0 9999px rgba(0,0,0,.35)",
+                  reading.verdict === "empty"
+                    ? "rgba(255,255,255,.55)"
+                    : reading.verdict === "unsure"
+                      ? "#f5c518"
+                      : "#3ddc84",
+                boxShadow: "0 0 0 9999px rgba(0,0,0,.45)",
               }}
             />
           </div>
         ) : null}
 
-        {reading.state !== "scanning" ? (
-          <div className="absolute inset-0 flex items-center justify-center p-6 text-center">
-            <p className="text-sm font-black text-white">
+        {/* Close sits top-right, where a full-screen view is expected to put it
+            and where a thumb reaches without crossing the viewfinder. */}
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close the camera"
+          className="absolute right-4 top-4 rounded-full border-2 border-white/70 bg-black/50 px-4 py-2 text-sm font-black text-white backdrop-blur"
+        >
+          Close
+        </button>
+
+        {reading.state === "scanning" ? (
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 p-6 pb-8 text-center">
+            <p className="text-base font-black text-white drop-shadow">{hint}</p>
+            <p className="mt-1 text-[11px] text-white/70">
+              {reading.fps ? `${reading.fps.toFixed(1)} frames a second · ` : ""}nothing leaves your phone
+            </p>
+          </div>
+        ) : null}
+
+        {reading.state !== "scanning" && reading.state !== "found" ? (
+          <div className="absolute inset-0 flex items-center justify-center p-8 text-center">
+            <p className="text-base font-black text-white">
               {reading.state === "starting"
                 ? "Starting…"
                 : reading.state === "loading"
                   ? `Loading the matcher${
                       reading.progress?.ratio ? ` — ${Math.round(reading.progress.ratio * 100)}%` : "…"
                     }`
-                  : reading.state === "denied"
-                    ? reading.reason
-                    : ""}
+                  : reading.reason}
               {reading.state === "loading" ? (
-                <span className="mt-1 block text-[11px] font-normal text-white/70">
+                <span className="mt-2 block text-xs font-normal text-white/70">
                   About 68 MB, once per browser. Everything after this is instant and offline.
                 </span>
               ) : null}
@@ -278,19 +355,15 @@ export function LiveScanner({
         ) : null}
       </div>
 
-      {reading.state === "scanning" ? (
-        <p className="mt-2 text-[11px] text-muted-text">
-          <b>{hint}</b>
-          {reading.fps ? ` · ${reading.fps.toFixed(1)} frames a second on this device` : ""} · nothing leaves your
-          phone
-        </p>
-      ) : null}
-
+      {/* THE RESULT IS A SHEET OVER THE VIEWFINDER, not a panel replacing it.
+          The camera has already stopped; keeping the last frame behind the
+          answer is what makes "this is the card I was just pointing at" read as
+          one gesture rather than two screens. */}
       {reading.state === "found" ? (
-        <div className="mt-3">
+        <div className="max-h-[62%] overflow-y-auto border-t-2 border-white/20 bg-white p-4">
           <p className="text-[11px] text-muted-text">
             {reading.tied > 1
-              ? `${reading.tied} cards share this artwork — check the number in the corner.`
+              ? `${reading.tied} cards share this artwork — check the number in the corner of yours.`
               : `Matched in ${Math.round(reading.elapsed)} ms, on your device.`}
           </p>
           <ul className="mt-2 grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))" }}>
@@ -315,13 +388,22 @@ export function LiveScanner({
               </li>
             ))}
           </ul>
-          <button
-            type="button"
-            onClick={onClose}
-            className="mt-3 w-full rounded-md border-2 border-black bg-foreground px-3 py-2 text-xs font-black text-white"
-          >
-            Scan another
-          </button>
+          <div className="mt-3 flex gap-2">
+            <button
+              type="button"
+              onClick={() => setAttempt((n) => n + 1)}
+              className="flex-1 rounded-md border-2 border-black bg-foreground px-3 py-2.5 text-sm font-black text-white"
+            >
+              Scan another
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-md border-2 border-black bg-card-surface px-4 py-2.5 text-sm font-black"
+            >
+              Done
+            </button>
+          </div>
         </div>
       ) : null}
     </div>

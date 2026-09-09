@@ -129,11 +129,39 @@ both above                      the card
 
 ---
 
-## 5. Framing is the whole game, and there is no detector
+## 5. Framing is the whole game, and automatic detection measured worse
 
-Nothing here finds the four corners of a card in a frame. A card-shaped guide is
+Nothing on the fast path finds the four corners of a card. A card-shaped guide is
 drawn on screen and only that region is read — **the person holding the phone is
 the detector.**
+
+### An automatic detector was built and is not wired in
+
+`lib/card-detect.ts` finds a card classically: gradient, threshold, convex hull,
+simplify to four points, then the same homography the ceiling lab uses. No model,
+no download, no licence. It was graded against the corners read off real
+photographs by hand (`scripts/detect-lab.mts`):
+
+| | cards identified |
+|---|---|
+| no detector at all | **3/4** |
+| automatic, hull of all edges | 2/4 |
+| automatic, largest connected component | 1/4 |
+| corners read by hand | **4/4** |
+
+**It is worse than doing nothing**, so it does not ship. The failure is visible
+in the corners rather than mysterious: on the Dark Charizard photograph it
+returns a quadrilateral covering 73% of the frame around a card covering 55% —
+the hull of edge pixels is the hull of the *scene*, because a photograph also
+contains a hand, a table and a room. Corner error ran 8–19% of the card's
+diagonal, and a few percent is all the embedding tolerates.
+
+The next thing to try is line-based (Hough) rather than blob-based: a card has
+four long straight edges, and intersecting dominant lines does not care about a
+border broken by glare or a background object touching it. Trained detectors are
+the other route, and the datasets available are cards **lying flat, often
+slabbed** — a real dataset for a different situation than a card held up to a
+phone.
 
 That is not a placeholder so much as the honest version of the same job. From the
 table above: a card filling a fifth of the frame scores 0.759 with a margin of

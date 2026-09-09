@@ -100,6 +100,46 @@ export function cardRect(width: number, height: number, fill = 0.82): SourceRect
   return { x: (width - w) / 2, y: (height - h) / 2, width: w, height: h };
 }
 
+/**
+ * The guide rectangle in the VIDEO's own pixels, given how the video is
+ * displayed — which is not the same question as `cardRect` alone.
+ *
+ * WHY THIS EXISTS. A full-screen viewfinder shows the camera with
+ * `object-fit: cover`: the frame is scaled to fill the box and the overflow is
+ * cropped away. So the part of the video a person can SEE is smaller than the
+ * frame the matcher receives, and a guide drawn over the visible area does not
+ * correspond to `cardRect` of the whole frame. On a 375x812 screen with a
+ * 720x1280 camera the two differ by enough to read a different rectangle than
+ * the one on screen — the person frames one thing and the model looks at
+ * another, which is the failure the guide exists to prevent.
+ *
+ * So: work out what `cover` actually shows, then place the card rectangle
+ * inside THAT.
+ */
+export function cardRectInView(
+  videoWidth: number,
+  videoHeight: number,
+  boxWidth: number,
+  boxHeight: number,
+  fill = 0.82
+): SourceRect {
+  if (videoWidth <= 0 || videoHeight <= 0 || boxWidth <= 0 || boxHeight <= 0) {
+    return cardRect(videoWidth, videoHeight, fill);
+  }
+  // `cover` scales by whichever factor is larger, and crops the rest.
+  const scale = Math.max(boxWidth / videoWidth, boxHeight / videoHeight);
+  const visibleWidth = Math.min(videoWidth, boxWidth / scale);
+  const visibleHeight = Math.min(videoHeight, boxHeight / scale);
+
+  const inner = cardRect(visibleWidth, visibleHeight, fill);
+  return {
+    x: (videoWidth - visibleWidth) / 2 + inner.x,
+    y: (videoHeight - visibleHeight) / 2 + inner.y,
+    width: inner.width,
+    height: inner.height,
+  };
+}
+
 // --- the worker -----------------------------------------------------------
 
 type Pending = { resolve: (match: ClipMatch) => void; reject: (error: Error) => void };
