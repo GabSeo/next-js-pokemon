@@ -8,6 +8,9 @@ This matters because the live scan is only as good as its references. A card wit
 no picture has no embedding, and a card with no embedding cannot be recognised by
 anything, however good the camera pipeline gets.
 
+Its companion is `docs/how-the-scan-works.md`: this one explains where the
+references come from, that one explains what happens to a photograph.
+
 ---
 
 ## 1. The five sources
