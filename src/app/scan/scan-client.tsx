@@ -6,7 +6,7 @@ import { AddToCollectionButton } from "@/components/add-to-collection-button";
 import { CardExplainer } from "@/components/card-explainer";
 import type { CodeCandidate } from "@/lib/card-code-ocr";
 import type { CardView } from "@/lib/card-view";
-import { bitmapOf, clipHitGame, clipHitId, matchCard, type ClipIndexKey } from "@/lib/clip-client";
+import { bitmapOf, cardRect, clipHitGame, clipHitId, matchCard, type ClipIndexKey } from "@/lib/clip-client";
 import { CLIP_MAX_TIED, clipTied, clipVerdict } from "@/lib/clip-search";
 import { LiveScanner } from "@/app/scan/live-scanner";
 import { onePieceSrc } from "@/lib/one-piece-image-url";
@@ -168,12 +168,42 @@ async function matchLocally(
 ): Promise<{ cards: CardView[]; route: Route; confident: boolean } | undefined> {
   const { source, width, height } = await bitmapOf(file);
   try {
-    // More hits than we can show, so "everything I asked for is tied" is
-    // distinguishable from "three things are tied".
-    // THE WHOLE PICTURE for an uploaded photo — the person framed it when they
-    // took it. The live view crops to a guide instead, because a camera frame
-    // is mostly room.
-    const result = await matchCard(source, { x: 0, y: 0, width, height }, keys, { limit: 8 });
+    /**
+     * THREE CROPS, AND THE ONE WITH THE CLEAREST ANSWER WINS.
+     *
+     * The whole photograph was the only thing tried, on the reasoning that a
+     * person frames an upload deliberately. That holds for a bare card and
+     * collapses for a graded slab, where a quarter of the frame is a PSA label
+     * and the rest is plastic, reflections and table.
+     *
+     * Measured on two real slab photographs (scripts/scan-lab.mts):
+     *
+     *   whole      0.818  margin 0.007   correct
+     *   centre 82% 0.905  margin 0.040   correct
+     *   centre 65% 0.939  margin 0.047   correct
+     *
+     * Same card, same photograph, seven times the margin. And the AUTOMATIC
+     * detector — the one the live view uses — found no card at all in that
+     * frame, so the obvious fix was the wrong one: a slab's edges are the
+     * slab's, not the card's.
+     *
+     * THE MARGIN PICKS THE WINNER, not the score. A score says how close the
+     * nearest card is; the margin says how much clearer it is than the next
+     * one, which is the only thing that distinguishes an answer from a guess —
+     * and it is already what every threshold here reads.
+     *
+     * THREE EMBEDDINGS, ~200 ms instead of ~70. Affordable for one photograph
+     * a person chose to take; it is why the live view still reads one crop per
+     * frame.
+     */
+    const attempts = await Promise.all(
+      [
+        { x: 0, y: 0, width, height },
+        cardRect(width, height, 0.82),
+        cardRect(width, height, 0.65),
+      ].map((rect) => matchCard(source, rect, keys, { limit: 8 }))
+    );
+    const result = attempts.reduce((best, attempt) => (attempt.margin > best.margin ? attempt : best));
     const verdict = clipVerdict(result);
     // Nothing card-like in the picture at all. No list is worth showing and the
     // reader will not find a code either, but it is allowed to try.
