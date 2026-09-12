@@ -6,7 +6,7 @@ import { AddToCollectionButton } from "@/components/add-to-collection-button";
 import { CardExplainer } from "@/components/card-explainer";
 import type { CodeCandidate } from "@/lib/card-code-ocr";
 import type { CardView } from "@/lib/card-view";
-import { ALL_INDEXES, bitmapOf, clipHitGame, clipHitId, matchCard } from "@/lib/clip-client";
+import { bitmapOf, clipHitGame, clipHitId, matchCard, type ClipIndexKey } from "@/lib/clip-client";
 import { CLIP_MAX_TIED, clipTied, clipVerdict } from "@/lib/clip-search";
 import { LiveScanner } from "@/app/scan/live-scanner";
 import { onePieceSrc } from "@/lib/one-piece-image-url";
@@ -149,7 +149,8 @@ async function uploadable(file: File): Promise<Blob> {
  * job on its own.
  */
 async function matchLocally(
-  file: File
+  file: File,
+  keys: ClipIndexKey[]
 ): Promise<{ cards: CardView[]; route: Route; confident: boolean } | undefined> {
   const { source, width, height } = await bitmapOf(file);
   try {
@@ -158,7 +159,7 @@ async function matchLocally(
     // THE WHOLE PICTURE for an uploaded photo — the person framed it when they
     // took it. The live view crops to a guide instead, because a camera frame
     // is mostly room.
-    const result = await matchCard(source, { x: 0, y: 0, width, height }, ALL_INDEXES, { limit: 8 });
+    const result = await matchCard(source, { x: 0, y: 0, width, height }, keys, { limit: 8 });
     const verdict = clipVerdict(result);
     // Nothing card-like in the picture at all. No list is worth showing and the
     // reader will not find a code either, but it is allowed to try.
@@ -308,6 +309,36 @@ function TiedCards({ cards }: { cards: CardView[] }) {
   );
 }
 
+/**
+ * One card on the capture rail.
+ *
+ * The mockup repeats this shape four times — hard border, hard shadow, a
+ * numbered red chip, an uppercase title — so it is written once. The step
+ * number is optional because the last panel ("Your shot") is a result rather
+ * than a step, and numbering it would imply an action that is not there.
+ */
+function Panel({ step, title, children }: { step?: string; title: string; children: React.ReactNode }) {
+  return (
+    <section
+      className="flex flex-col gap-3.5 rounded-lg border-2 border-foreground p-4"
+      style={{ background: "var(--card-surface)", boxShadow: "4px 4px 0 0 #000" }}
+    >
+      <div className="flex items-center gap-2">
+        {step ? (
+          <span
+            className="flex h-[22px] w-[22px] items-center justify-center border-2 border-foreground text-[10px] font-black text-white"
+            style={{ background: "var(--pokemon-red)" }}
+          >
+            {step}
+          </span>
+        ) : null}
+        <span className="text-[11px] font-black uppercase tracking-[1px]">{title}</span>
+      </div>
+      {children}
+    </section>
+  );
+}
+
 export function ScanClient() {
   const [status, setStatus] = useState<Status>({ phase: "idle" });
   const [preview, setPreview] = useState<string | undefined>();
@@ -355,7 +386,7 @@ export function ScanClient() {
      */
     let unsure: { cards: CardView[]; route: Route } | undefined;
     try {
-      const local = await matchLocally(file);
+      const local = await matchLocally(file, indexes);
       if (local?.confident) {
         setStatus({ phase: "done", candidates: [], cards: local.cards, route: local.route });
         return;
@@ -429,64 +460,218 @@ export function ScanClient() {
     });
   }
 
+  /**
+   * WHICH CATALOGUES TO SEARCH.
+   *
+   * THE MATCHER NO LONGER NEEDS THIS — it searches all four at once, measured
+   * at one wrong-catalogue answer in 1,008 — so this is a FILTER rather than
+   * the gate it used to be. Left in because a person who knows they are holding
+   * a Japanese card can say so and stop the English twin coming back beside it,
+   * which the picture can never separate.
+   *
+   * FRENCH IS ABSENT ON PURPOSE. The mockup drew EN/JP/FR; a French copy is not
+   * a separate Cardmarket product, it is a language option inside the Western
+   * listing, so there is no French catalogue to search and a third button would
+   * have been a control that did nothing.
+   */
+  const [game, setGame] = useState<"pokemon" | "onepiece">("pokemon");
+  const [language, setLanguage] = useState<"en" | "ja">("en");
+
+  /**
+   * The catalogues the chosen filter actually selects.
+   *
+   * ONE GAME, ONE LANGUAGE, so one index — which is a narrowing of the unified
+   * search rather than a return to the old gate. The engine can still search
+   * all four; this says which of them the person believes they are holding, and
+   * the measured cost of guessing wrong is that the right card is simply absent
+   * rather than outranked.
+   */
+  // REFERENTIAL STABILITY MATTERS HERE and is NOT hand-rolled. This array is a
+  // dependency of the live scanner's effect, so a fresh one on every render
+  // would tear the camera down and reopen it on every unrelated keystroke. A
+  // `useMemo` was written first and the React Compiler refused the whole
+  // component over it — "existing memoization could not be preserved" — because
+  // it already memoises exactly this shape. Letting it is both correct and one
+  // fewer dependency array to keep honest.
+  const indexes: ClipIndexKey[] = [
+    game === "pokemon" ? (language === "ja" ? "ja" : "en") : language === "ja" ? "op-ja" : "op-en",
+  ];
+
+  const pill = (active: boolean) =>
+    active
+      ? { background: "var(--nav-dark)", color: "#ffffff" }
+      : { background: "var(--card-surface)", color: "var(--foreground)" };
+
   return (
-    <div className="mt-6 grid gap-6 md:grid-cols-[320px_1fr]">
-      <div>
-        <label
-          className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-black bg-muted-surface p-6 text-center"
-          style={{ boxShadow: "3px 3px 0 0 #000" }}
-        >
-          <span className="text-2xl" aria-hidden>
-            &#128247;
-          </span>
-          <span className="mt-2 text-sm font-black">Take a photo of the card</span>
-          <span className="mt-1 text-[11px] text-muted-text">or choose one from your device</span>
-          {/* `capture` asks a phone for its back camera and is ignored on
-              desktop, where this stays an ordinary file picker. */}
-          <input type="file" accept="image/*" capture="environment" onChange={onFile} className="hidden" />
-        </label>
+    <div className="mt-6 flex flex-wrap items-start gap-6">
+      {/* ============ CAPTURE RAIL ============ */}
+      <aside className="flex min-w-[280px] flex-1 basis-[300px] flex-col gap-4 lg:max-w-[360px]">
+        <Panel step="1" title="Which catalogue">
+          <p className="text-xs leading-[18px] text-muted-text">
+            The matcher searches every catalogue on its own. Narrow it only if you already know.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {([["pokemon", "POKÉMON"], ["onepiece", "ONE PIECE"]] as const).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setGame(value)}
+                aria-pressed={game === value}
+                className="min-w-[110px] flex-1 rounded-md border-2 border-foreground px-3 py-2.5 text-xs font-black tracking-[0.4px] transition-colors"
+                style={pill(game === value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="flex overflow-hidden rounded-md border-2 border-foreground">
+            {([["en", "EN"], ["ja", "JP"]] as const).map(([value, label], index) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setLanguage(value)}
+                aria-pressed={language === value}
+                className={`flex-1 py-2.5 text-xs font-black transition-colors ${index > 0 ? "border-l-2 border-foreground" : ""}`}
+                style={pill(language === value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </Panel>
 
-        <button
-          type="button"
-          onClick={() => setLive((on) => !on)}
-          aria-pressed={live}
-          className={`mt-3 w-full rounded-lg border-2 border-black px-3 py-2.5 text-sm font-black transition-colors ${
-            live ? "bg-foreground text-white" : "bg-card-surface hover:bg-muted-surface"
-          }`}
-          style={{ boxShadow: "3px 3px 0 0 #000" }}
-        >
-          {live ? "Close the live camera" : "Scan live with the camera"}
-        </button>
+        <Panel step="2" title="Capture">
+          <label
+            className="cursor-pointer rounded-md border-2 border-foreground px-4 py-3.5 text-center text-sm font-black tracking-[-0.2px] text-white"
+            style={{ background: "var(--pokemon-red)", boxShadow: "3px 3px 0 0 #000" }}
+          >
+            Take a photo
+            {/* `capture` asks a phone for its back camera and is ignored on
+                desktop, where this stays an ordinary file picker. */}
+            <input type="file" accept="image/*" capture="environment" onChange={onFile} className="hidden" />
+          </label>
+          <p className="-mt-1 text-[11px] leading-[17px] text-muted-text">or choose one from your device</p>
+          <button
+            type="button"
+            onClick={() => setLive((on) => !on)}
+            aria-pressed={live}
+            className="flex items-center justify-center gap-2 rounded-md border-2 border-foreground px-4 py-3 text-[13px] font-black"
+            style={{
+              background: live ? "var(--nav-dark)" : "var(--card-surface)",
+              color: live ? "#ffffff" : "var(--foreground)",
+              boxShadow: "3px 3px 0 0 #000",
+            }}
+          >
+            <span
+              className="h-2 w-2 rounded-full"
+              style={{
+                background: "var(--pokemon-red)",
+                animation: live ? "livepulse 1.4s ease-in-out infinite" : undefined,
+              }}
+            />
+            {live ? "Close the live camera" : "Scan live with the camera"}
+          </button>
+          <p className="text-[11px] leading-[17px] text-muted-text">
+            Fill the frame and keep the card flat — the whole picture is what gets matched.
+          </p>
+        </Panel>
 
-        {/* NOTHING IS ASKED ANY MORE.
-            Two fieldsets stood here — Game, and Card language — and the
-            reasoning for them was sound and is now obsolete rather than wrong.
-            Neither answer is recoverable from a picture, so the person was
-            asked; but the person cannot recover it any faster than the matcher
-            can, and two taps in front of "point the camera at a card" is the
-            feature arguing with its own proposition.
-
-            What replaced them is a search across all four catalogues at once,
-            gated on a measurement rather than on optimism: 1,008 reference
-            vectors, one answered by the wrong catalogue, and that one was the
-            same One Piece card in its other language. See matchCard. */}
+        {/* STEP 3, ON THE RAIL WITH THE OTHER INPUTS, which is where the
+            mockup puts it and where it belongs: the three ways to name a card
+            are one decision, and having two of them on the left while the third
+            sits under the results makes the third look like a recovery from
+            failure rather than an equal option. The scan is a convenience over
+            the keyboard, and the keyboard never stops working. */}
+        <Panel step="3" title="Or type the code">
+          <p className="text-[11px] leading-[17px] text-muted-text">
+            Bottom corner of the card — 190/182 on Pokémon, ST21-014 on One Piece.
+          </p>
+          <form action="/lookup" method="get" className="flex gap-2">
+            <input
+              id="typed"
+              type="search"
+              name="q"
+              value={typed}
+              onChange={(event) => setTyped(event.target.value)}
+              placeholder="190/182"
+              className="w-full min-w-0 rounded-md border-2 border-foreground px-3 py-2.5 text-[13px] font-bold"
+              style={{ background: "var(--card-surface)" }}
+            />
+            <button
+              type="submit"
+              className="shrink-0 rounded-md border-2 border-foreground px-4 py-2.5 text-[13px] font-black"
+              style={{ background: "var(--pokemon-yellow)", boxShadow: "3px 3px 0 0 #000" }}
+            >
+              Find
+            </button>
+          </form>
+        </Panel>
 
         {preview ? (
-          /* eslint-disable-next-line @next/next/no-img-element -- a local object URL for a file the visitor just chose; there is no remote asset to optimize */
-          <img
-            src={preview}
-            alt="The card you photographed"
-            className="mt-4 w-full rounded-lg border-2 border-black object-contain"
-          />
+          <Panel title="Your shot">
+            <div className="relative overflow-hidden rounded border-2 border-foreground">
+              {/* eslint-disable-next-line @next/next/no-img-element -- a local object URL for a file the visitor just chose; there is no remote asset to optimize */}
+              <img src={preview} alt="The card you photographed" className="w-full object-contain" />
+              {/* THE SWEEP IS A STATUS, NOT A FLOURISH. A match takes a few
+                  hundred milliseconds with nothing else on screen changing, and
+                  without this the page looks like it ignored the photo. */}
+              {status.phase === "matching" || status.phase === "reading" ? (
+                <span
+                  className="pointer-events-none absolute inset-y-0 left-0 w-1/3"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, transparent, color-mix(in srgb, var(--pokemon-red) 35%, transparent), transparent)",
+                    animation: "sweep 1.1s linear infinite",
+                  }}
+                />
+              ) : null}
+            </div>
+          </Panel>
         ) : null}
-      </div>
+      </aside>
 
-      <div>
+      {/* ============ RESULT ============ */}
+      <main className="flex min-w-[300px] flex-1 basis-[520px] flex-col gap-4">
+        {/* HOW IT WAS FOUND, AT THE TOP AND IN ITS OWN COLOUR. One route kept
+            the photo on the device and one sent it to Google, and that
+            difference belongs to the person who took the picture. The mockup
+            puts it on black above the card, which is right: it frames
+            everything below it as the answer to a specific question. */}
+        {!live && status.phase === "done" && status.route ? (
+          <div
+            className="flex flex-wrap items-center gap-2.5 rounded-lg border-2 border-foreground px-4 py-3"
+            style={{ background: "var(--nav-dark)", color: "#ffffff", boxShadow: "4px 4px 0 0 #000" }}
+          >
+            <span className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.8px]">
+              <span
+                className="h-2 w-2 rounded-full"
+                style={{
+                  background:
+                    status.route.via === "artwork" ? "var(--success-green)" : "var(--pokemon-yellow)",
+                }}
+              />
+              {status.route.via === "artwork" || status.route.via === "artwork-tie"
+                ? "Matched by artwork"
+                : status.route.via === "name"
+                  ? "Matched by name only"
+                  : "Read the printed code"}
+            </span>
+            <span className="text-[11px] font-bold tracking-[0.3px] text-white/60">
+              {status.route.via === "artwork"
+                ? `on device · ${Math.round(status.route.elapsed)} ms · margin ${status.route.margin.toFixed(3)} · photo never left the phone`
+                : status.route.via === "artwork-tie"
+                  ? `on device · ${status.route.tied} cards share this artwork · photo never left the phone`
+                  : status.route.via === "name"
+                    ? "the number was unreadable — these share the name that was read"
+                    : "the artwork was unclear, so the photo was sent once to be read"}
+            </span>
+          </div>
+        ) : null}
         {/* THE LIVE VIEW OWNS THE RIGHT COLUMN while it is open. Running it
             above a stale photo result invites reading one and acting on the
             other. */}
         {live ? (
-          <LiveScanner onClose={() => setLive(false)} />
+          <LiveScanner indexes={indexes} onClose={() => setLive(false)} />
         ) : null}
 
         {!live && status.phase === "matching" ? (
@@ -733,33 +918,7 @@ export function ScanClient() {
           )
         ) : null}
 
-        {/* Always present, at every stage. The scan is a convenience over the
-            keyboard, and the keyboard never stops working. */}
-        <form action="/lookup" method="get" className="mt-6">
-          <label htmlFor="typed" className="text-xs font-black uppercase tracking-wide text-muted-text">
-            Or type the code
-          </label>
-          <div className="mt-2 flex gap-2">
-            <input
-              id="typed"
-              type="search"
-              name="q"
-              value={typed}
-              onChange={(event) => setTyped(event.target.value)}
-              placeholder="OP05-119 or 190/182"
-              className="w-full rounded-lg border-2 border-black bg-white px-3 py-2 text-sm font-bold"
-              style={{ boxShadow: "3px 3px 0 0 #000" }}
-            />
-            <button
-              type="submit"
-              className="shrink-0 rounded-lg border-2 border-black bg-muted-surface px-4 py-2 text-sm font-black"
-              style={{ boxShadow: "3px 3px 0 0 #000" }}
-            >
-              Find
-            </button>
-          </div>
-        </form>
-      </div>
+      </main>
     </div>
   );
 }

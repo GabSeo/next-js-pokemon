@@ -5,13 +5,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { CardView } from "@/lib/card-view";
 import {
-  ALL_INDEXES,
   cardRect,
   cardRectInView,
   clipHitGame,
   clipHitId,
   matchCard,
   prepareMatcher,
+  type ClipIndexKey,
   type ClipProgress,
   type ClipSourcedHit,
 } from "@/lib/clip-client";
@@ -122,7 +122,14 @@ type Reading =
     }
   | { state: "found"; cards: CardView[]; tied: number; elapsed: number };
 
-export function LiveScanner({ onClose }: { onClose: () => void }) {
+export function LiveScanner({
+  indexes,
+  onClose,
+}: {
+  /** Which catalogues to search — the rail's filter, narrowed from all four. */
+  indexes: ClipIndexKey[];
+  onClose: () => void;
+}) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [reading, setReading] = useState<Reading>({ state: "starting" });
 
@@ -284,7 +291,7 @@ export function LiveScanner({ onClose }: { onClose: () => void }) {
       // reads as broken rather than as loading.
       setReading({ state: "loading" });
       try {
-        await prepareMatcher(ALL_INDEXES, (progress) => {
+        await prepareMatcher(indexes, (progress) => {
           if (!cancelled) setReading({ state: "loading", progress });
         });
       } catch {
@@ -345,7 +352,7 @@ export function LiveScanner({ onClose }: { onClose: () => void }) {
           const rect = cardRectInView(width, height, box.width, box.height, fillRef.current);
           // FIND THE CARD RATHER THAN ASK FOR IT. `rect` is still the fallback
           // for the frames the detector declines.
-          result = await matchCard(video, rect, ALL_INDEXES, { limit: 8, detect: true });
+          result = await matchCard(video, rect, indexes, { limit: 8, detect: true });
 
           // Paint the SAME rectangle into the on-screen thumbnail. Same source,
           // same numbers — if the preview shows a label or a table, that is
@@ -471,7 +478,7 @@ export function LiveScanner({ onClose }: { onClose: () => void }) {
       cancelled = true;
       stop();
     };
-  }, [stop, attempt]);
+  }, [stop, attempt, indexes]);
 
   const hint =
     reading.state !== "scanning"

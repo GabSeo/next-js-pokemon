@@ -311,3 +311,45 @@
 @media (prefers-reduced-motion: reduce) {
   .set-card-enter { animation: none; }
 }
+
+/*
+ * Scan-page motion, ported verbatim from the "Scan a Card" mockup
+ * (Claudy/HTML prototypes/Scan a Card.dc.html) rather than re-derived.
+ *
+ * TWO KEYFRAMES, AND BOTH CARRY MEANING rather than decorate. `livepulse`
+ * marks a thing that is genuinely live — the on-device badge, the reading
+ * indicator — so a still dot and a beating one say different things.
+ * `sweep` is the scan line over a captured photo: it exists because a match
+ * that takes 400 ms with no feedback reads as a page that did nothing.
+ *
+ * Declared here rather than as motion/react animations because both loop
+ * forever on elements that never unmount, which is the one case where CSS is
+ * both lighter and simpler than a JS animation.
+ */
+@keyframes livepulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@keyframes sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* A looping pulse is exactly what this setting exists to stop. */
+  [class*="animate-"],
+  [style*="livepulse"],
+  [style*="sweep"] {
+    animation: none !important;
+  }
+}

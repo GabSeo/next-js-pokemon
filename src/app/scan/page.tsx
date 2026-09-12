@@ -33,26 +33,47 @@ export const metadata: Metadata = {
 
 export default function ScanPage() {
   return (
-    <main className="mx-auto w-full max-w-[1180px] px-6 py-6 pb-24">
-      <div className="mb-2">
-        <h1 className="text-[32px] font-black tracking-[-0.8px]">Scan a card</h1>
-        <p className="mt-1 text-sm text-muted-text">
-          Photograph the card and we recognise its artwork on your device. Nothing is uploaded unless the
-          picture is too unclear to place.
-        </p>
-      </div>
-
-      <p className="mt-4 rounded-lg border-2 border-black bg-muted-surface p-3 text-xs">
-        Pick the game and the language first — nothing in a photograph says which catalogue to search. Then fill
-        the frame with the card and keep it flat to the camera; the whole picture is what gets matched. When the
-        artwork cannot be placed, we fall back to reading the printed code in the <b>bottom corner</b>{" "}
-        (<b>ST21-014</b> on a One Piece card, <b>190/182</b> on a Pokémon one), and only then is the photo sent
-        anywhere. You can always{" "}
-        <Link href="/lookup" className="font-black underline underline-offset-4">
-          type the code instead
-        </Link>
-        .
-      </p>
+    <main className="mx-auto w-full max-w-[1180px] px-6 py-7 pb-24">
+      {/* THE INSTRUCTIONS MOVED INTO THE STEPS. A paragraph explaining the
+          whole pipeline stood here — which catalogue to pick, how to hold the
+          card, what happens when the artwork fails, where the printed code is —
+          and every sentence of it now sits inside the numbered panel it
+          describes, where it is read at the moment it applies rather than
+          before any of it is relevant. */}
+      <header className="flex flex-wrap items-end justify-between gap-5">
+        <div className="flex max-w-[620px] flex-col gap-2">
+          <span className="text-[11px] font-black uppercase tracking-[1px] text-muted-text">
+            Tools · Identify
+          </span>
+          <h1 className="text-[40px] font-black leading-[42px] tracking-[-1.1px]">Scan a card</h1>
+          <p className="text-[15px] leading-[22px] text-muted-text">
+            Artwork is matched on your device. The photo only leaves your phone if that fails and we fall back
+            to reading the printed code — or you can{" "}
+            <Link href="/lookup" className="font-black underline underline-offset-4">
+              type it instead
+            </Link>
+            .
+          </p>
+        </div>
+        {/* THE PRIVACY CLAIM AS A BADGE, because it is the single most
+            surprising thing about this feature and it was buried mid-paragraph.
+            The pulsing dot is the only decoration on it and it is earned: the
+            matcher genuinely is running locally. */}
+        <span
+          className="inline-flex items-center gap-2 rounded-full border-2 border-foreground px-3.5 py-2 text-[11px] font-black tracking-[0.6px]"
+          style={{
+            background: "color-mix(in srgb, var(--success-green) 14%, white)",
+            color: "#0a5c2c",
+            boxShadow: "3px 3px 0 0 #000",
+          }}
+        >
+          <span
+            className="h-2 w-2 rounded-full"
+            style={{ background: "var(--success-green)", animation: "livepulse 2s ease-in-out infinite" }}
+          />
+          ON-DEVICE · NOTHING UPLOADED
+        </span>
+      </header>
 
       <ScanClient />
     </main>
