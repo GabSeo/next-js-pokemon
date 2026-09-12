@@ -801,7 +801,7 @@ export function ScanClient() {
                         on ONE card: explaining each of six tied candidates is
                         six bills for a question the reader has not asked yet,
                         and the thing they need at that point is to pick one. */}
-                    {status.cards.length === 1 ? <CardExplainer tcg={card.tcg} code={card.code} /> : null}
+                    {status.cards.length === 1 ? <CardExplainer tcg={card.tcg} code={card.code} language={language} /> : null}
 
                     {/* THE MATCH, ALONE. The grid used to show every printing
                         ranked best-first, which asked the reader to re-do the

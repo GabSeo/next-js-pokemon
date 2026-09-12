@@ -114,9 +114,45 @@ function asTrackedCard(card: CardView): Card {
   } as unknown as Card;
 }
 
-export async function gradedFactsFor(card: CardView): Promise<GradedFacts | undefined> {
+/**
+ * The eBay market that belongs to the card in the reader's hand.
+ *
+ * ONE LANGUAGE, NEVER BOTH, and the reason is the same one that governs every
+ * other price on this screen. A Japanese print and its English release are
+ * different objects trading in different markets; showing both columns beside a
+ * card that is only one of them offers a figure that does not describe anything
+ * the reader owns, and the person holding it has no way to know which column is
+ * theirs.
+ *
+ * It was built with both columns because the tracked-card panel shows both —
+ * which is right THERE, where the page is a market overview and the comparison
+ * is the point. Here the card is already identified and the comparison is noise.
+ *
+ * THE `ja~` PREFIX IS THE AUTHORITY for Pokemon, because lib/card-view.ts puts
+ * it there when it resolves a Japanese card and it survives every hop. One Piece
+ * carries no such marker, so the caller's own choice decides — the rail's EN/JP
+ * toggle, which is the only thing that knows.
+ */
+function marketLanguage(card: CardView, chosen?: "en" | "ja"): string {
+  if (card.code.startsWith("ja~")) return "Japanese";
+  if (card.tcg === "onepiece" && chosen === "ja") return "Japanese";
+  return "English";
+}
+
+export async function gradedFactsFor(
+  card: CardView,
+  /** The rail's language toggle. Only consulted where the code cannot say. */
+  chosen?: "en" | "ja"
+): Promise<GradedFacts | undefined> {
   const data = await getGradedMarketData(asTrackedCard(card)).catch(() => undefined);
   if (!data) return undefined;
+
+  // NOTE ON COST: graded-market.ts queries both languages internally, so this
+  // filters rather than saves the calls. Narrowing the query itself would mean
+  // changing a module the tracked-card pages depend on, and halving eight eBay
+  // searches is not worth that risk today — it is written here so the next
+  // person sees the saving is available rather than absent.
+  const wanted = marketLanguage(card, chosen);
 
   const languages: string[] = [];
   const rows: GradedRow[] = [];
@@ -124,6 +160,7 @@ export async function gradedFactsFor(card: CardView): Promise<GradedFacts | unde
   for (const condition of data.conditions) {
     const cells: Record<string, GradedCell> = {};
     for (const entry of condition.languages) {
+      if (entry.language !== wanted) continue;
       // ONLY REAL LISTINGS. graded-market.ts falls back to illustrative preview
       // figures when eBay returns nothing, which is right for a panel labelled
       // as a preview and wrong for anything a model will read or a table will
@@ -161,7 +198,7 @@ export async function gradedFactsFor(card: CardView): Promise<GradedFacts | unde
     rows,
     psa10Multiple,
     note:
-      "Median asking price of live eBay listings — what sellers want today, not what anything sold for. " +
-      "The count is how many listings each median rests on.",
+      `Median asking price of live eBay listings for the ${wanted} print — what sellers want today, not what ` +
+      "anything sold for. The count is how many listings each median rests on.",
   };
 }

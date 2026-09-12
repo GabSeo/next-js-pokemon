@@ -31,9 +31,9 @@ import { getCardView } from "@/lib/card-view";
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
-  let payload: { code?: unknown; tcg?: unknown };
+  let payload: { code?: unknown; tcg?: unknown; language?: unknown };
   try {
-    payload = (await request.json()) as { code?: unknown; tcg?: unknown };
+    payload = (await request.json()) as { code?: unknown; tcg?: unknown; language?: unknown };
   } catch {
     return Response.json({ error: "Expected JSON." }, { status: 400 });
   }
@@ -41,6 +41,10 @@ export async function POST(request: Request) {
   const code = typeof payload.code === "string" ? payload.code : "";
   const tcg: "pokemon" | "onepiece" = payload.tcg === "onepiece" ? "onepiece" : "pokemon";
   if (!code) return Response.json({ error: "Expected a card code." }, { status: 400 });
+  // ONLY CONSULTED WHERE THE CODE CANNOT SAY. A Japanese Pokemon card carries
+  // `ja~` and decides for itself; One Piece carries no marker, so the rail's
+  // toggle is the only thing that knows which market the reader is in.
+  const language: "en" | "ja" = payload.language === "ja" ? "ja" : "en";
 
   // THE CATALOGUE DECIDES WHETHER THIS CARD EXISTS, before anything is spent.
   // A code that resolves to nothing is a 404 rather than a model asked to
@@ -53,7 +57,7 @@ export async function POST(request: Request) {
   // the card code, so a repeat costs nothing. It resolves to undefined on a
   // missing credential, an open circuit breaker, or a card nobody is selling —
   // all of which leave the field absent rather than failing the request.
-  const graded = await gradedFactsFor(card).catch(() => undefined);
+  const graded = await gradedFactsFor(card, language).catch(() => undefined);
   const facts = factsFor(card, graded);
 
   try {

@@ -295,7 +295,16 @@ function Rendered({ text }: { text: string }) {
   );
 }
 
-export function CardExplainer({ tcg, code }: { tcg: "pokemon" | "onepiece"; code: string }) {
+export function CardExplainer({
+  tcg,
+  code,
+  language,
+}: {
+  tcg: "pokemon" | "onepiece";
+  code: string;
+  /** Which market's eBay listings belong to this card — see marketLanguage. */
+  language: "en" | "ja";
+}) {
   const [state, setState] = useState<State>({ phase: "idle" });
 
   async function ask() {
@@ -304,7 +313,7 @@ export function CardExplainer({ tcg, code }: { tcg: "pokemon" | "onepiece"; code
       const response = await fetch("/api/scan/explain", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tcg, code }),
+        body: JSON.stringify({ tcg, code, language }),
       });
       const payload = (await response.json().catch(() => ({}))) as {
         text?: string;
