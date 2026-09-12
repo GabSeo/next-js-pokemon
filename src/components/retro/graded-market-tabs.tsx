@@ -5,6 +5,7 @@ import { FloatingPreviewChip } from "@/components/retro/floating-preview-chip";
 import { useSelectedMarket, type MarketTab } from "@/components/retro/market-tab";
 import { IllustrativeTag } from "@/components/retro/illustrative-tag";
 import { MarketDataBadge } from "@/components/retro/market-data-badge";
+import { ListingRow, type Listing } from "@/components/retro/listing-row";
 import { VintedListingsSection } from "@/components/retro/vinted-listings-section";
 import type { EbayCondition, EbayLanguage } from "@/lib/ebay-browse";
 import { EBAY_LOGO_URL } from "@/lib/marketplace-logos";
@@ -27,7 +28,19 @@ export type TypeSummary = {
   /** eBay answered and had nothing for this tier — distinct from `!isReal`, which means we could not ask. Suppresses the median figure and the see-all link, both meaningless at zero. */
   noListings?: boolean;
   seeAllHref: string;
-  rows: React.ReactNode;
+  /**
+   * The listings themselves, as DATA rather than as rendered rows.
+   *
+   * It was `React.ReactNode`, built by whichever server component owned the
+   * panel — which quietly made this whole component server-only: a node cannot
+   * cross a JSON boundary, so the scan's client panel could not use it and grew
+   * its own smaller table instead. Two screens showing the same market in two
+   * designs, which is the thing that was asked to stop.
+   *
+   * Plain rows serialise, so one component now serves both a server page and a
+   * client fetch, and the rendering lives in exactly one place.
+   */
+  rows: Listing[];
 };
 
 export type LanguageEntry = {
@@ -218,11 +231,22 @@ export function GradedMarketTabs({
 }: {
   /** English/Japanese only — see lib/graded-market.ts's GRADED_MARKET_LANGUAGES. */
   entries: ConditionEntry[];
-  vinted: VintedSummary;
+  /**
+   * The Vinted feed, when there is one.
+   *
+   * OPTIONAL, because the scan has no Vinted scrape to show and a required prop
+   * would have forced it to invent an empty one. Absent, the France tab is not
+   * offered at all — which is the honest version of "we have nothing for that
+   * market here" rather than an empty panel behind a tab.
+   */
+  vinted?: VintedSummary;
 }) {
   // Every condition entry carries the same set of languages (see
   // lib/graded-market.ts), so entries[0]'s is representative of all of them.
-  const marketTabs: MarketTab[] = [...entries[0].languages.map((l) => l.language), "France"];
+  const marketTabs: MarketTab[] = [
+    ...entries[0].languages.map((l) => l.language),
+    ...(vinted ? (["France"] as const) : []),
+  ];
   // Derived, not held: the toggle owns the selection, and the Grading Center
   // resolves it through the same hook so the two panels can never disagree
   // about which market the reader picked.
@@ -345,7 +369,22 @@ export function GradedMarketTabs({
               entry.languages.map((l) =>
                 TYPES.map((t) => (
                   <div key={`${entry.id}-${l.language}-${t}`} hidden={!(conditionId === entry.id && market === l.language && type === t)}>
-                    {l[t].rows}
+                    {/* THE EMPTY STATE LIVES HERE NOW, with the flag that
+                        describes it. `noListings` is a real answer — eBay was
+                        reached and had nothing in this tier today — and it is
+                        distinct from `!isReal`, which means we could not ask. */}
+                    {l[t].noListings ? (
+                      <div className="flex min-h-[140px] flex-col items-center justify-center gap-1 text-center">
+                        <span className="text-sm font-black tracking-[-0.2px]">No active listings today</span>
+                        <span className="text-xs font-bold text-muted-text">
+                          Nothing is currently for sale in this tier. Check back in 24h :)
+                        </span>
+                      </div>
+                    ) : (
+                      l[t].rows.map((listing, at) => (
+                        <ListingRow key={`${listing.url ?? ""}-${at}`} {...listing} />
+                      ))
+                    )}
                   </div>
                 ))
               )
@@ -386,9 +425,11 @@ export function GradedMarketTabs({
 
       </div>
 
-      <div hidden={market !== "France"}>
-        <VintedListingsSection vinted={vinted} />
-      </div>
+      {vinted ? (
+        <div hidden={market !== "France"}>
+          <VintedListingsSection vinted={vinted} />
+        </div>
+      ) : null}
     </div>
   );
 }

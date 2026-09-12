@@ -1,4 +1,3 @@
-import { ListingRow } from "@/components/retro/listing-row";
 import { MarketVitals } from "@/components/retro/market-vitals";
 import { GradedMarketTabs, type ConditionEntry, type TypeSummary, type VintedSummary } from "@/components/retro/graded-market-tabs";
 import { franchiseLabel } from "@/lib/cards";
@@ -26,22 +25,19 @@ function toTypeSummary(data: GradedMarketTypeData): TypeSummary {
     noListings: data.noListings,
     seeAllHref: data.seeAllUrl,
     // `noListings` is a real answer, not a failure — eBay was reached and had
-    // nothing for this tier today. Saying so beats an empty table, and beats
-    // the preview rows that used to fill this space, which told the reader
-    // something false about a market that simply has no sellers right now.
-    // The distinction from `!isReal` matters: that one means we could not ask.
-    rows: data.noListings ? (
-      <div className="flex min-h-[140px] flex-col items-center justify-center gap-1 text-center">
-        <span className="text-sm font-black tracking-[-0.2px]">No active listings today</span>
-        <span className="text-xs font-bold text-muted-text">Nothing is currently for sale in this tier. Check back in 24h :)</span>
-      </div>
-    ) : (
-      <div>
-        {data.rows.map((row, i) => (
-          <ListingRow key={row.url ?? i} date={row.date} description={row.description} price={row.price} currency={row.currency} url={row.url} />
-        ))}
-      </div>
-    ),
+    // nothing for this tier today. The empty state that used to be built here
+    // now lives in graded-market-tabs.tsx, which already knows the flag: rows
+    // are DATA now so one component can serve a server page and a client fetch,
+    // and a JSX empty state would have made that impossible again.
+    rows: data.noListings
+      ? []
+      : data.rows.map((row) => ({
+          date: row.date,
+          description: row.description,
+          price: row.price,
+          currency: row.currency,
+          url: row.url,
+        })),
   };
 }
 

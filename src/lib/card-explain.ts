@@ -349,19 +349,19 @@ export function shapesFor(facts: CardFacts): CardShapes {
      * cannot speak. 22 PSA 10s against 342 PSA 9s is a sentence about how hard
      * this card is to grade well, and it is sitting in plain sight unread.
      */
-    const raw = facts.graded.rows.find((row) => row.condition === "Raw");
-    const rawCell = raw ? Object.values(raw.cells)[0] : undefined;
-    const rawPrice = rawCell?.median;
+    // READ OFF THE SAME ENTRIES THE PANEL RENDERS, so the model and the table
+    // it sits under can never describe different numbers.
+    const cellOf = (id: string) => facts.graded!.entries.find((e) => e.id === id)?.languages[0]?.active;
+    const rawPrice = cellOf("Raw")?.medianPrice;
 
-    const tiers = facts.graded.rows
-      .map((row) => {
-        const cell = Object.values(row.cells)[0];
-        if (cell?.median === undefined) return undefined;
+    const tiers = facts.graded.entries
+      .map((entry) => {
+        const cell = entry.languages[0]?.active;
+        if (!cell || cell.noListings || !(cell.medianPrice > 0)) return undefined;
         return {
-          grade: row.condition,
-          listings: cell.count ?? 0,
-          multipleOfRaw:
-            rawPrice && rawPrice > 0 ? Number((cell.median / rawPrice).toFixed(1)) : undefined,
+          grade: entry.id,
+          listings: cell.count,
+          multipleOfRaw: rawPrice && rawPrice > 0 ? Number((cell.medianPrice / rawPrice).toFixed(1)) : undefined,
         };
       })
       .filter((tier): tier is NonNullable<typeof tier> => tier !== undefined);
@@ -378,8 +378,8 @@ export function shapesFor(facts: CardFacts): CardShapes {
         `there are ${Math.round(next.listings / top.listings)}x as many PSA 9 listings as PSA 10 listings`
       );
     }
-    // TWO GRADES PRICED ALIKE. It means the market pays for one thing only, and
-    // it changes what a grade is worth chasing.
+    // TWO GRADES PRICED ALIKE. The market pays for one thing only, and that
+    // changes what a grade is worth chasing.
     for (let i = 0; i < graded.length - 1; i++) {
       const a = graded[i];
       const b = graded[i + 1];
@@ -390,6 +390,15 @@ export function shapesFor(facts: CardFacts): CardShapes {
     // A FIGURE RESTING ON A HANDFUL OF LISTINGS is not a market price.
     for (const tier of tiers.filter((entry) => entry.listings > 0 && entry.listings < 4)) {
       observations.push(`the ${tier.grade} figure rests on only ${tier.listings} listings`);
+    }
+    // ASKS AGAINST SALES — the one comparison a table of asks cannot make, and
+    // the reason `sold` is now carried at all.
+    const sold = cellOf("PSA 10");
+    const soldTen = facts.graded.entries.find((e) => e.id === "PSA 10")?.languages[0]?.sold;
+    if (sold && soldTen && !soldTen.noListings && soldTen.medianPrice > 0 && sold.medianPrice > 0) {
+      const ratio = sold.medianPrice / soldTen.medianPrice;
+      if (ratio >= 1.15) observations.push(`PSA 10 sellers ask about ${ratio.toFixed(1)}x what PSA 10 copies have sold for`);
+      else if (ratio <= 0.87) observations.push(`PSA 10 asks sit below what PSA 10 copies have sold for`);
     }
 
     if (tiers.length > 0) shapes.market = { tiers, observations };

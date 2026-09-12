@@ -130,10 +130,24 @@ const ALLOWED = new Set([
  */
 const IMPORT_ONLY = new Set(["okf/about/route.ts"]);
 
-/** Every `@/…` import in a file. */
+/**
+ * Every `@/…` import in a file that SURVIVES COMPILATION.
+ *
+ * `import type { X } from "@/lib/y"` is erased by TypeScript: the module is
+ * never loaded, never runs, and cannot spend a quota. Counting it as a path to
+ * a metered upstream is a false positive, and it produced one the moment a
+ * shared UI component took an `EbayCondition` type — the scan page was reported
+ * as reaching lib/ebay-browse when the only thing it reaches is a string union
+ * that no longer exists at runtime.
+ *
+ * A MIXED `import { value, type X }` IS STILL COUNTED, correctly: the value
+ * import keeps the module, so the module still runs.
+ */
 function importsOf(file: string): string[] {
   const source = readFileSync(file, "utf8");
-  return [...source.matchAll(/from\s+"(@\/[^"]+)"/g)].map((m) => m[1]);
+  return [...source.matchAll(/^\s*import\s+(type\s+)?[^;]*?from\s+"(@\/[^"]+)"/gm)]
+    .filter((match) => !match[1])
+    .map((match) => match[2]);
 }
 
 function resolveAlias(spec: string): string | undefined {

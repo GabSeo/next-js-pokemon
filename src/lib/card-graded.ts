@@ -1,5 +1,7 @@
 import { getGradedMarketData } from "@/lib/graded-market";
-import type { Listing } from "@/components/retro/listing-row";
+import { formatPrice } from "@/lib/format-price";
+import type { ConditionEntry, TypeSummary } from "@/components/retro/graded-market-tabs";
+import type { GradedMarketTypeData } from "@/lib/graded-market";
 import type { CardView } from "@/lib/card-view";
 import type { Card } from "@/lib/types";
 
@@ -38,73 +40,29 @@ import type { Card } from "@/lib/types";
  * handles as an absence like any other.
  */
 
-export type GradedCell = {
-  /** Median asking price of live listings. Absent when eBay returned none that were real. */
-  median?: number;
-  currency?: string;
-  /**
-   * How many live listings the median rests on.
-   *
-   * SHOWN, NOT HIDDEN. A median of two asks is not a market, and a reader given
-   * a bare figure has no way to tell that from a median of sixty. It is the
-   * difference between a price and an anecdote.
-   */
-  count?: number;
-  /**
-   * The actual listings behind the median, in eBay's own order.
-   *
-   * THE MEDIAN ALONE WAS THE WRONG SUMMARY, and it was mine. A reader who sees
-   * "PSA 10 — USD 974.98" cannot act on it: the number describes a market, and
-   * what they want is the one somebody is selling at the bottom of it. The
-   * tracked-card pages have shown these rows with working links since they were
-   * built, which is why "the eBay functioning must be the exact same" is the
-   * right instruction — the data was always here and only this screen was
-   * discarding it.
-   *
-   * NEWEST FIRST, WHICH IS HOW THEY ARRIVE. lib/ebay-browse.ts queries with
-   * `sort=newlyListed`, so this order is a fact about the market rather than a
-   * choice made here — and keeping it means one fetch answers both questions a
-   * reader has. Cheapest is a sort of this list; newest IS this list.
-   */
-  listings?: Listing[];
-  /** eBay's own search for this tier, for when four rows are not enough. */
-  seeAllUrl?: string;
-};
-
 /**
- * How many listings each tier shows before the see-all link takes over.
+ * The graded market in the shape the tracked-card panel already renders.
  *
- * Eight, because the same rows serve two views: the four cheapest and the four
- * most recently listed, which are rarely the same four. Beyond that the panel
- * becomes a page of eBay, and eBay has one of those.
+ * NOT A SECOND DESIGN. This screen grew its own little table — a median per
+ * tier and nothing to click — while the tracked-card pages had tabs, an
+ * active-versus-sold pair, the real listings with working links, and a
+ * see-all button. Two designs for one market, and asked to stop being two:
+ * "make sure the eBay functioning is the exact same as in the tracked cards,
+ * since all our tests are positive there."
+ *
+ * So this builds `ConditionEntry[]` — components/retro/graded-market-tabs.tsx's
+ * own input — and the scan renders that component. The only change the
+ * component needed was for its rows to be DATA rather than rendered JSX, which
+ * is what lets one panel serve a server page and a client fetch.
+ *
+ * ACTIVE AND SOLD, BOTH. The earlier version kept only the live asks, so the
+ * one comparison a collector makes first — what people want against what
+ * anything actually went for — was the thing missing.
  */
-const LISTINGS_PER_TIER = 8;
-
-export type GradedRow = {
-  /** "PSA 10", "PSA 9", "PSA 8", "Raw". */
-  condition: string;
-  /** Keyed by language — "English", "Japanese". */
-  cells: Record<string, GradedCell>;
-};
-
 export type GradedFacts = {
-  /** The languages that produced at least one reading, in column order. */
-  languages: string[];
-  /** One row per condition tier, in the order graded-market.ts queries them. */
-  rows: GradedRow[];
-  /**
-   * Raw to PSA 10, as a multiple, per language.
-   *
-   * A MULTIPLE RATHER THAN A PERCENTAGE, because the reader is comparing two
-   * prices they can both see in the table. "4.2x" is read instantly; "320%" has
-   * to be unpacked and half of readers unpack it wrong.
-   *
-   * It is NOT a recommendation and the prompt forbids presenting it as one:
-   * grading costs money and takes months, and neither is in this figure.
-   */
+  entries: ConditionEntry[];
+  /** Raw-to-PSA-10 multiple per language, for the AI's shapes. Not rendered. */
   psa10Multiple: Record<string, number>;
-  /** Live eBay asking prices, not sales. Said plainly because the two are often confused. */
-  note: string;
 };
 
 /**
@@ -168,6 +126,37 @@ function marketLanguage(card: CardView, chosen?: "en" | "ja"): string {
   return "English";
 }
 
+/**
+ * One tier's figures, exactly as graded-market-panel.tsx maps them.
+ *
+ * KEPT IN STEP BY BEING THE SAME MAPPING, not by intention. If this drifts from
+ * the panel's `toTypeSummary` the two screens quote different numbers for one
+ * market, which is the failure this whole change exists to end.
+ */
+function toTypeSummary(data: GradedMarketTypeData): TypeSummary {
+  return {
+    // An empty tier has no median, and "USD 0" reads as a real price of zero
+    // rather than an absence.
+    avgLabel: data.noListings ? "—" : formatPrice(data.medianPrice, data.currency),
+    medianPrice: data.medianPrice,
+    currency: data.currency,
+    count: data.count,
+    rowCount: data.rows.length,
+    isReal: data.isReal,
+    noListings: data.noListings,
+    seeAllHref: data.seeAllUrl,
+    rows: data.noListings
+      ? []
+      : data.rows.map((row) => ({
+          date: row.date,
+          description: row.description,
+          price: row.price,
+          currency: row.currency,
+          url: row.url,
+        })),
+  };
+}
+
 export async function gradedFactsFor(
   card: CardView,
   /** The rail's language toggle. Only consulted where the code cannot say. */
@@ -176,72 +165,37 @@ export async function gradedFactsFor(
   const data = await getGradedMarketData(asTrackedCard(card)).catch(() => undefined);
   if (!data) return undefined;
 
-  // NOTE ON COST: graded-market.ts queries both languages internally, so this
-  // filters rather than saves the calls. Narrowing the query itself would mean
-  // changing a module the tracked-card pages depend on, and halving eight eBay
-  // searches is not worth that risk today — it is written here so the next
-  // person sees the saving is available rather than absent.
   const wanted = marketLanguage(card, chosen);
 
-  const languages: string[] = [];
-  const rows: GradedRow[] = [];
-
+  const entries: ConditionEntry[] = [];
   for (const condition of data.conditions) {
-    const cells: Record<string, GradedCell> = {};
-    for (const entry of condition.languages) {
-      if (entry.language !== wanted) continue;
-      // ONLY REAL LISTINGS. graded-market.ts falls back to illustrative preview
-      // figures when eBay returns nothing, which is right for a panel labelled
-      // as a preview and wrong for anything a model will read or a table will
-      // present as a market reading.
-      const active = entry.active;
-      if (!active?.isReal || !(active.medianPrice > 0)) continue;
-      cells[entry.language] = {
-        median: active.medianPrice,
-        currency: active.currency,
-        count: active.count,
-        // UNSORTED ON PURPOSE — see the field's own note. These arrive newest
-        // first because that is what was asked of eBay, and the client derives
-        // the cheapest view from the same rows rather than costing a second
-        // request to ask the same server the same question differently.
-        listings: active.rows
-          .slice(0, LISTINGS_PER_TIER)
-          .map((row) => ({
-            date: row.date,
-            description: row.description,
-            price: row.price,
-            currency: row.currency,
-            url: row.url,
-          })),
-        seeAllUrl: active.seeAllUrl,
-      };
-      if (!languages.includes(entry.language)) languages.push(entry.language);
-    }
-    // A tier nobody is selling in either language is left out entirely rather
-    // than shown as an empty row — the table is evidence, and a row of dashes
-    // is not evidence of anything.
-    if (Object.keys(cells).length > 0) rows.push({ condition: condition.condition, cells });
+    const languages = condition.languages
+      .filter((entry) => entry.language === wanted)
+      .map((entry) => ({
+        language: entry.language,
+        active: toTypeSummary(entry.active),
+        sold: toTypeSummary(entry.sold),
+      }));
+    // A tier with no reading in the reader's own market is left out rather than
+    // shown as a tab that opens on nothing.
+    if (languages.length > 0) entries.push({ id: condition.condition, label: condition.condition, languages });
   }
 
-  if (rows.length === 0) return undefined;
+  // ONLY REAL READINGS REACH THE PANEL. graded-market.ts falls back to
+  // illustrative preview figures when eBay returns nothing, which is right for
+  // a panel labelled as a preview and wrong here: this one sits under an answer
+  // and beside an AI that will read it.
+  const real = entries.filter((entry) => entry.languages.some((l) => l.active.isReal || l.sold.isReal));
+  if (real.length === 0) return undefined;
 
-  const psa10 = rows.find((row) => row.condition === "PSA 10");
-  const raw = rows.find((row) => row.condition === "Raw");
+  const psa10 = real.find((entry) => entry.id === "PSA 10");
+  const raw = real.find((entry) => entry.id === "Raw");
   const psa10Multiple: Record<string, number> = {};
-  for (const language of languages) {
-    const ten = psa10?.cells[language]?.median;
-    const bare = raw?.cells[language]?.median;
-    if (ten !== undefined && bare !== undefined && bare > 0) {
-      psa10Multiple[language] = Number((ten / bare).toFixed(1));
-    }
+  for (const language of real[0].languages.map((l) => l.language)) {
+    const ten = psa10?.languages.find((l) => l.language === language)?.active.medianPrice;
+    const bare = raw?.languages.find((l) => l.language === language)?.active.medianPrice;
+    if (ten && bare && bare > 0) psa10Multiple[language] = Number((ten / bare).toFixed(1));
   }
 
-  return {
-    languages,
-    rows,
-    psa10Multiple,
-    note:
-      `Median asking price of live eBay listings for the ${wanted} print — what sellers want today, not what ` +
-      "anything sold for. The count is how many listings each median rests on.",
-  };
+  return { entries: real, psa10Multiple };
 }

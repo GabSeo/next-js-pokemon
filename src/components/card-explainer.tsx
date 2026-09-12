@@ -2,7 +2,7 @@
 
 import { motion } from "motion/react";
 
-import { ListingRow, type Listing } from "@/components/retro/listing-row";
+import { GradedMarketTabs, type ConditionEntry } from "@/components/retro/graded-market-tabs";
 import { useState } from "react";
 
 /**
@@ -47,18 +47,15 @@ type Facts = {
     standing?: { rank: number; outOf: number; setLowEur: number; setMedianEur: number; setHighEur: number };
     history?: { date: string; eur?: number }[];
   };
-  graded?: {
-    languages: string[];
-    rows: {
-      condition: string;
-      cells: Record<
-        string,
-        { median?: number; currency?: string; count?: number; listings?: Listing[]; seeAllUrl?: string }
-      >;
-    }[];
-    psa10Multiple: Record<string, number>;
-    note: string;
-  };
+  /**
+   * The graded market, in the tracked-card panel's own shape.
+   *
+   * NOT A SUMMARY OF IT. This panel used to carry a reduced table — a median
+   * per tier and nothing to click — beside pages that showed tabs, asks against
+   * sales, the real listings with working links and a see-all button. One
+   * market, two designs. It now renders the same component those pages do.
+   */
+  graded?: { entries: ConditionEntry[]; psa10Multiple: Record<string, number> };
 };
 
 /**
@@ -137,168 +134,6 @@ function Tag({ source, note }: { source: Source; note?: string }) {
         {tone.label}
       </span>
       {note ? <span className="text-[11px] font-bold text-muted-text">{note}</span> : null}
-    </div>
-  );
-}
-
-/**
- * One condition tier's listings, with the two orders a reader actually wants.
- *
- * CHEAPEST AND NEWEST ARE DIFFERENT QUESTIONS. The first is "what does the
- * bottom of this market look like"; the second is "what appeared since I last
- * looked". A single list cannot be both, and picking one silently answers the
- * question the reader did not ask.
- *
- * NEWEST IS THE DEFAULT because it is the order eBay was asked for and the
- * order the see-all link opens in, so the panel and the page behind it agree.
- */
-function TierListings({
-  label,
-  newest,
-  cheapest,
-  count,
-  seeAllUrl,
-}: {
-  label: string;
-  newest: Listing[];
-  cheapest: Listing[];
-  count?: number;
-  seeAllUrl?: string;
-}) {
-  const [order, setOrder] = useState<"newest" | "cheapest">("newest");
-  const shown = order === "newest" ? newest : cheapest;
-
-  return (
-    <details className="rounded border border-black/15 px-2 py-1.5">
-      <summary className="cursor-pointer list-none text-[10px] font-black uppercase tracking-wide text-muted-text">
-        {label} — {count ? `${count} on sale now` : "on sale now"}
-      </summary>
-
-      <div className="mt-1.5 flex gap-1">
-        {(["newest", "cheapest"] as const).map((which) => (
-          <button
-            key={which}
-            type="button"
-            onClick={() => setOrder(which)}
-            aria-pressed={order === which}
-            className="rounded border-2 border-foreground px-2 py-1 text-[10px] font-black uppercase tracking-wide"
-            style={
-              order === which
-                ? { background: "var(--nav-dark)", color: "#ffffff" }
-                : { background: "transparent", color: "var(--foreground)" }
-            }
-          >
-            {which === "newest" ? "Just listed" : "Cheapest"}
-          </button>
-        ))}
-      </div>
-
-      <div className="mt-1">
-        {shown.map((listing, index) => (
-          <ListingRow key={`${listing.url ?? ""}-${index}`} {...listing} />
-        ))}
-      </div>
-
-      {seeAllUrl ? (
-        <a
-          href={seeAllUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-1 inline-block text-[11px] font-black underline underline-offset-4"
-          style={{ color: "var(--pokemon-blue)" }}
-        >
-          {/* SAYS WHAT IT OPENS. The link carries eBay's `_sop=10` — their code
-              for "Time: newly listed" — so calling it "see all" and landing the
-              reader on a newest-first page was a small lie of omission. */}
-          See all {count ?? ""} on eBay, newest first ↗
-        </a>
-      ) : null}
-    </details>
-  );
-}
-
-function Graded({ graded }: { graded: NonNullable<Facts["graded"]> }) {
-  const money = (cell?: { median?: number; currency?: string }) =>
-    cell?.median === undefined ? "—" : `${cell.currency ?? ""} ${cell.median.toFixed(2)}`.trim();
-
-  return (
-    <div className="mt-3 border-t border-black/15 pt-2.5">
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="text-[10px] font-black uppercase tracking-wide text-muted-text">Asking on eBay now</span>
-        {Object.entries(graded.psa10Multiple).map(([language, multiple]) => (
-          <span key={language} className="shrink-0 text-[10px] font-black">
-            PSA 10 = {multiple}x raw
-            {graded.languages.length > 1 ? ` (${language.slice(0, 2).toUpperCase()})` : ""}
-          </span>
-        ))}
-      </div>
-
-      <div className="mt-1.5 overflow-x-auto">
-        <table className="w-full text-[11px]">
-          <thead>
-            <tr className="text-left text-muted-text">
-              <th className="pb-1 pr-2 font-black uppercase tracking-wide">Grade</th>
-              {graded.languages.map((language) => (
-                <th key={language} className="pb-1 pl-2 text-right font-black uppercase tracking-wide">
-                  {language}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {graded.rows.map((row) => (
-              <tr key={row.condition} className="border-t border-muted-surface">
-                <td className="py-1 pr-2 font-black">{row.condition}</td>
-                {graded.languages.map((language) => {
-                  const cell = row.cells[language];
-                  return (
-                    <td key={language} className="py-1 pl-2 text-right tabular-nums">
-                      {money(cell)}
-                      {cell?.count ? (
-                        <span className="block text-[9px] font-normal text-muted-text">{cell.count} listed</span>
-                      ) : null}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* THE LISTINGS BEHIND EACH MEDIAN, BOTH WAYS ROUND.
-          A median is for judging and a list is for buying, and this panel only
-          ever offered the first. But "cheapest" and "just listed" are two
-          different questions — one is what the market bottoms out at, the other
-          is what turned up while you were not looking — and the same fetch
-          answers both: eBay is queried with sort=newlyListed, so the rows
-          arrive in one of the two orders already and the other is a sort of
-          them. No second request.
-
-          The rows render through the same ListingRow the tracked-card pages
-          use, so the two screens cannot drift apart again. */}
-      <div className="mt-2 grid gap-1">
-        {graded.rows.map((row) =>
-          graded.languages.map((language) => {
-            const cell = row.cells[language];
-            if (!cell?.listings?.length) return null;
-            const newest = cell.listings.slice(0, 4);
-            const cheapest = [...cell.listings].sort((a, b) => a.price - b.price).slice(0, 4);
-            return (
-              <TierListings
-                key={`${row.condition}-${language}`}
-                label={`${row.condition}${graded.languages.length > 1 ? ` · ${language}` : ""}`}
-                newest={newest}
-                cheapest={cheapest}
-                count={cell.count}
-                seeAllUrl={cell.seeAllUrl}
-              />
-            );
-          })
-        )}
-      </div>
-
-      <p className="mt-1.5 text-[10px] leading-relaxed text-muted-text">{graded.note}</p>
     </div>
   );
 }
@@ -555,7 +390,7 @@ export function CardExplainer({
         </section>
 
         {/* ---------- LIVE MARKET ---------- */}
-        {state.facts.graded ? (
+        {state.facts.graded?.entries.length ? (
           <section
             className="rounded-md border-2 p-3.5"
             style={{
@@ -564,7 +399,12 @@ export function CardExplainer({
             }}
           >
             <Tag source="market" note="eBay, fetched for this card just now" />
-            <Graded graded={state.facts.graded} />
+            <div className="mt-2">
+              {/* THE SAME PANEL THE TRACKED-CARD PAGES RENDER. No Vinted feed
+                  here — the scan has no scrape to show, and the component now
+                  omits that tab rather than opening it on nothing. */}
+              <GradedMarketTabs entries={state.facts.graded.entries} />
+            </div>
           </section>
         ) : null}
 
