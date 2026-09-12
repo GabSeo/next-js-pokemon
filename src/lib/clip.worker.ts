@@ -79,6 +79,22 @@ type MatchMessage = {
    */
   keys?: string[];
   /**
+   * Score ONLY these ids, in this order, instead of searching the catalogue.
+   *
+   * THE TIEBREAK, AND IT IS THE POINT OF HAVING BOTH SIGNALS. The printed
+   * number is unambiguous about WHICH NUMBER and ambiguous about which set: 154
+   * of 216 English sets share their printed total with another, so `93/108`
+   * names four real cards in four different sets. The artwork cannot read a
+   * number and is very good at telling four pictures apart.
+   *
+   * Neither alone answers. Together they do, and this is the half that was
+   * missing — a search returns the top of the whole index, which need not
+   * contain a candidate the NUMBER proposed, so the client could not look one
+   * up. Restricted to a handful of ids it is an exact comparison rather than a
+   * lookup that might miss.
+   */
+  only?: string[];
+  /**
    * Find the card in the frame rather than trusting the caller's crop.
    *
    * When set, the bitmap is a WHOLE FRAME and this side locates the card,
@@ -189,6 +205,32 @@ function searchAll(query: Float32Array, limit: number, keys?: string[]) {
   return { hits: top, margin: top.length > 1 ? top[0].score - top[1].score : 0 };
 }
 
+/**
+ * Score a named handful of cards, best first — no search.
+ *
+ * A MARGIN BETWEEN THE TWO BEST OF FOUR, not between the two best of 52,000.
+ * That is a different and much stronger number: the caller has already narrowed
+ * the field by other evidence, so what is left to decide is only which of these
+ * the picture looks like.
+ */
+function scoreOnly(query: Float32Array, only: string[], keys?: string[]) {
+  const wanted = new Set(only);
+  const hits: { id: string; score: number; key: string }[] = [];
+  for (const [key, index] of indexes) {
+    if (keys && !keys.includes(key)) continue;
+    for (let card = 0; card < index.ids.length; card++) {
+      const id = index.ids[card];
+      if (!wanted.has(id)) continue;
+      const offset = card * CLIP_DIM;
+      let total = 0;
+      for (let k = 0; k < CLIP_DIM; k++) total += index.vectors[offset + k] * query[k];
+      hits.push({ id, score: total / 127, key });
+    }
+  }
+  hits.sort((a, b) => b.score - a.score);
+  return { hits, margin: hits.length > 1 ? hits[0].score - hits[1].score : 0 };
+}
+
 /** The ingestion recipe: an RGBA square becomes the tensor the model wants. */
 function pixelsFrom(rgba: Uint8ClampedArray): Float32Array {
   const pixels = new Float32Array(3 * SIDE * SIDE);
@@ -281,7 +323,9 @@ self.onmessage = async (event: MessageEvent<Incoming>) => {
       const query = normalise(output.image_embeds.data);
       if (query.length !== CLIP_DIM) throw new Error(`model returned ${query.length} dimensions`);
 
-      const result = searchAll(query, message.limit, message.keys);
+      const result = message.only?.length
+        ? scoreOnly(query, message.only, message.keys)
+        : searchAll(query, message.limit, message.keys);
       self.postMessage({
         type: "match",
         id: message.id,

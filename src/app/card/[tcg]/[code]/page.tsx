@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AddToCollectionButton } from "@/components/add-to-collection-button";
 import { getCardView, type CardPrint, type CardView } from "@/lib/card-view";
+import { getCatalogCard } from "@/lib/catalog";
+import { printedNumber } from "@/lib/printed-number";
 import { absoluteUrl } from "@/lib/site";
 import { onePieceSrc, onePieceSrcSet } from "@/lib/one-piece-images";
 
@@ -63,6 +65,16 @@ export default async function CardPage({ params }: { params: Promise<{ tcg: stri
   const view = await getCardView(tcg, code);
   if (!view) notFound();
 
+  /**
+   * The number printed in the card's corner, for Pokemon.
+   *
+   * ONE PIECE ALREADY SHOWS IT: its code IS the printed number — `OP05-074` is
+   * what the card says. Pokemon is the game where our address and the card's
+   * own number are different strings.
+   */
+  const entry = view.tcg === "pokemon" ? getCatalogCard(view.code.replace(/^ja~/, "")) : undefined;
+  const printed = entry ? printedNumber(entry.card, entry.set, view.code.startsWith("ja~") ? "ja" : "en") : undefined;
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
@@ -86,8 +98,25 @@ export default async function CardPage({ params }: { params: Promise<{ tcg: stri
 
       <div className="mt-4">
         <h1 className="text-[32px] font-black tracking-[-0.8px]">{view.name}</h1>
-        <p className="mt-1 text-sm text-muted-text">
-          {view.code} · {view.prints.length} printing{view.prints.length === 1 ? "" : "s"}
+        {/* THE NUMBER AS PRINTED, FIRST. `swsh3.5-74` is our address for this
+            card; the corner of the card says `074/073`, and only one of those
+            is a fact about the object somebody is holding. For a secret rare
+            the printed form carries the whole story — a numerator above its
+            denominator is what "secret" means — and an internal id says
+            nothing. See lib/printed-number.ts for where the padding comes from,
+            since the catalogue does not carry it. */}
+        <p className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm text-muted-text">
+          {printed ? (
+            <span
+              className="rounded border-2 border-foreground px-1.5 py-0.5 text-[13px] font-black tabular-nums"
+              style={{ background: "var(--pokemon-yellow)", color: "var(--foreground)" }}
+            >
+              {printed}
+            </span>
+          ) : null}
+          <span>
+            {view.code} · {view.prints.length} printing{view.prints.length === 1 ? "" : "s"}
+          </span>
         </p>
       </div>
 

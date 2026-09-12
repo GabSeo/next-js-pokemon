@@ -40,6 +40,7 @@ import sharp from "sharp";
 
 import { detectCard, rectify } from "../src/lib/card-detect";
 import { getCatalogCard } from "../src/lib/catalog";
+import { lookupCards } from "../src/lib/card-lookup";
 
 const DIM = 512;
 const SIDE = 256;
@@ -142,6 +143,43 @@ if (files.length === 0) {
 console.log(`\n${ids.length.toLocaleString("en-US")} cards in the "${indexKey}" index · ${files.length} photograph(s)\n`);
 
 const FILLS = [0.95, 0.82, 0.65];
+/**
+ * The card a filename names — an id, or the number PRINTED on the card.
+ *
+ * TWO NAMING SCHEMES, BECAUSE PEOPLE USE THE SECOND ONE. The lab was written to
+ * read `swsh12-150.jpg`, our internal address, and the folder of real
+ * photographs that turned up is named the way a person names things:
+ * `claydol-ex-98-108.jpeg`, `pikachu gg 30.jpg`, `dark-charizard-4-82.jpeg` —
+ * a name and the number on the card. That is the better scheme for a human and
+ * the lab should meet it rather than ask for a rename.
+ *
+ * The trailing two numbers are the printed number and the set total, which is
+ * exactly what `lookupCards` resolves. When it names one card, that is the
+ * answer; when it names several — 154 of 216 English sets share a total — the
+ * NAME in the filename breaks the tie.
+ */
+function expectedFor(file: string): string | undefined {
+  const base = path.basename(file).replace(/\.[^.]+$/, "");
+
+  // Our own scheme first: an exact id, with or without the `ja~` qualifier.
+  const bare = base.replace(/^ja~/, "");
+  if (getCatalogCard(bare) ?? getCatalogCard(`ja~${bare}`)) return bare;
+
+  // `…-98-108` or `… gg 30` — the printed number, trailing.
+  const printed = /(?:^|[\s_-])([A-Za-z]{0,4})[\s_-]?(\d{1,3})[\s_-](\d{1,3})$/.exec(base);
+  if (!printed) return undefined;
+  const [, prefix, number, total] = printed;
+  const matches = lookupCards(`${prefix}${number}/${prefix}${total}`, "pokemon").matches;
+  if (matches.length === 0) return undefined;
+  if (matches.length === 1) return matches[0].code;
+
+  // Several sets print that total. The words before the number are the card's
+  // name, and that is what separates them.
+  const words = base.slice(0, printed.index).toLowerCase().replace(/[^a-z]+/g, "");
+  const named = matches.find((m: { name?: string; code: string }) => String(m.name).toLowerCase().replace(/[^a-z]+/g, "").includes(words.slice(0, 12)));
+  return (named ?? matches[0]).code;
+}
+
 const tally = { whole: 0, detected: 0, graded: 0 } as Record<string, number>;
 const byFill: Record<number, number> = Object.fromEntries(FILLS.map((f) => [f, 0]));
 
@@ -151,8 +189,8 @@ for (const file of files) {
   const width = meta.width ?? 0;
   const height = meta.height ?? 0;
 
-  const expected = path.basename(file).replace(/\.[^.]+$/, "").replace(/^ja~/, "");
-  const known = Boolean(getCatalogCard(expected) ?? getCatalogCard(`ja~${expected}`));
+  const expected = expectedFor(file);
+  const known = expected !== undefined;
   if (known) tally.graded++;
 
   const mark = (r: { id: string }) => (known ? (r.id === expected ? " ✓" : " ✗") : "");

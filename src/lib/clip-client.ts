@@ -378,7 +378,8 @@ async function matchInline(
   rect: SourceRect,
   keys: ClipIndexKey[],
   limit: number,
-  onProgress?: (p: ClipProgress) => void
+  onProgress?: (p: ClipProgress) => void,
+  only?: string[]
 ): Promise<ClipMatch> {
   const [{ vision, Tensor }, loaded] = await Promise.all([
     loadModel(onProgress),
@@ -399,6 +400,18 @@ async function matchInline(
 
   const hits: ClipSourcedHit[] = [];
   for (const [key, index] of loaded) {
+    if (only?.length) {
+      // The same exact comparison the worker does — see scoreOnly there.
+      const wanted = new Set(only);
+      for (let card = 0; card < index.ids.length; card++) {
+        const id = index.ids[card];
+        if (!wanted.has(id)) continue;
+        let total = 0;
+        for (let k = 0; k < CLIP_DIM; k++) total += index.vectors[card * CLIP_DIM + k] * query[k];
+        hits.push({ id, score: total / 127, key });
+      }
+      continue;
+    }
     for (const hit of clipSearch(index, query, limit).hits) hits.push({ ...hit, key });
   }
   hits.sort((a, b) => b.score - a.score);
@@ -449,6 +462,14 @@ export async function matchCard(
      * deliberately and second-guessing them is not an improvement.
      */
     detect?: boolean;
+    /**
+     * Rank exactly these cards instead of searching the catalogue.
+     *
+     * For the case where something else has already narrowed the field — a
+     * printed number naming four cards in four sets — and the only question
+     * left is which of them the picture looks like.
+     */
+    only?: string[];
   }
 ): Promise<ClipMatch> {
   const limit = options?.limit ?? 5;
@@ -489,7 +510,10 @@ export async function matchCard(
         // `keys` travels with every match, not just with the warm-up: the worker
         // retains every index it has loaded, so without this a narrowed search
         // still ran against whatever a previous scan happened to leave behind.
-        active.postMessage({ type: "match", id, bitmap, limit, keys, detect: options?.detect }, [bitmap]);
+        active.postMessage(
+          { type: "match", id, bitmap, limit, keys, detect: options?.detect, only: options?.only },
+          [bitmap]
+        );
       });
     } catch {
       // The worker refused this frame. Fall through rather than lose the scan;
@@ -497,7 +521,7 @@ export async function matchCard(
     }
   }
 
-  return matchInline(source, rect, keys, limit, options?.onProgress);
+  return matchInline(source, rect, keys, limit, options?.onProgress, options?.only);
 }
 
 /** Warm the model and every catalogue before the user takes a picture. */

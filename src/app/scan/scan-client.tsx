@@ -560,6 +560,58 @@ export function ScanClient() {
     const [local] = await Promise.all([artwork, readPrintedCode()]);
     if (local) unsure = { cards: local.cards, route: local.route };
 
+    /**
+     * THE NUMBER SAYS WHICH NUMBER; THE ARTWORK SAYS WHICH SET.
+     *
+     * What is printed on a Pokemon card is `93/108` — a number and a set SIZE,
+     * never the set itself, which is a symbol no reader can name. Measured, 154
+     * of 216 English sets share their printed total with another, so `93/108`
+     * resolves to four real cards: Dark Patch, Ultra Ball, Claydol ex and a
+     * Water Energy, in four different sets, all genuinely numbered 93.
+     *
+     * Reported as exactly that, with the right card third of four.
+     *
+     * NEITHER SIGNAL ANSWERS ALONE and together they do. The reader is
+     * unambiguous about the number and blind to the set; the artwork cannot read
+     * a number and is very good at telling four pictures apart. So the picture
+     * now orders what the number proposed.
+     *
+     * WHY NOT THE RANKING THE READER ALREADY DOES. /api/scan/ocr sorts these by
+     * an art SIGNATURE — a perceptual hash — and all four candidates had one, so
+     * it ran and still put the right card third. A hash does not survive a card
+     * held at an angle under a reflection; the embedding does, and it is already
+     * loaded on the device.
+     *
+     * IT SCORES THE FOUR EXACTLY rather than looking them up in a search result.
+     * A top-N over 52,000 vectors need not contain a card the NUMBER proposed —
+     * measured, a correct card has sat at rank #184 — so a lookup would often
+     * find nothing to sort by. Restricted to the candidates it is a comparison,
+     * not a search, and it cannot miss.
+     */
+    if (cards.length > 1) {
+      try {
+        const { source, width, height } = await bitmapOf(file);
+        try {
+          const ids = cards.map((card) => (card.code.startsWith("ja~") ? card.code.slice(3) : card.code));
+          const ranked = await matchCard(source, { x: 0, y: 0, width, height }, indexes, { only: ids });
+          const order = new Map(ranked.hits.map((hit, at) => [hit.id, at]));
+          // A candidate the index does not hold keeps its place at the end
+          // rather than being dropped — the number found it, and no picture of
+          // it existing is not evidence against it.
+          cards = [...cards].sort(
+            (a, b) =>
+              (order.get(a.code.replace(/^ja~/, "")) ?? Number.MAX_SAFE_INTEGER) -
+              (order.get(b.code.replace(/^ja~/, "")) ?? Number.MAX_SAFE_INTEGER)
+          );
+        } finally {
+          source.close();
+        }
+      } catch {
+        // No matcher on this device, or a picture it could not decode. The
+        // reader's own order stands; it was never wrong, only weaker.
+      }
+    }
+
     // THE PRINTED NUMBER WINS WHEN IT EXISTS, because it is the only evidence in
     // the picture that is unambiguous — artwork is shared between reprints and
     // between a card and its Japanese release; the number in the corner is not.
