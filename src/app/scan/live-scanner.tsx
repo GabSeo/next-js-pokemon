@@ -120,7 +120,23 @@ type Reading =
       /** Frames of evidence behind that board. */
       frames?: number;
     }
-  | { state: "found"; cards: CardView[]; tied: number; elapsed: number };
+  | {
+      state: "found";
+      cards: CardView[];
+      tied: number;
+      elapsed: number;
+      /** The printed-number reader is still running on the frame that settled it. */
+      checking?: boolean;
+      /**
+       * Which evidence the cards on screen came from, once the check is done.
+       *
+       * `code` means the reader named the card and replaced or confirmed what
+       * the artwork proposed. `artwork` means the reader found nothing usable
+       * and the artwork's answer stands on its own — which is a weaker claim,
+       * and the panel says so rather than letting both look alike.
+       */
+      confirmedBy?: "code" | "artwork";
+    };
 
 export function LiveScanner({
   indexes,
@@ -275,6 +291,30 @@ export function LiveScanner({
     return () => observer.disconnect();
   }, [attempt, fill]);
 
+  /**
+   * The frame that settled the vote, as a file the reader can take.
+   *
+   * CAPTURED BEFORE `stop()`, which is the whole trick: tearing the stream down
+   * releases the video element, and a canvas drawn from it afterwards is blank.
+   *
+   * DOWNSCALED TO 1600px on the long edge, the same ceiling the photo upload
+   * uses — a card number needs a fraction of a full frame and the rest is
+   * upload time on a phone.
+   */
+  const stillOfFrame = useCallback(async (): Promise<Blob | undefined> => {
+    const video = videoRef.current;
+    if (!video || video.videoWidth === 0) return undefined;
+    const scale = Math.min(1, 1600 / Math.max(video.videoWidth, video.videoHeight));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(video.videoWidth * scale);
+    canvas.height = Math.round(video.videoHeight * scale);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return undefined;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    return new Promise((resolve) => canvas.toBlob((blob) => resolve(blob ?? undefined), "image/jpeg", 0.9));
+  }, []);
+
   const stop = useCallback(() => {
     loop.current.running = false;
     const stream = videoRef.current?.srcObject as MediaStream | null;
@@ -422,11 +462,84 @@ export function LiveScanner({
             const { cards } = (await response.json()) as { cards?: CardView[] };
             if (cards && cards.length > 0) {
               if (cancelled) break;
+
+              /**
+               * THE FRAME IS TAKEN BEFORE THE CAMERA IS TORN DOWN, because a
+               * canvas drawn from a released video element is blank.
+               */
+              const still = await stillOfFrame();
+
               // FOUND MEANS STOP. Leaving the camera running behind a result
               // keeps the phone warm and invites the next frame to overwrite an
               // answer the reader is still reading.
               stop();
-              setReading({ state: "found", cards, tied: cards.length, elapsed: result.elapsed });
+
+              /**
+               * THE ARTWORK'S ANSWER APPEARS IMMEDIATELY, THEN THE NUMBER
+               * CHECKS IT.
+               *
+               * ONE CALL PER CARD, NOT PER FRAME — which is the argument that
+               * kept the reader out of here and was weaker than it looked. A
+               * metered per-image reader cannot run thirty times a second, true;
+               * but this view already decides when its evidence has settled, and
+               * that single moment is exactly one image.
+               *
+               * WHY IT IS WORTH THE CALL. The artwork alone is a guess: measured
+               * on real photographs a wrong match scores 0.83 where a right one
+               * scores 0.82, so no threshold separates them, and on the One Piece
+               * index — 83% of it built from pictures Bandai stamps "SAMPLE"
+               * across — the guess is usually wrong. The number in the corner
+               * names one card. See docs/how-the-scan-works.md §2a.
+               *
+               * NOBODY WAITS FOR IT. The artwork answer is on screen before the
+               * request leaves, and the reader either confirms it or replaces
+               * it a second or two later. Holding the result back until the
+               * reader answered would make every scan feel as slow as the
+               * slowest part of it.
+               */
+              setReading({ state: "found", cards, tied: cards.length, elapsed: result.elapsed, checking: Boolean(still) });
+
+              if (still) {
+                void (async () => {
+                  try {
+                    const read = await fetch("/api/scan/ocr", {
+                      method: "POST",
+                      headers: { "Content-Type": "image/jpeg" },
+                      body: still,
+                    });
+                    const payload = read.ok
+                      ? ((await read.json()) as { cards?: CardView[]; byNameOnly?: boolean })
+                      : undefined;
+                    // A NAME-ONLY ANSWER IS NOT A CORRECTION. The reader falls
+                    // back to matching the card's NAME when it cannot read a
+                    // number, which returns an arbitrary handful of cards
+                    // sharing it — weaker evidence than the artwork it would be
+                    // replacing.
+                    const named = payload?.cards ?? [];
+                    if (named.length > 0 && payload?.byNameOnly !== true) {
+                      setReading({
+                        state: "found",
+                        cards: named,
+                        tied: named.length,
+                        elapsed: result.elapsed,
+                        confirmedBy: "code",
+                      });
+                      return;
+                    }
+                  } catch {
+                    // The reader was unreachable or refused. The artwork answer
+                    // is already on screen and stays; this was the confirmation,
+                    // not the answer.
+                  }
+                  setReading({
+                    state: "found",
+                    cards,
+                    tied: cards.length,
+                    elapsed: result.elapsed,
+                    confirmedBy: "artwork",
+                  });
+                })();
+              }
               return;
             }
           } catch {
@@ -478,7 +591,7 @@ export function LiveScanner({
       cancelled = true;
       stop();
     };
-  }, [stop, attempt, indexes]);
+  }, [stop, attempt, indexes, stillOfFrame]);
 
   const hint =
     reading.state !== "scanning"
@@ -733,11 +846,35 @@ export function LiveScanner({
           one gesture rather than two screens. */}
       {reading.state === "found" ? (
         <div className="max-h-[62%] overflow-y-auto border-t-2 border-white/20 bg-white p-4">
-          <p className="text-[11px] text-muted-text">
-            {reading.tied > 1
-              ? `${reading.tied} cards share this artwork — check the number in the corner of yours.`
-              : `Matched in ${Math.round(reading.elapsed)} ms, on your device.`}
-          </p>
+          {/* WHICH EVIDENCE THIS IS, in the first line rather than a footnote.
+              The artwork alone and the printed number are not the same claim —
+              measured, a wrong artwork match scores 0.83 where a right one
+              scores 0.82 — so a panel that presents them identically is asking
+              for the same trust in both. */}
+          {reading.checking ? (
+            <p className="flex items-center gap-2 text-[11px] font-black" style={{ color: "var(--pokemon-blue)" }}>
+              <span
+                className="h-2 w-2 rounded-full"
+                style={{ background: "var(--pokemon-blue)", animation: "livepulse 1s ease-in-out infinite" }}
+              />
+              Matched by artwork — now checking the number printed on the card…
+            </p>
+          ) : reading.confirmedBy === "code" ? (
+            <p className="text-[11px] font-black" style={{ color: "#0a5c2c" }}>
+              Confirmed by the number printed on the card.
+            </p>
+          ) : reading.confirmedBy === "artwork" ? (
+            <p className="text-[11px] text-muted-text">
+              Matched by artwork only — the printed number could not be read, so check the number in the corner
+              of yours against this.
+            </p>
+          ) : (
+            <p className="text-[11px] text-muted-text">
+              {reading.tied > 1
+                ? `${reading.tied} cards share this artwork — check the number in the corner of yours.`
+                : `Matched in ${Math.round(reading.elapsed)} ms, on your device.`}
+            </p>
+          )}
           <ul className="mt-2 grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))" }}>
             {reading.cards.map((card) => (
               <li key={`${card.tcg}:${card.code}`} className="rounded-md border-2 border-black bg-muted-surface p-2">
