@@ -1,5 +1,6 @@
 import { ApiBudgetExceededError } from "@/lib/api-budget";
 import { explainCard, factsFor, ExplainNotConfiguredError } from "@/lib/card-explain";
+import { webContextFor } from "@/lib/card-context-web";
 import { getCardView } from "@/lib/card-view";
 
 /**
@@ -49,12 +50,25 @@ export async function POST(request: Request) {
   const facts = factsFor(card);
 
   try {
-    const text = await explainCard(facts);
+    /**
+     * BOTH STAGES AT ONCE, and the second is allowed to fail.
+     *
+     * The grounded explanation is the answer; the web note is a footnote. So
+     * they are fired together rather than in sequence — the reader waits for the
+     * slower of the two rather than for their sum — and a rejected web lookup
+     * resolves to nothing instead of failing the request. A search that is down,
+     * rate-limited or simply unhelpful costs the reader a paragraph they did not
+     * have before, not their explanation.
+     */
+    const [text, web] = await Promise.all([
+      explainCard(facts),
+      webContextFor(facts).catch(() => undefined),
+    ]);
     // `facts` travels back with the answer so the page can show what the model
     // was given. An explanation whose evidence is inspectable is a different
     // kind of claim from one that is not, and this is the first feature here
     // that a reader has any reason to distrust.
-    return Response.json({ text, facts });
+    return Response.json({ text, facts, web });
   } catch (error) {
     if (error instanceof ExplainNotConfiguredError) {
       return Response.json({ error: "The explainer is not configured on this deployment." }, { status: 501 });

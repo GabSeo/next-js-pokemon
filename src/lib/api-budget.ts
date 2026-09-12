@@ -124,6 +124,20 @@ const BUDGETS: Record<string, Budget> = {
    * Explanations are cached, so this counts NEW cards rather than views.
    */
   "api.groq.com": { limit: 2400, windowMs: MONTH_MS, burst: { limit: 120, windowMs: DAY_MS } },
+  /**
+   * The web-context stage, on a bucket of its OWN despite sharing a host.
+   *
+   * Keyed like the PokeWallet pair above: one literal host, two quotas that must
+   * not spend each other's. Groq meters `groq/compound` separately — 250
+   * requests a day against gpt-oss-20b's token-derived ~210 — and collapsing
+   * them would let a busy afternoon of web lookups starve the grounded
+   * explanations, which are the half that must always work.
+   *
+   * 60 a day, half the grounded stage's 120, because this stage is optional by
+   * design: an explanation is complete without it, and it is the part that
+   * fails soft.
+   */
+  "api.groq.com#compound": { limit: 1200, windowMs: MONTH_MS, burst: { limit: 60, windowMs: DAY_MS } },
   // Both 100/hour real, but their per-card costs are nothing alike, so the
   // ceilings are set from measurement rather than symmetry.
   //

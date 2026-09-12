@@ -130,7 +130,7 @@ function Figures({ facts }: { facts: Facts }) {
 type State =
   | { phase: "idle" }
   | { phase: "asking" }
-  | { phase: "done"; text: string; facts: Facts }
+  | { phase: "done"; text: string; facts: Facts; web?: string }
   | { phase: "failed"; reason: string };
 
 /**
@@ -186,13 +186,14 @@ export function CardExplainer({ tcg, code }: { tcg: "pokemon" | "onepiece"; code
       const payload = (await response.json().catch(() => ({}))) as {
         text?: string;
         facts?: Facts;
+        web?: string;
         error?: string;
       };
       if (!response.ok || !payload.text || !payload.facts) {
         setState({ phase: "failed", reason: payload.error ?? `The explainer returned ${response.status}.` });
         return;
       }
-      setState({ phase: "done", text: payload.text, facts: payload.facts });
+      setState({ phase: "done", text: payload.text, facts: payload.facts, web: payload.web });
     } catch {
       setState({ phase: "failed", reason: "Could not reach the explainer. Check your connection." });
     }
@@ -234,6 +235,26 @@ export function CardExplainer({ tcg, code }: { tcg: "pokemon" | "onepiece"; code
       <div className="mt-3">
         <Rendered text={state.text} />
       </div>
+
+      {/* WHAT THE WEB ADDS, AND VISIBLY FROM SOMEWHERE ELSE.
+          THE SEPARATION IS THE FEATURE, not decoration. Everything above this
+          line is checkable against the panel below — every figure came from our
+          own files and the reader can open them and look. This paragraph
+          cannot be checked that way: it came from the open web, through a model
+          that searched it. Those are different kinds of claim, and running them
+          together in one block would quietly lend the second the first's
+          credibility.
+          So it is ruled off, labelled, and given the quieter type. It is also
+          allowed to be absent — most cards have no story, and the stage is told
+          that saying so is the right answer rather than a failure. */}
+      {state.web ? (
+        <div className="mt-3 border-t-2 border-dashed border-muted-surface pt-2.5">
+          <div className="text-[10px] font-black uppercase tracking-wide text-muted-text">
+            From the web, not from our records
+          </div>
+          <p className="mt-1 text-[12px] leading-relaxed text-muted-text">{state.web}</p>
+        </div>
+      ) : null}
 
       {/* THE EVIDENCE, FOLDED. `details` needs no state and works before
           hydration, and the closed state is the right default: somebody who
