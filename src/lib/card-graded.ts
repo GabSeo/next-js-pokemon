@@ -51,7 +51,7 @@ export type GradedCell = {
    */
   count?: number;
   /**
-   * The actual listings behind the median, cheapest first.
+   * The actual listings behind the median, in eBay's own order.
    *
    * THE MEDIAN ALONE WAS THE WRONG SUMMARY, and it was mine. A reader who sees
    * "PSA 10 — USD 974.98" cannot act on it: the number describes a market, and
@@ -61,8 +61,10 @@ export type GradedCell = {
    * right instruction — the data was always here and only this screen was
    * discarding it.
    *
-   * CHEAPEST FIRST because that is the question. A median is for judging; a
-   * list is for buying, and it should open on the end of it that a buyer wants.
+   * NEWEST FIRST, WHICH IS HOW THEY ARRIVE. lib/ebay-browse.ts queries with
+   * `sort=newlyListed`, so this order is a fact about the market rather than a
+   * choice made here — and keeping it means one fetch answers both questions a
+   * reader has. Cheapest is a sort of this list; newest IS this list.
    */
   listings?: Listing[];
   /** eBay's own search for this tier, for when four rows are not enough. */
@@ -72,11 +74,11 @@ export type GradedCell = {
 /**
  * How many listings each tier shows before the see-all link takes over.
  *
- * Four is what fits under a tier without the panel becoming a page of eBay.
- * The cheapest is the one that matters and the next three give it context —
- * whether the bottom of the market is one outlier or where everything sits.
+ * Eight, because the same rows serve two views: the four cheapest and the four
+ * most recently listed, which are rarely the same four. Beyond that the panel
+ * becomes a page of eBay, and eBay has one of those.
  */
-const LISTINGS_PER_TIER = 4;
+const LISTINGS_PER_TIER = 8;
 
 export type GradedRow = {
   /** "PSA 10", "PSA 9", "PSA 8", "Raw". */
@@ -198,10 +200,11 @@ export async function gradedFactsFor(
         median: active.medianPrice,
         currency: active.currency,
         count: active.count,
-        // CHEAPEST FIRST, and sorted here rather than trusted: eBay's own order
-        // is its relevance ranking, which is not price.
-        listings: [...active.rows]
-          .sort((a, b) => a.price - b.price)
+        // UNSORTED ON PURPOSE — see the field's own note. These arrive newest
+        // first because that is what was asked of eBay, and the client derives
+        // the cheapest view from the same rows rather than costing a second
+        // request to ask the same server the same question differently.
+        listings: active.rows
           .slice(0, LISTINGS_PER_TIER)
           .map((row) => ({
             date: row.date,

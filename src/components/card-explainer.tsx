@@ -141,6 +141,82 @@ function Tag({ source, note }: { source: Source; note?: string }) {
   );
 }
 
+/**
+ * One condition tier's listings, with the two orders a reader actually wants.
+ *
+ * CHEAPEST AND NEWEST ARE DIFFERENT QUESTIONS. The first is "what does the
+ * bottom of this market look like"; the second is "what appeared since I last
+ * looked". A single list cannot be both, and picking one silently answers the
+ * question the reader did not ask.
+ *
+ * NEWEST IS THE DEFAULT because it is the order eBay was asked for and the
+ * order the see-all link opens in, so the panel and the page behind it agree.
+ */
+function TierListings({
+  label,
+  newest,
+  cheapest,
+  count,
+  seeAllUrl,
+}: {
+  label: string;
+  newest: Listing[];
+  cheapest: Listing[];
+  count?: number;
+  seeAllUrl?: string;
+}) {
+  const [order, setOrder] = useState<"newest" | "cheapest">("newest");
+  const shown = order === "newest" ? newest : cheapest;
+
+  return (
+    <details className="rounded border border-black/15 px-2 py-1.5">
+      <summary className="cursor-pointer list-none text-[10px] font-black uppercase tracking-wide text-muted-text">
+        {label} — {count ? `${count} on sale now` : "on sale now"}
+      </summary>
+
+      <div className="mt-1.5 flex gap-1">
+        {(["newest", "cheapest"] as const).map((which) => (
+          <button
+            key={which}
+            type="button"
+            onClick={() => setOrder(which)}
+            aria-pressed={order === which}
+            className="rounded border-2 border-foreground px-2 py-1 text-[10px] font-black uppercase tracking-wide"
+            style={
+              order === which
+                ? { background: "var(--nav-dark)", color: "#ffffff" }
+                : { background: "transparent", color: "var(--foreground)" }
+            }
+          >
+            {which === "newest" ? "Just listed" : "Cheapest"}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-1">
+        {shown.map((listing, index) => (
+          <ListingRow key={`${listing.url ?? ""}-${index}`} {...listing} />
+        ))}
+      </div>
+
+      {seeAllUrl ? (
+        <a
+          href={seeAllUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-1 inline-block text-[11px] font-black underline underline-offset-4"
+          style={{ color: "var(--pokemon-blue)" }}
+        >
+          {/* SAYS WHAT IT OPENS. The link carries eBay's `_sop=10` — their code
+              for "Time: newly listed" — so calling it "see all" and landing the
+              reader on a newest-first page was a small lie of omission. */}
+          See all {count ?? ""} on eBay, newest first ↗
+        </a>
+      ) : null}
+    </details>
+  );
+}
+
 function Graded({ graded }: { graded: NonNullable<Facts["graded"]> }) {
   const money = (cell?: { median?: number; currency?: string }) =>
     cell?.median === undefined ? "—" : `${cell.currency ?? ""} ${cell.median.toFixed(2)}`.trim();
@@ -190,44 +266,33 @@ function Graded({ graded }: { graded: NonNullable<Facts["graded"]> }) {
         </table>
       </div>
 
-      {/* THE LISTINGS BEHIND EACH MEDIAN, CHEAPEST FIRST.
+      {/* THE LISTINGS BEHIND EACH MEDIAN, BOTH WAYS ROUND.
           A median is for judging and a list is for buying, and this panel only
-          ever offered the first. "USD 974.98" cannot be acted on; the one
-          somebody is selling at the bottom of that market can. The rows and
-          their links were already being fetched and thrown away here — the
-          tracked-card pages have shown them since they were built, which is
-          why the instruction was to make this the SAME rather than better.
-          It renders the same ListingRow those pages do, so the two cannot
-          drift apart again. */}
+          ever offered the first. But "cheapest" and "just listed" are two
+          different questions — one is what the market bottoms out at, the other
+          is what turned up while you were not looking — and the same fetch
+          answers both: eBay is queried with sort=newlyListed, so the rows
+          arrive in one of the two orders already and the other is a sort of
+          them. No second request.
+
+          The rows render through the same ListingRow the tracked-card pages
+          use, so the two screens cannot drift apart again. */}
       <div className="mt-2 grid gap-1">
         {graded.rows.map((row) =>
           graded.languages.map((language) => {
             const cell = row.cells[language];
             if (!cell?.listings?.length) return null;
+            const newest = cell.listings.slice(0, 4);
+            const cheapest = [...cell.listings].sort((a, b) => a.price - b.price).slice(0, 4);
             return (
-              <details key={`${row.condition}-${language}`} className="rounded border border-black/15 px-2 py-1.5">
-                <summary className="cursor-pointer list-none text-[10px] font-black uppercase tracking-wide text-muted-text">
-                  {row.condition}
-                  {graded.languages.length > 1 ? ` · ${language}` : ""} — cheapest{" "}
-                  {cell.listings.length} on sale now
-                </summary>
-                <div className="mt-1">
-                  {cell.listings.map((listing, index) => (
-                    <ListingRow key={`${listing.url ?? ""}-${index}`} {...listing} />
-                  ))}
-                </div>
-                {cell.seeAllUrl ? (
-                  <a
-                    href={cell.seeAllUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-1 inline-block text-[11px] font-black underline underline-offset-4"
-                    style={{ color: "var(--pokemon-blue)" }}
-                  >
-                    See all {cell.count} on eBay ↗
-                  </a>
-                ) : null}
-              </details>
+              <TierListings
+                key={`${row.condition}-${language}`}
+                label={`${row.condition}${graded.languages.length > 1 ? ` · ${language}` : ""}`}
+                newest={newest}
+                cheapest={cheapest}
+                count={cell.count}
+                seeAllUrl={cell.seeAllUrl}
+              />
             );
           })
         )}
