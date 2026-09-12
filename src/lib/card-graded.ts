@@ -1,4 +1,4 @@
-import { getGradedMarketData, GRADED_MARKET_CONDITIONS } from "@/lib/graded-market";
+import { getGradedMarketData } from "@/lib/graded-market";
 import type { CardView } from "@/lib/card-view";
 import type { Card } from "@/lib/types";
 
@@ -37,29 +37,43 @@ import type { Card } from "@/lib/types";
  * handles as an absence like any other.
  */
 
-export type GradedFigure = {
-  /** "English" or "Japanese". */
-  language: string;
-  /** Median asking price of live listings, or absent when eBay returned none. */
-  psa10?: number;
-  raw?: number;
+export type GradedCell = {
+  /** Median asking price of live listings. Absent when eBay returned none that were real. */
+  median?: number;
   currency?: string;
   /**
-   * What grading would gain, as a multiple of the raw price.
+   * How many live listings the median rests on.
+   *
+   * SHOWN, NOT HIDDEN. A median of two asks is not a market, and a reader given
+   * a bare figure has no way to tell that from a median of sixty. It is the
+   * difference between a price and an anecdote.
+   */
+  count?: number;
+};
+
+export type GradedRow = {
+  /** "PSA 10", "PSA 9", "PSA 8", "Raw". */
+  condition: string;
+  /** Keyed by language — "English", "Japanese". */
+  cells: Record<string, GradedCell>;
+};
+
+export type GradedFacts = {
+  /** The languages that produced at least one reading, in column order. */
+  languages: string[];
+  /** One row per condition tier, in the order graded-market.ts queries them. */
+  rows: GradedRow[];
+  /**
+   * Raw to PSA 10, as a multiple, per language.
    *
    * A MULTIPLE RATHER THAN A PERCENTAGE, because the reader is comparing two
-   * prices they can both see. "4.2x" is read instantly; "320%" has to be
-   * unpacked, and half of readers will unpack it wrong.
+   * prices they can both see in the table. "4.2x" is read instantly; "320%" has
+   * to be unpacked and half of readers unpack it wrong.
    *
    * It is NOT a recommendation and the prompt forbids presenting it as one:
    * grading costs money and takes months, and neither is in this figure.
    */
-  psa10Multiple?: number;
-};
-
-/** How many listings each median rests on — a median of two asks is not a market. */
-export type GradedFacts = {
-  figures: GradedFigure[];
+  psa10Multiple: Record<string, number>;
   /** Live eBay asking prices, not sales. Said plainly because the two are often confused. */
   note: string;
 };
@@ -104,46 +118,50 @@ export async function gradedFactsFor(card: CardView): Promise<GradedFacts | unde
   const data = await getGradedMarketData(asTrackedCard(card)).catch(() => undefined);
   if (!data) return undefined;
 
-  const psa10 = data.conditions.find((c) => c.condition === "PSA 10");
-  const raw = data.conditions.find((c) => c.condition === "Raw");
-  if (!psa10 && !raw) return undefined;
+  const languages: string[] = [];
+  const rows: GradedRow[] = [];
 
-  const languages = new Set<string>();
-  for (const condition of [psa10, raw]) {
-    for (const entry of condition?.languages ?? []) languages.add(entry.language);
+  for (const condition of data.conditions) {
+    const cells: Record<string, GradedCell> = {};
+    for (const entry of condition.languages) {
+      // ONLY REAL LISTINGS. graded-market.ts falls back to illustrative preview
+      // figures when eBay returns nothing, which is right for a panel labelled
+      // as a preview and wrong for anything a model will read or a table will
+      // present as a market reading.
+      const active = entry.active;
+      if (!active?.isReal || !(active.medianPrice > 0)) continue;
+      cells[entry.language] = {
+        median: active.medianPrice,
+        currency: active.currency,
+        count: active.count,
+      };
+      if (!languages.includes(entry.language)) languages.push(entry.language);
+    }
+    // A tier nobody is selling in either language is left out entirely rather
+    // than shown as an empty row — the table is evidence, and a row of dashes
+    // is not evidence of anything.
+    if (Object.keys(cells).length > 0) rows.push({ condition: condition.condition, cells });
   }
 
-  const figures: GradedFigure[] = [];
+  if (rows.length === 0) return undefined;
+
+  const psa10 = rows.find((row) => row.condition === "PSA 10");
+  const raw = rows.find((row) => row.condition === "Raw");
+  const psa10Multiple: Record<string, number> = {};
   for (const language of languages) {
-    // ONLY REAL LISTINGS. graded-market.ts falls back to illustrative preview
-    // figures when eBay returns nothing, which is right for a panel labelled as
-    // a preview and wrong for anything a model will read: an estimate presented
-    // as a market reading is exactly the confident wrongness this whole feature
-    // is built to avoid.
-    const ten = psa10?.languages.find((l) => l.language === language)?.active;
-    const bare = raw?.languages.find((l) => l.language === language)?.active;
-    const tenPrice = ten?.isReal && ten.medianPrice > 0 ? ten.medianPrice : undefined;
-    const rawPrice = bare?.isReal && bare.medianPrice > 0 ? bare.medianPrice : undefined;
-    if (tenPrice === undefined && rawPrice === undefined) continue;
-
-    figures.push({
-      language,
-      psa10: tenPrice,
-      raw: rawPrice,
-      currency: ten?.currency ?? bare?.currency,
-      psa10Multiple:
-        tenPrice !== undefined && rawPrice !== undefined && rawPrice > 0
-          ? Number((tenPrice / rawPrice).toFixed(1))
-          : undefined,
-    });
+    const ten = psa10?.cells[language]?.median;
+    const bare = raw?.cells[language]?.median;
+    if (ten !== undefined && bare !== undefined && bare > 0) {
+      psa10Multiple[language] = Number((ten / bare).toFixed(1));
+    }
   }
-
-  if (figures.length === 0) return undefined;
 
   return {
-    figures,
+    languages,
+    rows,
+    psa10Multiple,
     note:
       "Median asking price of live eBay listings — what sellers want today, not what anything sold for. " +
-      `Tiers read: ${GRADED_MARKET_CONDITIONS.join(", ")}.`,
+      "The count is how many listings each median rests on.",
   };
 }

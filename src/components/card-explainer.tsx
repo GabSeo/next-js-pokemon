@@ -45,71 +45,88 @@ type Facts = {
     history?: { date: string; eur?: number }[];
   };
   graded?: {
-    figures: { language: string; psa10?: number; raw?: number; currency?: string; psa10Multiple?: number }[];
+    languages: string[];
+    rows: { condition: string; cells: Record<string, { median?: number; currency?: string; count?: number }> }[];
+    psa10Multiple: Record<string, number>;
     note: string;
   };
 };
 
 /**
- * What the card asks on eBay, graded and raw, per language.
+ * Every eBay reading that went into the answer, as a table.
  *
- * ITS OWN BLOCK RATHER THAN MORE CELLS IN THE STRIP ABOVE, because it is a
- * different kind of number and conflating them would be the worst thing this
- * panel could do. The strip is what a loose copy AVERAGES on Cardmarket over
- * time; this is what sellers are ASKING today for a specific condition. A
- * reader who reads one as the other will think a card is worth four times what
- * it is.
+ * THE WHOLE TABLE, NOT A SUMMARY. An earlier version kept only PSA 10 and raw
+ * and dropped PSA 9 and PSA 8 — which is throwing away evidence to save four
+ * lines. This block is the eBay counterpart of "what it was told": its job is
+ * to let a reader check the sentences above against the numbers behind them,
+ * and a summary cannot do that.
  *
- * SO THE LABEL SAYS "asking", and the note under it says asks are not sales.
+ * TIERS DOWN, LANGUAGES ACROSS, because the comparison a collector actually
+ * makes is between conditions of the same card, and a column is read faster
+ * than a row. Japanese beside English in the same row makes the other
+ * comparison — the two markets for one card — free.
  *
- * THE MULTIPLE IS THE POINT of the whole block: the gap between raw and slabbed
- * is the one figure that is invisible everywhere else in this product, and it
- * is the first thing a collector looks for.
+ * THE COUNT IS SHOWN under each figure. A median of two asks is not a market,
+ * and a bare price gives the reader no way to tell that from a median of sixty.
+ *
+ * IT SCROLLS SIDEWAYS RATHER THAN WRAPPING. Two languages fit a phone; a third
+ * would not, and a table that reflows into unreadable columns is worse than one
+ * that admits it is wider than the screen.
  */
 function Graded({ graded }: { graded: NonNullable<Facts["graded"]> }) {
+  const money = (cell?: { median?: number; currency?: string }) =>
+    cell?.median === undefined ? "—" : `${cell.currency ?? ""} ${cell.median.toFixed(2)}`.trim();
+
   return (
     <div className="mt-3 border-t-2 border-muted-surface pt-2.5">
-      <div className="text-[10px] font-black uppercase tracking-wide text-muted-text">
-        Asking on eBay now
-      </div>
-      <ul className="mt-1.5 grid gap-1.5">
-        {graded.figures.map((figure) => (
-          <li key={figure.language} className="flex items-baseline justify-between gap-3 text-[12px]">
-            <span className="shrink-0 font-black">{figure.language}</span>
-            <span className="truncate text-right tabular-nums">
-              {figure.raw !== undefined ? `raw ${figure.currency ?? ""} ${figure.raw.toFixed(2)}` : ""}
-              {figure.raw !== undefined && figure.psa10 !== undefined ? "  ·  " : ""}
-              {figure.psa10 !== undefined ? `PSA 10 ${figure.currency ?? ""} ${figure.psa10.toFixed(2)}` : ""}
-              {figure.psa10Multiple !== undefined ? (
-                <span className="ml-2 font-black">{figure.psa10Multiple}x</span>
-              ) : null}
-            </span>
-          </li>
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-[10px] font-black uppercase tracking-wide text-muted-text">Asking on eBay now</span>
+        {Object.entries(graded.psa10Multiple).map(([language, multiple]) => (
+          <span key={language} className="shrink-0 text-[10px] font-black">
+            PSA 10 = {multiple}x raw
+            {graded.languages.length > 1 ? ` (${language.slice(0, 2).toUpperCase()})` : ""}
+          </span>
         ))}
-      </ul>
-      <p className="mt-1 text-[10px] leading-relaxed text-muted-text">{graded.note}</p>
+      </div>
+
+      <div className="mt-1.5 overflow-x-auto">
+        <table className="w-full text-[11px]">
+          <thead>
+            <tr className="text-left text-muted-text">
+              <th className="pb-1 pr-2 font-black uppercase tracking-wide">Grade</th>
+              {graded.languages.map((language) => (
+                <th key={language} className="pb-1 pl-2 text-right font-black uppercase tracking-wide">
+                  {language}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {graded.rows.map((row) => (
+              <tr key={row.condition} className="border-t border-muted-surface">
+                <td className="py-1 pr-2 font-black">{row.condition}</td>
+                {graded.languages.map((language) => {
+                  const cell = row.cells[language];
+                  return (
+                    <td key={language} className="py-1 pl-2 text-right tabular-nums">
+                      {money(cell)}
+                      {cell?.count ? (
+                        <span className="block text-[9px] font-normal text-muted-text">{cell.count} listed</span>
+                      ) : null}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <p className="mt-1.5 text-[10px] leading-relaxed text-muted-text">{graded.note}</p>
     </div>
   );
 }
 
-/**
- * The figures, rendered by US rather than written by the model.
- *
- * WHY THIS IS THE IMPORTANT HALF. A collector wants four numbers and wants them
- * in half a second: what it costs, where it ranks, how far apart the printings
- * are, which way it moved. A paragraph is the wrong shape for that — it has to
- * be read to be scanned. And a model writing numbers is the one part of this
- * feature that can be wrong, so the numbers that matter most are the ones it
- * never touches.
- *
- * THE MODEL IS TOLD THIS STRIP EXISTS and asked not to repeat it, which is what
- * lets its two paragraphs be under ninety words. It writes the reading; the
- * strip carries the reading material.
- *
- * SO ONE PANEL SERVES BOTH READERS without being twice as long: somebody who
- * has never collected reads the sentences and ignores the strip, somebody who
- * has collected for years reads the strip and may never reach the sentences.
- */
 function Figures({ facts }: { facts: Facts }) {
   const priced = facts.printings.filter((p) => p.cardmarketEur !== undefined || p.tcgplayerUsd !== undefined);
   const standing = facts.context?.standing;
