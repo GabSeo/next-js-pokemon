@@ -318,50 +318,7 @@ async function matchLocally(
  * so the number printed in the card's bottom corner is the answer, and it is
  * what the line above sends the reader to go and look at.
  */
-function TiedCards({ cards, ranked }: { cards: CardView[]; ranked?: boolean }) {
-  /**
-   * WHEN THE ORDER MEANS SOMETHING, LEAD WITH THE WINNER.
-   *
-   * A tie between reprints is a genuine question — two cards carry the
-   * identical picture and only the printed number separates them — so those are
-   * shown side by side as equals, which is what this grid was built for.
-   *
-   * A list the ARTWORK has ordered is not that. The printed number named four
-   * cards in four different sets and the picture said which one; presenting
-   * them as four equal tiles asks the reader to redo a comparison that has
-   * already been made, and made well. Measured across four real photographs,
-   * the winner led the runner-up by 0.10 to 0.23 — seven to fifteen times the
-   * margin this project calls confident — and was right every time.
-   *
-   * NOT HIDDEN, THOUGH, AND THAT IS THE POINT OF THE DISCLOSURE RATHER THAN A
-   * THRESHOLD. Four successes and no failures is not a calibration; a cutoff
-   * fitted to it would be the same mistake that let a wrong card through at
-   * 0.016 this morning. So the others stay one tap away, and when the ranking
-   * is wrong the reader loses a click rather than the answer.
-   *
-   * The pattern is already in this page for One Piece printings — "not this
-   * one? show the other four" — and it is the same question.
-   */
-  if (ranked && cards.length > 1) {
-    const [best, ...rest] = cards;
-    return (
-      <div className="mt-3">
-        <TiedCards cards={[best]} />
-        <details className="mt-3">
-          <summary className="cursor-pointer text-[11px] font-black underline underline-offset-4">
-            Not this one? Show the other {rest.length} card{rest.length === 1 ? "" : "s"} with this number
-          </summary>
-          <p className="mt-2 text-[11px] text-muted-text">
-            The number printed on a card is a number and a set SIZE, never the set — and 154 of 216 English
-            sets share their total, so several real cards carry it. These are ordered by how much each looks
-            like your photo.
-          </p>
-          <TiedCards cards={rest} />
-        </details>
-      </div>
-    );
-  }
-
+function TiedCards({ cards }: { cards: CardView[] }) {
   return (
     <ul
       className="mt-3 grid gap-3"
@@ -461,6 +418,163 @@ function Panel({ step, title, children }: { step?: string; title: string; childr
       </div>
       {children}
     </section>
+  );
+}
+
+/**
+ * The full reading of one card — art, printings, prices, the button that
+ * records it, and the explainer.
+ *
+ * EXTRACTED BECAUSE THE ANSWER MUST LOOK LIKE AN ANSWER. This layout used to be
+ * reachable only when the scan returned exactly one card; a list of candidates
+ * got the comparison grid instead, which carries no price, no printings and no
+ * "explain this card". That was right while a list meant "we cannot tell these
+ * apart". It stopped being right the moment the artwork started ORDERING them:
+ * the winner is the answer, and it was being rendered as a candidate.
+
+ * So the two layouts are now chosen by what the list MEANS rather than by how
+ * long it is — a ranked winner reads like a single result, an unranked tie
+ * stays a comparison between equals.
+ */
+function CardReading({ cards, language }: { cards: CardView[]; language: "en" | "ja" }) {
+  return (
+        <div className="mt-3 grid gap-4">
+          {cards.map((card) => (
+            <div
+              key={`${card.tcg}:${card.code}`}
+              className="rounded-lg border-2 border-black bg-white p-3"
+              style={{ boxShadow: "3px 3px 0 0 #000" }}
+            >
+              <div className="flex items-baseline justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-black">{card.name}</div>
+                  <div className="text-[11px] text-muted-text">
+                    {/* THE SET, not just the code. `print.origin` carries
+                        it but only renders when a printing has no variant
+                        name, which for Pokemon is never — so two cards
+                        tied on identical artwork showed as two identical
+                        lines, and the set is the thing that tells them
+                        apart. */}
+                    {card.prints[0]?.origin ? `${card.prints[0].origin} · ` : ""}
+                    {card.code} · {card.prints.length} printing{card.prints.length === 1 ? "" : "s"}
+                  </div>
+                </div>
+                <Link
+                  href={`/card/${card.tcg}/${encodeURIComponent(card.code)}`}
+                  className="shrink-0 text-[11px] font-black underline underline-offset-4"
+                >
+                  Full page
+                </Link>
+              </div>
+
+              {/* THE EXPLANATION, ON DEMAND. Only where this reading is of ONE
+                  card: explaining each of six tied candidates is six calls for
+                  a question the reader has not asked yet, and the thing they
+                  need at that point is to pick one. A RANKED winner counts as
+                  one — it is the answer, and it arrives here alone. */}
+              {cards.length === 1 ? <CardExplainer tcg={card.tcg} code={card.code} language={language} /> : null}
+
+              {/* THE MATCH, ALONE. The grid used to show every printing
+                  ranked best-first, which asked the reader to re-do the
+                  comparison the ranking had already made. When the top
+                  match is right — and on real cards it is — the other six
+                  are noise between the person and the button they want.
+
+                  The rest stay one tap away rather than deleted, because
+                  the ranking is a best guess and the honest recovery from
+                  a wrong guess is "show me the others", not "start the
+                  scan again". `details` because that needs no state and
+                  works before hydration. */}
+              <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {card.prints.slice(0, 1).map((print, index) => {
+                  const cm = print.price?.cardmarket?.avg;
+                  const tp = print.price?.tcgplayer?.market;
+                  const money =
+                    cm !== undefined
+                      ? new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR" }).format(cm)
+                      : tp !== undefined
+                        ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(tp)
+                        : undefined;
+
+                  return (
+                    <li
+                      key={print.key}
+                      className={`rounded-md border-2 p-1.5 ${
+                        index === 0 && card.tcg === "onepiece" && card.prints.length > 1
+                          ? "border-black bg-white"
+                          : "border-black bg-muted-surface"
+                      }`}
+                    >
+                      {print.image ? (
+                        /* eslint-disable-next-line @next/next/no-img-element -- both sources are pre-sized; see docs/free-tier-catalogue.md §7 */
+                        <img
+                          src={card.tcg === "onepiece" ? onePieceSrc(print.image, 320) : print.image}
+                          alt={print.origin}
+                          loading="lazy"
+                          className="aspect-[300/420] w-full rounded object-contain"
+                        />
+                      ) : (
+                        <div className="aspect-[300/420] w-full rounded" />
+                      )}
+                      <div className="mt-1 truncate text-[11px] font-black" title={print.label ?? print.origin}>
+                        {index === 0 && card.tcg === "onepiece" && card.prints.length > 1 ? "★ " : ""}
+                        {print.label ?? print.origin}
+                      </div>
+                      <div className="text-[11px] text-muted-text">{money ?? "No price"}</div>
+                      <div className="mt-1.5">
+                        <AddToCollectionButton
+                          tcg={card.tcg}
+                          code={card.code}
+                          printKey={print.key}
+                          size="sm"
+                        />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+
+              {card.prints.length > 1 ? (
+                <details className="mt-3">
+                  <summary className="cursor-pointer text-[11px] font-black underline underline-offset-4">
+                    Not this one? Show the other {card.prints.length - 1} printing
+                    {card.prints.length - 1 === 1 ? "" : "s"}
+                  </summary>
+                  <p className="mt-2 text-[11px] text-muted-text">
+                    Ordered by how much each looks like your photo. Bandai gives every printing the same name,
+                    so the picture is the only difference between them.
+                  </p>
+                  <ul className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    {card.prints.slice(1).map((print) => (
+                      <li key={print.key} className="rounded-md border-2 border-black bg-muted-surface p-1.5">
+                        {print.image ? (
+                          /* eslint-disable-next-line @next/next/no-img-element -- both sources are pre-sized; see docs/free-tier-catalogue.md §7 */
+                          <img
+                            src={card.tcg === "onepiece" ? onePieceSrc(print.image, 320) : print.image}
+                            alt={print.origin}
+                            loading="lazy"
+                            className="aspect-[300/420] w-full rounded object-contain"
+                          />
+                        ) : (
+                          <div className="aspect-[300/420] w-full rounded" />
+                        )}
+                        <div className="mt-1 truncate text-[11px] font-black">{print.label ?? print.origin}</div>
+                        <div className="mt-1.5">
+                          <AddToCollectionButton
+                            tcg={card.tcg}
+                            code={card.code}
+                            printKey={print.key}
+                            size="sm"
+                          />
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              ) : null}
+            </div>
+          ))}
+        </div>
   );
 }
 
@@ -1033,153 +1147,37 @@ export function ScanClient() {
                   identical Mewtwos into two screens of scrolling, and comparing
                   two things you cannot see at once is the one thing the reader
                   actually has to do here. */}
-              {status.cards.length > 1 ? (
-                // `ranked` only where the artwork actually ordered them — the
-                // reader's own route. An artwork tie is a question between
-                // equals and keeps the side-by-side grid.
-                <TiedCards cards={status.cards} ranked={status.route?.via === "text"} />
+              {/* WHICH LAYOUT, BY WHAT THE LIST MEANS — not by how long it is.
+                  A ranked winner is an ANSWER and gets the full reading: its
+                  price, its printings, the record button, the explainer. An
+                  unranked tie is a QUESTION between cards nothing can separate,
+                  and stays a comparison of equals.
+
+                  Reported as "everything doesn't have the same design", and it
+                  was one screen showing an answer in a candidate's clothes: the
+                  moment the artwork started ORDERING the reader's candidates,
+                  the winner stopped being a candidate and the layout did not
+                  follow. */}
+              {status.route?.via === "text" && status.cards.length > 1 ? (
+                <>
+                  <CardReading cards={status.cards.slice(0, 1)} language={language} />
+                  <details className="mt-3">
+                    <summary className="cursor-pointer text-[11px] font-black underline underline-offset-4">
+                      Not this one? Show the other {status.cards.length - 1} card
+                      {status.cards.length - 1 === 1 ? "" : "s"} with this number
+                    </summary>
+                    <p className="mt-2 text-[11px] text-muted-text">
+                      What is printed on a card is a number and a set SIZE, never the set itself — and 154 of
+                      216 English sets share their total, so several real cards carry it. These are ordered by
+                      how much each looks like your photo.
+                    </p>
+                    <TiedCards cards={status.cards.slice(1)} />
+                  </details>
+                </>
+              ) : status.cards.length > 1 ? (
+                <TiedCards cards={status.cards} />
               ) : (
-              /* THE PRINTINGS, not just the code. A code names a card; a card
-                 is several printings and they are not worth the same — a
-                 reverse holo is a median 3.4x its normal twin. Showing them
-                 here is what lets someone finish in one place: read, recognise,
-                 and record which one is actually in their hand. */
-              <div className="mt-3 grid gap-4">
-                {status.cards.map((card) => (
-                  <div
-                    key={`${card.tcg}:${card.code}`}
-                    className="rounded-lg border-2 border-black bg-white p-3"
-                    style={{ boxShadow: "3px 3px 0 0 #000" }}
-                  >
-                    <div className="flex items-baseline justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-black">{card.name}</div>
-                        <div className="text-[11px] text-muted-text">
-                          {/* THE SET, not just the code. `print.origin` carries
-                              it but only renders when a printing has no variant
-                              name, which for Pokemon is never — so two cards
-                              tied on identical artwork showed as two identical
-                              lines, and the set is the thing that tells them
-                              apart. */}
-                          {card.prints[0]?.origin ? `${card.prints[0].origin} · ` : ""}
-                          {card.code} · {card.prints.length} printing{card.prints.length === 1 ? "" : "s"}
-                        </div>
-                      </div>
-                      <Link
-                        href={`/card/${card.tcg}/${encodeURIComponent(card.code)}`}
-                        className="shrink-0 text-[11px] font-black underline underline-offset-4"
-                      >
-                        Full page
-                      </Link>
-                    </div>
-
-                    {/* THE EXPLANATION, ON DEMAND. Only where the scan settled
-                        on ONE card: explaining each of six tied candidates is
-                        six bills for a question the reader has not asked yet,
-                        and the thing they need at that point is to pick one. */}
-                    {status.cards.length === 1 ? <CardExplainer tcg={card.tcg} code={card.code} language={language} /> : null}
-
-                    {/* THE MATCH, ALONE. The grid used to show every printing
-                        ranked best-first, which asked the reader to re-do the
-                        comparison the ranking had already made. When the top
-                        match is right — and on real cards it is — the other six
-                        are noise between the person and the button they want.
-
-                        The rest stay one tap away rather than deleted, because
-                        the ranking is a best guess and the honest recovery from
-                        a wrong guess is "show me the others", not "start the
-                        scan again". `details` because that needs no state and
-                        works before hydration. */}
-                    <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                      {card.prints.slice(0, 1).map((print, index) => {
-                        const cm = print.price?.cardmarket?.avg;
-                        const tp = print.price?.tcgplayer?.market;
-                        const money =
-                          cm !== undefined
-                            ? new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR" }).format(cm)
-                            : tp !== undefined
-                              ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(tp)
-                              : undefined;
-
-                        return (
-                          <li
-                            key={print.key}
-                            className={`rounded-md border-2 p-1.5 ${
-                              index === 0 && card.tcg === "onepiece" && card.prints.length > 1
-                                ? "border-black bg-white"
-                                : "border-black bg-muted-surface"
-                            }`}
-                          >
-                            {print.image ? (
-                              /* eslint-disable-next-line @next/next/no-img-element -- both sources are pre-sized; see docs/free-tier-catalogue.md §7 */
-                              <img
-                                src={card.tcg === "onepiece" ? onePieceSrc(print.image, 320) : print.image}
-                                alt={print.origin}
-                                loading="lazy"
-                                className="aspect-[300/420] w-full rounded object-contain"
-                              />
-                            ) : (
-                              <div className="aspect-[300/420] w-full rounded" />
-                            )}
-                            <div className="mt-1 truncate text-[11px] font-black" title={print.label ?? print.origin}>
-                              {index === 0 && card.tcg === "onepiece" && card.prints.length > 1 ? "★ " : ""}
-                              {print.label ?? print.origin}
-                            </div>
-                            <div className="text-[11px] text-muted-text">{money ?? "No price"}</div>
-                            <div className="mt-1.5">
-                              <AddToCollectionButton
-                                tcg={card.tcg}
-                                code={card.code}
-                                printKey={print.key}
-                                size="sm"
-                              />
-                            </div>
-                          </li>
-                        );
-                      })}
-                    </ul>
-
-                    {card.prints.length > 1 ? (
-                      <details className="mt-3">
-                        <summary className="cursor-pointer text-[11px] font-black underline underline-offset-4">
-                          Not this one? Show the other {card.prints.length - 1} printing
-                          {card.prints.length - 1 === 1 ? "" : "s"}
-                        </summary>
-                        <p className="mt-2 text-[11px] text-muted-text">
-                          Ordered by how much each looks like your photo. Bandai gives every printing the same name,
-                          so the picture is the only difference between them.
-                        </p>
-                        <ul className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                          {card.prints.slice(1).map((print) => (
-                            <li key={print.key} className="rounded-md border-2 border-black bg-muted-surface p-1.5">
-                              {print.image ? (
-                                /* eslint-disable-next-line @next/next/no-img-element -- both sources are pre-sized; see docs/free-tier-catalogue.md §7 */
-                                <img
-                                  src={card.tcg === "onepiece" ? onePieceSrc(print.image, 320) : print.image}
-                                  alt={print.origin}
-                                  loading="lazy"
-                                  className="aspect-[300/420] w-full rounded object-contain"
-                                />
-                              ) : (
-                                <div className="aspect-[300/420] w-full rounded" />
-                              )}
-                              <div className="mt-1 truncate text-[11px] font-black">{print.label ?? print.origin}</div>
-                              <div className="mt-1.5">
-                                <AddToCollectionButton
-                                  tcg={card.tcg}
-                                  code={card.code}
-                                  printKey={print.key}
-                                  size="sm"
-                                />
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                      </details>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
+                <CardReading cards={status.cards} language={language} />
               )}
 
               {/* The codes are still worth showing when they did not all resolve
