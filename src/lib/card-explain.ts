@@ -100,9 +100,9 @@ const GROQ: Provider = {
         model: GROQ_MODEL,
         max_tokens: MAX_TOKENS,
         temperature: 0.2,
-        messages: [
+          messages: [
           { role: "system", content: SYSTEM },
-          { role: "user", content: JSON.stringify(facts) },
+          { role: "user", content: JSON.stringify(shapesFor(facts)) },
         ],
       }),
     },
@@ -129,7 +129,7 @@ const ANTHROPIC: Provider = {
         model: ANTHROPIC_MODEL,
         max_tokens: MAX_TOKENS,
         system: SYSTEM,
-        messages: [{ role: "user", content: JSON.stringify(facts) }],
+        messages: [{ role: "user", content: JSON.stringify(shapesFor(facts)) }],
       }),
     },
   }),
@@ -204,43 +204,132 @@ export type CardFacts = {
   game: "pokemon" | "onepiece";
   name: string;
   code: string;
-  /** Why a price may be missing, in our own words rather than the model's guess. */
   priceNote: string;
   printings: {
-    /**
-     * The FINISH: "normal", "reverse", "holo" — absent for One Piece.
-     *
-     * NAMED `finish` AND NOT `label`, which it was for an afternoon. A model
-     * reading `label` took it for something printed on the card and told the
-     * reader to look for the word "reverse" in the bottom corner. No card
-     * carries that. The field name is part of the prompt whether or not it was
-     * written as one.
-     */
     finish?: string;
-    /** The set or pack this printing came from. */
     origin: string;
     rarity?: string;
     cardmarketEur?: number;
     tcgplayerUsd?: number;
   }[];
-  /**
-   * Everything else we hold — see lib/card-context.ts.
-   *
-   * THE ROOM WAS ALWAYS THERE. The free tier's binding limit is five REQUESTS a
-   * minute against a 250,000-token minute, so the original 445-token sheet used
-   * a fifth of one percent of what one call could carry. More context is free;
-   * more calls are not.
-   */
   context?: CardContext;
-  /**
-   * Live eBay asking prices — PSA 10 and raw, English and Japanese.
-   *
-   * THE THIRD KIND OF PRICE and the one a collector reaches for first: the gap
-   * between a raw copy and the same card in a slab. Absent for most cards, and
-   * the prompt treats an absence like any other.
-   */
   graded?: GradedFacts;
 };
+
+/**
+ * The sheet the MODEL sees — shapes, never figures.
+ *
+ * THIS IS THE FIX THAT WORKED, after two that did not. The brief told the model
+ * the numbers were already on screen and asked it not to repeat them; it
+ * repeated them. A worked example showed an answer that did not repeat them; it
+ * repeated them anyway — "a median of 11.71 EUR, a low of 2.2 EUR and a high of
+ * 372.74 EUR", verbatim out of the sheet.
+ *
+ * Both attempts asked a model to exercise restraint over material in front of
+ * it. The rest of this codebase solves that problem the other way round, and so
+ * does this now: the figures are removed. It cannot recite what it was never
+ * given, and nothing is lost, because every one of those numbers is rendered on
+ * screen by us — accurately, instantly, and beyond the reach of the one
+ * component here that can be wrong.
+ *
+ * What is left is what a model is actually good at and a table is bad at:
+ * saying that a reverse is worth several times a normal, that a card sits near
+ * the bottom of its set, that two readings are too close together to mean
+ * anything. Shapes, in words.
+ */
+export type CardShapes = {
+  name: string;
+  set?: string;
+  rarity?: string;
+  /** Finish names only — "normal", "reverse". No prices. */
+  printings: string[];
+  /** "the reverse is worth about 4x the normal", already phrased. */
+  printingGap?: string;
+  /** "11th of 70 priced cards in its set, in the top fifth". */
+  standing?: string;
+  /** "unchanged across the only two readings, two days apart". */
+  movement?: string;
+  /** "a graded copy asks about 4x a raw one; the PSA 9 figure rests on 2 listings". */
+  graded?: string;
+  /** Said plainly when there is nothing: the model must not fill the gap. */
+  missing?: string[];
+};
+
+/** A rank expressed the way a person would say it, not as a fraction. */
+function band(rank: number, outOf: number): string {
+  const share = rank / outOf;
+  if (share <= 0.05) return "among the very top";
+  if (share <= 0.2) return "in the top fifth";
+  if (share <= 0.4) return "in the upper half";
+  if (share <= 0.6) return "around the middle";
+  if (share <= 0.8) return "in the lower half";
+  return "near the bottom";
+}
+
+export function shapesFor(facts: CardFacts): CardShapes {
+  const missing: string[] = [];
+  const shapes: CardShapes = {
+    name: facts.name,
+    set: facts.printings[0]?.origin,
+    rarity: facts.printings[0]?.rarity,
+    printings: facts.printings.map((print) => print.finish ?? "single printing"),
+  };
+
+  // THE MULTIPLE, NOT THE TWO PRICES. It is the only thing about the pair that a
+  // sentence can add — the prices themselves are two cells of a table.
+  const values = facts.printings
+    .map((print) => print.cardmarketEur ?? print.tcgplayerUsd)
+    .filter((value): value is number => typeof value === "number" && value > 0);
+  if (values.length > 1) {
+    const low = Math.min(...values);
+    const high = Math.max(...values);
+    const ratio = high / low;
+    shapes.printingGap =
+      ratio < 1.2
+        ? "the printings are worth about the same"
+        : `the dearest printing is worth about ${ratio.toFixed(1)}x the cheapest`;
+  }
+
+  const standing = facts.context?.standing;
+  if (standing) {
+    shapes.standing = `${standing.rank} of ${standing.outOf} priced cards in its set, ${band(standing.rank, standing.outOf)}`;
+  }
+
+  const readings = (facts.context?.history ?? []).filter((row) => typeof row.eur === "number");
+  if (readings.length > 1) {
+    const first = readings[0].eur!;
+    const last = readings[readings.length - 1].eur!;
+    const change = first > 0 ? (last - first) / first : 0;
+    const span = `${readings.length} readings between ${readings[0].date} and ${readings[readings.length - 1].date}`;
+    shapes.movement =
+      Math.abs(change) < 0.01
+        ? `unchanged across ${span} — too short a window to mean anything`
+        : `${change > 0 ? "up" : "down"} ${Math.abs(change * 100).toFixed(0)}% across ${span} — too short a window to mean anything`;
+  } else {
+    missing.push("only one price reading, so there is no movement to report");
+  }
+
+  if (facts.graded) {
+    const parts: string[] = [];
+    for (const [language, multiple] of Object.entries(facts.graded.psa10Multiple)) {
+      parts.push(`in ${language}, a PSA 10 asks about ${multiple}x a raw copy`);
+    }
+    // A tier resting on a handful of listings is the one caveat worth a
+    // sentence, and it is invisible in a table of medians.
+    const thin = facts.graded.rows
+      .flatMap((row) => Object.entries(row.cells).map(([language, cell]) => ({ row, language, cell })))
+      .filter((entry) => (entry.cell.count ?? 0) > 0 && (entry.cell.count ?? 0) < 4);
+    for (const entry of thin.slice(0, 2)) {
+      parts.push(`the ${entry.row.condition} figure in ${entry.language} rests on only ${entry.cell.count} listings`);
+    }
+    if (parts.length > 0) shapes.graded = parts.join("; ");
+  } else {
+    missing.push("no eBay readings — say nothing about grading, slabs or PSA");
+  }
+
+  if (missing.length > 0) shapes.missing = missing;
+  return shapes;
+}
 
 export function factsFor(card: CardView, graded?: GradedFacts): CardFacts {
   return {
@@ -282,80 +371,80 @@ export function factsFor(card: CardView, graded?: GradedFacts): CardFacts {
  * is exactly the hallucination this design removes everywhere else. Naming the
  * empty field as the thing to report makes the absence the answer.
  */
+/**
+ * The brief.
+ *
+ * IT IS MOSTLY AN EXAMPLE, AND THAT IS THE CORRECTION. The version this replaces
+ * had grown to 75 lines carrying 13 separate bans and not one demonstration —
+ * every failure observed during the day had been answered with another "never",
+ * which is the cheapest fix to write and the weakest one to follow. Models
+ * imitate far more reliably than they obey, and a worked example teaches tone,
+ * length, what to leave out and what a good sentence looks like all at once,
+ * which no list of prohibitions can do.
+ *
+ * TWO EXAMPLES, NOT ONE, because a single one is copied rather than generalised.
+ * They are deliberately opposite: a cheap common with two printings, and an
+ * expensive card with one. Between them they show the two shapes every card
+ * falls into, and that the answer gets shorter when there is less to say.
+ *
+ * WHAT SURVIVED AS RULES is only what an example cannot show: the bans whose
+ * violation would be invisible in a sample that happens not to violate them.
+ * Inventing artwork, giving advice, predicting a price, naming a marketplace
+ * with no figure. Those stay, and they are short.
+ */
 const SYSTEM = [
-  "You explain a trading card to someone holding it, in a few plain sentences.",
+  "You explain one trading card to the person holding it, in two short",
+  "paragraphs. They may have never collected before, or for twenty years.",
   "",
-  "You are given a JSON fact sheet about ONE card that somebody has just",
-  "photographed. Every FACT must come from that sheet. Never state a number that",
-  "is not in it. If the sheet does not contain something, you do not know it.",
+  "You are given SHAPES, not figures — the prices, ranks and tables are already",
+  "on the reader's screen and you are not given them. Your job is the part a",
+  "table cannot do: say what those shapes mean, in sentences.",
   "",
-  "You MAY explain what a general collecting term means — what a reverse holo",
-  "is, what a holo is, how a set number works. That is vocabulary, not a claim",
-  "about this card.",
+  "Here is exactly the job, twice.",
   "",
-  "THE NUMBERS ARE ALREADY ON SCREEN, in a table directly above your text: the",
-  "prices, the rank in the set, the spread between printings, the change since",
-  "the last reading. The reader can see all of them without you.",
+  "SHAPES:",
+  '{\"name\":\"Venonat\",\"set\":\"Silver Tempest\",\"rarity\":\"Common\",\"printings\":[\"normal\",\"reverse\"],\"printingGap\":\"the dearest printing is worth about 4.5x the cheapest\",\"standing\":\"176 of 215 priced cards in its set, near the bottom\",\"movement\":\"unchanged across 2 readings between 2026-09-05 and 2026-09-07 — too short a window to mean anything\"}',
   "",
-  "So quote AT MOST ONE figure, and only where a sentence collapses without it.",
-  "Never recite the set low, median and high — that is the table's whole job.",
-  "Your paragraphs are the part a table cannot say: what the reader is holding,",
-  "and what the shape of those numbers means for them.",
+  "ANSWER:",
+  "**Which one you have**",
+  "This picture was printed twice. On the normal card the surface is flat and",
+  "matte. On the reverse holo the border and background are foil while the",
+  "picture itself stays dull — tilt it under a light and watch the frame, not the",
+  "artwork. That is the whole difference.",
   "",
-  "Two short paragraphs, each under a bold heading, and nothing else:",
+  "**What that means**",
+  "The reverse is worth about four times the normal one, which sounds dramatic",
+  "until you see where this card sits: near the bottom of its set. It is the kind",
+  "of card that fills a binder rather than anchors one.",
   "",
-  "**Which one you have** — if the sheet lists several printings, say this",
-  "artwork exists in more than one version and explain what those words mean",
-  "physically, so the reader can look at their own card and tell which they are",
-  "holding. Give them something to DO: where to look, what they would see —",
-  "described from what the WORD means, never from the artwork, which you have",
-  "not seen. If there is only one printing, say so in one sentence and move on.",
+  "SHAPES:",
+  '{\"name\":\"Charizard\",\"set\":\"Base Set\",\"rarity\":\"Rare\",\"printings\":[\"holo\"],\"standing\":\"1 of 102 priced cards in its set, among the very top\",\"graded\":\"in English, a PSA 10 asks about 6x a raw copy\",\"missing\":[\"only one price reading, so there is no movement to report\"]}',
   "",
-  "IF THERE IS NO graded BLOCK ON THE SHEET, never mention PSA, grading, slabs,",
-  "condition tiers or eBay at all. Not to say they are unknown, not in passing.",
-  "Those markets exist and you know it; this card has no reading from them, and",
-  "a sentence about a price you were not given is the one failure this whole",
-  "design exists to prevent.",
+  "ANSWER:",
+  "**Which one you have**",
+  "Only one version exists, so there is nothing to tell apart. It is a holo,",
+  "which means the foil is on the picture itself rather than around it.",
   "",
-  "If the sheet has a `graded` block, it holds LIVE EBAY ASKING PRICES — every",
-  "condition tier, in every language that returned listings. THAT TABLE IS ALSO",
-  "ON SCREEN, directly under your text, with the count of listings behind each",
-  "figure. So do not read it out. Do not list the tiers. Do not quote PSA 9 or",
-  "PSA 8 at all.",
+  "**What that means**",
+  "This is the most valuable card in its set, and not narrowly. A graded copy",
+  "asks around six times what an ungraded one does — that gap is what people mean",
+  "when they talk about sending a card away to be slabbed.",
   "",
-  "Say only what the table's SHAPE means, in one sentence at most: that a graded",
-  "copy asks several times a raw one and roughly how many times, or that the two",
-  "languages differ, or that a tier rests on so few listings that its figure is",
-  "thin. These are asks, not sales — say so once if you mention them at all.",
+  "Notice what those answers do NOT do. No prices. No ranks read out as numbers.",
+  "No description of the illustration. No advice about what to do with the card.",
   "",
-  "NEVER turn any of it into a recommendation to grade, sell or buy. Grading",
-  "costs money and takes months, and neither is anywhere in these numbers.",
+  "Now the same for the shapes you are given. Two paragraphs, those two headings,",
+  "under 90 words, plain language, no bullet lists, no emoji, no preamble.",
   "",
-  "**What that means** — the reading of the figures, not the figures. Where this",
-  "card sits in its set and whether that is high or low. Whether one printing is",
-  "worth notably more than another and which to check first. Whether the price",
-  "moved between readings, and if they are days apart, that this is too short to",
-  "mean anything. Say it the way you would to a friend who does not know if they",
-  "are holding something worth keeping.",
+  "Three things are never allowed:",
   "",
-  "NEVER, whatever the figures say:",
+  "- Never invent a number. You have almost none, and that is deliberate.",
+  "- Never describe the artwork. You have not seen it.",
+  "- Never advise or predict — not whether to keep, sell, grade or sleeve it, not",
+  "  whether it is a good investment, not where a price is heading.",
   "",
-  "- Advise. Do not say whether to keep, sell, sleeve, grade or hold a card, and",
-  "  never call it a good investment or a long-term hold. Report what the sheet",
-  "  shows and stop. What somebody does with their own card is theirs.",
-  "- Predict. No claim about where a price is going, what a card will be worth,",
-  "  or whether it is rising in popularity.",
-  "- Describe the artwork. You have not seen it. No borders, no colours, no",
-  "  poses, no gold, no frames — the reader is looking at the card and you are",
-  "  not.",
-  "- Claim anything about the OTHER cards in the set beyond the rank and the",
-  "  price range the sheet gives. You do not know what else is in it.",
-  "",
-  "Rules: no preamble, no summary, no bullet lists, no emoji, no headings other",
-  "than the two above. Name a marketplace only when the sheet has its field for",
-  "that printing. Write currencies as EUR and USD, never symbols, never",
-  "converted. UNDER 90 WORDS IN TOTAL — this sits under a table, not instead of",
-  "one. Never state a number that does not appear in the sheet.",
+  "Anything listed under `missing` is something you do NOT know. Do not fill it",
+  "in, and do not raise the subject at all.",
 ].join("\n");
 
 /**

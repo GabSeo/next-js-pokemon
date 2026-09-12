@@ -78,7 +78,7 @@ function Graded({ graded }: { graded: NonNullable<Facts["graded"]> }) {
     cell?.median === undefined ? "—" : `${cell.currency ?? ""} ${cell.median.toFixed(2)}`.trim();
 
   return (
-    <div className="mt-3 border-t-2 border-muted-surface pt-2.5">
+    <div className="mt-3 border-t border-black/15 pt-2.5">
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-[10px] font-black uppercase tracking-wide text-muted-text">Asking on eBay now</span>
         {Object.entries(graded.psa10Multiple).map(([language, multiple]) => (
@@ -172,7 +172,7 @@ function Figures({ facts }: { facts: Facts }) {
 
   return (
     <ul
-      className="grid gap-1.5 border-b-2 border-muted-surface pb-3"
+      className="grid gap-1.5"
       style={{ gridTemplateColumns: "repeat(auto-fit, minmax(88px, 1fr))" }}
     >
       {cells.map((cell) => (
@@ -210,7 +210,7 @@ type State =
  */
 function Rendered({ text }: { text: string }) {
   return (
-    <div className="grid gap-2">
+    <div className="grid gap-3">
       {text
         .split(/\n{2,}/)
         .map((block) => block.trim())
@@ -219,15 +219,15 @@ function Rendered({ text }: { text: string }) {
           const heading = /^\*\*(.+?)\*\*\s*(?:—|-|:)?\s*([\s\S]*)$/.exec(block);
           if (!heading) {
             return (
-              <p key={index} className="text-[13px] leading-relaxed">
+              <p key={index} className="text-[14px] leading-[1.6]">
                 {block}
               </p>
             );
           }
           return (
             <div key={index}>
-              <div className="text-[11px] font-black uppercase tracking-wide text-muted-text">{heading[1]}</div>
-              <p className="mt-0.5 text-[13px] leading-relaxed">{heading[2]}</p>
+              <div className="text-[10px] font-black uppercase tracking-[0.08em] text-muted-text">{heading[1]}</div>
+              <p className="mt-1 text-[14px] leading-[1.6]">{heading[2]}</p>
             </div>
           );
         })}
@@ -293,13 +293,37 @@ export function CardExplainer({ tcg, code }: { tcg: "pokemon" | "onepiece"; code
   }
 
   return (
-    <div className="mt-3 rounded-md border-2 border-black bg-white p-3">
-      <Figures facts={state.facts} />
-      <div className="mt-3">
+    /* THREE LAYERS, NOT SEVEN BLOCKS. Reported as "insanely difficult to read
+       with 0 UX structure", and the reading was right: every section had the
+       same tiny uppercase label, the same hairline rule and the same type size,
+       so a panel with five things in it presented five things of equal weight
+       and let the reader sort it out.
+
+       The hierarchy is now the one the content already has:
+
+         the ANSWER      prose, largest type, white ground, nothing above it
+         the EVIDENCE    tables, recessed on a tinted ground, smaller
+         the ASIDE       the web note, quietest, dashed rule, visibly elsewhere
+
+       Nothing is hidden — the tables were asked for explicitly — but a table
+       reads as reference rather than as prose once it sits on its own ground,
+       and the eye stops treating it as something to read start to finish. */
+    <div className="mt-3 overflow-hidden rounded-md border-2 border-black bg-white">
+      {/* THE ANSWER FIRST. It was under the figures strip, which put a row of
+          numbers between the reader and the sentences written for them. */}
+      <div className="p-3.5">
         <Rendered text={state.text} />
       </div>
 
-      {state.facts.graded ? <Graded graded={state.facts.graded} /> : null}
+      {/* THE EVIDENCE, RECESSED. One ground, one heading, both tables inside —
+          rather than two sibling blocks each announcing itself. */}
+      <div className="border-t-2 border-black bg-muted-surface px-3.5 py-3">
+        <div className="text-[10px] font-black uppercase tracking-wide text-muted-text">The numbers</div>
+        <div className="mt-2">
+          <Figures facts={state.facts} />
+        </div>
+        {state.facts.graded ? <Graded graded={state.facts.graded} /> : null}
+      </div>
 
       {/* WHAT THE WEB ADDS, AND VISIBLY FROM SOMEWHERE ELSE.
           THE SEPARATION IS THE FEATURE, not decoration. Everything above this
@@ -313,7 +337,7 @@ export function CardExplainer({ tcg, code }: { tcg: "pokemon" | "onepiece"; code
           allowed to be absent — most cards have no story, and the stage is told
           that saying so is the right answer rather than a failure. */}
       {state.web ? (
-        <div className="mt-3 border-t-2 border-dashed border-muted-surface pt-2.5">
+        <div className="border-t-2 border-dashed border-black/25 bg-muted-surface px-3.5 pb-3 pt-2.5">
           <div className="text-[10px] font-black uppercase tracking-wide text-muted-text">
             From the web, not from our records
           </div>
@@ -324,7 +348,7 @@ export function CardExplainer({ tcg, code }: { tcg: "pokemon" | "onepiece"; code
       {/* THE EVIDENCE, FOLDED. `details` needs no state and works before
           hydration, and the closed state is the right default: somebody who
           trusts the answer should not have to scroll past its footnotes. */}
-      <details className="mt-3 border-t-2 border-muted-surface pt-2">
+      <details className="border-t-2 border-black bg-muted-surface px-3.5 py-2.5">
         <summary className="cursor-pointer text-[11px] font-black uppercase tracking-wide text-muted-text">
           What it was told
         </summary>
