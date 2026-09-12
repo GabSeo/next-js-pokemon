@@ -82,13 +82,50 @@ function asTrackedCard(card: CardView): Card {
   const bare = card.code.slice(card.code.lastIndexOf("-") + 1);
 
   return {
-    id: card.code,
+    /**
+     * THE PRINTING, NOT THE CARD. `OP09-061_p2` rather than `OP09-061`.
+     *
+     * The matcher resolves a photograph to a PRINTING, and that is a sharper
+     * identity than the code: the code names four versions of one picture and
+     * the eBay query has to say which. graded-market.ts reads this to look the
+     * printing up by id and derive both halves of a real query — the clause
+     * naming this version and the terms excluding its siblings. Everything else
+     * that reads `id` uses it for log lines, where a printing is also the more
+     * useful thing to see.
+     */
+    id: print?.key ?? card.code,
     slug: card.code,
-    franchise: card.tcg === "onepiece" ? "onepiece" : "pokemon",
+    // `"one-piece"`, WITH THE HYPHEN — the Franchise union's own spelling. It
+    // was written `"onepiece"` here, which is the CardView spelling, and the
+    // `as unknown as Card` cast below let it through: every franchise branch in
+    // graded-market.ts then took the Pokemon path for a One Piece card, which
+    // is why the scan's eBay query never looked like the tracked pages'.
+    franchise: card.tcg === "onepiece" ? "one-piece" : "pokemon",
     name: card.name,
     character: card.name,
     set: print?.origin ?? "",
     number: card.tcg === "onepiece" ? card.code : bare,
+    /**
+     * WHICH PRINTING, which is the field the whole eBay query hangs on.
+     *
+     * `deriveQueryForCard` reads this to find the card's row among its
+     * siblings, and from there builds both halves of a real query: the positive
+     * clause naming this version — `("2nd anniversary")` — and the negative
+     * terms excluding the others — `-jumbo -emperors -uc -r -sr -sec`. Without
+     * it the search asks for every printing of the code at once and reports
+     * their prices as one market.
+     *
+     * The scan knows it wherever the printing is a NAMED promo — the resolver
+     * returns this card's printings ranked by how much each looks like the
+     * photo, and the first one's label is "2nd Anniversary Set" or "Jumbo".
+     *
+     * `label` ONLY, never `origin` as a fallback: a set code like "ST-26"
+     * matches no row in the corpus and would be a worse guess than none. Bandai
+     * records that a code has four printings and not which is the Alternate
+     * Art — 0 of 945 multi-printing groups differ by name — so those keep the
+     * broad query, which is the honest result rather than a wrong narrow one.
+     */
+    printName: card.tcg === "onepiece" ? print?.label : undefined,
     currency: eur !== undefined ? "EUR" : "USD",
     currentPrice: eur ?? usd ?? 0,
     priceUnavailable: eur === undefined && usd === undefined,

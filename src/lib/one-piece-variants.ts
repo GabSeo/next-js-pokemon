@@ -59,7 +59,7 @@
  * is a treatment and none was ever eligible.
  */
 import { opRowsForCode, opSetFamily, type OpEntry } from "@/lib/one-piece-catalog";
-import { opProductVocabulary, opSetVocabulary } from "@/data/one-piece-sets";
+import { OP_PRODUCT_VOCABULARY, opProductVocabulary, opSetVocabulary } from "@/data/one-piece-sets";
 
 /**
  * The closed set of version types, with the words sellers actually write.
@@ -681,6 +681,29 @@ export function deriveQuery(code: string, wanted: OpEntry): DerivedQuery {
  * `card.printName` is undefined. The corpus is on disk and does not care, so a
  * metered upstream being down costs freshness, never correctness.
  */
+/**
+ * The product a bare print name begins with, if the vocabulary knows one.
+ *
+ * A corpus row names its product in parentheses — "Monkey.D.Luffy (Jumbo)" —
+ * and `productOf` reads those. A print name reaching here from the scan has
+ * none: it is "3rd Anniversary Treasure Campaign Pack", flat. The vocabulary
+ * already holds "3rd Anniversary Treasure" with the terms sellers write, and
+ * the only thing between them was the shape of the string.
+ *
+ * LONGEST MATCH WINS, which is the same rule every prefix table follows: a name
+ * matching both "3rd Anniversary" and "3rd Anniversary Treasure" belongs to the
+ * second, because the more specific entry is the more specific claim.
+ */
+function knownProductPrefix(name: string): string | undefined {
+  const lower = name.toLowerCase();
+  let best: string | undefined;
+  for (const product of Object.keys(OP_PRODUCT_VOCABULARY)) {
+    if (!lower.startsWith(product.toLowerCase())) continue;
+    if (!best || product.length > best.length) best = product;
+  }
+  return best;
+}
+
 export function deriveQueryForCard(
   code: string,
   printName: string | undefined,
@@ -706,7 +729,15 @@ export function deriveQueryForCard(
   const name = printName ?? (variantTags ?? []).map((t) => `(${t})`).join(" ");
   if (!name) return undefined;
   const ids = treatmentsOf(name).filter((id) => !NON_SEPARATING.has(id));
-  const product = ids.length === 0 ? productOf(name) : undefined;
+  // `productOf` reads PARENTHETICALS, because a corpus row is written
+  // "Monkey.D.Luffy (Jumbo)". A print name from the scan is not: it arrives as
+  // a bare "3rd Anniversary Treasure Campaign Pack", so the parenthetical
+  // reader finds nothing and a card whose product IS in the vocabulary gets the
+  // broad query anyway. Falling back to the longest vocabulary entry the name
+  // starts with recovers it — longest so "3rd Anniversary Treasure" wins over a
+  // hypothetical "3rd Anniversary", which is the more specific claim.
+  const product =
+    ids.length === 0 ? (productOf(name) ?? knownProductPrefix(name)) : undefined;
   const accept = ids.length > 0 ? termsFor(ids) : product ? productTerms(product) : [];
   if (accept.length === 0) return undefined;
   return {

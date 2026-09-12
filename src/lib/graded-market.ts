@@ -773,8 +773,37 @@ async function resolveGradedMarketData(card: Card): Promise<GradedMarketData | u
      * appears nowhere in either language's catalogue — proven, not assumed:
      * across 2,865 codes no EN treatment name differs from its JP one.
      */
-    if (ref && ref.lookup.by === "code") {
-      const derived = deriveQueryForCard(ref.lookup.code, card.printName, ref.lookup.variantTags);
+    /**
+     * THE REF WAS INCIDENTAL TO THIS, and gating on it cost the scan the whole
+     * refinement. `deriveQueryForCard` needs a CODE and a PRINT NAME; a tracked
+     * card carries both on its ref, and a scanned card carries both on itself —
+     * `card.id` is the One Piece code and `card.printName` the printing it
+     * resolved to. The gate said "tracked cards only" when it meant "One Piece
+     * cards whose printing we know".
+     *
+     * What that cost, measured against the same card on both screens:
+     *
+     *   tracked   OP09-061 PSA 10 ("2nd anniversary") -jumbo -emperors -uc -r …
+     *   scanned   Monkey.D.Luffy OP09-061 PSA 10
+     *
+     * The second searches every printing of that code at once and reports their
+     * prices as one market. The card's own number is the same; which version of
+     * it is for sale is not.
+     */
+    const byCode = ref?.lookup.by === "code" ? ref.lookup : undefined;
+    // `number` carries the CODE for One Piece — `id` is the printing, which is
+    // a different and sharper thing. Reading the code off `id` would have
+    // worked only until a caller set it to a printing, which one now does.
+    const derivationCode = byCode ? byCode.code : card.franchise === "one-piece" ? card.number : undefined;
+    if (derivationCode) {
+      // BY NAME, WHICH IS ALL THE CORPUS OFFERS. An id path was written and
+      // removed: the One Piece corpus keys its rows on a content hash
+      // (`op_d46c7…`), not on Bandai's printing ids, so `OP09-061_p2` finds
+      // nothing there. `printName` is the only handle, and the scan has one
+      // wherever the printing is a NAMED promo — "2nd Anniversary Set",
+      // "Jumbo". Bandai's own numbered printings carry no name in either
+      // source, so those keep the broad query and say so.
+      const derived = deriveQueryForCard(derivationCode, card.printName, byCode?.variantTags);
       if (derived && derived.acceptGroups.length > 0) {
         return {
           tags: undefined,
