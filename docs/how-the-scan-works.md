@@ -46,6 +46,65 @@ is the only metered thing anywhere near the scan.
 
 ---
 
+## 2a. The rule: a photo reads the code, the camera reads the artwork
+
+**This is the most important rule in the scan, and it was broken for weeks
+without anyone noticing.**
+
+| | a photograph | the live camera |
+|---|---|---|
+| leads with | the **printed code**, via Vision | the **artwork**, on device |
+| falls back to | the artwork match | nothing — it says so instead |
+| why | one image, chosen, one metered call it can afford | thirty frames a second cannot be metered |
+
+### How it broke
+
+The photo path worked. Then the live view was built, and its reasoning — the
+artwork is all we have, a tie is an answer, escalating to a metered reader is
+impossible at 30 fps — was correct *there* and got applied to the photo path,
+where every premise of it is false. The photo path stopped calling the reader
+except as a last resort, and nobody noticed because it still returned cards.
+
+The failure that exposed it: the same photograph of a slabbed Eustass Kid
+resolved correctly with the Japanese catalogue selected and wrongly with the
+English one. The banner carried the reason — `margin 0.016`, against a
+`CLIP_CONFIDENT_MARGIN` of 0.015. A wrong card cleared the bar by a thousandth,
+so the scan called itself certain and never asked the reader. With the other
+catalogue the same photograph failed the margin, fell through, and came back
+right.
+
+### Why no threshold fixes it
+
+Checked, not assumed. Across four real photographs:
+
+| | score | correct? |
+|---|---|---|
+| Moltres, centre crop | 0.94 | yes |
+| Moltres, whole frame | 0.82 | yes |
+| Pikachu GG30 | 0.83 | **no** |
+| Eustass Kid, slab | 0.77 | **no** |
+
+The distributions overlap. There is no number that separates them.
+
+An agreement rule was tried next — do the three crops of one photograph name the
+same card? Measured on the failing slab: **two of three agreed on the wrong
+card.** Necessary, not sufficient, discarded.
+
+### The principle
+
+**The artwork is a guess; the printed number is evidence.** A picture is shared
+between reprints, between a card and its Japanese release, and — where 4,839 of
+5,809 One Piece vectors were built from pictures Bandai stamps "SAMPLE" across —
+between a real card and a watermarked reference that merely resembles it. The
+number in the corner names one card, and Vision read `OP05-074` off a PSA slab
+through the plastic.
+
+Both run in parallel on a photo, so the rule costs no time. The live view keeps
+the artwork because at thirty frames a second it is all there is — and that is
+the right trade *there*, which is exactly why it must not leak back here.
+
+---
+
 ## 3. Why the model runs in the browser
 
 The model is **68 MB** of ONNX weights. On Vercel that is re-downloaded on every
