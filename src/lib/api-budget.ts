@@ -105,15 +105,25 @@ const BUDGETS: Record<string, Budget> = {
    * Groq — the explainer's first choice, and open-weight models on a free tier
    * wide enough to put in front of visitors rather than only in front of us.
    *
-   * THE CEILING IS OURS, NOT THEIRS. Groq publishes its own per-minute and
-   * per-day limits and moves them; rather than encode a number that will drift,
-   * this sits at a volume this project could not plausibly exceed honestly —
-   * 60 a day is more cards than anyone catalogues in a sitting — and lets
-   * Groq's own 429 be the authority if it is ever reached.
+   * THE BINDING LIMIT IS TOKENS, NOT REQUESTS, and reading the dashboard's
+   * biggest number would have set this wrong. Groq allows openai/gpt-oss-20b
+   * 1,000 requests a day and 30 a minute — but only 200,000 tokens a day and
+   * 8,000 a minute. One call here is about 950 tokens (sheet, brief and reply),
+   * so the real capacity is:
+   *
+   *   200,000 / 950  =  ~210 calls a day
+   *     8,000 / 950  =  ~8 calls a MINUTE, against a stated 30
+   *
+   * 120 a day sits at half the token-derived ceiling, which is the margin this
+   * ledger always keeps: it charges at attempt time and so over-counts retries.
+   *
+   * THE PER-MINUTE FIGURE IS NOT GUARDED HERE and is worth knowing anyway —
+   * eight a minute is generous for one person and thin for several at once, so
+   * a busy moment surfaces as Groq's own 429 rather than as this ceiling.
    *
    * Explanations are cached, so this counts NEW cards rather than views.
    */
-  "api.groq.com": { limit: 1200, windowMs: MONTH_MS, burst: { limit: 60, windowMs: DAY_MS } },
+  "api.groq.com": { limit: 2400, windowMs: MONTH_MS, burst: { limit: 120, windowMs: DAY_MS } },
   // Both 100/hour real, but their per-card costs are nothing alike, so the
   // ceilings are set from measurement rather than symmetry.
   //
