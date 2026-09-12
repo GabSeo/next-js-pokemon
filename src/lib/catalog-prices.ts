@@ -342,3 +342,86 @@ export async function getCatalogPricesByVariant(cards: CatalogCard[]): Promise<M
 
   return out;
 }
+
+/**
+ * The cheapest and dearest printing of each card, for a GRID.
+ *
+ * WHY A RANGE AND NOT A NUMBER. A Pokemon card is several objects sharing one
+ * picture, and they do not trade together. Measured on this snapshot:
+ *
+ *   cards carrying two distinct Cardmarket figures   60.3% (12,336 of 20,442)
+ *   ratio between the two, median                    3.45x
+ *   ratio at the 90th percentile                     10.52x
+ *
+ * A tile has room for one line, and for six cards in ten a single figure on
+ * that line is the wrong object's price by a factor of three. This is why the
+ * tile carried no price at all for a while — the choice looked like "one number
+ * or nothing". A range is the third answer: it needs no more room than a number
+ * and it makes no claim that is false.
+ *
+ * The other four in ten have one printing and get one figure, because
+ * formatCatalogPriceRange collapses equal ends. A range there would invent a
+ * spread.
+ *
+ * NEVER MIXED CURRENCIES. Cardmarket quotes euros and TCGplayer dollars, so a
+ * range spanning both would be arithmetic on two different units. Cardmarket
+ * leads — it prices more of this catalogue (19,776 cards against TCGplayer's
+ * 18,777) and it is the same marketplace the sort in getCatalogPriceValues
+ * prefers, so a grid ordered by price and a grid labelled with prices agree.
+ * A card Cardmarket does not price falls to TCGplayer wholesale, both ends.
+ *
+ * SNAPSHOT ONLY, NO LIVE FALLBACK, and that is the same rule
+ * getCatalogPriceValues follows for the same reason: a grid is a bulk operation
+ * over as many rows as the page shows, and per-card fetches across a bulk
+ * operation is exactly the failure this module exists to remove — 21k
+ * build-time requests tripped the circuit breaker and froze empty prices into
+ * static HTML for 24h. A card the snapshot lacks is simply absent here; its own
+ * page still fetches it live.
+ */
+export type CatalogPriceRange = {
+  min: number;
+  max: number;
+  currency: "EUR" | "USD";
+  /** How many printings were priced — 1 means the range is a single figure. */
+  printings: number;
+};
+
+export function getCatalogPriceRanges(cards: CatalogCard[]): Map<string, CatalogPriceRange> {
+  const { cards: entries } = loadSnapshot();
+  const out = new Map<string, CatalogPriceRange>();
+
+  for (const card of cards) {
+    const entry = entries[card.tcgdexId];
+    if (!entry) continue;
+
+    // One pass per distinct printing, through the same resolution the card page
+    // uses — `cardmarketPriceFields` is where the suffix rules live, and
+    // reading the snapshot's raw keys here would be a second, divergent copy of
+    // them. See getCatalogPricesByVariant for the same loop.
+    const seen = new Set<string>();
+    const eur: number[] = [];
+    const usd: number[] = [];
+
+    for (const variant of card.variants) {
+      const type = variant.type;
+      if (type && seen.has(type)) continue;
+      if (type) seen.add(type);
+      const price = toPrice(card, entry, type);
+      if (!price) continue;
+      if (typeof price.cardmarket?.avg === "number") eur.push(price.cardmarket.avg);
+      if (typeof price.tcgplayer?.market === "number") usd.push(price.tcgplayer.market);
+    }
+
+    const values = eur.length > 0 ? eur : usd;
+    if (values.length === 0) continue;
+
+    out.set(card.tcgdexId, {
+      min: Math.min(...values),
+      max: Math.max(...values),
+      currency: eur.length > 0 ? "EUR" : "USD",
+      printings: values.length,
+    });
+  }
+
+  return out;
+}

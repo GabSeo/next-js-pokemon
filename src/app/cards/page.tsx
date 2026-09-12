@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SearchControls } from "@/components/search-controls";
 import { CatalogCardTile } from "@/components/catalog-card-tile";
+import { getCatalogPriceRanges } from "@/lib/catalog-prices";
 import { EyebrowTitle } from "@/components/retro/eyebrow-title";
 import { catalogStats, getCatalogSets } from "@/lib/catalog";
 import { isSortId, searchCatalogCards, type CatalogQuery } from "@/lib/catalog-search";
@@ -72,6 +73,12 @@ export default async function CardsPage({ searchParams }: PageProps) {
   }
   const entries = result.entries;
 
+  // ONE PAGE OF RESULTS, not the whole match set. `entries` is already paginated,
+  // so this resolves sixty ranges rather than however many thousands the query
+  // matched — the same discipline the price sort follows, which reads two fields
+  // per row for ordering and leaves the full resolution to the rows on screen.
+  const prices = getCatalogPriceRanges(entries.map((entry) => entry.card));
+
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6">
       <EyebrowTitle tone="blue">Catalogue</EyebrowTitle>
@@ -116,6 +123,7 @@ export default async function CardsPage({ searchParams }: PageProps) {
                     label={latinCardLabel(entry.card, entry.set.id, entry.set.language === "ja")}
                     imageUrl={entry.card.image ? undefined : pokemonImageUrl(entry.card, entry.set, 320)}
                     setName={pokemonSetShortLabel(entry.set)}
+                    price={prices.get(entry.card.tcgdexId)}
                   />
                 </li>
               ))}

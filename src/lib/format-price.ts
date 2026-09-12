@@ -38,3 +38,50 @@ export function formatPrice(value: number, currency: string): string {
   if (magnitude >= THOUSANDS) return `${currency} ${(rounded / 1000).toFixed(1)}K`;
   return `${currency} ${rounded.toLocaleString("en-US")}`;
 }
+
+/**
+ * A price for a CATALOGUE GRID, where most cards cost less than a coffee.
+ *
+ * WHY `formatPrice` CANNOT BE USED HERE. It rounds to whole units, which is
+ * right for the graded market it was written for — cents are noise on a median
+ * of four asks in the hundreds — and wrong for a catalogue by an order of
+ * magnitude. Measured across data/prices/pokemon.json:
+ *
+ *   median             EUR 0.60
+ *   under EUR 1.00     56.6% of priced cards
+ *   under EUR 0.50     47.4%
+ *
+ * Rounded to units, more than half the catalogue reads "EUR 1" or "EUR 0" —
+ * the second of which states that a card is free.
+ *
+ * So: cents below 100, whole units above, where the cent has stopped carrying
+ * information and the width starts to. The thousands and millions backstops are
+ * `formatPrice`'s, for the same reason they exist there.
+ */
+export function formatCatalogPrice(value: number, currency: string): string {
+  const magnitude = Math.abs(value);
+  if (magnitude >= MILLIONS) return `${currency} ${(value / MILLIONS).toFixed(2)}M`;
+  if (magnitude >= THOUSANDS) return `${currency} ${(value / 1000).toFixed(1)}K`;
+  if (magnitude >= 100) return `${currency} ${Math.round(value).toLocaleString("en-US")}`;
+  return `${currency} ${value.toFixed(2)}`;
+}
+
+/**
+ * The same, as a range — "EUR 0.60 - 2.07".
+ *
+ * THE CURRENCY IS PRINTED ONCE. Two symbols on one line in a 150px tile is
+ * noise, and the caller guarantees both ends came from one marketplace: see
+ * getCatalogPriceRanges, which never mixes Cardmarket euros with TCGplayer
+ * dollars inside one range.
+ *
+ * Equal ends collapse to a single figure rather than printing "EUR 2 - 2".
+ * That is not a formatting nicety: a card with one printing HAS one price, and
+ * a range implies a spread that does not exist.
+ */
+export function formatCatalogPriceRange(min: number, max: number, currency: string): string {
+  if (!(max > min)) return formatCatalogPrice(min, currency);
+  const low = formatCatalogPrice(min, currency);
+  // The high end drops the currency — it is the same one by construction.
+  const high = formatCatalogPrice(max, currency).slice(currency.length + 1);
+  return `${low} – ${high}`;
+}

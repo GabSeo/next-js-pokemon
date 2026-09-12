@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { EyebrowTitle } from "@/components/retro/eyebrow-title";
 import { CatalogCardTile } from "@/components/catalog-card-tile";
 import { getCatalogSet, getCatalogSetCards, getCatalogSets, isDigitalOnlySet, qualify } from "@/lib/catalog";
+import { getCatalogPriceRanges } from "@/lib/catalog-prices";
 import { pokemonImageUrl } from "@/lib/pokemon-image";
 import { pokemonSeriesLabel, pokemonSetLabel, pokemonSetShortLabel } from "@/lib/pokemon-set-label";
 import { absoluteUrl } from "@/lib/site";
@@ -89,6 +90,12 @@ export default async function SetPage({ params }: PageProps) {
   const entries = getCatalogSetCards(set.id, set.language ?? "en");
   const cards = entries.map((e) => e.card);
 
+  // PRICES ARE BACK ON THE GRID, as a range. One memoised snapshot read and a
+  // map lookup per card — no fetch, no per-tile work. Japanese sets get an
+  // empty map, because the snapshot's source is the English endpoint and prices
+  // none of them; the tiles simply render without a figure.
+  const prices = getCatalogPriceRanges(cards);
+
   const itemListJsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
@@ -121,10 +128,11 @@ export default async function SetPage({ params }: PageProps) {
         </div>
       </div>
 
-      {/* No prices here any more: browsing is for finding a card, and a figure
-          per tile could not be qualified at that size — a reverse holo is a
-          median 3.36x its normal twin. /card/[tcg]/[code] answers it per
-          printing, which is the only place it can be answered honestly. */}
+      {/* A RANGE PER TILE, not a number. 60.3% of priced cards carry two
+          distinct Cardmarket figures a median 3.45x apart, so a single figure
+          would be the wrong printing's price six times in ten with no room to
+          say which. "EUR 0.60 - 2.07" fits the same line and claims nothing
+          false; /card/[tcg]/[code] still answers it per printing. */}
 
       <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {/* THE SAME RULES THE SEARCH GRID USES. This page predates both and
@@ -138,6 +146,7 @@ export default async function SetPage({ params }: PageProps) {
               label={label}
               imageUrl={card.image ? undefined : pokemonImageUrl(card, set, 320)}
               setName={pokemonSetShortLabel(set)}
+              price={prices.get(card.tcgdexId)}
             />
           </li>
         ))}
