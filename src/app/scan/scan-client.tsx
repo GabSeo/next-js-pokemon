@@ -456,6 +456,7 @@ export function ScanClient() {
     let cards: CardView[] = [];
     let note: string | undefined;
     let byNameOnly = false;
+    let read = "";
 
     try {
       const image = await uploadable(file);
@@ -478,10 +479,16 @@ export function ScanClient() {
           candidates?: CodeCandidate[];
           cards?: CardView[];
           byNameOnly?: boolean;
+          text?: string;
         };
         candidates = payload.candidates ?? [];
         cards = payload.cards ?? [];
         byNameOnly = payload.byNameOnly === true;
+        // KEPT FOR THE FAILURE MESSAGE ONLY. When the reader finds no code, the
+        // difference between "it saw nothing" and "it saw the card and the code
+        // was not among what we extracted" is the whole diagnosis, and it is
+        // invisible without showing what came back.
+        read = payload.text ?? "";
       }
     } catch {
       note = "Could not reach the card reader. Check your connection, or type the code below.";
@@ -507,8 +514,11 @@ export function ScanClient() {
           (candidates.length > 0
             ? `Read "${candidates[0].value}" off the card, but no card in the catalogue has that number. ` +
               "These are the closest artwork matches — or type the number yourself."
-            : "The printed number could not be read in this photo, so these are the closest artwork " +
-              "matches rather than an answer. The number sits in the bottom corner."),
+            : read.trim().length > 0
+              ? "The reader saw text on this card but no card number among it, so these are the closest " +
+                `artwork matches rather than an answer. It read: “${read.replace(/\s+/g, " ").trim().slice(0, 120)}…”`
+              : "The reader found no text at all in this photo, so these are the closest artwork matches " +
+                "rather than an answer. The number sits in the bottom corner."),
         route: unsure.route,
       });
       return;
