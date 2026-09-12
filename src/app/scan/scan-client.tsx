@@ -318,7 +318,50 @@ async function matchLocally(
  * so the number printed in the card's bottom corner is the answer, and it is
  * what the line above sends the reader to go and look at.
  */
-function TiedCards({ cards }: { cards: CardView[] }) {
+function TiedCards({ cards, ranked }: { cards: CardView[]; ranked?: boolean }) {
+  /**
+   * WHEN THE ORDER MEANS SOMETHING, LEAD WITH THE WINNER.
+   *
+   * A tie between reprints is a genuine question — two cards carry the
+   * identical picture and only the printed number separates them — so those are
+   * shown side by side as equals, which is what this grid was built for.
+   *
+   * A list the ARTWORK has ordered is not that. The printed number named four
+   * cards in four different sets and the picture said which one; presenting
+   * them as four equal tiles asks the reader to redo a comparison that has
+   * already been made, and made well. Measured across four real photographs,
+   * the winner led the runner-up by 0.10 to 0.23 — seven to fifteen times the
+   * margin this project calls confident — and was right every time.
+   *
+   * NOT HIDDEN, THOUGH, AND THAT IS THE POINT OF THE DISCLOSURE RATHER THAN A
+   * THRESHOLD. Four successes and no failures is not a calibration; a cutoff
+   * fitted to it would be the same mistake that let a wrong card through at
+   * 0.016 this morning. So the others stay one tap away, and when the ranking
+   * is wrong the reader loses a click rather than the answer.
+   *
+   * The pattern is already in this page for One Piece printings — "not this
+   * one? show the other four" — and it is the same question.
+   */
+  if (ranked && cards.length > 1) {
+    const [best, ...rest] = cards;
+    return (
+      <div className="mt-3">
+        <TiedCards cards={[best]} />
+        <details className="mt-3">
+          <summary className="cursor-pointer text-[11px] font-black underline underline-offset-4">
+            Not this one? Show the other {rest.length} card{rest.length === 1 ? "" : "s"} with this number
+          </summary>
+          <p className="mt-2 text-[11px] text-muted-text">
+            The number printed on a card is a number and a set SIZE, never the set — and 154 of 216 English
+            sets share their total, so several real cards carry it. These are ordered by how much each looks
+            like your photo.
+          </p>
+          <TiedCards cards={rest} />
+        </details>
+      </div>
+    );
+  }
+
   return (
     <ul
       className="mt-3 grid gap-3"
@@ -991,7 +1034,10 @@ export function ScanClient() {
                   two things you cannot see at once is the one thing the reader
                   actually has to do here. */}
               {status.cards.length > 1 ? (
-                <TiedCards cards={status.cards} />
+                // `ranked` only where the artwork actually ordered them — the
+                // reader's own route. An artwork tie is a question between
+                // equals and keeps the side-by-side grid.
+                <TiedCards cards={status.cards} ranked={status.route?.via === "text"} />
               ) : (
               /* THE PRINTINGS, not just the code. A code names a card; a card
                  is several printings and they are not worth the same — a
