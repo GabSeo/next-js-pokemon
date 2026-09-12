@@ -204,6 +204,31 @@ async function matchLocally(
       ].map((rect) => matchCard(source, rect, keys, { limit: 8 }))
     );
     const result = attempts.reduce((best, attempt) => (attempt.margin > best.margin ? attempt : best));
+
+    /**
+     * DO THE CROPS AGREE? — and this is the check that matters more than any
+     * threshold.
+     *
+     * Taking the best margin of three crops is taking the best of three chances
+     * to clear a bar, which inflates exactly the number the bar is read from. A
+     * slabbed One Piece card proved it: the winning crop cleared
+     * CLIP_CONFIDENT_MARGIN by a thousandth — 0.016 against 0.015 — so the scan
+     * declared itself sure, answered with the wrong card, and never called the
+     * printed-number reader that would have got it right. The same photograph
+     * with the other catalogue selected failed the margin outright, fell
+     * through to the reader, and was identified correctly.
+     *
+     * A threshold cannot fix that, because 0.015 is not wrong — it was fitted
+     * to five photographs and it separates them. What is wrong is treating one
+     * lucky sample as a measurement.
+     *
+     * Agreement is the second opinion the margin cannot be. Three crops of one
+     * photograph are three looks at the same card: when they name the same
+     * card, that is evidence no single margin carries, and when they disagree
+     * the confidence is an artefact of whichever crop happened to land well.
+     */
+    const winners = attempts.map((attempt) => attempt.hits[0]?.id).filter(Boolean);
+    const agreed = winners.filter((id) => id === result.hits[0]?.id).length;
     const verdict = clipVerdict(result);
     // Nothing card-like in the picture at all. No list is worth showing and the
     // reader will not find a code either, but it is allowed to try.
@@ -262,7 +287,12 @@ async function matchLocally(
       // Only an `identified` single card ends the scan here. Everything else is
       // held as the fallback while the printed number gets its turn — including
       // the diffuse spread, which is a shortlist rather than an answer.
-      confident: verdict === "identified" && tied.length <= CLIP_MAX_TIED && cards.length === 1,
+      // TWO CROPS OUT OF THREE, not all three: a whole-frame read of a slab is
+      // genuinely a different picture from a tight centre crop, so demanding
+      // unanimity would refuse answers that are plainly right. Two agreeing is
+      // the difference between a reading and a coincidence.
+      confident:
+        verdict === "identified" && agreed >= 2 && tied.length <= CLIP_MAX_TIED && cards.length === 1,
     };
   } finally {
     source.close();
@@ -416,8 +446,11 @@ export function ScanClient() {
   const objectUrl = useRef<string | undefined>(undefined);
 
   async function onFile(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const picked = event.target.files?.[0];
+    if (!picked) return;
+    // Narrowed once, into a const the async closures below can read — TypeScript
+    // loses the narrowing on `event.target.files?.[0]` across a function boundary.
+    const file: File = picked;
 
     if (objectUrl.current) URL.revokeObjectURL(objectUrl.current);
     objectUrl.current = URL.createObjectURL(file);
@@ -427,29 +460,37 @@ export function ScanClient() {
     // sends no photograph anywhere, and answers in milliseconds once the model
     // is warm. Cloud Vision is the fallback for a picture the artwork cannot
     // place, not the first move.
-    setStatus({ phase: "matching" });
     /**
-     * The artwork's answer when it was NOT confident enough to end the scan.
+     * A PHOTOGRAPH READS THE PRINTED CODE FIRST. Always, both games.
      *
-     * Kept rather than discarded, because the reader can fail too — no key on
-     * the deployment, no code in frame, a code Vision misreads into a card that
-     * does not exist. A tied pair of reprints is a far better last word than
-     * "the card reader failed", so it waits here for that case.
+     * THE ARTWORK IS A GUESS AND THE NUMBER IS EVIDENCE. A picture is shared
+     * between reprints, between a card and its Japanese release, and — measured
+     * — between a real card and a watermarked reference that merely resembles
+     * it. The number stamped in the corner is none of those things: it names one
+     * card, and Vision read `OP05-074` off a slabbed Eustass Kid through the
+     * plastic of a PSA case.
+     *
+     * WHAT ASKING THE ARTWORK FIRST COST. On the One Piece index — 4,839 of
+     * 5,809 vectors (83%) built from pictures Bandai stamps "SAMPLE" across —
+     * a wrong card cleared CLIP_CONFIDENT_MARGIN by a thousandth, 0.016 against
+     * 0.015. The scan called itself certain, answered Kalgara, and never asked
+     * the reader. The same photograph with the other catalogue selected failed
+     * the margin, fell through, and came back correct: the whole of the "it
+     * works in JP but not EN" report.
+     *
+     * AND NO THRESHOLD FIXES IT, which was checked rather than assumed. Across
+     * four real photographs a correct match scored 0.94 and 0.82 while wrong
+     * ones scored 0.83 and 0.77 — the distributions overlap, so there is no
+     * number that separates them.
+     *
+     * BOTH RUN AT ONCE, so this costs no time. The artwork match is still worth
+     * having: it answers when the reader is switched off, when no code is in
+     * frame, and when a code names a card the catalogue does not hold.
+     *
+     * THE LIVE VIEW IS UNCHANGED and cannot follow this rule — the reader is a
+     * metered per-image call and a camera produces thirty a second. There, the
+     * artwork is all there is.
      */
-    let unsure: { cards: CardView[]; route: Route } | undefined;
-    try {
-      const local = await matchLocally(file, indexes);
-      if (local?.confident) {
-        setStatus({ phase: "done", candidates: [], cards: local.cards, route: local.route });
-        return;
-      }
-      if (local) unsure = { cards: local.cards, route: local.route };
-    } catch {
-      // No WebGPU, a failed model download, an image this browser will not
-      // decode. None of that should cost the visitor their scan — fall through
-      // to the reader that runs on a server.
-    }
-
     setStatus({ phase: "reading" });
 
     let candidates: CodeCandidate[] = [];
@@ -458,20 +499,25 @@ export function ScanClient() {
     let byNameOnly = false;
     let read = "";
 
-    try {
-      const image = await uploadable(file);
-      const response = await fetch("/api/scan/ocr", {
-        method: "POST",
-        headers: { "Content-Type": image.type || "image/jpeg" },
-        body: image,
-      });
+    /** The printed-number reader, as one call. Returns nothing and sets `note` on failure. */
+    async function readPrintedCode(): Promise<void> {
+      try {
+        const image = await uploadable(file);
+        const response = await fetch("/api/scan/ocr", {
+          method: "POST",
+          headers: { "Content-Type": image.type || "image/jpeg" },
+          body: image,
+        });
 
-      if (response.status === 501) {
-        note = "The card reader is not configured on this deployment.";
-      } else if (!response.ok) {
-        const { error } = (await response.json().catch(() => ({}))) as { error?: string };
-        note = `The card reader failed: ${error ?? response.status}`;
-      } else {
+        if (response.status === 501) {
+          note = "The card reader is not configured on this deployment.";
+          return;
+        }
+        if (!response.ok) {
+          const { error } = (await response.json().catch(() => ({}))) as { error?: string };
+          note = `The card reader failed: ${error ?? response.status}`;
+          return;
+        }
         // The reader returns the cards already resolved and their printings
         // already ordered by how much each looks like the photo — one upload,
         // one response, no second round trip.
@@ -486,13 +532,33 @@ export function ScanClient() {
         byNameOnly = payload.byNameOnly === true;
         // KEPT FOR THE FAILURE MESSAGE ONLY. When the reader finds no code, the
         // difference between "it saw nothing" and "it saw the card and the code
-        // was not among what we extracted" is the whole diagnosis, and it is
-        // invisible without showing what came back.
+        // was not among what we extracted" is the whole diagnosis.
         read = payload.text ?? "";
+      } catch {
+        note = "Could not reach the card reader. Check your connection, or type the code below.";
       }
-    } catch {
-      note = "Could not reach the card reader. Check your connection, or type the code below.";
     }
+
+    /**
+     * The artwork's answer when it was NOT confident enough to end the scan.
+     *
+     * Kept rather than discarded, because the reader can fail too — no key on
+     * the deployment, no code in frame, a code Vision misreads into a card that
+     * does not exist. A tied pair of reprints is a far better last word than
+     * "the card reader failed", so it waits here for that case.
+     */
+    let unsure: { cards: CardView[]; route: Route } | undefined;
+
+    const artwork = matchLocally(file, indexes).catch(() => {
+      // No WebGPU, a failed model download, an image this browser will not
+      // decode. None of that should cost the visitor their scan.
+      return undefined;
+    });
+
+    // Even a CONFIDENT artwork answer is only the fallback now: on an index
+    // built from watermarked pictures its confidence is not evidence.
+    const [local] = await Promise.all([artwork, readPrintedCode()]);
+    if (local) unsure = { cards: local.cards, route: local.route };
 
     // THE PRINTED NUMBER WINS WHEN IT EXISTS, because it is the only evidence in
     // the picture that is unambiguous — artwork is shared between reprints and
@@ -763,25 +829,18 @@ export function ScanClient() {
           <LiveScanner indexes={indexes} onClose={() => setLive(false)} />
         ) : null}
 
-        {!live && status.phase === "matching" ? (
-          <p className="rounded-lg border-2 border-black bg-muted-surface p-3 text-sm font-bold">
-            Looking at the artwork…
-            <span className="mt-1 block text-xs font-normal text-muted-text">
-              This runs on your device and the photo does not leave it. The first card of a session also
-              downloads the matcher, which takes a moment; every one after is instant.
-            </span>
-          </p>
-        ) : null}
-
-        {!live && status.phase === "reading" ? (
-          <p className="rounded-lg border-2 border-black bg-muted-surface p-3 text-sm font-bold">
+        {/* ONE PROGRESS STATE, BECAUSE THERE IS ONE STAGE NOW. There were two —
+            "looking at the artwork", then "reading the printed code instead" —
+            and the second sentence said the artwork had failed. It no longer
+            has: both run together and the reader leads by design, so the old
+            copy would explain a fallback that is not happening. */}
+        {!live && (status.phase === "matching" || status.phase === "reading") ? (
+          <p className="rounded-lg border-2 border-foreground bg-muted-surface p-3 text-sm font-bold">
             Reading the card…
             <span className="mt-1 block text-xs font-normal text-muted-text">
-              {/* WHY the photo is being sent differs by game, and saying the
-                  wrong reason is worse than saying none. One Piece never had a
-                  local attempt to fail. */}
-              The artwork was not a clear enough match, so the printed code is being read instead. The photo is
-              sent once, read, and not stored.
+              The number printed in the corner is read first — it names one card, where an artwork can be
+              shared by several. The photo is sent once for that, read, and not stored. The artwork is matched
+              on your device at the same time, as the fallback.
             </span>
           </p>
         ) : null}
