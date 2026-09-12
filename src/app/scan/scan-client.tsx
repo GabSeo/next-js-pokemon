@@ -495,9 +495,20 @@ export function ScanClient() {
         phase: "done",
         candidates,
         cards: unsure.cards,
+        // WHY, SPECIFICALLY. "Couldn't read the number" covered three different
+        // failures — the reader being switched off on this deployment, the
+        // reader running and finding no code, and the reader finding a code
+        // that names no card — and only one of them is the reader's fault. A
+        // person who is told the reader is not configured knows to type the
+        // code; a person told "couldn't read it" takes another photograph for
+        // nothing.
         note:
-          "Couldn't read the number printed on the card, so this is the closest artwork — " +
-          "check the number in the corner of yours, or type it below.",
+          note ??
+          (candidates.length > 0
+            ? `Read "${candidates[0].value}" off the card, but no card in the catalogue has that number. ` +
+              "These are the closest artwork matches — or type the number yourself."
+            : "The printed number could not be read in this photo, so these are the closest artwork " +
+              "matches rather than an answer. The number sits in the bottom corner."),
         route: unsure.route,
       });
       return;
@@ -774,6 +785,26 @@ export function ScanClient() {
             </p>
           ) : (
             <>
+              {/* THE NOTE SURVIVES A NON-EMPTY LIST, which it did not.
+                  It was rendered only in the "nothing at all" branch, so the
+                  moment the artwork shortlist filled `cards` the sentence
+                  explaining that the printed-number reader had been tried and
+                  failed was written and thrown away. A reader then saw five
+                  guesses with no account of why, which is the question that got
+                  asked: "if you have the number, why does it show OP08 cards?"
+                  The answer was on the floor. */}
+              {status.note ? (
+                <p
+                  className="mb-3 rounded-md border-2 px-3 py-2 text-[12px] font-bold"
+                  style={{
+                    borderColor: "var(--pokemon-red)",
+                    background: "color-mix(in srgb, var(--pokemon-red) 7%, white)",
+                  }}
+                >
+                  {status.note}
+                </p>
+              ) : null}
+
               <p className="text-xs font-black uppercase tracking-wide text-muted-text">
                 {status.route?.via === "name"
                   ? "Couldn't read the number — cards with this name"
