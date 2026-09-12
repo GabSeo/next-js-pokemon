@@ -377,7 +377,10 @@ impossible.
 
 ### Freshness is a deploy concern now
 
-`prebuild` regenerates the snapshot, so prices are as of the last deploy.
+`npm run prices` regenerates the snapshot and the file is committed, so prices
+are as of the last refresh rather than the last deploy. It used to run in
+`prebuild`; that put 21,066 requests to a free keyless API in front of every
+build and, on a slow day, 44 minutes in front of a 45-minute ceiling.
 Refresh without deploying with `npm run prices`. The file is committed as well
 as generated, so a deploy never depends on TCGdex being up.
 

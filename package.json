@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:e2e": "playwright test",
-    "prebuild": "npx tsx scripts/check-free-tier.mts && npx tsx scripts/check-image-urls.mts && npx tsx scripts/check-source-hygiene.mts && npx tsx scripts/check-one-piece-vocabulary.mts && npx tsx scripts/price-refresh.mts",
+    "prebuild": "npx tsx scripts/check-free-tier.mts && npx tsx scripts/check-image-urls.mts && npx tsx scripts/check-source-hygiene.mts && npx tsx scripts/check-one-piece-vocabulary.mts",
     "prices": "npx tsx scripts/price-refresh.mts",
     "catalog": "npx tsx scripts/catalog-crawl.mts",
     "catalog:one-piece": "npx tsx scripts/one-piece-official-crawl.mts",

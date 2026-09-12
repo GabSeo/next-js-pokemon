@@ -18,9 +18,20 @@
  * requests, and a price sort can order all 21,066 cards instead of the 250 it
  * could afford to fetch.
  *
- * FRESHNESS IS NOW A DEPLOY CONCERN, and it is stated rather than implied.
- * Figures are as of `generatedAt`, which pages print — see priceSnapshotDate.
- * Refresh by re-running the script; `prebuild` does it on every deploy.
+ * FRESHNESS IS A COMMIT, NOT A DEPLOY. `prebuild` used to re-price all 21,066
+ * cards on every build, and that was the same mistake this module exists to fix,
+ * moved one stage earlier: the network back in the critical path, just the
+ * build's rather than the render's. Observed on a real deploy running at 7.9
+ * cards/s against the 343/s the refresh script was measured at — a projected 44
+ * minutes for the price step alone, against a 45-minute build ceiling, for a
+ * file already committed to the repository.
+ *
+ * It also fired 21,066 requests at a free keyless API on every deploy, with no
+ * counter and nothing able to say stop. TCGdex publishes no rate limit, which is
+ * not the same as having none.
+ *
+ * So: run `npm run prices` and commit the snapshot. Figures are as of
+ * `generatedAt`, which pages print — see priceSnapshotDate.
  *
  * THE LIVE FALLBACK IS PER-CARD AND DELIBERATE. A card the snapshot does not
  * hold — added upstream since the last refresh — is fetched live rather than
