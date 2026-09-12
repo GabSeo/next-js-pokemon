@@ -6,7 +6,7 @@ import { AddToCollectionButton } from "@/components/add-to-collection-button";
 import type { CodeCandidate } from "@/lib/card-code-ocr";
 import type { CardView } from "@/lib/card-view";
 import { bitmapOf, matchCard, type ClipIndexKey } from "@/lib/clip-client";
-import { CLIP_MAX_TIED, clipTied } from "@/lib/clip-search";
+import { CLIP_MAX_TIED, clipTied, clipVerdict } from "@/lib/clip-search";
 import { LiveScanner } from "@/app/scan/live-scanner";
 import { onePieceSrc } from "@/lib/one-piece-image-url";
 
@@ -96,26 +96,43 @@ async function uploadable(file: File): Promise<Blob> {
 /**
  * Ask the artwork matcher, on this device.
  *
- * A TIE IS AN ANSWER, NOT A FAILURE — this is the correction that matters here.
- * The first version refused whenever the margin was small and escalated to the
- * server-side reader. Measured afterwards: 28% of Japanese cards and 4% of
- * English ones have a near-twin inside that margin, because a reprint carries
- * the SAME artwork under a new number. `SM12a-052` is `SM11-029` unchanged, and
- * that card's own official scan ranks the other one first by 0.0015.
+ * A TIE IS AN ANSWER — AND ON A PHOTO IT IS STILL THE SECOND-BEST ONE.
  *
- * Escalating there was doubly wrong. It threw away a correct result for having
- * a companion — and it escalated to something the live camera view will not
- * have, because the printed-number reader is a metered per-image API call that
- * cannot run thirty times a second.
+ * The first version escalated to the server reader whenever the margin was
+ * small. That was wrong on its own terms: measured, 28% of Japanese cards and
+ * 4% of English ones have a near-twin inside that margin, because a reprint
+ * carries the SAME artwork under a new number — `SM12a-052` is `SM11-029`
+ * unchanged, and that card's own official scan ranks the other one first by
+ * 0.0015. Refusing there threw away a correct result for having a companion.
  *
- * So: one candidate is an answer, two or three are an answer with a question,
- * and only a diffuse spread falls through.
+ * THE CORRECTION OVERSHOT. Treating every tie as a finished answer removed the
+ * escalation entirely, and with it Cloud Vision — so a photograph whose artwork
+ * match was merely a guess got a confident-looking card list and the printed
+ * number was never read. Reported as "take a photo isn't working like before",
+ * and it is the same bug seen from the front.
+ *
+ * The argument for removing it does not transfer from the live view to a photo.
+ * Vision is a metered per-image call that cannot run thirty times a second —
+ * true, and the reason the camera loop has no reader. A photo is ONE image, on
+ * purpose, at a moment a person chose. It can afford the call.
+ *
+ * So the split is by CONFIDENCE, not by tie:
+ *
+ *   identified   one card, clear of the floor and the margin -> answer, no call
+ *   tie / unsure -> read the printed number, and keep the artwork as the
+ *                   fallback if the reader comes back with nothing
+ *
+ * `clipVerdict` rather than `clipTied` alone is the load-bearing half. `clipTied`
+ * filters on the MARGIN only; it has no score floor, so a photograph the matcher
+ * could not place at all still produced one to three near-tied cards and looked
+ * exactly like a reprint. See CLIP_CARD_FLOOR for why a margin cannot do this
+ * job on its own.
  */
 async function matchLocally(
   file: File,
   key: ClipIndexKey,
   tcg: "pokemon" | "onepiece"
-): Promise<{ cards: CardView[]; route: Route } | undefined> {
+): Promise<{ cards: CardView[]; route: Route; confident: boolean } | undefined> {
   const { source, width, height } = await bitmapOf(file);
   try {
     // More hits than we can show, so "everything I asked for is tied" is
@@ -124,6 +141,11 @@ async function matchLocally(
     // took it. The live view crops to a guide instead, because a camera frame
     // is mostly room.
     const result = await matchCard(source, { x: 0, y: 0, width, height }, key, { limit: 8 });
+    const verdict = clipVerdict(result);
+    // Nothing card-like in the picture at all. No list is worth showing and the
+    // reader will not find a code either, but it is allowed to try.
+    if (verdict === "empty") return undefined;
+
     const tied = clipTied(result);
     if (tied.length === 0 || tied.length > CLIP_MAX_TIED) return undefined;
 
@@ -150,6 +172,9 @@ async function matchLocally(
         cards.length === 1
           ? { via: "artwork", margin: result.margin, elapsed: result.elapsed }
           : { via: "artwork-tie", tied: cards.length, elapsed: result.elapsed },
+      // Only an `identified` single card ends the scan here. Everything else is
+      // held as the fallback while the printed number gets its turn.
+      confident: verdict === "identified" && cards.length === 1,
     };
   } finally {
     source.close();
@@ -303,12 +328,22 @@ export function ScanClient() {
     // is warm. Cloud Vision is the fallback for a picture the artwork cannot
     // place, not the first move.
     setStatus({ phase: "matching" });
+    /**
+     * The artwork's answer when it was NOT confident enough to end the scan.
+     *
+     * Kept rather than discarded, because the reader can fail too — no key on
+     * the deployment, no code in frame, a code Vision misreads into a card that
+     * does not exist. A tied pair of reprints is a far better last word than
+     * "the card reader failed", so it waits here for that case.
+     */
+    let unsure: { cards: CardView[]; route: Route } | undefined;
     try {
       const local = await matchLocally(file, indexKey, game);
-      if (local) {
+      if (local?.confident) {
         setStatus({ phase: "done", candidates: [], cards: local.cards, route: local.route });
         return;
       }
+      if (local) unsure = { cards: local.cards, route: local.route };
     } catch {
       // No WebGPU, a failed model download, an image this browser will not
       // decode. None of that should cost the visitor their scan — fall through
@@ -344,6 +379,22 @@ export function ScanClient() {
       }
     } catch {
       note = "Could not reach the card reader. Check your connection, or type the code below.";
+    }
+
+    // THE PRINTED NUMBER WINS WHEN IT EXISTS, because it is the only evidence in
+    // the picture that is unambiguous — artwork is shared between reprints and
+    // between a card and its Japanese release; the number in the corner is not.
+    if (cards.length === 0 && unsure) {
+      setStatus({
+        phase: "done",
+        candidates,
+        cards: unsure.cards,
+        note:
+          "Couldn't read the number printed on the card, so this is the closest artwork — " +
+          "check the number in the corner of yours, or type it below.",
+        route: unsure.route,
+      });
+      return;
     }
 
     setStatus({ phase: "done", candidates, cards, note, route: { via: "text" } });

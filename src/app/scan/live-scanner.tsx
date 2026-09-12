@@ -101,6 +101,14 @@ type Reading =
       found?: { corners: number[][]; width: number };
       /** What the matcher thinks it is looking at, whether or not it will say so. */
       peek?: { id: string; score: number; margin: number };
+      /**
+       * The running vote, top first. Only rendered in hold mode — see the
+       * button — but computed every frame, because it is two sorts of a map
+       * that is already sorted and the cost is nothing next to the match.
+       */
+      board?: { id: string; avg: number; seen: number; lead: number }[];
+      /** Frames of evidence behind that board. */
+      frames?: number;
     }
   | { state: "found"; cards: CardView[]; tied: number; elapsed: number };
 
@@ -125,6 +133,45 @@ export function LiveScanner({
    * press.
    */
   const [attempt, setAttempt] = useState(0);
+
+  /**
+   * HOLD: keep scanning, never conclude.
+   *
+   * WHY A SCANNER NEEDS A BRAKE. The evidence loop settles in about a second
+   * and a half, which is the point of it and also why a scan that lands on the
+   * wrong card is impossible to study — the answer sheet covers the viewfinder
+   * before anyone can see what the frames were saying. Reported exactly that
+   * way: "results come too fast and it's difficult to understand what's
+   * happening when I live scan pikachu gg30".
+   *
+   * So hold mode changes ONE thing: it stops the loop from accepting. Frames
+   * are still read, the vote still accumulates and decays identically, and the
+   * standings are put on screen instead of an answer. Nothing about the
+   * matching is different in this mode, which is what makes it worth watching —
+   * a debug view that scans differently would be measuring itself.
+   *
+   * It is not hidden behind a build flag. Distinguishing "the crop is wrong"
+   * from "the card is not in the index" is the question this project keeps
+   * needing to answer, and it is also the question a person with a card that
+   * will not scan is asking.
+   */
+  const [hold, setHold] = useState(false);
+  // Mirrored into a ref for the loop, in an effect and not during render — same
+  // reason as `fillRef` below: a discarded render must not leave a value behind.
+  const holdRef = useRef(false);
+  useEffect(() => {
+    holdRef.current = hold;
+  }, [hold]);
+
+  /**
+   * Set by "Take the leader" and consumed by the loop on its next pass.
+   *
+   * A REF, NOT A HANDLER THAT RESOLVES THE CARD ITSELF. The accept path — the
+   * tie filter, the resolve call, stopping the camera — already exists inside
+   * the loop, and a button that duplicated it would be a second copy to keep in
+   * step. This lets the button say "accept" and the loop do the accepting.
+   */
+  const takeRef = useRef(false);
 
   /**
    * The guide's size in screen pixels, computed rather than styled.
@@ -327,7 +374,14 @@ export function LiveScanner({
         const leader = ranked[0];
         const runnerUp = ranked[1];
         const lead = leader ? (leader[1].sum - (runnerUp?.[1].sum ?? 0)) / Math.max(1, loop.current.frames) : 0;
-        const settled = Boolean(leader && loop.current.frames >= MIN_FRAMES && leader[1].seen >= 2 && lead >= ACCEPT_LEAD);
+        const enough = Boolean(
+          leader && loop.current.frames >= MIN_FRAMES && leader[1].seen >= 2 && lead >= ACCEPT_LEAD
+        );
+        // The button overrides the evidence — that is what it is for. Consumed
+        // here so one press accepts one card and does not arm the next loop.
+        const forced = takeRef.current && Boolean(leader);
+        takeRef.current = false;
+        const settled = forced || (enough && !holdRef.current);
 
         if (settled && leader) {
           // A REPRINT STILL SHOWS BOTH. Two cards with the same artwork run
@@ -375,6 +429,18 @@ export function LiveScanner({
             peek: result.hits[0]
               ? { id: result.hits[0].id, score: result.hits[0].score, margin: result.margin }
               : undefined,
+            // AVERAGE, NOT SUM. The sum grows with every frame and decays with
+            // DECAY, so its absolute value says more about how long the camera
+            // has been open than about the card. Divided by the frame count it
+            // is comparable to the per-frame score in the corner panel, which
+            // is the number a person already has on screen to compare it to.
+            frames: loop.current.frames,
+            board: ranked.slice(0, 5).map(([id, entry]) => ({
+              id,
+              avg: entry.sum / Math.max(1, loop.current.frames),
+              seen: entry.seen,
+              lead: (leader![1].sum - entry.sum) / Math.max(1, loop.current.frames),
+            })),
           });
         }
       }
@@ -394,7 +460,9 @@ export function LiveScanner({
         ? "Point the camera at a card"
         // "Unsure" no longer means "do something differently" — evidence is
         // accumulating and the honest thing to say is that it is working.
-        : "Reading…";
+        : hold
+          ? "Holding — it will not answer on its own"
+          : "Reading…";
 
   return (
     /* FULL SCREEN, NOT A PANEL IN A COLUMN. A scanner is a viewfinder: the frame
@@ -484,6 +552,84 @@ export function LiveScanner({
         >
           Close
         </button>
+
+        {/* THE BRAKE. Sits under Close because it is the second thing a person
+            reaches for on this screen and the first one they reach for when the
+            scan keeps naming the wrong card. */}
+        {reading.state === "scanning" ? (
+          <button
+            type="button"
+            onClick={() => setHold((on) => !on)}
+            aria-pressed={hold}
+            className="absolute right-4 top-[4.25rem] rounded-full border-2 px-4 py-2 text-[12px] font-black backdrop-blur"
+            style={
+              hold
+                ? { borderColor: "#f5c518", background: "#f5c518", color: "#000" }
+                : { borderColor: "rgba(255,255,255,.7)", background: "rgba(0,0,0,.5)", color: "#fff" }
+            }
+          >
+            {hold ? "Holding" : "Hold"}
+          </button>
+        ) : null}
+
+        {/* THE VOTE, ITEM BY ITEM. Only in hold mode: five ids and four decimal
+            places over a viewfinder is the wrong thing to show somebody who is
+            trying to scan a card, and the only thing to show somebody who is
+            trying to work out why it will not.
+
+            WHAT TO READ OFF IT. If the right card is NOWHERE in the five, the
+            crop is wrong or the card is missing from the index — look at the
+            thumbnail on the left, which is the exact square being matched. If
+            it is there but second, the artwork is being separated and losing,
+            which is a different problem and the numbers say how close. */}
+        {reading.state === "scanning" && hold ? (
+          <div className="absolute right-4 top-[7.5rem] w-[13.5rem] rounded-md bg-black/60 p-2 text-[10px] text-white/85 backdrop-blur">
+            <div className="flex items-baseline justify-between font-black uppercase tracking-wide text-white/60">
+              <span>Running vote</span>
+              <span className="tabular-nums">{reading.frames ?? 0}f</span>
+            </div>
+            {reading.board && reading.board.length > 0 ? (
+              <ol className="mt-1 grid gap-0.5">
+                {reading.board.map((row, rank) => (
+                  <li key={row.id} className="flex items-baseline justify-between gap-1">
+                    <span className={`truncate ${rank === 0 ? "font-black text-white" : ""}`}>{row.id}</span>
+                    <span className="shrink-0 tabular-nums text-white/70">
+                      {row.avg.toFixed(3)}
+                      {rank > 0 ? ` −${row.lead.toFixed(3)}` : ""}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <div className="mt-1 text-white/50">no votes yet</div>
+            )}
+            <div className="mt-2 flex gap-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  takeRef.current = true;
+                }}
+                disabled={!reading.board?.length}
+                className="flex-1 rounded border border-white/60 bg-white/15 px-2 py-1.5 font-black disabled:opacity-40"
+              >
+                Take the leader
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  // Forget everything and start the vote again, without
+                  // reopening the camera. The decay gets there on its own in a
+                  // few seconds; this is for comparing two cards back to back.
+                  loop.current.tally.clear();
+                  loop.current.frames = 0;
+                }}
+                className="rounded border border-white/60 bg-white/15 px-2 py-1.5 font-black"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+        ) : null}
 
         {/* WHAT IT IS ACTUALLY LOOKING AT. Small, out of the way, and the
             single most useful thing on this screen when a scan is not working:

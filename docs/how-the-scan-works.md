@@ -218,6 +218,31 @@ lines up a rectangle that nothing is reading.
   matches. The main thread now decodes one bitmap per frame and waits.
 - **Found means stop.** Leaving the camera running behind a result keeps the phone
   warm and invites the next frame to overwrite an answer someone is still reading.
+- **Hold: keep scanning, never conclude.** The vote settles in about a second and
+  a half, which is the point of it and also why a scan that lands on the wrong
+  card is impossible to study — the answer sheet covers the viewfinder before
+  anyone can see what the frames were saying. Reported exactly that way. `Hold`
+  stops the loop accepting and nothing else: frames are read, the vote
+  accumulates and decays identically, and the standings go on screen instead of
+  an answer. A debug view that scanned differently would be measuring itself.
+  `Take the leader` accepts by hand, through the same resolve path the loop uses;
+  `Clear` forgets the vote without reopening the camera, for comparing two cards
+  back to back.
+
+**Reading the hold panel.** It answers the one question this project keeps
+needing to ask, and the same one a person with a card that will not scan is
+asking:
+
+| what it shows | what it means |
+|---|---|
+| the right card is **nowhere** in the five | the crop is wrong, or the card is not in the index — check the thumbnail top-left, which is the exact square being matched |
+| the right card is there but **second or third** | the artwork is being separated and losing; the `−0.00x` column is by how much |
+| every row is a different card each frame | nothing card-like is in the square at all |
+
+Scores are shown as the running **average** per frame, not the sum: the sum
+grows with the number of frames and shrinks with the decay, so its absolute value
+says more about how long the camera has been open than about the card. Averaged,
+it is directly comparable to the per-frame score in the corner panel.
 
 Measured in a browser, driving the loop with a synthetic camera:
 
@@ -256,6 +281,27 @@ reprint carries the same picture under a new number.
 **So a tie is an answer, not a failure.** The scan shows the two or three cards
 that share the artwork and says why, pointing the reader at the number in the
 bottom corner. Refusing would throw away a correct result for having a companion.
+
+**And on a photo it is only the second-best answer.** That correction overshot
+once: treating every tie as finished removed the escalation to Vision entirely,
+so a photograph the artwork could not place got a confident-looking list and the
+printed number was never read. Both of the real slab photos on file land there —
+
+| photo | 1st | 2nd | margin |
+|---|---|---|---|
+| `sm115-44` Moltres | 0.8178 ✓ | 0.8107 | 0.0071 |
+| `swsh12.5gg-GG30` Pikachu | 0.8255 ✗ | 0.8229 | 0.0026 |
+
+— both under the 0.015 margin, so both were shown as ties, and the second one
+was three wrong Pikachus shown with confidence.
+
+The argument for dropping the escalation does not transfer from the live view to
+a photo. Vision is a metered per-image call that cannot run thirty times a second
+— true, and the reason the camera loop has no reader. A photo is **one** image,
+at a moment a person chose, and it can afford the call. So the photo path splits
+on the verdict rather than on the tie: `identified` answers on the device, and
+anything less reads the printed number, keeping the artwork's tie as the fallback
+for when the reader comes back empty.
 
 **One Piece is the more precise of the two.** It separates `ST21-014` from
 `ST21-014_p1` — two printings of the same card — which Pokémon can never do.
