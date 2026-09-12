@@ -249,11 +249,29 @@ export type CardShapes = {
   standing?: string;
   /** "unchanged across the only two readings, two days apart". */
   movement?: string;
-  /** "a graded copy asks about 4x a raw one; the PSA 9 figure rests on 2 listings". */
-  graded?: string;
+  /**
+   * The graded market as RELATIONSHIPS, for the model to draw a conclusion from.
+   *
+   * Never a finished sentence — see the builder for why that failed. `tiers` is
+   * each grade's multiple of raw and how many copies are listed at it;
+   * `observations` are neutral facts about the shape of that, with the meaning
+   * deliberately left off.
+   */
+  market?: {
+    tiers: { grade: string; listings: number; multipleOfRaw?: number }[];
+    observations: string[];
+  };
   /** Said plainly when there is nothing: the model must not fill the gap. */
   missing?: string[];
 };
+
+/** `2` -> `2nd`. English ordinals, including the teens that break the pattern. */
+function ordinal(value: number): string {
+  const tens = value % 100;
+  if (tens >= 11 && tens <= 13) return `${value}th`;
+  const suffix = { 1: "st", 2: "nd", 3: "rd" }[value % 10] ?? "th";
+  return `${value}${suffix}`;
+}
 
 /** A rank expressed the way a person would say it, not as a fraction. */
 function band(rank: number, outOf: number): string {
@@ -292,7 +310,11 @@ export function shapesFor(facts: CardFacts): CardShapes {
 
   const standing = facts.context?.standing;
   if (standing) {
-    shapes.standing = `${standing.rank} of ${standing.outOf} priced cards in its set, ${band(standing.rank, standing.outOf)}`;
+    // AN ORDINAL, NOT "2 of 79". The first phrasing read as "two of the
+    // seventy-nine cards" and the model duly wrote "one of only two priced
+    // cards in its set" about a card ranked second. An ambiguous field is a
+    // prompt bug, not a model failure.
+    shapes.standing = `${ordinal(standing.rank)} dearest out of ${standing.outOf} priced cards in its set, ${band(standing.rank, standing.outOf)}`;
   }
 
   const readings = (facts.context?.history ?? []).filter((row) => typeof row.eur === "number");
@@ -310,19 +332,67 @@ export function shapesFor(facts: CardFacts): CardShapes {
   }
 
   if (facts.graded) {
-    const parts: string[] = [];
-    for (const [language, multiple] of Object.entries(facts.graded.psa10Multiple)) {
-      parts.push(`in ${language}, a PSA 10 asks about ${multiple}x a raw copy`);
+    /**
+     * FACTS TO CONNECT, NOT A SENTENCE TO REPHRASE.
+     *
+     * This was a pre-written line — "a PSA 10 asks about 15x a raw copy" — and
+     * the model did the only thing left to do with it: said it again, longer.
+     * Reported as "it doesn't add anything", and that was exactly right; the
+     * meaning had already been written, so there was no work left.
+     *
+     * What goes here now is the RELATIONSHIPS, unnarrated. Whether a grade is
+     * crowded or scarce, whether two grades are priced alike, where the jump
+     * is. Each is a fact; what it implies for somebody holding the card is not,
+     * and that inference is the job.
+     *
+     * The listing counts are the part no other panel uses and the part a table
+     * cannot speak. 22 PSA 10s against 342 PSA 9s is a sentence about how hard
+     * this card is to grade well, and it is sitting in plain sight unread.
+     */
+    const raw = facts.graded.rows.find((row) => row.condition === "Raw");
+    const rawCell = raw ? Object.values(raw.cells)[0] : undefined;
+    const rawPrice = rawCell?.median;
+
+    const tiers = facts.graded.rows
+      .map((row) => {
+        const cell = Object.values(row.cells)[0];
+        if (cell?.median === undefined) return undefined;
+        return {
+          grade: row.condition,
+          listings: cell.count ?? 0,
+          multipleOfRaw:
+            rawPrice && rawPrice > 0 ? Number((cell.median / rawPrice).toFixed(1)) : undefined,
+        };
+      })
+      .filter((tier): tier is NonNullable<typeof tier> => tier !== undefined);
+
+    const observations: string[] = [];
+    const graded = tiers.filter((tier) => tier.grade !== "Raw");
+    const top = graded.find((tier) => tier.grade === "PSA 10");
+    const next = graded.find((tier) => tier.grade === "PSA 9");
+
+    // SCARCITY AT THE TOP. A grade with far fewer listings than the one below
+    // it is the market saying this card rarely comes back a 10.
+    if (top && next && next.listings > 0 && top.listings > 0 && next.listings / top.listings >= 4) {
+      observations.push(
+        `there are ${Math.round(next.listings / top.listings)}x as many PSA 9 listings as PSA 10 listings`
+      );
     }
-    // A tier resting on a handful of listings is the one caveat worth a
-    // sentence, and it is invisible in a table of medians.
-    const thin = facts.graded.rows
-      .flatMap((row) => Object.entries(row.cells).map(([language, cell]) => ({ row, language, cell })))
-      .filter((entry) => (entry.cell.count ?? 0) > 0 && (entry.cell.count ?? 0) < 4);
-    for (const entry of thin.slice(0, 2)) {
-      parts.push(`the ${entry.row.condition} figure in ${entry.language} rests on only ${entry.cell.count} listings`);
+    // TWO GRADES PRICED ALIKE. It means the market pays for one thing only, and
+    // it changes what a grade is worth chasing.
+    for (let i = 0; i < graded.length - 1; i++) {
+      const a = graded[i];
+      const b = graded[i + 1];
+      if (a.multipleOfRaw && b.multipleOfRaw && Math.abs(a.multipleOfRaw - b.multipleOfRaw) / a.multipleOfRaw < 0.12) {
+        observations.push(`${a.grade} and ${b.grade} ask almost the same`);
+      }
     }
-    if (parts.length > 0) shapes.graded = parts.join("; ");
+    // A FIGURE RESTING ON A HANDFUL OF LISTINGS is not a market price.
+    for (const tier of tiers.filter((entry) => entry.listings > 0 && entry.listings < 4)) {
+      observations.push(`the ${tier.grade} figure rests on only ${tier.listings} listings`);
+    }
+
+    if (tiers.length > 0) shapes.market = { tiers, observations };
   } else {
     missing.push("no eBay readings — say nothing about grading, slabs or PSA");
   }
@@ -393,58 +463,67 @@ export function factsFor(card: CardView, graded?: GradedFacts): CardFacts {
  * with no figure. Those stay, and they are short.
  */
 const SYSTEM = [
-  "You explain one trading card to the person holding it, in two short",
-  "paragraphs. They may have never collected before, or for twenty years.",
+  "You are a collector reading one card's market for somebody who cannot read it",
+  "themselves. Two short paragraphs.",
   "",
-  "You are given SHAPES, not figures — the prices, ranks and tables are already",
-  "on the reader's screen and you are not given them. Your job is the part a",
-  "table cannot do: say what those shapes mean, in sentences.",
+  "A table of prices is already on their screen. Repeating it is the one useless",
+  "thing you can do. Your job is the CONCLUSION a table cannot state: what the",
+  "shape of those numbers means for the person holding this card.",
   "",
   "Here is exactly the job, twice.",
   "",
-  "SHAPES:",
-  '{\"name\":\"Venonat\",\"set\":\"Silver Tempest\",\"rarity\":\"Common\",\"printings\":[\"normal\",\"reverse\"],\"printingGap\":\"the dearest printing is worth about 4.5x the cheapest\",\"standing\":\"176 of 215 priced cards in its set, near the bottom\",\"movement\":\"unchanged across 2 readings between 2026-09-05 and 2026-09-07 — too short a window to mean anything\"}',
+  "INPUT:",
+  '{\"name\":\"Charizard\",\"set\":\"Champion\u2019s Path\",\"printings\":[\"holo\"],\"standing\":\"2nd dearest out of 79 priced cards in its set, among the very top\",\"market\":{\"tiers\":[{\"grade\":\"PSA 10\",\"listings\":22,\"multipleOfRaw\":15},{\"grade\":\"PSA 9\",\"listings\":342,\"multipleOfRaw\":11.1},{\"grade\":\"PSA 8\",\"listings\":36,\"multipleOfRaw\":10.8},{\"grade\":\"Raw\",\"listings\":58,\"multipleOfRaw\":1}],\"observations\":[\"there are 16x as many PSA 9 listings as PSA 10 listings\",\"PSA 9 and PSA 8 ask almost the same\"]}}',
+  "",
+  "ANSWER:",
+  "**Which one you have**",
+  "One version only, so nothing to tell apart. It is a holo, meaning the foil",
+  "sits on the picture itself rather than around it.",
+  "",
+  "**What that means**",
+  "This one is hard to grade. There are sixteen times as many PSA 9s on the",
+  "market as PSA 10s, which is what it looks like when a card comes back from",
+  "grading imperfect far more often than not. And the market knows: a 9 and an 8",
+  "ask almost the same, so only the 10 carries a premium. Sending this away is a",
+  "coin flip between a large gain and no gain at all.",
+  "",
+  "INPUT:",
+  '{\"name\":\"Venonat\",\"set\":\"Silver Tempest\",\"rarity\":\"Common\",\"printings\":[\"normal\",\"reverse\"],\"printingGap\":\"the dearest printing is worth about 4.5x the cheapest\",\"standing\":\"176th dearest out of 215 priced cards in its set, near the bottom\",\"missing\":[\"no eBay readings \u2014 say nothing about grading, slabs or PSA\"]}}',
   "",
   "ANSWER:",
   "**Which one you have**",
   "This picture was printed twice. On the normal card the surface is flat and",
   "matte. On the reverse holo the border and background are foil while the",
   "picture itself stays dull — tilt it under a light and watch the frame, not the",
-  "artwork. That is the whole difference.",
+  "artwork.",
   "",
   "**What that means**",
-  "The reverse is worth about four times the normal one, which sounds dramatic",
-  "until you see where this card sits: near the bottom of its set. It is the kind",
-  "of card that fills a binder rather than anchors one.",
+  "The reverse is the one worth checking for, at several times the normal — but",
+  "both sit near the bottom of a large set, so the multiple is a bigger number",
+  "than the money behind it. This is binder filler either way.",
   "",
-  "SHAPES:",
-  '{\"name\":\"Charizard\",\"set\":\"Base Set\",\"rarity\":\"Rare\",\"printings\":[\"holo\"],\"standing\":\"1 of 102 priced cards in its set, among the very top\",\"graded\":\"in English, a PSA 10 asks about 6x a raw copy\",\"missing\":[\"only one price reading, so there is no movement to report\"]}',
+  "NOW NOTICE WHAT THOSE ANSWERS DO. Neither restates a figure it was handed. The",
+  "first one takes two observations and says what they imply together; the second",
+  "says a multiple is misleading in context. That inference is the whole product.",
   "",
-  "ANSWER:",
-  "**Which one you have**",
-  "Only one version exists, so there is nothing to tell apart. It is a holo,",
-  "which means the foil is on the picture itself rather than around it.",
+  "If the numbers are unremarkable, say the ordinary thing plainly and briefly —",
+  "do not manufacture significance. But look first: a crowded grade, two grades",
+  "priced alike, a figure resting on three listings, a big multiple on a cheap",
+  "card. One of those is usually there, and it is what the reader came for.",
   "",
-  "**What that means**",
-  "This is the most valuable card in its set, and not narrowly. A graded copy",
-  "asks around six times what an ungraded one does — that gap is what people mean",
-  "when they talk about sending a card away to be slabbed.",
-  "",
-  "Notice what those answers do NOT do. No prices. No ranks read out as numbers.",
-  "No description of the illustration. No advice about what to do with the card.",
-  "",
-  "Now the same for the shapes you are given. Two paragraphs, those two headings,",
-  "under 90 words, plain language, no bullet lists, no emoji, no preamble.",
+  "Two paragraphs, those two headings, under 100 words, plain language, no bullet",
+  "lists, no emoji, no preamble.",
   "",
   "Three things are never allowed:",
   "",
-  "- Never invent a number. You have almost none, and that is deliberate.",
+  "- Never state a figure that is not in the input, and never a price in currency",
+  "  — you are given multiples and counts, not prices.",
   "- Never describe the artwork. You have not seen it.",
-  "- Never advise or predict — not whether to keep, sell, grade or sleeve it, not",
-  "  whether it is a good investment, not where a price is heading.",
+  "- Never tell them what to DO — not to grade, sell, keep or buy. Say what the",
+  "  market looks like and let them decide. \"It is a coin flip\" is an observation;",
+  "  \"you should grade it\" is advice.",
   "",
-  "Anything listed under `missing` is something you do NOT know. Do not fill it",
-  "in, and do not raise the subject at all.",
+  "Anything under `missing` is something you do not know. Do not raise it.",
 ].join("\n");
 
 /**

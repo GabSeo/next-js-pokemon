@@ -458,7 +458,7 @@ export function CardExplainer({
           style={{ background: "var(--card-surface)", boxShadow: "3px 3px 0 0 #000" }}
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <Tag source="ai" note="No figures were given to it" />
+            <Tag source="ai" note="Reads the tables above — never prices, only their shape" />
             <button
               type="button"
               onClick={ask}
