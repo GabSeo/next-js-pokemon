@@ -7,7 +7,63 @@ import { getJapaneseCardText } from "@/lib/cards";
 import { buildCached } from "@/lib/build-cache";
 import { cardRefs } from "@/data/card-refs";
 import { clause, deriveQueryForCard } from "@/lib/one-piece-variants";
-import type { Card } from "@/lib/types";
+import type { Franchise } from "@/lib/types";
+
+/**
+ * What this module needs to know about a card — the whole of it, named.
+ *
+ * WHY THIS EXISTS RATHER THAN `Card`. Two screens ask for this market: a
+ * tracked-card page, which has a full `Card` from the curated refs, and the
+ * scan, which has a photograph and a catalogue row. The scan used to hand-build
+ * a `Card` and finish with `as unknown as Card`, and that cast is where the
+ * divergences lived: a `franchise` written "onepiece" instead of "one-piece"
+ * compiled fine and sent every One Piece card down the Pokemon branch, and a
+ * missing `printName` silently produced `Monkey.D.Luffy OP09-061 PSA 10` where
+ * the tracked page sends `OP09-061 PSA 10 ("2nd anniversary") -jumbo -emperors
+ * -uc -r -sr -sec`. One code spans EUR 4.49 to EUR 7,500 across its printings,
+ * so that is four cards averaged into one price.
+ *
+ * Neither was findable by reading. Both were found by a person comparing two
+ * URLs, one at a time — which is the cost of a cast: it moves a compiler's work
+ * onto whoever notices next.
+ *
+ * So the contract is explicit and the cast is gone. `Card` satisfies it
+ * structurally, so the tracked pages pass one unchanged; the scan builds one
+ * and the compiler now says which fields it owes.
+ *
+ * VINTED'S THREE ARE OPTIONAL because only the tracked pages have a French feed
+ * to show — the scan has no scrape, and the panel omits that tab rather than
+ * opening it on nothing.
+ */
+export type GradedMarketSubject = {
+  id: string;
+  slug: string;
+  franchise: Franchise;
+  name: string;
+  /** The real-world character, for the Vinted panel's mascot and its query. */
+  character: string;
+  /** `271/264` for Pokemon, `OP07-113` for One Piece — what a seller writes. */
+  number?: string;
+  /** The set or pack it came from. Read by the Japanese-text resolver. */
+  set: string;
+  /**
+   * WHICH printing, and the field the whole One Piece query hangs on.
+   *
+   * From it come both halves: the clause naming this version and the terms
+   * excluding its siblings. Absent, the search asks for every printing of the
+   * code at once.
+   */
+  printName?: string;
+  currency: "USD" | "EUR";
+  currentPrice: number;
+  priceUnavailable?: boolean;
+  imageUrl?: string;
+  rarity?: string;
+  /** Vinted only. */
+  displayName?: string;
+  searchUrl?: string;
+  tcgdexId?: string;
+};
 
 export const GRADED_MARKET_CONDITIONS: EbayCondition[] = ["PSA 10", "PSA 9", "PSA 8", "Raw"];
 
@@ -53,7 +109,7 @@ export const ONE_PIECE_MARKET_ENABLED = true;
  */
 const ONE_PIECE_CONDITIONS: EbayCondition[] = ["PSA 10", "PSA 9", "Raw"];
 
-function conditionsFor(card: Card): EbayCondition[] {
+function conditionsFor(card: GradedMarketSubject): EbayCondition[] {
   return card.franchise === "one-piece" ? ONE_PIECE_CONDITIONS : GRADED_MARKET_CONDITIONS;
 }
 
@@ -346,7 +402,7 @@ const ENGLISH_PRICE_GAP_THRESHOLD = 0.4;
  * Both constraints are skipped when the card has no readable price
  * (placeholder cards), since the anchor would then be meaningless.
  */
-function marketGuardFor(card: Card, condition: EbayCondition, language: EbayLanguage): EbayMarketGuard | undefined {
+function marketGuardFor(card: GradedMarketSubject, condition: EbayCondition, language: EbayLanguage): EbayMarketGuard | undefined {
   if (card.priceUnavailable) return undefined;
   const floor = card.currentPrice * (1 - ENGLISH_PRICE_GAP_THRESHOLD);
 
@@ -394,7 +450,7 @@ function marketGuardFor(card: Card, condition: EbayCondition, language: EbayLang
 }
 
 async function fetchActiveTier(
-  card: Card,
+  card: GradedMarketSubject,
   condition: EbayCondition,
   language: EbayLanguage,
   nameOverride?: string,
@@ -490,7 +546,7 @@ async function fetchActiveTier(
  * card's real print name/number, not a mismatched one.
  */
 function buildSoldTier(
-  card: Card,
+  card: GradedMarketSubject,
   condition: EbayCondition,
   language: EbayLanguage,
   nameOverride?: string,
@@ -575,7 +631,7 @@ function summarizeVintedFeed(
  * marketplace gets searched in French), English otherwise — see
  * vintedQueryForCard.
  */
-async function buildVintedMarket(card: Card): Promise<VintedMarketData> {
+async function buildVintedMarket(card: GradedMarketSubject): Promise<VintedMarketData> {
   const { query, displayName, searchUrl } = await vintedQueryForCard(card);
 
   const real = await getVintedListingsForCard(card, displayName, searchUrl);
@@ -683,7 +739,7 @@ async function buildVintedMarket(card: Card): Promise<VintedMarketData> {
  * was never that franchise's only source of real market data, just the only
  * source of this particular one.
  */
-async function resolveGradedMarketData(card: Card): Promise<GradedMarketData | undefined> {
+async function resolveGradedMarketData(card: GradedMarketSubject): Promise<GradedMarketData | undefined> {
   if (card.franchise !== "pokemon" && !ONE_PIECE_MARKET_ENABLED) return undefined;
 
   const conditionTiers = conditionsFor(card);
@@ -698,7 +754,7 @@ async function resolveGradedMarketData(card: Card): Promise<GradedMarketData | u
   // pure waste.
   let japaneseNumberOverride: string | undefined;
   if (card.franchise === "pokemon" && GRADED_MARKET_LANGUAGES.includes("Japanese")) {
-    const ref = cardRefs.find((r) => r.slug === card.slug);
+    const ref = refFor(card);
     if (ref) {
       const ja = await getJapaneseCardText(card, ref);
       if (ja.translated && ja.number) japaneseNumberOverride = ja.number;
@@ -742,7 +798,7 @@ async function resolveGradedMarketData(card: Card): Promise<GradedMarketData | u
   } => {
     if (card.franchise !== "one-piece")
       return { tags: undefined, acceptGroups: undefined, nameOverride: undefined, suffix: undefined, reject: undefined };
-    const ref = cardRefs.find((r) => r.slug === card.slug);
+    const ref = refFor(card);
     const override = language === "Japanese" ? ref?.ebayVariantTags?.jp : ref?.ebayVariantTags?.en;
     if (override && override.length > 0) {
       // Same SHAPE as a derived query even though the content is hand-written:
@@ -918,7 +974,41 @@ async function resolveGradedMarketData(card: Card): Promise<GradedMarketData | u
  * stable and unique per card regardless of which route resolved this
  * particular `Card` object.
  */
-export async function getGradedMarketData(card: Card): Promise<GradedMarketData | undefined> {
+/**
+ * The curated ref for a card — BY IDENTITY, not by the string we happened to
+ * address it with.
+ *
+ * THIS IS WHERE THE QUERIES DIVERGED, and it was never the query builder. A
+ * whole set of One Piece rules exists in data/card-refs.ts — which printing a
+ * code means, the seller vocabulary eBay actually matches, the pinned
+ * Cardmarket product — and every one of them was reached through
+ * `r.slug === card.slug`. A tracked page's slug is `monkey-d-luffy-op09-061`.
+ * A scanned card's slug is its code, `OP09-061`. Same card, same rules on
+ * disk, and the lookup missed, so the scan silently fell back to the broad
+ * query while the tracked page got the curated one:
+ *
+ *   tracked   OP09-061 PSA 10 ("2nd anniversary") -jumbo -emperors -uc -r …
+ *   scanned   Monkey.D.Luffy OP09-061 PSA 10
+ *
+ * A CODE IS AN IDENTITY; a slug is one spelling of it. Matching on the code
+ * as well is not a special case for these two cards — it is the reason the
+ * rules were written once instead of per screen.
+ *
+ * PRECEDENCE IS UNCHANGED AND MATTERS. What the ref carries is the DEFAULT
+ * printing for a code, so it fills a gap rather than overriding an answer: a
+ * scan that resolved the printing itself passes `card.printName`, and
+ * deriveQueryForCard reads that first. Inheriting the ref's "2nd Anniversary
+ * Set" for a photograph of the Jumbo would be the wrong card, confidently.
+ */
+function refFor(card: GradedMarketSubject) {
+  const bySlug = cardRefs.find((r) => r.slug === card.slug);
+  if (bySlug) return bySlug;
+  if (card.franchise !== "one-piece" || !card.number) return undefined;
+  const code = card.number.toUpperCase();
+  return cardRefs.find((r) => r.lookup.by === "code" && r.lookup.code.toUpperCase() === code);
+}
+
+export async function getGradedMarketData(card: GradedMarketSubject): Promise<GradedMarketData | undefined> {
   return buildCached(`graded-market:${card.slug}`, () => resolveGradedMarketData(card), allIllustrative);
 }
 

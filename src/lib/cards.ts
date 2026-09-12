@@ -24,6 +24,7 @@ import {
   cardmarketStats as pokeWalletCardmarketStats,
 } from "@/lib/pokewallet";
 import { buildCached } from "@/lib/build-cache";
+import type { GradedMarketSubject } from "@/lib/graded-market";
 import { cardmarketUrl } from "@/lib/cardmarket-search";
 import { absoluteUrl, freshness } from "@/lib/site";
 import { describeUpstreamError, logUpstreamOnce } from "@/lib/upstream";
@@ -998,11 +999,11 @@ async function resolveWesternCardmarket(ref: CardRef): Promise<Card["cardmarket"
   return stats && { ...stats, print: "western" as const };
 }
 
-export const getJapaneseCardText = cache((card: Card, ref: CardRef): Promise<LocalizedCardText> =>
+export const getJapaneseCardText = cache((card: GradedMarketSubject, ref: CardRef): Promise<LocalizedCardText> =>
   buildCached(`ja-pokemon:${ref.slug}`, () => resolveJapaneseCardText(card, ref), untranslated)
 );
 
-async function resolveJapaneseCardText(card: Card, ref: CardRef): Promise<LocalizedCardText> {
+async function resolveJapaneseCardText(card: GradedMarketSubject, ref: CardRef): Promise<LocalizedCardText> {
   const fallback: LocalizedCardText = {
     name: card.name,
     set: card.set,

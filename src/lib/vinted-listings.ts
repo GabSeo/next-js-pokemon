@@ -8,7 +8,7 @@ import {
 import { cleanCardName } from "@/lib/ebay-search";
 import { getLocalizedName } from "@/lib/tcgdex";
 import { vintedSearchLink } from "@/lib/vinted-search";
-import type { Card } from "@/lib/types";
+import type { GradedMarketSubject } from "@/lib/graded-market";
 
 /**
  * The Vinted domain layer: turns raw Lobstr result rows (lib/lobstr.ts)
@@ -334,7 +334,7 @@ export function toVintedListing(rawRow: Record<string, unknown>): VintedListing 
  * always at least usable. The parenthetical variant descriptor is stripped
  * via cleanCardName for the same reason lib/ebay-search.ts strips it.
  */
-export async function vintedQueryForCard(card: Card): Promise<{ query: string; displayName: string; searchUrl: string }> {
+export async function vintedQueryForCard(card: GradedMarketSubject): Promise<{ query: string; displayName: string; searchUrl: string }> {
   const frenchName = card.tcgdexId ? await getLocalizedName(card.tcgdexId, "fr").catch(() => undefined) : undefined;
   const displayName = frenchName ?? cleanCardName(card);
   const query = `${displayName} ${card.number ?? ""}`.trim();
@@ -526,7 +526,7 @@ export function selectVintedListings(listings: VintedListing[], displayName: str
   return deduped.slice(0, DISPLAY_LIMIT);
 }
 
-export async function getVintedListingsForCard(card: Card, displayName: string, searchUrl: string): Promise<VintedListing[]> {
+export async function getVintedListingsForCard(card: GradedMarketSubject, displayName: string, searchUrl: string): Promise<VintedListing[]> {
   if (!hasLobstrCredentials()) return [];
 
   const pinnedRun = pinnedVintedRunHash();

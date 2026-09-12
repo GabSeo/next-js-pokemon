@@ -1,9 +1,9 @@
-import { getGradedMarketData } from "@/lib/graded-market";
+import { getGradedMarketData, type GradedMarketSubject } from "@/lib/graded-market";
 import { formatPrice } from "@/lib/format-price";
 import type { ConditionEntry, TypeSummary } from "@/components/retro/graded-market-tabs";
 import type { GradedMarketTypeData } from "@/lib/graded-market";
 import type { CardView } from "@/lib/card-view";
-import type { Card } from "@/lib/types";
+
 
 /**
  * What a card is actually asking on eBay right now — graded and raw, in both
@@ -73,7 +73,7 @@ export type GradedFacts = {
  * placeholder in a field that IS read would produce confident results for the
  * wrong card.
  */
-function asTrackedCard(card: CardView): Card {
+function subjectFor(card: CardView): GradedMarketSubject {
   const print = card.prints[0];
   const eur = print?.price?.cardmarket?.avg;
   const usd = print?.price?.tcgplayer?.market;
@@ -129,13 +129,13 @@ function asTrackedCard(card: CardView): Card {
     currency: eur !== undefined ? "EUR" : "USD",
     currentPrice: eur ?? usd ?? 0,
     priceUnavailable: eur === undefined && usd === undefined,
-    asOfDate: new Date().toISOString(),
-    priceHistory: [],
-    recentSnapshots: [],
-    trend: { avg1: 0, avg7: 0, avg30: 0 },
-    priceRange: null,
+    // FIVE EMPTY FIELDS WERE HERE — asOfDate, priceHistory, recentSnapshots,
+    // trend, priceRange — invented so a hand-built object would look like a
+    // `Card`. None was ever read by anything this calls. They are gone with the
+    // cast that demanded them.
     imageUrl: print?.image,
-  } as unknown as Card;
+    rarity: print?.rarity,
+  };
 }
 
 /**
@@ -199,7 +199,7 @@ export async function gradedFactsFor(
   /** The rail's language toggle. Only consulted where the code cannot say. */
   chosen?: "en" | "ja"
 ): Promise<GradedFacts | undefined> {
-  const data = await getGradedMarketData(asTrackedCard(card)).catch(() => undefined);
+  const data = await getGradedMarketData(subjectFor(card)).catch(() => undefined);
   if (!data) return undefined;
 
   const wanted = marketLanguage(card, chosen);

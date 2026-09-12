@@ -1,6 +1,6 @@
 import { cardSearchTerms, tagFirstWord } from "@/lib/ebay-search";
 import { resilientFetch } from "@/lib/upstream";
-import type { Card } from "@/lib/types";
+import type { GradedMarketSubject } from "@/lib/graded-market";
 
 /**
  * eBay Buy Browse API client — real active-listing search, not a search-link
@@ -183,7 +183,7 @@ function conditionFilter(condition: EbayCondition): string {
  * localized number, e.g. a Japanese Pokémon print's own set number).
  */
 function conditionQuery(
-  card: Card,
+  card: GradedMarketSubject,
   condition: EbayCondition,
   nameOverride?: string,
   numberOverride?: string,
@@ -298,7 +298,7 @@ function numberMatchesTitle(number: string, title: string): boolean {
  */
 function titleMatchesCard(
   title: string,
-  card: Card,
+  card: GradedMarketSubject,
   condition: EbayCondition,
   numberOverride?: string,
   variantTags?: string[],
@@ -638,7 +638,7 @@ const DISPLAY_LIMIT = 4;
  * below is the only caller, and decides whether a second attempt is needed.
  */
 async function runSearch(
-  card: Card,
+  card: GradedMarketSubject,
   condition: EbayCondition,
   language: EbayLanguage | undefined,
   sort: EbaySort,
@@ -861,7 +861,7 @@ async function runSearch(
  * see that function's own comment for why.
  */
 export async function searchActiveListings(
-  card: Card,
+  card: GradedMarketSubject,
   condition: EbayCondition,
   language?: EbayLanguage,
   nameOverride?: string,
@@ -920,7 +920,7 @@ export async function searchActiveListings(
  * PSA 8, which sent whoever read the log looking at the wrong thing.
  */
 function reportEmpty(
-  card: Card,
+  card: GradedMarketSubject,
   condition: EbayCondition,
   language: EbayLanguage | undefined,
   guard: EbayMarketGuard | undefined,

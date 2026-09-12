@@ -1,5 +1,5 @@
 import type { EbayCondition, EbayLanguage } from "@/lib/ebay-browse";
-import type { Card } from "@/lib/types";
+import type { GradedMarketSubject } from "@/lib/graded-market";
 
 /** eBay's "CCG Individual Cards" category — matches ebay-browse.ts's CCG_INDIVIDUAL_CARDS_CATEGORY. */
 const CCG_INDIVIDUAL_CARDS_CATEGORY = "183454";
@@ -45,7 +45,7 @@ const PROFESSIONAL_GRADER_PARAM =
  * clean name — the parenthetical would break TCGdex's own name search the
  * same way it breaks eBay's.
  */
-export function cleanCardName(card: Card): string {
+export function cleanCardName(card: GradedMarketSubject): string {
   return card.name.replace(/\s*\([^)]*\)\s*$/, "").trim();
 }
 
@@ -94,7 +94,7 @@ export function cleanCardName(card: Card): string {
  * to also guess at a variant-specific name.
  */
 export function cardSearchTerms(
-  card: Card,
+  card: GradedMarketSubject,
   nameOverride?: string,
   numberOverride?: string,
   /**
@@ -265,7 +265,7 @@ function scrubQuotes(text: string): string {
  * `OP05-119 PSA 10 (alt,alternate) -manga`.
  */
 export function conditionSearchLink(
-  card: Card,
+  card: GradedMarketSubject,
   condition: EbayCondition,
   language: EbayLanguage = "English",
   nameOverride?: string,

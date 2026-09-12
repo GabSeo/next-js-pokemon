@@ -1,4 +1,4 @@
-import type { Card } from "@/lib/types";
+import type { GradedMarketSubject } from "@/lib/graded-market";
 
 /**
  * Placeholder data for panels the mockups show (PSA/eBay graded prices,
@@ -34,7 +34,7 @@ export type IllustrativePopulation = {
 };
 
 /** Grading-population shape (more low/mid grades than gem-mint 10s) — not a real PSA population report. */
-export function illustrativePopulation(card: Card): IllustrativePopulation {
+export function illustrativePopulation(card: GradedMarketSubject): IllustrativePopulation {
   const scale = 300 + Math.round(seedFraction(card.id, 7) * 800);
   const bars = [
     { grade: "10", count: Math.round(scale * 0.15) },
@@ -55,7 +55,7 @@ export function illustrativePopulation(card: Card): IllustrativePopulation {
 export type IllustrativeIntlPrice = { label: string; currency: string; amount: number };
 
 /** Rough static FX multipliers off the real USD price — not a live conversion rate. */
-export function illustrativeInternational(card: Card): IllustrativeIntlPrice[] {
+export function illustrativeInternational(card: GradedMarketSubject): IllustrativeIntlPrice[] {
   if (card.currency !== "USD") return [];
   return [
     { label: "Euro", currency: "€", amount: Math.round(card.currentPrice * 0.92 * 100) / 100 },
@@ -102,7 +102,7 @@ function relativeDateLabel(daysAgo: number): string {
  * swaps this out automatically the moment a real eBay fetch for that tier
  * succeeds.
  */
-export function illustrativeActiveListings(card: Card, condition: EbayConditionTier): IllustrativeListingSet {
+export function illustrativeActiveListings(card: GradedMarketSubject, condition: EbayConditionTier): IllustrativeListingSet {
   const base = card.currentPrice;
   const [lo, hi] = MULTIPLIER_RANGE[condition];
   const salt = ACTIVE_SALT[condition];
@@ -125,7 +125,7 @@ export function illustrativeActiveListings(card: Card, condition: EbayConditionT
  * comment, is currently gated behind eBay's restricted Marketplace Insights
  * API, so this stays illustrative regardless of eBay credentials.
  */
-export function illustrativeSoldListings(card: Card, condition: EbayConditionTier): IllustrativeListingSet {
+export function illustrativeSoldListings(card: GradedMarketSubject, condition: EbayConditionTier): IllustrativeListingSet {
   const base = card.currentPrice;
   const [lo, hi] = MULTIPLIER_RANGE[condition];
   const salt = SOLD_SALT[condition];
@@ -183,7 +183,7 @@ const VINTED_MINUTES_AGO = [0, 4, 11, 19, 27, 38, 52, 70, 95, 128];
  * and this feed renders only when that returns nothing — no API key, no
  * finished run yet, or no très bon état listing for this card right now.
  */
-export function illustrativeVintedFeed(card: Card): VintedFeedListing[] {
+export function illustrativeVintedFeed(card: GradedMarketSubject): VintedFeedListing[] {
   const base = card.currentPrice;
   return VINTED_MINUTES_AGO.map((minutesAgo, i) => {
     const multiplier = 0.5 + seedFraction(card.id, 60 + i) * 0.65;
