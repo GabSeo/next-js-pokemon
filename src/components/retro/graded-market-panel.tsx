@@ -1,3 +1,4 @@
+import { ListingRow } from "@/components/retro/listing-row";
 import { MarketVitals } from "@/components/retro/market-vitals";
 import { GradedMarketTabs, type ConditionEntry, type TypeSummary, type VintedSummary } from "@/components/retro/graded-market-tabs";
 import { franchiseLabel } from "@/lib/cards";
@@ -5,31 +6,6 @@ import { formatPrice } from "@/lib/format-price";
 import type { GradedMarketData, GradedMarketTypeData } from "@/lib/graded-market";
 import { relativeTimeLabel } from "@/lib/vinted-listings";
 import type { Card } from "@/lib/types";
-
-/** One row, real or illustrative — real rows get a working per-item link, illustrative rows never do (see lib/illustrative.ts). */
-function ListingRow({ date, description, price, currency, url }: { date: string; description: string; price: number; currency: string; url?: string }) {
-  return (
-    <div className="grid grid-cols-[76px_1fr_auto_20px] items-center gap-3 border-t border-dashed border-border-subtle py-3 text-[13px] first:border-t-0">
-      <span className="text-[11px] font-bold text-muted-text">{date}</span>
-      <span className="truncate font-bold">{description}</span>
-      {/* Deliberately NOT formatPrice: this is one seller's actual asking
-          price, where 2,599.99 is the real number and rounding it to 2,600
-          would be inventing a figure nobody listed. Two fixed decimals rather
-          than the locale default, so a row ending .99 and a row ending .00
-          line up instead of one showing cents and the next not. */}
-      <span className="font-black tabular-nums">
-        {currency} {price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-      </span>
-      {url ? (
-        <a href={url} target="_blank" rel="noopener noreferrer" className="text-muted-text hover:text-pokemon-blue">
-          ↗
-        </a>
-      ) : (
-        <span />
-      )}
-    </div>
-  );
-}
 
 function toTypeSummary(data: GradedMarketTypeData): TypeSummary {
   return {

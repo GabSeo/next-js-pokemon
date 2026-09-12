@@ -1,6 +1,8 @@
 "use client";
 
 import { motion } from "motion/react";
+
+import { ListingRow, type Listing } from "@/components/retro/listing-row";
 import { useState } from "react";
 
 /**
@@ -47,7 +49,13 @@ type Facts = {
   };
   graded?: {
     languages: string[];
-    rows: { condition: string; cells: Record<string, { median?: number; currency?: string; count?: number }> }[];
+    rows: {
+      condition: string;
+      cells: Record<
+        string,
+        { median?: number; currency?: string; count?: number; listings?: Listing[]; seeAllUrl?: string }
+      >;
+    }[];
     psa10Multiple: Record<string, number>;
     note: string;
   };
@@ -180,6 +188,49 @@ function Graded({ graded }: { graded: NonNullable<Facts["graded"]> }) {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* THE LISTINGS BEHIND EACH MEDIAN, CHEAPEST FIRST.
+          A median is for judging and a list is for buying, and this panel only
+          ever offered the first. "USD 974.98" cannot be acted on; the one
+          somebody is selling at the bottom of that market can. The rows and
+          their links were already being fetched and thrown away here — the
+          tracked-card pages have shown them since they were built, which is
+          why the instruction was to make this the SAME rather than better.
+          It renders the same ListingRow those pages do, so the two cannot
+          drift apart again. */}
+      <div className="mt-2 grid gap-1">
+        {graded.rows.map((row) =>
+          graded.languages.map((language) => {
+            const cell = row.cells[language];
+            if (!cell?.listings?.length) return null;
+            return (
+              <details key={`${row.condition}-${language}`} className="rounded border border-black/15 px-2 py-1.5">
+                <summary className="cursor-pointer list-none text-[10px] font-black uppercase tracking-wide text-muted-text">
+                  {row.condition}
+                  {graded.languages.length > 1 ? ` · ${language}` : ""} — cheapest{" "}
+                  {cell.listings.length} on sale now
+                </summary>
+                <div className="mt-1">
+                  {cell.listings.map((listing, index) => (
+                    <ListingRow key={`${listing.url ?? ""}-${index}`} {...listing} />
+                  ))}
+                </div>
+                {cell.seeAllUrl ? (
+                  <a
+                    href={cell.seeAllUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 inline-block text-[11px] font-black underline underline-offset-4"
+                    style={{ color: "var(--pokemon-blue)" }}
+                  >
+                    See all {cell.count} on eBay ↗
+                  </a>
+                ) : null}
+              </details>
+            );
+          })
+        )}
       </div>
 
       <p className="mt-1.5 text-[10px] leading-relaxed text-muted-text">{graded.note}</p>

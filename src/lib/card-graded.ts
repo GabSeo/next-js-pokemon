@@ -1,4 +1,5 @@
 import { getGradedMarketData } from "@/lib/graded-market";
+import type { Listing } from "@/components/retro/listing-row";
 import type { CardView } from "@/lib/card-view";
 import type { Card } from "@/lib/types";
 
@@ -49,7 +50,33 @@ export type GradedCell = {
    * difference between a price and an anecdote.
    */
   count?: number;
+  /**
+   * The actual listings behind the median, cheapest first.
+   *
+   * THE MEDIAN ALONE WAS THE WRONG SUMMARY, and it was mine. A reader who sees
+   * "PSA 10 — USD 974.98" cannot act on it: the number describes a market, and
+   * what they want is the one somebody is selling at the bottom of it. The
+   * tracked-card pages have shown these rows with working links since they were
+   * built, which is why "the eBay functioning must be the exact same" is the
+   * right instruction — the data was always here and only this screen was
+   * discarding it.
+   *
+   * CHEAPEST FIRST because that is the question. A median is for judging; a
+   * list is for buying, and it should open on the end of it that a buyer wants.
+   */
+  listings?: Listing[];
+  /** eBay's own search for this tier, for when four rows are not enough. */
+  seeAllUrl?: string;
 };
+
+/**
+ * How many listings each tier shows before the see-all link takes over.
+ *
+ * Four is what fits under a tier without the panel becoming a page of eBay.
+ * The cheapest is the one that matters and the next three give it context —
+ * whether the bottom of the market is one outlier or where everything sits.
+ */
+const LISTINGS_PER_TIER = 4;
 
 export type GradedRow = {
   /** "PSA 10", "PSA 9", "PSA 8", "Raw". */
@@ -171,6 +198,19 @@ export async function gradedFactsFor(
         median: active.medianPrice,
         currency: active.currency,
         count: active.count,
+        // CHEAPEST FIRST, and sorted here rather than trusted: eBay's own order
+        // is its relevance ranking, which is not price.
+        listings: [...active.rows]
+          .sort((a, b) => a.price - b.price)
+          .slice(0, LISTINGS_PER_TIER)
+          .map((row) => ({
+            date: row.date,
+            description: row.description,
+            price: row.price,
+            currency: row.currency,
+            url: row.url,
+          })),
+        seeAllUrl: active.seeAllUrl,
       };
       if (!languages.includes(entry.language)) languages.push(entry.language);
     }
