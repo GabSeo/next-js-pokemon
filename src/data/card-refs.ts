@@ -455,20 +455,39 @@ export const cardRefs: CardRef[] = [
     cardmarketProductUrl: {
       japanese: "https://www.cardmarket.com/en/OnePiece/Products/Singles/Promos-Japanese/MonkeyDLuffy-P-033-V2",
     },
-    // Per language, because this card's two tiers need OPPOSITE vocabulary
-    // and a single value can only ever serve one of them. Measured with
-    // scripts/ebay-query-lab.mts on 2026-08-30, PSA 10, both tiers:
-    //   English  "Event Pack Vol. 2" -> 8 raw / 7 real; "Shonen Jump" -> 0
-    //   Japanese "Shonen Jump"       -> 20 raw / 20 real; "Event Pack..." -> 0
-    // The card shipped as a Weekly Shonen Jump insert in Japan and as an
-    // event-pack promo in English, so sellers in each market title it after
-    // a different real-world product. Before this was per-language the
-    // single "Shonen Jump" value served Japanese and left the English tier
-    // with zero listings.
-    //
-    // See CardRef's own ebayVariantTags doc comment — real eBay listings
-    // for this exact print say "Weekly Shonen Jump", never "Event"/"Vol.".
-    ebayVariantTags: { en: ["Event Pack Vol. 2"], jp: ["Shonen Jump"] },
+    /**
+     * JAPANESE ONLY, AND THE ENGLISH HALF IS DELETED because the derivation
+     * now covers it and covers it better. It used to read
+     * `{ en: ["Event Pack Vol. 2"], jp: ["Shonen Jump"] }`; deriveQueryForCard
+     * produces the same positive clause from the catalogue plus two
+     * exclusions the hand-written value never had:
+     *
+     *   hand-written  ("Event Pack Vol. 2")
+     *   derived       ("event pack vol. 2") -"cs 2023 event pack"
+     *                                       -"cs 2023 event pack finalist"
+     *
+     * P-033's code carries four English printings and two of them ARE CS 2023
+     * Event Packs, so the hand-written clause was matching its own siblings.
+     * Deleting the field is not a loss of a rule — it is stopping a card from
+     * bypassing one.
+     *
+     * WHAT REMAINS IS NOT AN EXCEPTION TO A RULE; it is a fact no free
+     * catalogue we hold contains. This card shipped as a Weekly Shonen Jump
+     * insert in Japan and as an event-pack promo in English, so each market's
+     * sellers title it after a different real-world product. The corpus knows
+     * only the English side — its single Japanese row reads
+     * `Monkey.D.Luffy (P-033) (V.1)`, with the magazine nowhere in it — so
+     * there is nothing to derive "Shonen Jump" FROM.
+     *
+     * Measured with scripts/ebay-query-lab.mts on 2026-08-30, PSA 10:
+     *   Japanese  "Shonen Jump" -> 20 raw / 20 real;  "Event Pack…" -> 0
+     * Removing it would take that tier from twenty real listings to none, so
+     * it stays until a source records the Japanese product name.
+     *
+     * It cannot be ADDED to the derived query either: two parenthesised
+     * groups are an AND on eBay, and no listing says both names.
+     */
+    ebayVariantTags: { jp: ["Shonen Jump"] },
   },
   {
     // ONE CODE, FOUR PRINTINGS, AND A 200x SPREAD. searchCards("ST21-014")

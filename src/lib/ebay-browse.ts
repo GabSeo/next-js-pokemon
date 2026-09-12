@@ -251,6 +251,39 @@ function numberMatchesTitle(number: string, title: string): boolean {
 }
 
 /**
+ * Does this title say this phrase — whatever punctuation the seller used?
+ *
+ * WHY IT IS SHARED. The accept side and the reject side of the same query
+ * matched phrases by two different rules, and the correct one was on the
+ * reject side. Accept did a raw `title.includes("event pack vol. 2")`, so a
+ * seller writing "Event Pack Vol.2" or "Event Pack Vol 2" — the same card,
+ * same words, one character of punctuation apart — failed the filter and their
+ * listing was dropped. Measured live on P-033 PSA 10: two of four real
+ * listings thrown away, including the only two priced near the middle of the
+ * market.
+ *
+ * That is not a P-033 problem. Every One Piece accept group is a phrase built
+ * from a catalogue name, and catalogue punctuation is not seller punctuation:
+ * "Vol. 2", "Ver.", "Vol.2", "3rd Anniversary Treasure Campaign Pack". One
+ * rule for both sides means fixing it once instead of per card.
+ *
+ * BOTH SIDES ARE NORMALISED, which the reject side was not: it cleaned the
+ * TAG's punctuation and then searched the RAW title, so it carried half the
+ * same bug and would let a competing printing through on a spelling.
+ *
+ * A single word still matches whole-word only — "sp" must never fire on
+ * "spectacular" — which is what the word set is for.
+ */
+function phraseInTitle(title: string, phrase: string): boolean {
+  const parts = phrase.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+  if (parts.length === 0) return false;
+  const words = title.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+  if (parts.length === 1) return words.includes(parts[0]);
+  // Space-joined on BOTH sides, so "Vol. 2", "Vol.2" and "Vol 2" are one thing.
+  return ` ${words.join(" ")} `.includes(` ${parts.join(" ")} `);
+}
+
+/**
  * Sanity check on a returned listing's title, not just trust in the
  * structured filters — precisionAspectFilter is still unverified against
  * the API (confirmed working on eBay's website, not confirmed there), and
@@ -393,27 +426,12 @@ function titleMatchesCard(
     // Whole-word (or whole-phrase) matching, never substring: "sp" must not
     // fire on "spectacular", and a two-word reject like "2nd anniversary" only
     // counts when both words appear together.
-    const lower = title.toLowerCase();
-    const words = new Set(lower.split(/[^a-z0-9]+/).filter(Boolean));
-    const disqualified = rejectTags.some((tag) => {
-      const parts = tag.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
-      if (parts.length === 0) return false;
-      return parts.length > 1 ? lower.includes(parts.join(" ")) : words.has(parts[0]);
-    });
-    if (disqualified) return false;
+    if (rejectTags.some((tag) => phraseInTitle(title, tag))) return false;
   }
 
   if (acceptGroups && acceptGroups.length > 0) {
-    const lower = title.toLowerCase();
-    const words = new Set(lower.split(/[^a-z0-9]+/));
     const everyGroupOk = acceptGroups.every(
-      (group) =>
-        group.length === 0 ||
-        group.some((tag) => {
-          const clean = tag.replace(/["'‘’“”]/g, "").toLowerCase().trim();
-          if (!clean) return false;
-          return clean.includes(" ") ? lower.includes(clean) : words.has(clean);
-        })
+      (group) => group.length === 0 || group.some((tag) => phraseInTitle(title, tag))
     );
     if (!everyGroupOk) return false;
   }
