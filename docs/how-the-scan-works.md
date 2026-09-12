@@ -51,11 +51,15 @@ is the only metered thing anywhere near the scan.
 **This is the most important rule in the scan, and it was broken for weeks
 without anyone noticing.**
 
-| | a photograph | the live camera |
+| | a photograph | the live camera, today |
 |---|---|---|
 | leads with | the **printed code**, via Vision | the **artwork**, on device |
 | falls back to | the artwork match | nothing — it says so instead |
-| why | one image, chosen, one metered call it can afford | thirty frames a second cannot be metered |
+| why | one image, chosen, one metered call it can afford | no reader is wired in yet |
+
+The photo half is a decided rule. The camera half is a **description of the
+current code**, not a decision — see the open question at the end of this
+section.
 
 ### How it broke
 
@@ -99,9 +103,20 @@ between a real card and a watermarked reference that merely resembles it. The
 number in the corner names one card, and Vision read `OP05-074` off a PSA slab
 through the plastic.
 
-Both run in parallel on a photo, so the rule costs no time. The live view keeps
-the artwork because at thirty frames a second it is all there is — and that is
-the right trade *there*, which is exactly why it must not leak back here.
+Both run in parallel on a photo, so the rule costs no time.
+
+### The open question: should the live view read the code too?
+
+The reasoning that kept it out was "a metered per-image call cannot run thirty
+times a second", and that is true and beside the point. **The live view does not
+need a reader per FRAME.** It already decides when its evidence has settled —
+that is what the vote is for — and at that single moment it could send one image
+to be read, exactly as the photo path does.
+
+One call per card scanned, not per frame. On the Eustass Kid that would have
+turned Kalgara into `OP05-074`.
+
+It is not built, and the argument against it was weaker than it looked.
 
 ---
 
