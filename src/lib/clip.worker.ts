@@ -67,6 +67,18 @@ type MatchMessage = {
   bitmap: ImageBitmap;
   limit: number;
   /**
+   * Which catalogues THIS request wants searched.
+   *
+   * SENT PER MATCH, NOT PER WORKER, and that distinction was a live bug. The
+   * worker keeps every index it has ever loaded — which is right, they are
+   * expensive and a session switches between them — but the search iterated the
+   * whole map rather than the requested set. So once any scan had loaded the
+   * Japanese Pokemon index, every later scan searched it too: a One Piece card
+   * photographed with ONE PIECE and EN selected came back as six Japanese
+   * Pokemon cards, because the filter was never reaching the arithmetic.
+   */
+  keys?: string[];
+  /**
    * Find the card in the frame rather than trusting the caller's crop.
    *
    * When set, the bitmap is a WHOLE FRAME and this side locates the card,
@@ -163,9 +175,13 @@ async function ensureIndex(key: string): Promise<void> {
  * names a card in the English catalogue AND in the Japanese one, which is why
  * the resolver has ever needed a `ja~` qualifier at all.
  */
-function searchAll(query: Float32Array, limit: number) {
+function searchAll(query: Float32Array, limit: number, keys?: string[]) {
   const hits: { id: string; score: number; key: string }[] = [];
   for (const [key, index] of indexes) {
+    // The requested catalogues only. An absent list means every loaded one,
+    // which is what the live view wants and what every caller sent before the
+    // rail grew a filter.
+    if (keys && !keys.includes(key)) continue;
     for (const hit of clipSearch(index, query, limit).hits) hits.push({ ...hit, key });
   }
   hits.sort((a, b) => b.score - a.score);
@@ -265,7 +281,7 @@ self.onmessage = async (event: MessageEvent<Incoming>) => {
       const query = normalise(output.image_embeds.data);
       if (query.length !== CLIP_DIM) throw new Error(`model returned ${query.length} dimensions`);
 
-      const result = searchAll(query, message.limit);
+      const result = searchAll(query, message.limit, message.keys);
       self.postMessage({
         type: "match",
         id: message.id,

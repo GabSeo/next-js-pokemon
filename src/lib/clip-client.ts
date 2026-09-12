@@ -486,7 +486,10 @@ export async function matchCard(
       const id = nextRequest++;
       return await new Promise<ClipMatch>((resolve, reject) => {
         pending.set(id, { resolve, reject });
-        active.postMessage({ type: "match", id, bitmap, limit, detect: options?.detect }, [bitmap]);
+        // `keys` travels with every match, not just with the warm-up: the worker
+        // retains every index it has loaded, so without this a narrowed search
+        // still ran against whatever a previous scan happened to leave behind.
+        active.postMessage({ type: "match", id, bitmap, limit, keys, detect: options?.detect }, [bitmap]);
       });
     } catch {
       // The worker refused this frame. Fall through rather than lose the scan;

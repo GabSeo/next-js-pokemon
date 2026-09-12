@@ -61,7 +61,21 @@ import { onePieceSrc } from "@/lib/one-piece-image-url";
 type Route =
   | { via: "artwork"; margin: number; elapsed: number }
   /** Several cards share one artwork and no photograph can separate them. */
-  | { via: "artwork-tie"; tied: number; elapsed: number }
+  /**
+   * Several cards the artwork cannot separate — and the two reasons that
+   * happens are NOT the same claim, so they are not the same state.
+   *
+   * `reprint` is a genuine tie: two or three cards carrying the identical
+   * picture under different numbers, which no camera will ever tell apart.
+   * `unsure` is the matcher spreading its confidence across a handful of
+   * unrelated cards because it could not place the photograph at all.
+   *
+   * They looked identical on screen until a One Piece card came back as six
+   * Japanese Pokemon under the words "these 6 cards share the same artwork —
+   * one is a reprint of the other". That sentence is true of a reprint and a
+   * fabrication about a failed match.
+   */
+  | { via: "artwork-tie"; tied: number; elapsed: number; kind: "reprint" | "unsure" }
   | { via: "text" }
   /**
    * The number could not be read, so these cards were found by NAME alone.
@@ -206,7 +220,15 @@ async function matchLocally(
       route:
         cards.length === 1
           ? { via: "artwork", margin: result.margin, elapsed: result.elapsed }
-          : { via: "artwork-tie", tied: cards.length, elapsed: result.elapsed },
+          : {
+              via: "artwork-tie",
+              tied: cards.length,
+              elapsed: result.elapsed,
+              // The confidence rule decides which it is: inside the tie cap the
+              // matcher is sure about a small group, past it it is sure of
+              // nothing.
+              kind: tied.length <= CLIP_MAX_TIED ? "reprint" : "unsure",
+            },
       // Only an `identified` single card ends the scan here. Everything else is
       // held as the fallback while the printed number gets its turn — including
       // the diffuse spread, which is a shortlist rather than an answer.
@@ -646,21 +668,37 @@ export function ScanClient() {
               <span
                 className="h-2 w-2 rounded-full"
                 style={{
+                  // RED FOR A FAILED MATCH, not the same amber as a reprint
+                  // tie. One is "pick which of these two you own"; the other is
+                  // "this probably is not any of them".
                   background:
-                    status.route.via === "artwork" ? "var(--success-green)" : "var(--pokemon-yellow)",
+                    status.route.via === "artwork"
+                      ? "var(--success-green)"
+                      : status.route.via === "artwork-tie" && status.route.kind === "unsure"
+                        ? "var(--pokemon-red)"
+                        : "var(--pokemon-yellow)",
                 }}
               />
-              {status.route.via === "artwork" || status.route.via === "artwork-tie"
+              {/* THE BANNER MUST NOT CLAIM A MATCH THERE WAS NOT. A diffuse
+                  spread said "MATCHED BY ARTWORK" in green-adjacent type above
+                  six unrelated cards, which is the loudest possible way to be
+                  wrong. */}
+              {status.route.via === "artwork" ||
+              (status.route.via === "artwork-tie" && status.route.kind === "reprint")
                 ? "Matched by artwork"
-                : status.route.via === "name"
-                  ? "Matched by name only"
-                  : "Read the printed code"}
+                : status.route.via === "artwork-tie"
+                  ? "No clear artwork match"
+                  : status.route.via === "name"
+                    ? "Matched by name only"
+                    : "Read the printed code"}
             </span>
             <span className="text-[11px] font-bold tracking-[0.3px] text-white/60">
               {status.route.via === "artwork"
                 ? `on device · ${Math.round(status.route.elapsed)} ms · margin ${status.route.margin.toFixed(3)} · photo never left the phone`
                 : status.route.via === "artwork-tie"
-                  ? `on device · ${status.route.tied} cards share this artwork · photo never left the phone`
+                  ? status.route.kind === "reprint"
+                    ? `on device · ${status.route.tied} cards carry this exact picture · photo never left the phone`
+                    : `on device · ${status.route.tied} closest guesses, none confident · photo never left the phone`
                   : status.route.via === "name"
                     ? "the number was unreadable — these share the name that was read"
                     : "the artwork was unclear, so the photo was sent once to be read"}
@@ -734,9 +772,19 @@ export function ScanClient() {
                   apologising for not knowing. */}
               {status.route?.via === "artwork-tie" ? (
                 <p className="mt-1 text-[11px] text-muted-text">
-                  These {status.route.tied} cards share the same artwork — one is a reprint of the other. Check
-                  the number in the bottom corner of your card to tell them apart. Matched on your device in{" "}
-                  {Math.round(status.route.elapsed)} ms; the photo was not uploaded.
+                  {status.route.kind === "reprint" ? (
+                    <>
+                      These {status.route.tied} cards carry the identical picture — one is a reprint of the
+                      other, and no photograph can separate them. Check the number in the bottom corner of
+                      yours.
+                    </>
+                  ) : (
+                    <>
+                      The artwork could not be placed, so these are the {status.route.tied} closest guesses
+                      rather than an answer. If none is yours, type the number from the bottom corner instead.
+                    </>
+                  )}{" "}
+                  Matched on your device in {Math.round(status.route.elapsed)} ms; the photo was not uploaded.
                 </p>
               ) : null}
 
