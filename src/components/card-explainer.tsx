@@ -44,7 +44,53 @@ type Facts = {
     standing?: { rank: number; outOf: number; setLowEur: number; setMedianEur: number; setHighEur: number };
     history?: { date: string; eur?: number }[];
   };
+  graded?: {
+    figures: { language: string; psa10?: number; raw?: number; currency?: string; psa10Multiple?: number }[];
+    note: string;
+  };
 };
+
+/**
+ * What the card asks on eBay, graded and raw, per language.
+ *
+ * ITS OWN BLOCK RATHER THAN MORE CELLS IN THE STRIP ABOVE, because it is a
+ * different kind of number and conflating them would be the worst thing this
+ * panel could do. The strip is what a loose copy AVERAGES on Cardmarket over
+ * time; this is what sellers are ASKING today for a specific condition. A
+ * reader who reads one as the other will think a card is worth four times what
+ * it is.
+ *
+ * SO THE LABEL SAYS "asking", and the note under it says asks are not sales.
+ *
+ * THE MULTIPLE IS THE POINT of the whole block: the gap between raw and slabbed
+ * is the one figure that is invisible everywhere else in this product, and it
+ * is the first thing a collector looks for.
+ */
+function Graded({ graded }: { graded: NonNullable<Facts["graded"]> }) {
+  return (
+    <div className="mt-3 border-t-2 border-muted-surface pt-2.5">
+      <div className="text-[10px] font-black uppercase tracking-wide text-muted-text">
+        Asking on eBay now
+      </div>
+      <ul className="mt-1.5 grid gap-1.5">
+        {graded.figures.map((figure) => (
+          <li key={figure.language} className="flex items-baseline justify-between gap-3 text-[12px]">
+            <span className="shrink-0 font-black">{figure.language}</span>
+            <span className="truncate text-right tabular-nums">
+              {figure.raw !== undefined ? `raw ${figure.currency ?? ""} ${figure.raw.toFixed(2)}` : ""}
+              {figure.raw !== undefined && figure.psa10 !== undefined ? "  ·  " : ""}
+              {figure.psa10 !== undefined ? `PSA 10 ${figure.currency ?? ""} ${figure.psa10.toFixed(2)}` : ""}
+              {figure.psa10Multiple !== undefined ? (
+                <span className="ml-2 font-black">{figure.psa10Multiple}x</span>
+              ) : null}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-1 text-[10px] leading-relaxed text-muted-text">{graded.note}</p>
+    </div>
+  );
+}
 
 /**
  * The figures, rendered by US rather than written by the model.
@@ -235,6 +281,8 @@ export function CardExplainer({ tcg, code }: { tcg: "pokemon" | "onepiece"; code
       <div className="mt-3">
         <Rendered text={state.text} />
       </div>
+
+      {state.facts.graded ? <Graded graded={state.facts.graded} /> : null}
 
       {/* WHAT THE WEB ADDS, AND VISIBLY FROM SOMEWHERE ELSE.
           THE SEPARATION IS THE FEATURE, not decoration. Everything above this

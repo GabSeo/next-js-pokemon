@@ -1,6 +1,7 @@
 import { ApiBudgetExceededError } from "@/lib/api-budget";
 import { explainCard, factsFor, ExplainNotConfiguredError } from "@/lib/card-explain";
 import { webContextFor } from "@/lib/card-context-web";
+import { gradedFactsFor } from "@/lib/card-graded";
 import { getCardView } from "@/lib/card-view";
 
 /**
@@ -47,7 +48,13 @@ export async function POST(request: Request) {
   const card = await getCardView(tcg, code);
   if (!card) return Response.json({ error: "No such card." }, { status: 404 });
 
-  const facts = factsFor(card);
+  // EBAY BEFORE THE SHEET, because the sheet is what the model reads. Up to
+  // eight searches (four condition tiers times two languages) and a cache key of
+  // the card code, so a repeat costs nothing. It resolves to undefined on a
+  // missing credential, an open circuit breaker, or a card nobody is selling —
+  // all of which leave the field absent rather than failing the request.
+  const graded = await gradedFactsFor(card).catch(() => undefined);
+  const facts = factsFor(card, graded);
 
   try {
     /**

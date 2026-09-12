@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 
 import { chargeApiBudget } from "@/lib/api-budget";
 import { contextFor, type CardContext } from "@/lib/card-context";
+import type { GradedFacts } from "@/lib/card-graded";
 import type { CardView } from "@/lib/card-view";
 
 /**
@@ -231,9 +232,17 @@ export type CardFacts = {
    * more calls are not.
    */
   context?: CardContext;
+  /**
+   * Live eBay asking prices — PSA 10 and raw, English and Japanese.
+   *
+   * THE THIRD KIND OF PRICE and the one a collector reaches for first: the gap
+   * between a raw copy and the same card in a slab. Absent for most cards, and
+   * the prompt treats an absence like any other.
+   */
+  graded?: GradedFacts;
 };
 
-export function factsFor(card: CardView): CardFacts {
+export function factsFor(card: CardView, graded?: GradedFacts): CardFacts {
   return {
     game: card.tcg,
     name: card.name,
@@ -250,6 +259,7 @@ export function factsFor(card: CardView): CardFacts {
     // Pokemon price archives. A One Piece card gets the printings and nothing
     // more, which the prompt handles as an absent field like any other.
     context: card.tcg === "pokemon" ? contextFor(card.code) : undefined,
+    graded,
   };
 }
 
@@ -300,6 +310,13 @@ const SYSTEM = [
   "holding. Give them something to DO: where to look, what they would see —",
   "described from what the WORD means, never from the artwork, which you have",
   "not seen. If there is only one printing, say so in one sentence and move on.",
+  "",
+  "If the sheet has a `graded` block, it holds LIVE EBAY ASKING PRICES: what a",
+  "PSA 10 copy and a raw copy are being listed at today, per language. These are",
+  "asks, not sales — say so if you mention them. Where a psa10Multiple exists,",
+  "it is how many times the raw price a slabbed copy asks. Report it; never turn",
+  "it into a recommendation to grade. Grading costs money and takes months and",
+  "neither is in that number.",
   "",
   "**What that means** — the reading of the figures, not the figures. Where this",
   "card sits in its set and whether that is high or low. Whether one printing is",
