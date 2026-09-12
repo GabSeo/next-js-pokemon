@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { AddToCollectionButton } from "@/components/add-to-collection-button";
+import { CardExplainer } from "@/components/card-explainer";
 import type { CodeCandidate } from "@/lib/card-code-ocr";
 import type { CardView } from "@/lib/card-view";
 import { ALL_INDEXES, bitmapOf, clipHitGame, clipHitId, matchCard } from "@/lib/clip-client";
@@ -610,6 +611,12 @@ export function ScanClient() {
                         Full page
                       </Link>
                     </div>
+
+                    {/* THE EXPLANATION, ON DEMAND. Only where the scan settled
+                        on ONE card: explaining each of six tied candidates is
+                        six bills for a question the reader has not asked yet,
+                        and the thing they need at that point is to pick one. */}
+                    {status.cards.length === 1 ? <CardExplainer tcg={card.tcg} code={card.code} /> : null}
 
                     {/* THE MATCH, ALONE. The grid used to show every printing
                         ranked best-first, which asked the reader to re-do the

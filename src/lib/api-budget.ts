@@ -84,6 +84,36 @@ const BUDGETS: Record<string, Budget> = {
    * on-device OCR could not read, against roughly 150 scans in total.
    */
   "vision.googleapis.com": { limit: 900, windowMs: 30 * 24 * HOUR_MS },
+  /**
+   * The card explainer — the ONE thing here that bills money rather than
+   * spending a free allowance.
+   *
+   * Every other bucket protects a free tier: passing its ceiling means being
+   * refused. This one has no free tier and no natural stop, so the ceiling is
+   * not protecting a quota, it is the only thing standing between a loop and a
+   * credit card.
+   *
+   * 400 a month against a scan volume measured in the low hundreds, and a burst
+   * of 40 a day because the failure this guards against is a page calling it on
+   * a timer rather than a person scanning forty cards. A real afternoon of
+   * cataloguing a collection is a few dozen; a runaway is thousands in an hour,
+   * and the daily ceiling catches that on the first day instead of the first
+   * invoice.
+   */
+  "api.anthropic.com": { limit: 400, windowMs: MONTH_MS, burst: { limit: 40, windowMs: DAY_MS } },
+  /**
+   * Groq — the explainer's first choice, and open-weight models on a free tier
+   * wide enough to put in front of visitors rather than only in front of us.
+   *
+   * THE CEILING IS OURS, NOT THEIRS. Groq publishes its own per-minute and
+   * per-day limits and moves them; rather than encode a number that will drift,
+   * this sits at a volume this project could not plausibly exceed honestly —
+   * 60 a day is more cards than anyone catalogues in a sitting — and lets
+   * Groq's own 429 be the authority if it is ever reached.
+   *
+   * Explanations are cached, so this counts NEW cards rather than views.
+   */
+  "api.groq.com": { limit: 1200, windowMs: MONTH_MS, burst: { limit: 60, windowMs: DAY_MS } },
   // Both 100/hour real, but their per-card costs are nothing alike, so the
   // ceilings are set from measurement rather than symmetry.
   //

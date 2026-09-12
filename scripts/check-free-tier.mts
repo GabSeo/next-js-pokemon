@@ -58,7 +58,7 @@ const SRC_DIR = path.join(process.cwd(), "src");
  *   tcggo         cardmarket-api-tcg.p.rapidapi.com    80/day, burst 24/min
  *   vision        vision.googleapis.com                900/month
  */
-const METERED_MODULES = ["apitcg", "berrywallet", "pokewallet", "ebay-browse", "tcggo", "vision"];
+const METERED_MODULES = ["apitcg", "berrywallet", "pokewallet", "ebay-browse", "tcggo", "vision", "card-explain"];
 
 /**
  * Routes that are metered ON PURPOSE.
@@ -80,6 +80,10 @@ const ALLOWED = new Set([
   "tools/price-checker/[cardId]/page.tsx",
   "tools/price-checker.md/route.ts",
   "okf/tools/price-checker/route.ts",
+  // The card explainer. Free by default — Groq's free tier, open-weight models
+  // — but metered, and a free allowance is a ceiling like any other. See the
+  // api.groq.com bucket.
+  "api/scan/explain/route.ts",
   // Market APIs and the agent surfaces over them.
   "api/mcp/route.ts",
   "api/pokemon/route.ts",
