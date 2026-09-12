@@ -85,6 +85,32 @@ const OP_PROMO = /\bP\s*[-–—_ ]\s*([0-9OoQDIlSsBZGT]{3})\b/gi;
 const PKM_NUMBER = /\b([0-9OoQDIlSsBZGT]{1,3})\s*\/\s*([0-9OoQDIlSsBZGT]{1,3})\b/g;
 
 /**
+ * The printed number of a SUBSET card: `GG30/GG70`, `TG12/TG30`, `SV30/SV94`.
+ *
+ * WHY `PKM_NUMBER` CANNOT READ THESE, and it was read as a mystery rather than
+ * a bug for a while. Its digit class caps at three characters and starts at a
+ * word boundary, so `GG30` — four characters, no boundary after the first G —
+ * never matches at all. A photograph of a Galarian Gallery Pikachu therefore
+ * produced NO code, fell through to the name fallback, and came back as six
+ * arbitrary cards called Pikachu. Observed exactly that way.
+ *
+ * It is not a rare shape: 1,536 of 23,546 English cards (6.5%) are numbered in
+ * a subset sequence — Galarian Gallery, Trainer Gallery, Shiny Vault, and every
+ * promo run (SWSH, SM, XY, BW, DP, HGSS) — and those are disproportionately the
+ * cards worth photographing.
+ *
+ * BOTH PREFIXES MUST AGREE. A real printed number repeats its subset on either
+ * side of the slash, and requiring that is what keeps this pattern from firing
+ * on ordinary text: two letter-digit runs around a slash are common, the same
+ * letters on both sides are not.
+ *
+ * The prefix is LETTERS ONLY, with no digit repair applied to it. `GG` and `TG`
+ * are exactly the shapes `asDigits` would rewrite (G to 6, T to 7), so running
+ * the repair here would destroy the thing being read.
+ */
+const PKM_SUBSET = /\b([A-Za-z]{1,4})([0-9OoQDIlSsBZGT]{1,3})\s*\/\s*([A-Za-z]{1,4})([0-9OoQDIlSsBZGT]{1,3})\b/g;
+
+/**
  * Every plausible card code in `text`, best first.
  *
  * Ranked by how constrained the pattern is rather than by where it appeared:
@@ -121,6 +147,19 @@ export function extractCardCodes(text: string): CodeCandidate[] {
 
   for (const m of text.matchAll(OP_PROMO)) {
     add(`P-${asDigits(m[1])}`, "one-piece-code", m[0].trim());
+  }
+
+  // BEFORE the bare-number pattern, so `GG30/GG70` is offered ahead of any
+  // loose `30/70` reading the same text might also yield. More constraints
+  // agreeing means a likelier code, which is the ordering rule this whole
+  // function follows.
+  for (const m of text.matchAll(PKM_SUBSET)) {
+    const prefix = m[1].toUpperCase();
+    if (prefix !== m[3].toUpperCase()) continue;
+    const numerator = asDigits(m[2]);
+    const denominator = asDigits(m[4]);
+    if (Number(numerator) === 0 || Number(denominator) === 0) continue;
+    add(`${prefix}${numerator}/${prefix}${denominator}`, "pokemon-number", m[0].trim());
   }
 
   for (const m of text.matchAll(PKM_NUMBER)) {

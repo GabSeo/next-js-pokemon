@@ -4,7 +4,17 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { CardView } from "@/lib/card-view";
-import { cardRect, cardRectInView, matchCard, prepareMatcher, type ClipIndexKey, type ClipProgress } from "@/lib/clip-client";
+import {
+  ALL_INDEXES,
+  cardRect,
+  cardRectInView,
+  clipHitGame,
+  clipHitId,
+  matchCard,
+  prepareMatcher,
+  type ClipProgress,
+  type ClipSourcedHit,
+} from "@/lib/clip-client";
 import { clipVerdict, CLIP_MAX_TIED, type ClipVerdict } from "@/lib/clip-search";
 
 /**
@@ -112,15 +122,7 @@ type Reading =
     }
   | { state: "found"; cards: CardView[]; tied: number; elapsed: number };
 
-export function LiveScanner({
-  indexKey,
-  tcg,
-  onClose,
-}: {
-  indexKey: ClipIndexKey;
-  tcg: "pokemon" | "onepiece";
-  onClose: () => void;
-}) {
+export function LiveScanner({ onClose }: { onClose: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [reading, setReading] = useState<Reading>({ state: "starting" });
 
@@ -221,7 +223,19 @@ export function LiveScanner({
    * down and build a new one on every frame, and two loops racing one camera is
    * a bug that looks like the matcher being wrong.
    */
-  const loop = useRef<{ running: boolean; frames: number; tally: Map<string, { sum: number; seen: number }> }>({
+  /**
+   * THE VOTE IS KEYED BY CATALOGUE AND ID, not by id alone.
+   *
+   * `neo1-1` names a card in the English catalogue and a different one in the
+   * Japanese; tallying on the bare id would add their evidence together and
+   * answer with whichever the map happened to hold. The hit already knows which
+   * catalogue answered, so it is kept all the way to the resolve call.
+   */
+  const loop = useRef<{
+    running: boolean;
+    frames: number;
+    tally: Map<string, { sum: number; seen: number; hit: ClipSourcedHit }>;
+  }>({
     running: false,
     frames: 0,
     tally: new Map(),
@@ -270,7 +284,7 @@ export function LiveScanner({
       // reads as broken rather than as loading.
       setReading({ state: "loading" });
       try {
-        await prepareMatcher(indexKey, (progress) => {
+        await prepareMatcher(ALL_INDEXES, (progress) => {
           if (!cancelled) setReading({ state: "loading", progress });
         });
       } catch {
@@ -331,7 +345,7 @@ export function LiveScanner({
           const rect = cardRectInView(width, height, box.width, box.height, fillRef.current);
           // FIND THE CARD RATHER THAN ASK FOR IT. `rect` is still the fallback
           // for the frames the detector declines.
-          result = await matchCard(video, rect, indexKey, { limit: 8, detect: true });
+          result = await matchCard(video, rect, ALL_INDEXES, { limit: 8, detect: true });
 
           // Paint the SAME rectangle into the on-screen thumbnail. Same source,
           // same numbers — if the preview shows a label or a table, that is
@@ -362,10 +376,11 @@ export function LiveScanner({
           }
           for (const hit of result.hits) {
             if (hit.score < VOTE_FLOOR) continue;
-            const entry = tally.get(hit.id) ?? { sum: 0, seen: 0 };
+            const at = `${hit.key}/${hit.id}`;
+            const entry = tally.get(at) ?? { sum: 0, seen: 0, hit };
             entry.sum += hit.score;
             entry.seen += 1;
-            tally.set(hit.id, entry);
+            tally.set(at, entry);
           }
           loop.current.frames++;
         }
@@ -390,13 +405,12 @@ export function LiveScanner({
           const tied = ranked
             .filter(([, entry]) => (leader[1].sum - entry.sum) / Math.max(1, loop.current.frames) < ACCEPT_LEAD)
             .slice(0, CLIP_MAX_TIED)
-            .map(([id]) => id);
-          const ids = tied.map((id) => (indexKey === "ja" ? `ja~${id}` : id));
+            .map(([, entry]) => entry.hit);
           try {
             const response = await fetch("/api/scan/resolve", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ ids, tcg }),
+              body: JSON.stringify({ ids: tied.map(clipHitId), games: tied.map(clipHitGame) }),
             });
             const { cards } = (await response.json()) as { cards?: CardView[] };
             if (cards && cards.length > 0) {
@@ -426,8 +440,14 @@ export function LiveScanner({
               : 0,
             leading: leader?.[0],
             found: result.corners ? { corners: result.corners, width: 640 } : undefined,
+            // The catalogue is part of the id here, because with four searched
+            // at once "which one answered" is half of what the panel is for.
             peek: result.hits[0]
-              ? { id: result.hits[0].id, score: result.hits[0].score, margin: result.margin }
+              ? {
+                  id: `${result.hits[0].key}/${result.hits[0].id}`,
+                  score: result.hits[0].score,
+                  margin: result.margin,
+                }
               : undefined,
             // AVERAGE, NOT SUM. The sum grows with every frame and decays with
             // DECAY, so its absolute value says more about how long the camera
@@ -451,7 +471,7 @@ export function LiveScanner({
       cancelled = true;
       stop();
     };
-  }, [indexKey, tcg, stop, attempt]);
+  }, [stop, attempt]);
 
   const hint =
     reading.state !== "scanning"

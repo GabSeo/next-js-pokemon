@@ -49,9 +49,9 @@ const MAX_CODES = 8;
 const MAX_CARDS_PER_CODE = 6;
 
 export async function POST(request: Request) {
-  let payload: { codes?: unknown; ids?: unknown; tcg?: unknown };
+  let payload: { codes?: unknown; ids?: unknown; tcg?: unknown; games?: unknown };
   try {
-    payload = (await request.json()) as { codes?: unknown; ids?: unknown; tcg?: unknown };
+    payload = (await request.json()) as { codes?: unknown; ids?: unknown; tcg?: unknown; games?: unknown };
   } catch {
     return Response.json({ error: "Expected JSON." }, { status: 400 });
   }
@@ -71,18 +71,30 @@ export async function POST(request: Request) {
     : [];
 
   /**
-   * WHICH GAME THE IDS BELONG TO, sent rather than guessed. It defaulted to
-   * Pokemon while Pokemon was the only indexed game, and a One Piece printing
-   * id put through `getCardView("pokemon", …)` resolves to nothing at all —
-   * a silent empty result rather than a visible error.
+   * WHICH GAME EACH ID BELONGS TO, per id rather than per request.
+   *
+   * It was one game for the whole call, sent rather than guessed, and that was
+   * right while the scan asked which game before it would look at a picture. It
+   * no longer asks: the matcher searches all four catalogues at once and knows
+   * for each hit which one answered, so a single result list can hold a Pokemon
+   * card and a One Piece card at the same time.
+   *
+   * `games[i]` belongs to `ids[i]`. A missing or unrecognised entry falls back
+   * to the request-level `tcg`, which keeps every existing caller working — a
+   * One Piece printing id put through `getCardView("pokemon", …)` resolves to
+   * nothing at all, a silent empty result rather than a visible error.
    */
-  const tcg: "pokemon" | "onepiece" = payload.tcg === "onepiece" ? "onepiece" : "pokemon";
+  const fallbackTcg: "pokemon" | "onepiece" = payload.tcg === "onepiece" ? "onepiece" : "pokemon";
+  const games = Array.isArray(payload.games) ? payload.games : [];
+  const gameAt = (i: number): "pokemon" | "onepiece" =>
+    games[i] === "onepiece" ? "onepiece" : games[i] === "pokemon" ? "pokemon" : fallbackTcg;
 
   const real: string[] = [];
   const cards: CardView[] = [];
   const seen = new Set<string>();
 
-  for (const id of ids) {
+  for (const [position, id] of ids.entries()) {
+    const tcg = gameAt(position);
     // A ONE PIECE MATCH NAMES A PICTURE, and pictures come in two shapes: a
     // Bandai printing id like `ST21-014_p2`, and — for the 970 printings Bandai
     // does not publish — an optcgapi filename like

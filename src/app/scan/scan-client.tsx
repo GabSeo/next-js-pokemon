@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 import { AddToCollectionButton } from "@/components/add-to-collection-button";
 import type { CodeCandidate } from "@/lib/card-code-ocr";
 import type { CardView } from "@/lib/card-view";
-import { bitmapOf, matchCard, type ClipIndexKey } from "@/lib/clip-client";
+import { ALL_INDEXES, bitmapOf, clipHitGame, clipHitId, matchCard } from "@/lib/clip-client";
 import { CLIP_MAX_TIED, clipTied, clipVerdict } from "@/lib/clip-search";
 import { LiveScanner } from "@/app/scan/live-scanner";
 import { onePieceSrc } from "@/lib/one-piece-image-url";
@@ -61,7 +61,16 @@ type Route =
   | { via: "artwork"; margin: number; elapsed: number }
   /** Several cards share one artwork and no photograph can separate them. */
   | { via: "artwork-tie"; tied: number; elapsed: number }
-  | { via: "text" };
+  | { via: "text" }
+  /**
+   * The number could not be read, so these cards were found by NAME alone.
+   *
+   * A separate route rather than a flag on `text`, because it is a different
+   * promise: a resolved number names the card, a name names an arbitrary few of
+   * however many share it — 166 cards are called Pikachu. Presenting the two
+   * identically is what made six wrong Pikachus look like an answer.
+   */
+  | { via: "name" };
 
 type Status =
   | { phase: "idle" }
@@ -71,6 +80,16 @@ type Status =
 
 /** Long edge in pixels. Comfortably more detail than a card code needs. */
 const UPLOAD_MAX_EDGE = 1600;
+
+/**
+ * How many artwork candidates are worth putting in front of someone.
+ *
+ * Not a confidence threshold — `CLIP_MAX_TIED` is that, and it is deliberately
+ * three. This is a LAYOUT limit: the comparison grid wraps to two columns on a
+ * phone, so six is three rows and still scannable, where the full eight the
+ * matcher returns is a wall.
+ */
+const SHORTLIST = 6;
 
 async function uploadable(file: File): Promise<Blob> {
   try {
@@ -129,9 +148,7 @@ async function uploadable(file: File): Promise<Blob> {
  * job on its own.
  */
 async function matchLocally(
-  file: File,
-  key: ClipIndexKey,
-  tcg: "pokemon" | "onepiece"
+  file: File
 ): Promise<{ cards: CardView[]; route: Route; confident: boolean } | undefined> {
   const { source, width, height } = await bitmapOf(file);
   try {
@@ -140,26 +157,42 @@ async function matchLocally(
     // THE WHOLE PICTURE for an uploaded photo — the person framed it when they
     // took it. The live view crops to a guide instead, because a camera frame
     // is mostly room.
-    const result = await matchCard(source, { x: 0, y: 0, width, height }, key, { limit: 8 });
+    const result = await matchCard(source, { x: 0, y: 0, width, height }, ALL_INDEXES, { limit: 8 });
     const verdict = clipVerdict(result);
     // Nothing card-like in the picture at all. No list is worth showing and the
     // reader will not find a code either, but it is allowed to try.
     if (verdict === "empty") return undefined;
 
+    // TWO DIFFERENT QUESTIONS, AND THEY USED TO SHARE ONE ANSWER.
+    //
+    //   how confident is this?   -> `tied`, capped at CLIP_MAX_TIED
+    //   what should I show?      -> `shortlist`, up to SHORTLIST
+    //
+    // A spread of eight near-ties means the matcher cannot name the card, and
+    // it used to mean the whole local match was discarded — so a photograph
+    // with eight plausible readings showed nothing at all while one with three
+    // showed three. That was the confidence rule deciding the display, and once
+    // the search covers four catalogues it fires far more often: the Galarian
+    // Gallery photo on file ties EIGHT ways at a margin of 0.0004.
+    //
+    // The confidence rule is unchanged and still gates the short-circuit past
+    // the printed-number reader. What changes is that a diffuse spread is now
+    // kept as a shortlist for after the reader has had its turn, instead of
+    // being thrown away before it.
     const tied = clipTied(result);
-    if (tied.length === 0 || tied.length > CLIP_MAX_TIED) return undefined;
+    if (tied.length === 0) return undefined;
+    const shortlist = tied.slice(0, SHORTLIST);
 
     // The matcher decided WHICH cards; the resolver only fetches them.
     //
-    // ONE PIECE IS ALREADY ADDRESSED BY ITS PRINTING ID — `ST21-014_p2` — and
-    // the resolver turns that into the card that owns it. Only the Japanese
-    // Pokemon catalogue needs a qualifier, because `neo1-1` names a card in
-    // each of the two.
-    const ids = tied.map((hit) => (key === "ja" ? `ja~${hit.id}` : hit.id));
+    // EACH HIT CARRIES ITS OWN CATALOGUE, which is what lets one result list
+    // hold a Pokemon card and a One Piece card at once. `clipHitId` applies the
+    // `ja~` qualifier where it is needed and `clipHitGame` says which lookup to
+    // use — both are the matcher's knowledge, not a guess made here.
     const response = await fetch("/api/scan/resolve", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids, tcg }),
+      body: JSON.stringify({ ids: shortlist.map(clipHitId), games: shortlist.map(clipHitGame) }),
     });
     if (!response.ok) return undefined;
 
@@ -173,8 +206,9 @@ async function matchLocally(
           ? { via: "artwork", margin: result.margin, elapsed: result.elapsed }
           : { via: "artwork-tie", tied: cards.length, elapsed: result.elapsed },
       // Only an `identified` single card ends the scan here. Everything else is
-      // held as the fallback while the printed number gets its turn.
-      confident: verdict === "identified" && cards.length === 1,
+      // held as the fallback while the printed number gets its turn — including
+      // the diffuse spread, which is a shortlist rather than an answer.
+      confident: verdict === "identified" && tied.length <= CLIP_MAX_TIED && cards.length === 1,
     };
   } finally {
     source.close();
@@ -278,40 +312,22 @@ export function ScanClient() {
   const [preview, setPreview] = useState<string | undefined>();
   const [typed, setTyped] = useState("");
   /**
-   * ONE LANGUAGE, NEVER BOTH. An English card and its Japanese release share
-   * artwork exactly, so a search across both returns two answers for one card
-   * and asks the reader to break a tie the picture cannot break.
-   */
-  const [language, setLanguage] = useState<"en" | "ja">("en");
-  /**
-   * WHICH GAME, ASKED RATHER THAN GUESSED.
+   * WHAT WAS ASKED HERE, AND IS NOT ANY MORE.
    *
-   * It has to be asked because nothing in the picture says. When there was an
-   * index for Pokemon and none for One Piece, a photographed Luffy was searched
-   * against 41,500 Pokemon vectors and confidently answered with a Koffing —
-   * the exact failure this codebase refuses everywhere else. One Piece has its
-   * own index now, so the question no longer decides whether the matcher runs;
-   * it decides which catalogue it runs against, which is the same question the
-   * language toggle asks.
+   * Two pieces of state stood here: `language` and `game`. Both were honest —
+   * an English card and its Japanese release share artwork exactly, and nothing
+   * in a picture says which game it is; when One Piece had no index a
+   * photographed Luffy came back a Koffing. Both are gone because the matcher
+   * now searches every catalogue and reports which one answered, so the
+   * question is the machine's again.
    *
-   * Both indexes are in one embedding space, so a later version could search
-   * both and drop the question. That needs measuring first: two catalogues in
-   * one search is two chances to be confidently wrong.
+   * The ambiguity they were hiding has not been solved. It has been SHOWN: an
+   * English card and its Japanese twin both come back, as candidates, exactly
+   * the way two reprints of one artwork do. The picture cannot separate them
+   * and never could — putting that behind a toggle only moved the guess onto
+   * the person.
    */
-  const [game, setGame] = useState<"pokemon" | "onepiece">("pokemon");
 
-  /**
-   * The index this pair of choices selects. Four exist: two games times two
-   * languages, all in the same embedding space and all searched the same way.
-   */
-  const indexKey: ClipIndexKey = game === "pokemon" ? language : language === "ja" ? "op-ja" : "op-en";
-  /**
-   * The live camera, off until asked for.
-   *
-   * NOT THE DEFAULT, and that is a decision rather than an omission: opening it
-   * on page load asks for a camera permission before anyone has said they want
-   * one, and downloads 68 MB to a visitor who may only have come to read.
-   */
   const [live, setLive] = useState(false);
   const objectUrl = useRef<string | undefined>(undefined);
 
@@ -338,7 +354,7 @@ export function ScanClient() {
      */
     let unsure: { cards: CardView[]; route: Route } | undefined;
     try {
-      const local = await matchLocally(file, indexKey, game);
+      const local = await matchLocally(file);
       if (local?.confident) {
         setStatus({ phase: "done", candidates: [], cards: local.cards, route: local.route });
         return;
@@ -355,6 +371,7 @@ export function ScanClient() {
     let candidates: CodeCandidate[] = [];
     let cards: CardView[] = [];
     let note: string | undefined;
+    let byNameOnly = false;
 
     try {
       const image = await uploadable(file);
@@ -373,9 +390,14 @@ export function ScanClient() {
         // The reader returns the cards already resolved and their printings
         // already ordered by how much each looks like the photo — one upload,
         // one response, no second round trip.
-        const payload = (await response.json()) as { candidates?: CodeCandidate[]; cards?: CardView[] };
+        const payload = (await response.json()) as {
+          candidates?: CodeCandidate[];
+          cards?: CardView[];
+          byNameOnly?: boolean;
+        };
         candidates = payload.candidates ?? [];
         cards = payload.cards ?? [];
+        byNameOnly = payload.byNameOnly === true;
       }
     } catch {
       note = "Could not reach the card reader. Check your connection, or type the code below.";
@@ -397,7 +419,13 @@ export function ScanClient() {
       return;
     }
 
-    setStatus({ phase: "done", candidates, cards, note, route: { via: "text" } });
+    setStatus({
+      phase: "done",
+      candidates,
+      cards,
+      note,
+      route: { via: byNameOnly ? "name" : "text" },
+    });
   }
 
   return (
@@ -429,64 +457,18 @@ export function ScanClient() {
           {live ? "Close the live camera" : "Scan live with the camera"}
         </button>
 
-        {/* WHAT THE SCANNER CANNOT WORK OUT FOR ITSELF, asked rather than
-            guessed. Both answers change which catalogue is searched, and
-            neither is recoverable from the picture: the artwork matcher has no
-            text to read a language off, and it has no index at all for One
-            Piece — so left to guess it answered a photographed Luffy with a
-            Koffing. */}
-        <fieldset className="mt-3 rounded-lg border-2 border-black bg-white p-2">
-          <legend className="px-1 text-[10px] font-black uppercase tracking-wide text-muted-text">Game</legend>
-          <div className="flex gap-1">
-            {(
-              [
-                ["pokemon", "Pokémon"],
-                ["onepiece", "One Piece"],
-              ] as const
-            ).map(([value, name]) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setGame(value)}
-                aria-pressed={game === value}
-                className={`flex-1 rounded border-2 border-black px-2 py-1.5 text-xs font-black transition-colors ${
-                  game === value ? "bg-black text-white" : "bg-muted-surface hover:bg-white"
-                }`}
-              >
-                {name}
-              </button>
-            ))}
-          </div>
-        </fieldset>
+        {/* NOTHING IS ASKED ANY MORE.
+            Two fieldsets stood here — Game, and Card language — and the
+            reasoning for them was sound and is now obsolete rather than wrong.
+            Neither answer is recoverable from a picture, so the person was
+            asked; but the person cannot recover it any faster than the matcher
+            can, and two taps in front of "point the camera at a card" is the
+            feature arguing with its own proposition.
 
-        {/* BOTH GAMES ARE HELD TWICE, so both take the question. Bandai
-            publishes an English and a Japanese card list, and the two carry
-            different printings of the same code. */}
-        <fieldset className="mt-2 rounded-lg border-2 border-black bg-white p-2">
-          <legend className="px-1 text-[10px] font-black uppercase tracking-wide text-muted-text">
-            Card language
-          </legend>
-          <div className="flex gap-1">
-            {(
-              [
-                ["en", "English"],
-                ["ja", "Japanese"],
-              ] as const
-            ).map(([value, name]) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setLanguage(value)}
-                aria-pressed={language === value}
-                className={`flex-1 rounded border-2 border-black px-2 py-1.5 text-xs font-black transition-colors ${
-                  language === value ? "bg-black text-white" : "bg-muted-surface hover:bg-white"
-                }`}
-              >
-                {name}
-              </button>
-            ))}
-          </div>
-        </fieldset>
+            What replaced them is a search across all four catalogues at once,
+            gated on a measurement rather than on optimism: 1,008 reference
+            vectors, one answered by the wrong catalogue, and that one was the
+            same One Piece card in its other language. See matchCard. */}
 
         {preview ? (
           /* eslint-disable-next-line @next/next/no-img-element -- a local object URL for a file the visitor just chose; there is no remote asset to optimize */
@@ -503,7 +485,7 @@ export function ScanClient() {
             above a stale photo result invites reading one and acting on the
             other. */}
         {live ? (
-          <LiveScanner indexKey={indexKey} tcg={game} onClose={() => setLive(false)} />
+          <LiveScanner onClose={() => setLive(false)} />
         ) : null}
 
         {!live && status.phase === "matching" ? (
@@ -539,8 +521,24 @@ export function ScanClient() {
           ) : (
             <>
               <p className="text-xs font-black uppercase tracking-wide text-muted-text">
-                {status.cards.length === 1 ? "Your card" : "Which of these is yours?"}
+                {status.route?.via === "name"
+                  ? "Couldn't read the number — cards with this name"
+                  : status.cards.length === 1
+                    ? "Your card"
+                    : "Which of these is yours?"}
               </p>
+
+              {/* THE HONEST VERSION OF A GUESS. These cards were not identified;
+                  they were listed because something on the photograph matched
+                  their name. Saying so is the difference between a shortlist and
+                  six wrong answers with an "I own this" button under each. */}
+              {status.route?.via === "name" ? (
+                <p className="mt-1 text-[11px] text-muted-text">
+                  The number in the bottom corner is what names a card, and it was not readable in this photo.
+                  These share the name that was read, and there may be many more. Retake the photo with that
+                  corner in frame, or type the code below.
+                </p>
+              ) : null}
 
               {/* WHY THERE ARE TWO, said out loud. Without this the screen
                   reads as the scanner hedging. It is not hedging: these cards

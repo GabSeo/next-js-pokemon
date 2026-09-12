@@ -34,13 +34,33 @@ let vision: VisionModel | undefined;
 let Tensor: TensorCtor | undefined;
 /** Which backend actually loaded, reported so it can be seen rather than assumed. */
 let backend: "webgpu" | "wasm" = "wasm";
-let index: ClipIndex | undefined;
-let indexKey: string | undefined;
+/**
+ * EVERY catalogue, loaded at once, keyed by which one it is.
+ *
+ * WHY NOT ONE. The scan used to ask two questions before it would look at a
+ * picture — which game, which language — and neither is answerable by the
+ * person holding the card any faster than by the machine. Four indexes is 26 MB
+ * against the 10 MB one, next to a model that is 68 MB on its own, and the
+ * search is 52,328 vectors rather than 20,276: about 12 ms in plain JavaScript
+ * where a single catalogue was 8.
+ *
+ * It was gated on a measurement rather than on size, because two catalogues in
+ * one search is two chances to be confidently wrong. Measured (1,008 reference
+ * vectors, each searched against all four): ONE was answered by a different
+ * catalogue, and that one was the same One Piece card in its other language,
+ * which is a correct answer rather than a confusion. Zero Pokemon/One Piece
+ * crossings.
+ *
+ * That measurement was only true after clipIndexFrom started re-normalising —
+ * before it, 18 of the 1,008 went astray, all of them to forty corrupt vectors
+ * in the One Piece English index. See clipIndexFrom.
+ */
+const indexes = new Map<string, ClipIndex>();
 
 /** One canvas reused for every frame; allocating per frame is a garbage-collection stall. */
 let canvas: OffscreenCanvas | undefined;
 
-type InitMessage = { type: "init"; key: string };
+type InitMessage = { type: "init"; keys: string[] };
 type MatchMessage = {
   type: "match";
   id: number;
@@ -115,7 +135,7 @@ async function ensureModel(): Promise<void> {
 }
 
 async function ensureIndex(key: string): Promise<void> {
-  if (index && indexKey === key) return;
+  if (indexes.has(key)) return;
   self.postMessage({ type: "progress", stage: "index" });
   const [manifest, blob] = await Promise.all([
     fetch(`/api/scan/index/${key}.json`).then((r) => {
@@ -127,8 +147,30 @@ async function ensureIndex(key: string): Promise<void> {
       return r.arrayBuffer();
     }),
   ]);
-  index = clipIndexFrom(manifest, blob);
-  indexKey = key;
+  indexes.set(key, clipIndexFrom(manifest, blob));
+}
+
+/**
+ * Search every loaded catalogue and merge, best first.
+ *
+ * THE MARGIN IS RECOMPUTED ACROSS THE MERGED LIST, not taken from any one
+ * index. Each index reports the gap to ITS own runner-up, and the runner-up
+ * that matters is the best other card anywhere — a Pokemon card whose nearest
+ * Pokemon rival is far away is not confidently identified if a One Piece card
+ * sits between them.
+ *
+ * The `key` travels with every hit because an id alone is ambiguous: `neo1-1`
+ * names a card in the English catalogue AND in the Japanese one, which is why
+ * the resolver has ever needed a `ja~` qualifier at all.
+ */
+function searchAll(query: Float32Array, limit: number) {
+  const hits: { id: string; score: number; key: string }[] = [];
+  for (const [key, index] of indexes) {
+    for (const hit of clipSearch(index, query, limit).hits) hits.push({ ...hit, key });
+  }
+  hits.sort((a, b) => b.score - a.score);
+  const top = hits.slice(0, limit);
+  return { hits: top, margin: top.length > 1 ? top[0].score - top[1].score : 0 };
 }
 
 /** The ingestion recipe: an RGBA square becomes the tensor the model wants. */
@@ -182,7 +224,9 @@ self.onmessage = async (event: MessageEvent<Incoming>) => {
   try {
     if (message.type === "init") {
       await ensureModel();
-      await ensureIndex(message.key);
+      // Sequentially, so the progress messages describe one download at a time
+      // rather than four overlapping ones reporting over each other.
+      for (const key of message.keys) await ensureIndex(key);
       self.postMessage({ type: "ready", backend });
       return;
     }
@@ -221,7 +265,7 @@ self.onmessage = async (event: MessageEvent<Incoming>) => {
       const query = normalise(output.image_embeds.data);
       if (query.length !== CLIP_DIM) throw new Error(`model returned ${query.length} dimensions`);
 
-      const result = clipSearch(index!, query, message.limit);
+      const result = searchAll(query, message.limit);
       self.postMessage({
         type: "match",
         id: message.id,

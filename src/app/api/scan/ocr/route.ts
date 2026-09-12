@@ -368,6 +368,18 @@ export async function POST(request: Request) {
     // but the name is usually the largest text on the card and survives. This
     // runs only in that case: when a number DID resolve, the name is used to
     // order those candidates rather than to invent more.
+    //
+    // AND THE CALLER IS TOLD IT HAPPENED. These cards were chosen because they
+    // share a NAME, which for a Pikachu means an arbitrary six of the 166 that
+    // exist — the photographed one is very likely not among them. Rendered
+    // under the same heading as a resolved number, that reads as six confident
+    // answers; observed exactly that way on a Galarian Gallery Pikachu, whose
+    // number the extractor could not parse at the time.
+    //
+    // The cards are still returned, because a name is real evidence and one of
+    // them may be right. What changes is that the page can now say which kind
+    // of answer it is holding.
+    let byNameOnly = false;
     if (cards.length === 0) {
       for (const hit of namesInText(text)) {
         for (const match of lookupCards(hit.name, undefined, language).matches.slice(0, 6)) {
@@ -378,13 +390,14 @@ export async function POST(request: Request) {
           if (view) cards.push(view);
         }
       }
+      byNameOnly = cards.length > 0;
     }
 
     orderCandidates(cards, text);
     await rankPokemonCards(cards, image);
     await rankPrintings(cards, image, text);
 
-    return Response.json({ text, candidates, cards });
+    return Response.json({ text, candidates, cards, byNameOnly });
   } catch (error) {
     if (error instanceof VisionNotConfiguredError) {
       return Response.json({ error: "Vision is not configured." }, { status: 501 });

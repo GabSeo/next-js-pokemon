@@ -71,8 +71,20 @@ const LIMIT = 60;
 /** `OP05-119`, `ST21-014`, `EB01-003`, `P-033`, with or without a `_p2` printing suffix. */
 const OP_CODE = /^([A-Z]{1,4}\d{2}-\d{3}|P-\d{3})(_[A-Za-z0-9]+)?$/i;
 
-/** The number printed on a Pokémon card: `190/182`. */
-const PRINTED_NUMBER = /^(\d+)\s*\/\s*(\d+)$/;
+/**
+ * The number printed on a Pokémon card: `190/182`, and `GG30/GG70`.
+ *
+ * THE LETTER PREFIX IS NOT DECORATION. Modern sets carry a SUBSET whose cards
+ * are numbered in their own sequence with their own total — Galarian Gallery,
+ * Trainer Gallery, Shiny Vault, and every promo run. Measured across the
+ * English catalogue, 1,536 of 23,546 cards (6.5%) are numbered that way, and
+ * they are disproportionately the ones somebody bothers to photograph.
+ *
+ * Both halves carry it, and both are captured: the prefix identifies the
+ * subset and the digits index into it, exactly as a bare number does for a
+ * main set.
+ */
+const PRINTED_NUMBER = /^([A-Za-z]{0,4})(\d+)\s*\/\s*([A-Za-z]{0,4})(\d+)$/;
 
 
 function pokemonMatch(entry: CatalogEntry, detail?: string): LookupMatch {
@@ -128,21 +140,51 @@ function onePieceMatch(code: string): LookupMatch | undefined {
  * on purpose, and the caller says how many sets print that many. Narrowing it
  * to one is the name's job, not the number's.
  */
-function byPrintedNumber(localId: string, total: number, language?: CatalogLanguage): LookupMatch[] {
+function byPrintedNumber(
+  localId: string,
+  total: number,
+  language?: CatalogLanguage,
+  /** The subset letters, if the card carries any — `GG` for `GG30/GG70`. */
+  prefix = ""
+): LookupMatch[] {
   const out: LookupMatch[] = [];
 
   // ZERO PADDING DIFFERS BETWEEN THE CATALOGUES. English stores `48`, Japanese
   // stores `048` — 9,808 of 12,781 Japanese cards are padded against 4,450 of
   // 23,546 English ones. Comparing the strings, or normalising only one side,
   // silently finds nothing in the other language; both are reduced to a number.
+  //
+  // AND PADDING VARIES INSIDE ONE SUBSET TOO, which is why the prefix cannot
+  // simply be glued back on and compared as a string: Crown Zenith stores
+  // `GG01` and Hidden Fates stores `SV1`. The prefix is compared as letters and
+  // the remainder as a number, so both spellings resolve.
   const wanted = Number(localId);
+  const wantedPrefix = prefix.toUpperCase();
+
+  /**
+   * The card's own number, or undefined if it is not in the sequence asked for.
+   *
+   * Written out rather than built as a RegExp from the prefix — a template
+   * literal eats the backslash in `\d` and leaves a pattern matching a literal
+   * "d", which fails silently and looks like a catalogue miss.
+   */
+  const indexOf = (cardLocalId: string): number | undefined => {
+    if (!wantedPrefix) return /^\d+$/.test(cardLocalId) ? Number(cardLocalId) : undefined;
+    const upper = cardLocalId.toUpperCase();
+    if (!upper.startsWith(wantedPrefix)) return undefined;
+    const rest = upper.slice(wantedPrefix.length);
+    return /^\d+$/.test(rest) ? Number(rest) : undefined;
+  };
 
   for (const set of getCatalogSets({ language: language ?? "all" })) {
+    // The TOTAL IS THE SUBSET'S OWN. `GG70` means seventy cards in the Galarian
+    // Gallery, not in Crown Zenith — and the catalogue files the subset as its
+    // own set with its own count, so the same comparison works for both.
     if (set.cardCount?.official !== total) continue;
     const hit = getCatalogSetCards(set.id, set.language).find(
-      (entry) => Number(entry.card.localId) === wanted && /^\d+$/.test(entry.card.localId)
+      (entry) => indexOf(entry.card.localId) === wanted
     );
-    if (hit) out.push(pokemonMatch(hit, `#${localId}/${total}`));
+    if (hit) out.push(pokemonMatch(hit, `#${prefix}${localId}/${prefix}${total}`));
   }
 
   return out;
@@ -237,13 +279,18 @@ export function lookupCards(
   // 2. The number printed on a Pokémon card. Often ambiguous — see the header.
   const printed = query.match(PRINTED_NUMBER);
   if (printed) {
-    const [, localId, total] = printed;
-    const matches = byPrintedNumber(String(Number(localId)), Number(total), language);
+    const [, rawPrefix, localId, totalPrefix, total] = printed;
+    // BOTH HALVES MUST AGREE, because a real printed number repeats its subset
+    // on each side of the slash. `GG30/70` is OCR losing a prefix, not a card;
+    // taking the half that survived would search the wrong sequence.
+    const prefix = rawPrefix.toUpperCase() === totalPrefix.toUpperCase() ? rawPrefix : "";
+    const matches = byPrintedNumber(String(Number(localId)), Number(total), language, prefix);
     if (matches.length > 0) {
+      const shown = `${prefix}${localId}`;
       const note =
         matches.length === 1
-          ? `card ${localId} of a ${total}-card set`
-          : `card ${localId} of a ${total}-card set — ${matches.length} sets print that many`;
+          ? `card ${shown} of a ${total}-card set`
+          : `card ${shown} of a ${total}-card set — ${matches.length} sets print that many`;
       return finish(note, matches);
     }
   }

@@ -308,16 +308,66 @@ for when the reader comes back empty.
 
 ---
 
-## 8. What is asked rather than guessed
+## 8. Nothing is asked any more
 
-Two questions, because nothing in a picture answers either:
+Two questions used to stand in front of the camera — **which game** and **which
+language** — and the reasoning was sound. Nothing in a picture answers either;
+when One Piece had no index a photographed Luffy came back a Koffing; an English
+card and its Japanese release share artwork exactly.
 
-- **Which game.** There is no signal in the artwork. When there was an index for
-  Pokémon and none for One Piece, a photographed Luffy was searched against 41,500
-  Pokémon vectors and confidently answered with a Koffing.
-- **Which language.** An English card and its Japanese release share artwork
-  exactly, so searching both returns two answers for one card and forces the
-  reader to break a tie the picture cannot break.
+They are gone, because the person cannot answer them any faster than the machine
+can, and two taps in front of "point the camera at a card" is the feature arguing
+with its own proposition. All four catalogues are searched at once — 52,328
+vectors instead of 20,276, about 12 ms instead of 8, and 26 MB of index instead
+of 10 next to a model that is 68 MB on its own.
+
+**What the change costs, measured rather than assumed.** Two tests, and they
+disagree — which is the point of running both.
+
+*Clean images.* 1,008 reference vectors, each searched against all four indexes:
+**one** came back from a different catalogue, and it was the same One Piece card
+in its other language — a correct answer, not a confusion. Zero Pokémon/One Piece
+crossings.
+
+*Real photographs.* The two slab photos on file, before and after:
+
+| photo | one catalogue | four catalogues |
+|---|---|---|
+| `sm115-44` Moltres | correct at **#1** | correct at **#4**, behind three unrelated Japanese GX cards |
+| `swsh12.5gg-GG30` Pikachu | 3-way tie | **8**-way tie, margin 0.0004 |
+
+A reference image self-matches at ~1.0 and is untouchable; a photograph through
+slab plastic sits at 0.82, where the field is dense. Doubling the pool doubles
+the chances of something nosing past it. **The first measurement did not test the
+case that matters**, and the second one is the honest number.
+
+The outcome for both photos is unchanged — both were already below the margin and
+both escalate to the printed-number reader, which now reads `GG30/GG70`. But the
+artwork ranking is genuinely diluted, and that is the price of not asking.
+
+**The ambiguity was never solved — it is now shown.** An English card and its
+Japanese twin both come back, as candidates, exactly the way two reprints of one
+artwork do. The picture cannot separate them and never could; a toggle only moved
+the guess onto the person.
+
+### The forty vectors that were winning everything
+
+Found while measuring the above, and it was a live fault rather than a risk:
+**40 of 5,809 One Piece English vectors (0.7%) carried a norm of ~2,255 instead of
+127** — a self-score of 316 where the maximum is 1.0. A dot product is only a
+cosine when both vectors are unit length; past that, a vector's score scales with
+its magnitude and it beats everything in the index whatever the picture shows.
+
+All forty are alternate printings (`OP01-101_p1`, `EB02-010_p2`, …), scattered
+rather than contiguous, and the current embedder cannot produce them — it divides
+by the norm explicitly. They are stale vectors from an earlier recipe, kept alive
+by the ingestion's incremental cache, which skips a printing already embedded.
+
+`clipIndexFrom` now re-normalises on load, so the arithmetic is true whatever the
+file holds. Before that repair, 18 of the 1,008 reference vectors went astray, all
+to those forty. After it, one. **Re-embedding them is still the real fix** — a
+repaired vector is the right length and the wrong embedding; it has stopped being
+everyone else's answer, not started being its own.
 
 All four indexes are in **one embedding space**, which is what would let a later
 version search all of them and drop both questions. That needs measuring first:

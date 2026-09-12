@@ -114,7 +114,7 @@ export const CLIP_CARD_FLOOR = 0.5;
  */
 export type ClipVerdict = "empty" | "unsure" | "identified";
 
-export function clipVerdict(result: ClipResult): ClipVerdict {
+export function clipVerdict(result: { hits: ClipHit[]; margin: number }): ClipVerdict {
   const best = result.hits[0];
   if (!best || best.score < CLIP_CARD_FLOOR) return "empty";
   return result.margin >= CLIP_CONFIDENT_MARGIN ? "identified" : "unsure";
@@ -140,7 +140,7 @@ export function clipVerdict(result: ClipResult): ClipVerdict {
  * front of a person. More than `CLIP_MAX_TIED` is noise, and the caller should
  * treat it as no match.
  */
-export function clipTied(result: ClipResult): ClipHit[] {
+export function clipTied<T extends ClipHit>(result: { hits: T[]; margin: number }): T[] {
   const best = result.hits[0];
   if (!best) return [];
   return result.hits.filter((hit) => best.score - hit.score < CLIP_CONFIDENT_MARGIN);
@@ -190,10 +190,45 @@ export function clipSearch(index: ClipIndex, query: Float32Array, limit = 5): Cl
 }
 
 /**
+ * The magnitude every stored vector is supposed to have.
+ *
+ * The ingestion L2-normalises each embedding and multiplies by 127, so a
+ * correct vector's norm is 127 give or take rounding — measured across the
+ * Pokemon indexes, min 126.4, median 127.2, max 128.2.
+ */
+const EXPECTED_NORM = 127;
+
+/** Beyond this far from `EXPECTED_NORM`, a vector was not written by the current recipe. */
+const NORM_TOLERANCE = 1.1;
+
+/**
  * Read an index out of the two files the ingestion writes.
  *
  * The manifest and the blob are separate because 20 MB of numbers as JSON would
  * be ~120 MB and parse in seconds; as a typed array it is a single allocation.
+ *
+ * EVERY VECTOR IS RE-NORMALISED HERE, and that is not belt-and-braces — it is
+ * repairing a live fault. A dot product only equals the cosine when both
+ * vectors are unit length; the moment one is not, its score scales with its
+ * MAGNITUDE and it beats everything in the index regardless of what the picture
+ * shows.
+ *
+ * Measured across the four shipped indexes: 40 of 5,809 One Piece English
+ * vectors (0.7%) carry a norm of ~2,255 instead of 127, which is a self-score
+ * of 316 where the maximum should be 1.0. All forty are alternate printings
+ * (`OP01-101_p1`, `EB02-010_p2`, …), scattered rather than contiguous, and the
+ * current embedder cannot produce them — it divides by the norm explicitly. They
+ * are stale vectors from an earlier recipe, kept alive by the ingestion's
+ * incremental cache, which skips a printing that is already embedded.
+ *
+ * So forty cards were winning every English One Piece search, whatever was in
+ * frame. Re-embedding them is the real fix and needs the network; this makes the
+ * arithmetic true whatever the file happens to hold, which is where the
+ * guarantee belongs — the search is the thing that depends on unit length, so
+ * the search is what should insist on it.
+ *
+ * A repaired vector is still the wrong embedding for its card. It just stops
+ * being everyone else's answer.
  */
 export function clipIndexFrom(manifest: { ids?: string[] }, blob: ArrayBuffer): ClipIndex {
   const ids = manifest.ids ?? [];
@@ -207,5 +242,19 @@ export function clipIndexFrom(manifest: { ids?: string[] }, blob: ArrayBuffer): 
         `(expected ${ids.length * CLIP_DIM})`
     );
   }
+
+  for (let card = 0; card < ids.length; card++) {
+    const offset = card * CLIP_DIM;
+    let total = 0;
+    for (let k = 0; k < CLIP_DIM; k++) total += vectors[offset + k] * vectors[offset + k];
+    const norm = Math.sqrt(total);
+    // A norm of zero is an absent embedding, not a wrong one — rescaling it
+    // would divide by zero, and it already scores zero against everything,
+    // which is the correct answer for a card with no picture.
+    if (norm === 0 || Math.abs(norm - EXPECTED_NORM) <= NORM_TOLERANCE) continue;
+    const scale = EXPECTED_NORM / norm;
+    for (let k = 0; k < CLIP_DIM; k++) vectors[offset + k] = Math.round(vectors[offset + k] * scale);
+  }
+
   return { ids, vectors };
 }

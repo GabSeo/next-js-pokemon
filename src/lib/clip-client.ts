@@ -61,6 +61,33 @@ const DETECT_WIDTH = 640;
  */
 export type ClipIndexKey = "en" | "ja" | "op-en" | "op-ja";
 
+/**
+ * All four, which is now what a scan searches.
+ *
+ * The order is the order they download in, so the biggest catalogue is usable
+ * first if a slow connection is still fetching the rest.
+ */
+export const ALL_INDEXES: ClipIndexKey[] = ["en", "ja", "op-en", "op-ja"];
+
+/** Which catalogue a hit came from. An id alone is ambiguous — `neo1-1` exists in two. */
+export type ClipSourcedHit = ClipHit & { key: ClipIndexKey };
+
+/**
+ * A hit's address in the catalogue, which differs by game and language.
+ *
+ * ONE PIECE IS ALREADY ADDRESSED BY ITS PRINTING — `ST21-014_p2` — and the
+ * resolver turns that into the card that owns it. Japanese Pokemon needs the
+ * qualifier because `neo1-1` names a card in each of the two catalogues.
+ */
+export function clipHitId(hit: ClipSourcedHit): string {
+  return hit.key === "ja" ? `ja~${hit.id}` : hit.id;
+}
+
+/** Which game a hit belongs to, for the resolver. */
+export function clipHitGame(hit: ClipSourcedHit): "pokemon" | "onepiece" {
+  return hit.key === "op-en" || hit.key === "op-ja" ? "onepiece" : "pokemon";
+}
+
 /** @deprecated Kept so existing callers keep compiling; `ClipIndexKey` is the shape. */
 export type ClipLanguage = ClipIndexKey;
 
@@ -71,7 +98,9 @@ export type ClipProgress = {
   ratio?: number;
 };
 
-export type ClipMatch = ClipResult & {
+export type ClipMatch = Omit<ClipResult, "hits"> & {
+  /** Best first, across every catalogue searched, each tagged with which one. */
+  hits: ClipSourcedHit[];
   /** Milliseconds spent embedding and searching, once everything is loaded. */
   elapsed: number;
   /**
@@ -159,14 +188,15 @@ type Pending = { resolve: (match: ClipMatch) => void; reject: (error: Error) => 
 type WorkerReply =
   | { type: "ready"; backend?: "webgpu" | "wasm" }
   | { type: "progress"; stage: "model" | "index"; ratio?: number }
-  | { type: "match"; id: number; hits: ClipHit[]; margin: number; elapsed: number; corners?: Quad; backend?: "webgpu" | "wasm" }
+  | { type: "match"; id: number; hits: ClipSourcedHit[]; margin: number; elapsed: number; corners?: Quad; backend?: "webgpu" | "wasm" }
   | { type: "error"; id?: number; message: string };
 
 let worker: Worker | undefined;
 let workerBroken = false;
 let nextRequest = 1;
 const pending = new Map<number, Pending>();
-const readyFor = new Map<ClipIndexKey, Promise<void>>();
+/** Keyed by the JOINED set of catalogues, so warming "all four" is one entry. */
+const readyFor = new Map<string, Promise<void>>();
 let reportProgress: ((progress: ClipProgress) => void) | undefined;
 
 function supportsWorker(): boolean {
@@ -228,7 +258,8 @@ function getWorker(): Worker | undefined {
   return worker;
 }
 
-function warmWorker(active: Worker, key: ClipIndexKey): Promise<void> {
+function warmWorker(active: Worker, keys: ClipIndexKey[]): Promise<void> {
+  const key = keys.join(",");
   const held = readyFor.get(key);
   if (held) return held;
 
@@ -244,7 +275,7 @@ function warmWorker(active: Worker, key: ClipIndexKey): Promise<void> {
       }
     };
     active.addEventListener("message", settle);
-    active.postMessage({ type: "init", key });
+    active.postMessage({ type: "init", keys });
   });
 
   readyFor.set(key, warming);
@@ -345,15 +376,17 @@ function normalise(raw: Float32Array): Float32Array {
 async function matchInline(
   source: CanvasImageSource,
   rect: SourceRect,
-  key: ClipIndexKey,
+  keys: ClipIndexKey[],
   limit: number,
   onProgress?: (p: ClipProgress) => void
 ): Promise<ClipMatch> {
-  const [{ vision, Tensor }, index] = await Promise.all([
+  const [{ vision, Tensor }, loaded] = await Promise.all([
     loadModel(onProgress),
     (async () => {
       onProgress?.({ stage: "index" });
-      return loadIndex(key);
+      // Same catalogues as the worker searches, so a browser without workers
+      // gets the same answer rather than a narrower one.
+      return Promise.all(keys.map(async (key) => [key, await loadIndex(key)] as const));
     })(),
   ]);
   onProgress?.({ stage: "ready" });
@@ -364,25 +397,46 @@ async function matchInline(
   const query = normalise(output.image_embeds.data);
   if (query.length !== CLIP_DIM) throw new Error(`model returned ${query.length} dimensions, expected ${CLIP_DIM}`);
 
-  const result = clipSearch(index, query, limit);
-  return { ...result, elapsed: performance.now() - started };
+  const hits: ClipSourcedHit[] = [];
+  for (const [key, index] of loaded) {
+    for (const hit of clipSearch(index, query, limit).hits) hits.push({ ...hit, key });
+  }
+  hits.sort((a, b) => b.score - a.score);
+  const top = hits.slice(0, limit);
+  // Recomputed across the merged list — see the worker's searchAll for why a
+  // per-index margin is the wrong number once there is more than one index.
+  const margin = top.length > 1 ? top[0].score - top[1].score : 0;
+  return { hits: top, margin, elapsed: performance.now() - started };
 }
 
 // --- what callers use -----------------------------------------------------
 
 /**
- * Embed one image and search one catalogue's index.
+ * Embed one image and search EVERY catalogue.
  *
- * ONE CATALOGUE, NEVER TWO — the same rule the OCR path follows, for the same
- * measured reason: an English card and its Japanese release share artwork
- * exactly, so searching both returns two answers for one card and forces the
- * reader to break the tie with information the picture does not contain.
+ * THIS USED TO ASK FIRST, and the questions were "which game" and "which
+ * language". They were honest questions — nothing in a picture answers either,
+ * and when One Piece had no index a photographed Luffy came back a Koffing. But
+ * they put two taps in front of a feature whose whole proposition is pointing a
+ * camera at a card, and they asked the person to supply something the machine
+ * can work out.
+ *
+ * It is measured rather than assumed. 1,008 reference vectors, each searched
+ * against all four indexes: ONE came back from a different catalogue, and it was
+ * the same One Piece card in its other language — a correct answer, not a
+ * confusion. Zero Pokemon/One Piece crossings.
+ *
+ * AN ENGLISH CARD AND ITS JAPANESE RELEASE STILL SHARE ARTWORK EXACTLY, and
+ * that has not been solved — it has been reclassified. Both now come back, as
+ * candidates, the same way two reprints of one artwork do. The picture cannot
+ * separate them and never could; offering both is the honest form of that, and
+ * hiding one behind a toggle only moved the guess to the person.
  */
 export async function matchCard(
   source: CanvasImageSource,
   /** The region to read. Pass the whole image for a photo, `cardRect` for a frame. */
   rect: SourceRect,
-  key: ClipIndexKey,
+  keys: ClipIndexKey[],
   options?: {
     limit?: number;
     onProgress?: (p: ClipProgress) => void;
@@ -403,7 +457,7 @@ export async function matchCard(
   if (active) {
     try {
       reportProgress = options?.onProgress;
-      await warmWorker(active, key);
+      await warmWorker(active, keys);
       options?.onProgress?.({ stage: "ready" });
 
       // THE CROP HAPPENS HERE, in `createImageBitmap`, which decodes off the
@@ -440,23 +494,26 @@ export async function matchCard(
     }
   }
 
-  return matchInline(source, rect, key, limit, options?.onProgress);
+  return matchInline(source, rect, keys, limit, options?.onProgress);
 }
 
-/** Warm the model and one catalogue before the user takes a picture. */
-export async function prepareMatcher(key: ClipIndexKey, onProgress?: (p: ClipProgress) => void): Promise<void> {
+/** Warm the model and every catalogue before the user takes a picture. */
+export async function prepareMatcher(
+  keys: ClipIndexKey[],
+  onProgress?: (p: ClipProgress) => void
+): Promise<void> {
   const active = getWorker();
   if (active) {
     try {
       reportProgress = onProgress;
-      await warmWorker(active, key);
+      await warmWorker(active, keys);
       onProgress?.({ stage: "ready" });
       return;
     } catch {
       // fall through and warm the inline path instead
     }
   }
-  await Promise.all([loadModel(onProgress), loadIndex(key)]);
+  await Promise.all([loadModel(onProgress), ...keys.map((key) => loadIndex(key))]);
   onProgress?.({ stage: "ready" });
 }
 
