@@ -75,7 +75,15 @@ export async function POST(request: Request) {
     // was given. An explanation whose evidence is inspectable is a different
     // kind of claim from one that is not, and this is the first feature here
     // that a reader has any reason to distrust.
-    return Response.json({ text, facts, web });
+    // `sources` says which stages actually produced something, so a missing
+    // block on screen is distinguishable from a stage that ran and found
+    // nothing — a distinction that cost an hour to make by inference once.
+    return Response.json({
+      text,
+      facts,
+      web,
+      sources: { graded: graded !== undefined, web: web !== undefined },
+    });
   } catch (error) {
     if (error instanceof ExplainNotConfiguredError) {
       return Response.json({ error: "The explainer is not configured on this deployment." }, { status: 501 });
