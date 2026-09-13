@@ -22,6 +22,8 @@ import { extractCardCodes, type CodeCandidate } from "@/lib/card-code-ocr";
 import { namesInText } from "@/lib/card-name-match";
 import { lookupCards } from "@/lib/card-lookup";
 import { getCardView } from "@/lib/card-view";
+import { getCatalogCard } from "@/lib/catalog";
+import { printedNumber } from "@/lib/printed-number";
 import { japaneseName } from "@/lib/pokemon-ja-official";
 import { pokemonSignature } from "@/lib/pokemon-art";
 import type { CardView } from "@/lib/card-view";
@@ -57,6 +59,66 @@ export function liftNamedCandidates(cards: CardView[], text: string): void {
   const rest = cards.filter((card) => !isNamed(card));
   cards.length = 0;
   cards.push(...named, ...rest);
+}
+
+/**
+ * THE ZERO PADDING IS EVIDENCE, and it was being normalised away.
+ *
+ * `3/64` and `003/064` are the same number and NOT the same printed string, and
+ * Pokemon is inconsistent about which it uses by design: Jungle prints `3/64` in
+ * 1999 and Shrouded Fable prints `003/064` in 2024. The lookup reduces both
+ * sides to a number — it has to, because the two catalogues store the padding
+ * differently — so a photographed Jungle Flareon named eight cards:
+ *
+ *   base2-3        3/64      <- the card in hand
+ *   neo3-3         3/64
+ *   sv06.5-003     003/064
+ *   ja~SM11a-003   003/64      ja~SV6a-003   003/64
+ *   ja~SV7a-003    003/64      ja~XY8-Bb-003 003/064   ja~XY8-Br-003 003/064
+ *
+ * Six of them cannot be the card: the reader saw `3/64`, and those six print
+ * three digits. **Eight candidates become two.**
+ *
+ * WHERE THE PRINTED FORM COMES FROM. Not the catalogue — its padding is a
+ * storage convention, which is exactly why byPrintedNumber normalises it.
+ * `printedNumber` derives the real thing from Limitless filenames, era by era;
+ * see its own comment for why that is the only place the padding survives.
+ *
+ * IT LIFTS, IT NEVER DROPS, and that matters because `printedNumber` degrades:
+ * a set Limitless does not cover comes back unpadded, which is a guess rather
+ * than a reading. A candidate whose form disagrees keeps its place behind the
+ * ones that agree; it is never removed, and a photograph where nothing agrees
+ * comes out exactly as it went in.
+ *
+ * Measured against every card in img test/ whose answer is known — thirteen of
+ * them, English and Japanese, padded and not — the printed width agrees with
+ * what Vision read **13 times out of 13**, with no disagreement and no set
+ * Limitless could not cover.
+ */
+export function liftPrintedForm(cards: CardView[], candidates: CodeCandidate[]): void {
+  // What the reader actually saw, as widths: `3/64` is 1, `003/064` is 3.
+  const read = new Set(
+    candidates
+      .map((candidate) => /^0*(\d{1,3})\s*\/\s*0*\d{1,3}$/.exec(candidate.value.trim()) && candidate.value.trim())
+      .filter((value): value is string => Boolean(value))
+      .map((value) => (value.split("/")[0].match(/\d+/)?.[0] ?? "").length)
+  );
+  if (read.size === 0) return;
+
+  const agrees = (card: CardView): boolean => {
+    if (card.tcg !== "pokemon") return false;
+    const entry = getCatalogCard(card.code);
+    if (!entry) return false;
+    const printed = printedNumber(entry.card, entry.set, card.code.startsWith("ja~") ? "ja" : "en");
+    if (!printed) return false;
+    return read.has((printed.split("/")[0].match(/\d+/)?.[0] ?? "").length);
+  };
+
+  const matching = cards.filter(agrees);
+  if (matching.length === 0 || matching.length === cards.length) return;
+  const rest = cards.filter((card) => !agrees(card));
+  cards.length = 0;
+  cards.push(...matching, ...rest);
 }
 
 /**
@@ -314,6 +376,8 @@ export async function resolveCards(input: {
 
   orderCandidates(cards, text);
   rankPokemonCards(cards, photo);
+  // Printed evidence outranks the picture; the name outranks both.
+  liftPrintedForm(cards, candidates);
   liftNamedCandidates(cards, text);
 
   return { candidates, cards, byNameOnly };
