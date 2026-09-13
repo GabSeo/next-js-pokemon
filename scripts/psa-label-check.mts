@@ -9,6 +9,13 @@
  * four regexes the whole feature, and a regex nobody exercises is a regex that
  * quietly stops matching.
  *
+ * THE GRADE, NOT THE GRADER. The first version of this gate asked for the
+ * company's name, and Vision's real output for the two PSA 10 slabs below
+ * contains no "PSA" at all — the company sets its own name as a stylised logo,
+ * so there is nothing there to read. "GEM MT" is read on both. A grade phrase
+ * describes the slab rather than the card, which is also why none of them
+ * appears in any of the 44,985 card names in either catalogue.
+ *
  * THE NEGATIVE CASES MATTER MORE THAN THE POSITIVE ONES. The reader runs on
  * text that contains the card FACE as well as any label, so the question is not
  * only "does it read a real label" but "does it stay silent on everything
@@ -22,7 +29,7 @@
  * Run:  npx tsx scripts/psa-label-check.mts
  */
 
-const GRADER = /\b(?:PSA|BGS|CGC|SGC|BECKETT)\b/i;
+const GRADER = /\b(?:PSA|BGS|CGC|SGC|BECKETT)\b|\bgem\s*m(?:t|int)\b|\bnm[- ]?mt\b|\bpristine\b/i;
 
 function finishFromLabel(text: string): string | undefined {
   if (!GRADER.test(text)) return undefined;
@@ -43,21 +50,33 @@ const CASES: [string, string | undefined][] = [
   ["2003 POKEMON EX RUBY & SAPPHIRE TREECKO REVERSE #66 BGS 9", "reverse"],
   ["2020 POKEMON VIVID VOLTAGE PIKACHU VMAX #044 SGC 10", undefined],
 
-  // TRANSCRIBED FROM REAL SLABS, because invented wording only ever tests the
-  // pattern I had in mind when I wrote it. Both are PSA 10s photographed by the
-  // owner on 2026-09-13, and the second is the one that matters: it writes the
-  // finish as "REV.FOIL" — joined by an en dash and broken by a full stop
-  // rather than the space every invented example above uses.
+  // VISION'S OWN OUTPUT for two real PSA 10 slabs, read on 2026-09-13 — not
+  // wording invented here, which only ever tests the pattern its author had in
+  // mind. Both begin with the label and continue into the card face, because
+  // that is what the reader returns; both are truncated at the point where the
+  // rules text starts.
   //
-  // Its label also says FRENCH, and the card it resolves to is `dp2-94`, the
-  // English row. That is the rule, not a gap: a Western-language copy is a
-  // language option inside one Cardmarket listing rather than a product of its
-  // own, so there is no French catalogue and the English equivalent IS the
-  // answer. Only the Asian printings are separate objects with separate
-  // markets. The finish this reads is a property of the cardboard and survives
-  // the translation untouched.
-  ["2000 POKEMON PROMO MEW–HOLO BLACK STAR #9 GEM MT 10 PSA 44731852", "holo"],
-  ["2008 POKEMON D & P PIKACHU–REV.FOIL MYSTERIOUS TREAS.FRENCH #94 GEM MT 10 PSA 70394249", "reverse"],
+  // Neither contains the word PSA. Both contain GEM MT. That is the whole
+  // reason the gate reads the grade instead of the grader.
+  //
+  // The first writes the finish as "REV.FOIL", broken by a full stop rather
+  // than the space every invented example above uses. Its label also says
+  // FRENCH, and the card it resolves to is `dp2-94`, the English row — that is
+  // the rule rather than a gap. A Western-language copy is a language option
+  // inside one Cardmarket listing, not a product of its own, so the English
+  // equivalent IS the answer; only the Asian printings are separate objects
+  // with separate markets. The finish is a property of the cardboard and
+  // survives the translation untouched.
+  [
+    "#94 GEM MT 10 70394249 2008 POKEMON D & P PIKACHU REV.FOIL MYSTERIOUS TREAS.FRENCH PA " +
+      "Pikachu V.15 PV604 BASE NO. 025 Pokémon Souris",
+    "reverse",
+  ],
+  [
+    "2000 POKEMON PROMO MEW HOLO BLACK STAR #9 GEM MT 10 44731852 Basic Pokémon Mew 50 HPO " +
+      "New Species Pokémon. Length: 1' 4\", Weight: 9 lbs.",
+    "holo",
+  ],
 
   // NEGATIVES. A raw card carries no grader marker, so nothing is read even
   // when the face happens to contain one of the finish words.
@@ -98,13 +117,13 @@ const ORDERING: [string, Print[], string, string[]][] = [
   [
     "dp2-94 Pikachu in the REV.FOIL slab",
     [{ key: "normal" }, { key: "reverse" }],
-    "2008 POKEMON D & P PIKACHU–REV.FOIL MYSTERIOUS TREAS.FRENCH #94 GEM MT 10 PSA",
+    "#94 GEM MT 10 2008 POKEMON D & P PIKACHU REV.FOIL MYSTERIOUS TREAS.FRENCH",
     ["reverse", "normal"],
   ],
   [
     "basep-9 Mew, one printing, nothing to choose",
     [{ key: "holo" }],
-    "2000 POKEMON PROMO MEW–HOLO BLACK STAR #9 GEM MT 10 PSA",
+    "2000 POKEMON PROMO MEW HOLO BLACK STAR #9 GEM MT 10",
     ["holo"],
   ],
   [

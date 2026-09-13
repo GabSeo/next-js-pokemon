@@ -149,25 +149,37 @@ const MAX_BYTES = 8 * 1024 * 1024;
  * matching the shorter one first would call every reverse a holo — the same
  * longest-first rule rarityFromText already follows for SEC against SR.
  *
- * NOT VERIFIED ON A PHOTOGRAPH. Every Pokemon picture in img test/ is a raw
- * card, so there is no slab here to run this against. What is verified is that
- * it stays silent on all of them, and the patterns are tested against real
- * label wording in scripts/psa-label-check.mts.
+ * VERIFIED against Vision's own output for two real PSA slabs, in
+ * scripts/psa-label-check.mts.
  */
 /**
- * The graders whose name cannot be mistaken for something Pokemon prints.
+ * Is this text a grading label at all?
  *
- * TAG Grading and ACE Grading are deliberately NOT here. "TAG TEAM" and
- * "ACE SPEC" are printed on the face of real cards — one of them is legible on
- * megasableye-tyranitargx-226-236.jpg in img test/ — so `\bTAG\b` would report
- * a grading label on a raw card and defeat the only gate this reader has. The
- * catalogue cannot measure that risk (it stores names, not the words printed on
- * the card), which is a reason to be more careful here, not less.
+ * THE GRADE, NOT THE GRADER, and getting that backwards made the first version
+ * of this useless. It asked for the company's name — and measured against the
+ * reader's real output for two PSA 10 slabs, `\bPSA\b` is FALSE on both. PSA
+ * sets its own name as a stylised logo, so there is no text there to read. What
+ * IS read, on both, is `GEM MT`: the grade, spelled the way the grading scale
+ * spells it.
  *
- * The cost is that two small graders' slabs go unread. The alternative cost is
- * misreading an entire, very common card type.
+ * That turns out to be the safer half anyway. A grade phrase describes the
+ * SLAB, so it has no reason to appear on a card, and none of the five below
+ * occurs in any of the 44,985 card names in either catalogue. A company name
+ * can collide — which is the second thing this gate got wrong.
+ *
+ * TAG Grading and ACE Grading are deliberately absent. Pokemon prints
+ * "TAG TEAM" and "ACE SPEC" on the face of real cards — the first is legible on
+ * megasableye-tyranitargx-226-236.jpg in img test/, and Vision does read "TAG"
+ * out of it — so listing TAG here reported a grading label on a raw card and
+ * defeated the only gate this reader has. The catalogue cannot measure that
+ * risk, since it stores names rather than the words printed on a card, which is
+ * a reason to be more careful here rather than less.
+ *
+ * Bare "MINT" is left out on the same principle even though it collides with
+ * nothing today: it is one word away from ordinary English, and the four-plus-
+ * company list already catches every slab tested.
  */
-const GRADER = /\b(?:PSA|BGS|CGC|SGC|BECKETT)\b/i;
+const GRADER = /\b(?:PSA|BGS|CGC|SGC|BECKETT)\b|\bgem\s*m(?:t|int)\b|\bnm[- ]?mt\b|\bpristine\b/i;
 
 /** The finish a grading label names, or nothing. */
 function finishFromLabel(text: string): string | undefined {
