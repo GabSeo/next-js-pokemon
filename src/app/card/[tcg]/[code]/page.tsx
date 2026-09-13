@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AddToCollectionButton } from "@/components/add-to-collection-button";
-import { getCardView, type CardPrint, type CardView } from "@/lib/card-view";
+import { getCardView, printPlace, type CardPrint, type CardView } from "@/lib/card-view";
 import { getCatalogCard } from "@/lib/catalog";
 import { printedNumber } from "@/lib/printed-number";
 import { absoluteUrl } from "@/lib/site";
@@ -176,7 +176,7 @@ function PrintTile({ print, tcg, code }: { print: CardPrint; tcg: CardView["tcg"
             the pack name in its place keeps every tile answering "which one is
             this" with whatever the source actually knows. */}
         <div className="text-xs font-black leading-tight">{print.label ?? print.origin}</div>
-        {print.label ? <div className="mt-0.5 text-[11px] text-muted-text">{print.origin}</div> : null}
+        {print.label ? <div className="mt-0.5 text-[11px] text-muted-text">{printPlace(print)}</div> : null}
         {print.rarity ? <div className="mt-1 text-[11px] text-muted-text">{print.rarity}</div> : null}
       </div>
 

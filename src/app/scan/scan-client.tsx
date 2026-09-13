@@ -6,6 +6,7 @@ import { AddToCollectionButton } from "@/components/add-to-collection-button";
 import { CardExplainer } from "@/components/card-explainer";
 import type { CodeCandidate } from "@/lib/card-code-ocr";
 import type { CardView } from "@/lib/card-view";
+import { printPlace } from "@/lib/print-place";
 import { bitmapOf, cardRect, clipHitGame, clipHitId, matchCard, type ClipIndexKey } from "@/lib/clip-client";
 import { CLIP_MAX_TIED, clipTied, clipVerdict } from "@/lib/clip-search";
 import { LiveScanner } from "@/app/scan/live-scanner";
@@ -520,6 +521,15 @@ function CardReading({ cards, language }: { cards: CardView[]; language: "en" | 
                         {index === 0 && card.tcg === "onepiece" && card.prints.length > 1 ? "★ " : ""}
                         {print.label ?? print.origin}
                       </div>
+                      {/* The set under the treatment, because "Manga" answers
+                          WHICH printing and the set answers WHERE it came from.
+                          Only when the line above is not already the origin —
+                          otherwise the tile would print it twice. */}
+                      {print.label ? (
+                        <div className="truncate text-[11px] text-muted-text" title={printPlace(print)}>
+                          {printPlace(print)}
+                        </div>
+                      ) : null}
                       <div className="text-[11px] text-muted-text">{money ?? "No price"}</div>
                       <div className="mt-1.5">
                         <AddToCollectionButton
@@ -559,6 +569,11 @@ function CardReading({ cards, language }: { cards: CardView[]; language: "en" | 
                           <div className="aspect-[300/420] w-full rounded" />
                         )}
                         <div className="mt-1 truncate text-[11px] font-black">{print.label ?? print.origin}</div>
+                        {print.label ? (
+                          <div className="truncate text-[11px] text-muted-text" title={printPlace(print)}>
+                            {printPlace(print)}
+                          </div>
+                        ) : null}
                         <div className="mt-1.5">
                           <AddToCollectionButton
                             tcg={card.tcg}

@@ -7,6 +7,7 @@ import { officialCode, officialRowsForCode } from "@/lib/one-piece-official";
 import { onePieceImageUrl, onePiecePictureUrl } from "@/lib/one-piece-images";
 import { isBandaiPicture, optcgRowsForCode, pictureKey, printAlias } from "@/lib/one-piece-optcg";
 import { productOf, treatmentsOf } from "@/lib/one-piece-variants";
+export { printPlace } from "@/lib/print-place";
 
 /**
  * The card→print shape both games render through — see
@@ -46,6 +47,18 @@ export type CardPrint = {
   label?: string;
   /** Where this printing was printed — a Pokémon set, a One Piece pack. */
   origin: string;
+  /**
+   * The set's FULL NAME where a source says it — "Awakening of the New Era"
+   * beside `origin`'s "OP-05".
+   *
+   * Kept as a second field rather than replacing `origin`, because they come
+   * from different places and only one of them is always present. `origin` is
+   * Bandai's own pack label and exists for every printing Bandai lists;
+   * this is optcgapi's set name and exists only where their mirror has a row.
+   * Overwriting the first with the second would trade a fact we always have
+   * for one we sometimes have.
+   */
+  setName?: string;
   rarity?: string;
   /** Per-print for One Piece; the card's shared artwork for Pokémon. */
   image?: string;
@@ -202,6 +215,25 @@ function namedProduct(name: string): string | undefined {
 }
 
 /**
+ * A treatment id as a collector writes it. `alternate-art` -> "Alternate Art".
+ *
+ * `sp` is the one id that is an acronym rather than a word, and word-casing it
+ * produced "Sp" — a label no seller, no catalogue and no player has ever
+ * written. The whole vocabulary is eleven ids (lib/one-piece-variants.ts), so
+ * this is a closed list rather than a rule waiting to be wrong.
+ */
+const TREATMENT_ACRONYMS = new Set(["sp"]);
+
+function treatmentTitle(id: string): string {
+  return id
+    .split("-")
+    .map((word) =>
+      TREATMENT_ACRONYMS.has(word) ? word.toUpperCase() : word.charAt(0).toUpperCase() + word.slice(1)
+    )
+    .join(" ");
+}
+
+/**
  * What to call this printing: its product, else the treatment it carries.
  *
  * A treatment is not a product — `lib/one-piece-variants.ts` keeps them apart
@@ -219,14 +251,7 @@ function printingLabel(name: string): string | undefined {
   if (product) return product;
   const treatments = treatmentsOf(name);
   if (treatments.length === 0) return undefined;
-  return treatments
-    .map((id) =>
-      id
-        .split("-")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" ")
-    )
-    .join(" · ");
+  return treatments.map(treatmentTitle).join(" · ");
 }
 
 /**
@@ -406,7 +431,34 @@ function onePiecePrints(code: string, rows: ReturnType<typeof officialRowsForCod
         // tile below, and that one carries its own price.
         existing.print.price ??= optcgPrice(row.market);
 
-        if (!product || namedProducts.has(product)) continue;
+        /**
+         * AND ITS NAME, from the same row, for the same reason.
+         *
+         * This branch has always taken the figure off the mirror's row and
+         * thrown away everything else on it, so a tile arrived reading
+         * "OP-05 · SuperRare · $0.46" beside an identical-looking one reading
+         * "OP-05 · SuperRare · $620.75". A 1,350x spread, and nothing on the
+         * screen said the second is the Manga print — the reader was left to
+         * infer it from the artwork.
+         *
+         * NOT A GUESS AND NOT A JOIN. The row being read here is the row that
+         * just supplied this tile's price: the mirror points at THIS printing's
+         * Bandai file, which is the whole test above. Whatever it calls the
+         * printing describes the thing we are already pricing from it.
+         *
+         * `printingLabel` rather than `product`, because for a treatment there
+         * IS no product: productOf returns undefined for all seven of
+         * OP05-074's rows, and the treatment vocabulary is what names them.
+         * That distinction is load-bearing elsewhere — admitting treatments as
+         * products once appended four phantom tiles to OP05-119 — but naming a
+         * tile that already exists is not admitting a new one.
+         */
+        existing.print.setName ??= row.setName;
+
+        if (!product || namedProducts.has(product)) {
+          existing.print.label ??= printingLabel(row.name);
+          continue;
+        }
         namedProducts.add(product);
 
         // Name the anonymous row in place rather than beside it. P-033 arrives
