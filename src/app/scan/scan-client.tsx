@@ -760,79 +760,21 @@ export function ScanClient() {
      * find nothing to sort by. Restricted to the candidates it is a comparison,
      * not a search, and it cannot miss.
      */
-    /**
-     * AND THEN THE SAME QUESTION ONE LEVEL DOWN: which PRINTING of it.
-     *
-     * The block above ranked the CARDS a number proposed, and stopped there —
-     * so a code naming one card skipped it entirely, and its printings rendered
-     * in Bandai's list order under a caption reading "Ordered by how much each
-     * looks like your photo". The caption promised something the code did not
-     * do.
-     *
-     * It matters most exactly where it was missing. A One Piece code names one
-     * card and up to twelve printings, all sharing that number, so the reader —
-     * the strong signal, the one this product trusts — cannot separate them at
-     * all. The picture is the ONLY evidence left, and it was being ignored.
-     *
-     * Measured on a real photograph of OP05-119, ranking its own twelve:
-     *
-     *   0.857  2nd Anniversary Set        0.775  the base print   <- shown 1st
-     *   0.832  Alternate Art (PRB-01)     0.418  Wanted Poster
-     *
-     * A spread of 0.44 across the printings, and the tile the page led with sat
-     * fourth. Bandai's order is not a ranking; it was being read as one.
-     *
-     * A COMPARISON, NOT A SEARCH, which is what makes it trustworthy here. The
-     * same measurement over the whole index is much weaker — sampled across the
-     * corpus, a printing's nearest neighbour is a DIFFERENT card 31.5% of the
-     * time — but `only` scores exactly these keys and cannot wander off to a
-     * similar-looking stranger. Every printing is scoreable: 12 of 12 for
-     * OP05-119 and 8 of 8 for OP05-074 are in an index, because a CardPrint's
-     * key IS the index id.
-     *
-     * ONE BITMAP FOR BOTH PASSES. Decoding the photograph twice to ask two
-     * questions of the same picture would be pure waste.
-     */
-    const needsCardRank = cards.length > 1;
-    const needsPrintRank = cards.length > 0 && cards[0].prints.length > 1;
-    if (needsCardRank || needsPrintRank) {
+    if (cards.length > 1) {
       try {
         const { source, width, height } = await bitmapOf(file);
-        const rect = { x: 0, y: 0, width, height };
         try {
-          if (needsCardRank) {
-            const ids = cards.map((card) => (card.code.startsWith("ja~") ? card.code.slice(3) : card.code));
-            const ranked = await matchCard(source, rect, indexes, { only: ids });
-            const order = new Map(ranked.hits.map((hit, at) => [hit.id, at]));
-            // A candidate the index does not hold keeps its place at the end
-            // rather than being dropped — the number found it, and no picture of
-            // it existing is not evidence against it.
-            cards = [...cards].sort(
-              (a, b) =>
-                (order.get(a.code.replace(/^ja~/, "")) ?? Number.MAX_SAFE_INTEGER) -
-                (order.get(b.code.replace(/^ja~/, "")) ?? Number.MAX_SAFE_INTEGER)
-            );
-          }
-
-          const winner = cards[0];
-          if (winner && winner.prints.length > 1) {
-            const ranked = await matchCard(source, rect, indexes, {
-              only: winner.prints.map((print) => print.key),
-              limit: winner.prints.length,
-            });
-            const order = new Map(ranked.hits.map((hit, at) => [hit.id, at]));
-            // Same rule as above, and it carries real weight here: the chosen
-            // index is one language, so a printing that exists only in the other
-            // one cannot be scored. Keeping it in place rather than dropping it
-            // says "no picture of this to compare", which is true, instead of
-            // "this is not your card", which is not.
-            cards = [
-              { ...winner, prints: [...winner.prints].sort(
-                (a, b) => (order.get(a.key) ?? Number.MAX_SAFE_INTEGER) - (order.get(b.key) ?? Number.MAX_SAFE_INTEGER)
-              ) },
-              ...cards.slice(1),
-            ];
-          }
+          const ids = cards.map((card) => (card.code.startsWith("ja~") ? card.code.slice(3) : card.code));
+          const ranked = await matchCard(source, { x: 0, y: 0, width, height }, indexes, { only: ids });
+          const order = new Map(ranked.hits.map((hit, at) => [hit.id, at]));
+          // A candidate the index does not hold keeps its place at the end
+          // rather than being dropped — the number found it, and no picture of
+          // it existing is not evidence against it.
+          cards = [...cards].sort(
+            (a, b) =>
+              (order.get(a.code.replace(/^ja~/, "")) ?? Number.MAX_SAFE_INTEGER) -
+              (order.get(b.code.replace(/^ja~/, "")) ?? Number.MAX_SAFE_INTEGER)
+          );
         } finally {
           source.close();
         }
@@ -841,6 +783,27 @@ export function ScanClient() {
         // reader's own order stands; it was never wrong, only weaker.
       }
     }
+
+    /**
+     * THE PRINTINGS ARE NOT RE-RANKED HERE, and a version of this that did was
+     * written, measured and removed. /api/scan/ocr already orders them, with a
+     * perceptual art signature and a rarity read off the card, and on the one
+     * real photograph we have it is simply better than the embedding:
+     *
+     *   signature (server)   1. Alternate Art · PRB-01   <- the card in hand
+     *   embedding (here)     1. 2nd Anniversary Set      2. Alternate Art · PRB-01
+     *
+     * The embedding is the right tool one level up, where it ranks the CARDS a
+     * number proposed — a hash does not survive a card held at an angle, and
+     * that case was measured. Between printings of ONE card it loses to the
+     * hash, and running it here would have overwritten the better answer with
+     * the worse one.
+     *
+     * What actually broke this was a cap in that route skipping any card with
+     * more than ten printings; see its own comment. With the cap gone the
+     * server ranks all 1,267 multi-printing codes, so there is no gap left for
+     * a client-side fallback to fill.
+     */
 
     // THE PRINTED NUMBER WINS WHEN IT EXISTS, because it is the only evidence in
     // the picture that is unambiguous — artwork is shared between reprints and

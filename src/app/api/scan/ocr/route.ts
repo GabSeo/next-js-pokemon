@@ -1,4 +1,5 @@
 import { artDistance, artSignature, rarityFromText, referenceSignatures } from "@/lib/art-rank";
+import { treatmentsInText } from "@/lib/one-piece-variants";
 import { extractCardCodes } from "@/lib/card-code-ocr";
 import { namesInText } from "@/lib/card-name-match";
 import { japaneseName } from "@/lib/pokemon-ja-official";
@@ -113,8 +114,176 @@ export function GET() {
 /** Vision's own hard limit is 20 MB base64; a phone photo is 2–6 MB and a card needs far less. */
 const MAX_BYTES = 8 * 1024 * 1024;
 
-/** Beyond this, comparing every printing costs more than the ordering is worth. */
-const MAX_RANKED_PRINTINGS = 10;
+/**
+ * POKEMON: THE FINISH, WHEN A GRADING LABEL STATES IT.
+ *
+ * WHY IT IS A SEPARATE FUNCTION AND NOT A BRANCH OF rankPrintings. That one
+ * orders by ARTWORK, and Pokemon has none to order by — 0 of 10,110
+ * multi-variant cards have a distinct image, which is exactly why it excludes
+ * Pokemon in its first line. A normal and its reverse holo are the same
+ * picture. No amount of looking will ever separate them, so a picture-based
+ * ranker has nothing to contribute and this one never touches a signature.
+ *
+ * WHAT IS AT STAKE. 9,321 English and Japanese cards carry more than one
+ * finish — 20.7% of the catalogue — and 7,906 of those are the normal/reverse
+ * pair, where the reverse is worth a median 3.36x its twin (see CardPrint's own
+ * comment). Today the scan shows both tiles in catalogue order and says nothing
+ * about which one is in the reader's hand, on a difference that large.
+ *
+ * ONLY FROM A GRADING LABEL, and that is the whole safety argument rather than
+ * a limitation. A raw Pokemon card does not say "reverse" anywhere on it: the
+ * finish is a property of the cardboard, not of anything printed on it. So the
+ * only place these words legitimately appear in what a reader returns is a
+ * slab's label. Requiring the grader's own marker before trusting them turns a
+ * dangerous free-text match into a narrow one — and costs nothing, because
+ * there is no other case where the evidence exists at all.
+ *
+ * THE RESIDUAL RISK IS NAMED rather than waved away: a slab's OCR carries the
+ * card FACE as well as the label, so a card whose own wording contains one of
+ * these words could mislead it. Measured against every English card name, that
+ * is one card in 21,066 — "Reverse Valley". The cost there is two
+ * identical-looking tiles in the wrong order, which a person fixes by looking.
+ * Nothing is ever dropped.
+ *
+ * REVERSE IS TESTED BEFORE HOLO, because "REVERSE HOLO" contains "HOLO" and
+ * matching the shorter one first would call every reverse a holo — the same
+ * longest-first rule rarityFromText already follows for SEC against SR.
+ *
+ * NOT VERIFIED ON A PHOTOGRAPH. Every Pokemon picture in img test/ is a raw
+ * card, so there is no slab here to run this against. What is verified is that
+ * it stays silent on all of them, and the patterns are tested against real
+ * label wording in scripts/psa-label-check.mts.
+ */
+/**
+ * The graders whose name cannot be mistaken for something Pokemon prints.
+ *
+ * TAG Grading and ACE Grading are deliberately NOT here. "TAG TEAM" and
+ * "ACE SPEC" are printed on the face of real cards — one of them is legible on
+ * megasableye-tyranitargx-226-236.jpg in img test/ — so `\bTAG\b` would report
+ * a grading label on a raw card and defeat the only gate this reader has. The
+ * catalogue cannot measure that risk (it stores names, not the words printed on
+ * the card), which is a reason to be more careful here, not less.
+ *
+ * The cost is that two small graders' slabs go unread. The alternative cost is
+ * misreading an entire, very common card type.
+ */
+const GRADER = /\b(?:PSA|BGS|CGC|SGC|BECKETT)\b/i;
+
+/** The finish a grading label names, or nothing. */
+function finishFromLabel(text: string): string | undefined {
+  if (!GRADER.test(text)) return undefined;
+  // "REVERSE", and the "REV FOIL" graders abbreviate to. The trailing word is
+  // deliberately not required: the finish is already decided by this point, and
+  // demanding "HOLO" after it would miss every label that writes "REV FOIL".
+  if (/\brev(?:erse)?\b/i.test(text)) return "reverse";
+  if (/\bnon[ -]?holo(?:foil)?\b/i.test(text)) return "normal";
+  if (/\bholo(?:foil|graphic)?\b/i.test(text)) return "holo";
+  return undefined;
+}
+
+/**
+ * Move the printing the label names to the front. Never drops, never reorders
+ * anything else.
+ *
+ * A stable partition rather than a sort: everything this cannot name keeps the
+ * order the catalogue gave it, so a label that says nothing about the finish
+ * leaves the card exactly as it was.
+ */
+function orderPokemonPrintings(cards: CardView[], text: string): void {
+  const finish = finishFromLabel(text);
+  if (!finish) return;
+  for (const card of cards) {
+    if (card.tcg !== "pokemon" || card.prints.length < 2) continue;
+    const named = card.prints.filter((print) => print.key === finish);
+    if (named.length === 0) continue;
+    card.prints = [...named, ...card.prints.filter((print) => print.key !== finish)];
+  }
+}
+
+/**
+ * WHAT THE CARD SAYS ABOUT WHICH PRINTING IT IS — a set, a treatment, or both.
+ *
+ * THE PROJECT'S OWN RULE, APPLIED ONE LEVEL DOWN. "The artwork is a guess; the
+ * printed number is evidence" is why this route reads the code before it looks
+ * at a picture. Between PRINTINGS of that code the same rule was abandoned: the
+ * ordering went straight to artwork distance while the reader's own output sat
+ * unread. It is not always there — but when it is, it is not a resemblance.
+ *
+ * A GRADED SLAB STATES IT OUTRIGHT. Measured on a real PSA photograph in
+ * img test/, Vision returns:
+ *
+ *   2024 ONE PIECE PRB01 EN
+ *   MONKEY D. LUFFY
+ *   ALTERNATE ART
+ *
+ * That is the set and the treatment, in words, on a card whose five printings
+ * the artwork could not separate — it put the base print first and the right
+ * one second.
+ *
+ * THE CARD'S OWN CODE IS REMOVED FIRST, and skipping that would break every
+ * card rather than fix one: `OP01-024` contains the token `OP01`, so a naive
+ * reader finds a "set" on every card ever printed and always the wrong one —
+ * the set a code BELONGS to, never the set a copy was PRINTED in. A reprint's
+ * whole nature is that those differ. What survives the strip is a set named by
+ * something other than the number, which is exactly a slab label or a set name
+ * printed on the face.
+ *
+ * IT CANNOT INVENT, ONLY CHOOSE, which is what makes reading free text safe
+ * here. Every term is matched against printings this card already has, so a
+ * hallucinated "GOLD" off a foil selects nothing on a card with no Gold
+ * printing and the ranking is exactly what it would have been. See
+ * treatmentsInText's own comment for why that guarantee has to live at the
+ * caller.
+ */
+function printedEvidence(text: string, code: string): { sets: string[]; treatments: string[] } {
+  const stripped = text.replace(new RegExp(code.replace("-", "[- ]?"), "gi"), " ");
+  const sets = [
+    ...new Set((stripped.toUpperCase().match(/\b(?:OP|EB|ST|PRB)[- ]?\d{2}\b/g) ?? []).map((m) => m.replace(/[- ]/, ""))),
+  ];
+  return { sets, treatments: treatmentsInText(stripped) };
+}
+
+/** How many independent printed facts this printing satisfies. Never negative. */
+function evidenceFor(print: CardPrint, found: { sets: string[]; treatments: string[] }): number {
+  const bare = (value: string) => value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  // `origin` is Bandai's pack code — "PRB-01", or "JP · PRB-01" — so the
+  // punctuation has to go before "PRB01" can match it.
+  const set = found.sets.some((s) => bare(print.origin).includes(bare(s)));
+  // A label is "Alternate Art" or "SP · Gold"; the vocabulary's ids are
+  // "alternate-art" and "sp"/"gold". Same words, different spelling.
+  const label = (print.label ?? "").toLowerCase().replace(/\s*·\s*/g, " ").replace(/\s+/g, "-");
+  const treatment = found.treatments.some((t) => label.includes(t));
+  return (set ? 1 : 0) + (treatment ? 1 : 0);
+}
+
+/**
+ * THERE IS NO CAP ANY MORE, and the one that was here cost the ranking exactly
+ * where it was worth most.
+ *
+ * `MAX_RANKED_PRINTINGS = 10` skipped any card with more than ten printings —
+ * 30 codes, and they are the chase cards, the ones a person photographs
+ * BECAUSE they have sixteen versions at wildly different prices. OP05-119 has
+ * twelve, so a real scan of it was never ranked at all and rendered in
+ * catalogue order under a caption promising otherwise.
+ *
+ * The cost it was guarding against no longer exists. It was written when this
+ * function FETCHED AND HASHED each reference image per scan — seven sequential
+ * 250 KB downloads for a seven-printing card, which was the whole "works great
+ * but very slow". Signatures are precomputed on disk now and read once per
+ * process, so one comparison is 0.24 microseconds: the six the cap saved on a
+ * sixteen-printing card were worth 0.001 ms between them.
+ *
+ * Measured on a real photograph of OP05-119 (a French holo, in img test/), the
+ * ranking the cap was suppressing is simply right:
+ *
+ *   0.359  Alternate Art · PRB-01   <- the card in hand, confirmed by its owner
+ *   0.382  (base) · JP · PRB-01
+ *   0.411  2nd Anniversary Set
+ *
+ * The loop below still guards itself — a missing signature still abandons the
+ * card rather than ranking it half — and measured across all 1,267
+ * multi-printing codes, that path now fires zero times.
+ */
 
 /**
  * Reorder each card's printings so the one that looks like the photo comes
@@ -139,7 +308,7 @@ async function rankPrintings(cards: CardView[], image: Buffer, text: string): Pr
 
   for (const card of cards) {
     if (card.tcg !== "onepiece") continue;
-    if (card.prints.length < 2 || card.prints.length > MAX_RANKED_PRINTINGS) continue;
+    if (card.prints.length < 2) continue;
 
     // Precomputed, read from disk once per process. This used to fetch and hash
     // each reference image per scan -- seven sequential 250 KB downloads for a
@@ -186,8 +355,15 @@ async function rankPrintings(cards: CardView[], image: Buffer, text: string): Pr
     // The bonus is deliberately larger than the widest observed artwork gap
     // (0.206 across seven printings), so a rarity match leads — but everything
     // stays on screen.
+    // PRINTED EVIDENCE OUTRANKS RESEMBLANCE, on the same scale as the rarity
+    // bonus and for the same reason: both are things the card SAYS, and the
+    // artwork gap they have to beat is 0.206 at its widest. Two facts agreeing
+    // (a set AND a treatment) beat one, and a printing the text says nothing
+    // about keeps its artwork distance untouched.
+    const printed = printedEvidence(text, card.code);
     for (const entry of scored) {
       if (rarity && entry.print.rarity === rarity) entry.distance -= 1;
+      entry.distance -= evidenceFor(entry.print, printed);
     }
 
     scored.sort((a, b) => a.distance - b.distance);
@@ -396,6 +572,7 @@ export async function POST(request: Request) {
     orderCandidates(cards, text);
     await rankPokemonCards(cards, image);
     await rankPrintings(cards, image, text);
+    orderPokemonPrintings(cards, text);
 
     return Response.json({ text, candidates, cards, byNameOnly });
   } catch (error) {

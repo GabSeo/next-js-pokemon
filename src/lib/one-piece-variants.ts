@@ -235,6 +235,35 @@ export function treatmentsOf(name: string): string[] {
 }
 
 /**
+ * The same closed vocabulary, read from FREE TEXT instead of parentheticals.
+ *
+ * `treatmentsOf` reads `Monkey.D.Luffy (Alternate Art)`, because that is how a
+ * catalogue row is written. What a READER returns is not written that way — a
+ * graded slab's label says
+ *
+ *   2024 ONE PIECE PRB01 EN
+ *   MONKEY D. LUFFY
+ *   ALTERNATE ART
+ *
+ * with no parentheses anywhere, so `treatmentsOf` returns nothing for text that
+ * names the printing outright. This is the same list applied to the raw string.
+ *
+ * SEPARATE RATHER THAN A FLAG, because the two have different safety. Inside a
+ * parenthetical, `\bsp\b` can only be the SP treatment; in free text it could be
+ * any three letters a reader hallucinated out of a foil. So what this returns is
+ * never allowed to name a printing on its own — the caller may only use it to
+ * choose among printings the card already has, which means a wrong word selects
+ * nothing instead of selecting wrongly.
+ */
+export function treatmentsInText(text: string): string[] {
+  const ids = TREATMENTS.filter((t) => t.match.test(text)).map((t) => t.id);
+  // Not a TREATMENTS entry — treatmentsOf special-cases it too — but it IS a
+  // printing label, and a slab label says it.
+  if (/\breprint\b/i.test(text)) ids.push("reprint");
+  return ids;
+}
+
+/**
  * The PRODUCT a row names, when it names one — the parentheticals that are not
  * treatments.
  *
