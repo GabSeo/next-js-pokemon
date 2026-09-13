@@ -153,6 +153,17 @@ export type CatalogCard = {
   tcgplayerProductId?: number;
   sourceUpdated?: string;
   variants: CatalogVariant[];
+  /**
+   * Which source added this card, when it was not the language's own crawl.
+   *
+   * `"tcgcollector"` marks a card TCGdex does not publish at all — a whole set
+   * of them, or one secret rare past the printed total. Such a row carries a
+   * number, an English name, a rarity and nothing else: no illustrator, no
+   * Cardmarket product, no variants. Recorded so that a thin row reads as
+   * imported rather than as a failed crawl, and so a later TCGdex pass knows
+   * which rows it may replace.
+   */
+  addedFrom?: "tcgcollector";
   /** The crawl could not fetch this card's detail. Kept so a partial corpus looks partial rather than small. */
   unresolved?: true;
   unresolvedReason?: string;
