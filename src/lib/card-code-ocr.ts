@@ -160,12 +160,18 @@ const PKM_GLUED = /([0-9OoQDIlSsBZGT]{4,})\s*\/\s*([0-9OoQDIlSsBZGT]{1,3})\b/g;
  * card — and one letter carries no distinctiveness to survive that. The other
  * fifteen prefixes are two characters or more.
  *
+ * AND NOT IN FRONT OF A FRACTION EITHER, which the sweep across all 35 Pokemon
+ * photographs in img test/ caught. A Japanese card prints its set code beside
+ * its number — `SV9 109/100 AR` on an N's Reshiram — and without this guard the
+ * `SV9` read as a promo code and resolved to sma-SV9, a Wooper. A code standing
+ * in front of a fraction is labelling that fraction, not naming a card.
+ *
  * TWO LETTERS IS NOT IMMUNITY, only a much smaller target: `PRISM158` still
  * reads as `SM158`. That is the price of reading a glued code at all, it is
  * paid in a candidate that ranks last, and it buys the 305 SWSH promos, 248 SM
  * and 211 XY that were unreadable before.
  */
-const PKM_PROMO = /(?<![/\d])(AR|BW|CC|DP|GG|HGSS|RC|RT|SH|SL|SM|SWSH|TG|XY|SV)[- ]?(\d{1,3})\b(?!\s*\/)/gi;
+const PKM_PROMO = /(?<![/\d])(AR|BW|CC|DP|GG|HGSS|RC|RT|SH|SL|SM|SWSH|TG|XY|SV)[- ]?(\d{1,3})\b(?!\s*\/)(?!\s+\d{1,3}\s*\/)/gi;
 
 /**
  * The printed number of a SUBSET card: `GG30/GG70`, `TG12/TG30`, `SV30/SV94`.

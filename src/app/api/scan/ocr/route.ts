@@ -433,6 +433,36 @@ async function rankPrintings(cards: CardView[], image: Buffer, text: string): Pr
 /** Kana and kanji. Latin-only text has none; a Japanese card face is full of them. */
 const JAPANESE_SCRIPT = /[぀-ゟ゠-ヿ一-鿿]/;
 
+/** Every word of `name`, present in an already-tokenised text. */
+function nameIsInText(name: string | undefined, words: Set<string>): boolean {
+  const parts = (name ?? "").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+  return parts.length > 0 && parts.every((part) => words.has(part));
+}
+
+/**
+ * Move the candidates the text NAMES to the front, and touch nothing else.
+ *
+ * The name-matching half of `orderCandidates`, on its own, to run after the
+ * artwork. It is the half that is evidence: a card whose name Vision read off
+ * the photograph is that card far more often than a card that merely resembles
+ * it. The script half is a tie-break, so it stays where it was — see the call
+ * site for what happened when both ran late.
+ *
+ * A STABLE PARTITION, not a sort, so the picture's ranking survives inside both
+ * groups and a photograph that names nothing comes out exactly as it went in.
+ */
+function liftNamedCandidates(cards: CardView[], text: string): void {
+  const words = new Set(text.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
+  const isNamed = (card: CardView) =>
+    (card.tcg === "pokemon" && japanesePrintedName(card.code) !== undefined && text.includes(japanesePrintedName(card.code)!)) ||
+    nameIsInText(card.name, words);
+  const named = cards.filter(isNamed);
+  if (named.length === 0 || named.length === cards.length) return;
+  const rest = cards.filter((card) => !isNamed(card));
+  cards.length = 0;
+  cards.push(...named, ...rest);
+}
+
 /**
  * Put the candidate that best matches what Vision actually read first.
  *
@@ -458,14 +488,41 @@ const JAPANESE_SCRIPT = /[぀-ゟ゠-ヿ一-鿿]/;
  */
 function orderCandidates(cards: CardView[], text: string): void {
   const japanese = JAPANESE_SCRIPT.test(text);
-  const haystack = text.toLowerCase();
+  // Tokenised once: a name match is checked per candidate and the text is long.
+  const words = new Set(text.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
+
+  /**
+   * Does the text carry this card's name — EVERY WORD OF IT, in any order?
+   *
+   * A CARD DOES NOT PRINT ITS NAME AS ONE STRING, and matching it as one was
+   * costing the name signal entirely on the cards that need it most. Vision's
+   * output for a photographed Champion's Path Charizard VMAX begins
+   *
+   *   VMAX Charizard VY Evolves from Charizard V Gigantamax 330 Claw Slash ...
+   *
+   * because the VMAX badge sits above the name rather than after it. The
+   * catalogue calls that card "Charizard VMAX", `text.includes("Charizard
+   * VMAX")` is false, and the whole candidate list fell through to the artwork —
+   * which put Tropius first, at 0.779 against 0.812 for the Charizard, on a
+   * photograph of an orange dragon. All three distances were above 0.77: the
+   * signature was not choosing, it was guessing.
+   *
+   * WHOLE WORDS, NOT SUBSTRINGS, so a one-letter suffix cannot match on nothing:
+   * "Charizard V" needs a standalone `V` in the text, and gets one here from
+   * "Evolves from Charizard V". That is correct — both printings are genuinely
+   * plausible readings of this photograph, and the artwork ranks between them.
+   * What is not acceptable is a card sharing neither word leading both.
+   *
+   * Unchanged for the single-word names that are most of the catalogue: the old
+   * substring test and this one agree on "Pikachu".
+   */
+  const named = (name: string | undefined): boolean => nameIsInText(name, words);
 
   const rank = (card: CardView): number => {
     // 0 — the name Vision read is this card's name, in either spelling.
     const printed = card.tcg === "pokemon" ? japanesePrintedName(card.code) : undefined;
     if (printed && text.includes(printed)) return 0;
-    const name = card.name?.trim();
-    if (name && name.length >= 2 && (text.includes(name) || haystack.includes(name.toLowerCase()))) return 0;
+    if (named(card.name)) return 0;
     if (card.tcg !== "pokemon") return 1;
     // 1 — written in the script Vision read. 2 — written in the other one.
     return card.code.startsWith("ja~") === japanese ? 1 : 2;
@@ -718,8 +775,38 @@ export async function POST(request: Request) {
       byNameOnly = cards.length > 0;
     }
 
+    /**
+     * ORDER, THEN LOOK, THEN LET THE NAME HAVE THE LAST WORD.
+     *
+     * `orderCandidates` ran first and `rankPokemonCards` re-sorted every Pokemon
+     * candidate by picture straight afterwards, so a name match survived only
+     * when the artwork ranker happened to bail — which it does on a missing
+     * signature. That is why a CGC Lugia was ordered by its label and a
+     * Champion's Path Charizard VMAX was not: all three of its candidates had
+     * signatures, all three scored above 0.77 — the picture was not choosing,
+     * it was guessing — and Tropius led on a photograph of an orange dragon.
+     *
+     * SWAPPING THE TWO WAS THE WRONG FIX, and the sweep across all 35 Pokemon
+     * photographs in img test/ caught it: `orderCandidates` also sorts by SCRIPT
+     * — a card written in the language Vision read outranks one that is not —
+     * and running that after the picture let a band with no name evidence in it
+     * overrule a verdict the picture had earned. An N's Reshiram, `SV9 109/100`,
+     * went from ja~SV9-109 to a Wooper, purely because the Wooper is English and
+     * the OCR had read no kana off a Japanese card.
+     *
+     * So both passes run, each where it belongs. The script band goes first,
+     * where it breaks ties the picture cannot see and costs nothing when the
+     * picture can. The NAME goes last and alone: it lifts what it recognises and
+     * touches nothing else, so the picture's order survives underneath it.
+     * Stable sorts throughout, so every band keeps the order it arrived with.
+     *
+     * The picture is a guess and the name is evidence. Evidence goes last
+     * because the last word is the one that counts — but only the half of that
+     * function which IS evidence.
+     */
     orderCandidates(cards, text);
     await rankPokemonCards(cards, image);
+    liftNamedCandidates(cards, text);
     await rankPrintings(cards, image, text);
     orderPokemonPrintings(cards, text);
 
