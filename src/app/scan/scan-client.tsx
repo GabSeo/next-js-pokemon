@@ -675,7 +675,14 @@ export function ScanClient() {
     async function readPrintedCode(): Promise<void> {
       try {
         const image = await uploadable(file);
-        const response = await fetch("/api/scan/ocr", {
+        // THE CATALOGUE FILTER TRAVELS WITH THE PHOTO, and not sending it was
+        // how a One Piece card turned up in a Pokemon scan. The reader's name
+        // fallback searches by NAME, and a name has no game in it — "Lance" is
+        // a Pokemon Supporter and part of a One Piece card title, so a scan
+        // filtered to POKEMON came back with OP-09 Thunder Lance among the
+        // Pikachus. The panel above says this control narrows the search; until
+        // now it narrowed only what the on-device matcher looked at.
+        const response = await fetch(`/api/scan/ocr?game=${game}`, {
           method: "POST",
           headers: { "Content-Type": image.type || "image/jpeg" },
           body: image,

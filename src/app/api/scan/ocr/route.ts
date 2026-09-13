@@ -533,6 +533,45 @@ async function rankPokemonCards(cards: CardView[], image: Buffer): Promise<void>
   }
 }
 
+/**
+ * A WIZARDS-ERA PROMO NUMBER, which is bare and therefore needs its set named.
+ *
+ * `#9` is the whole of what a Wizards Black Star Promo prints. Every pattern in
+ * lib/card-code-ocr.ts wants either a fraction or a prefixed code, so this one
+ * produced nothing and a photographed Mew fell through to matching by name.
+ *
+ * THE SAME `#` MEANS TWO DIFFERENT THINGS ON ONE CARD, which is why this cannot
+ * be a wider regex. Measured on a real PSA slab, Vision returns
+ *
+ *   2000 POKEMON PROMO MEW HOLO BLACK STAR ... Mew #9 GEM MT 10 ...
+ *   ... LV. 23 #151 Illus. Ken Sugimori ... 01999-2000 Wizards
+ *
+ * `#9` is the card number, off the grading label. `#151` is Mew's Pokedex
+ * number, printed on the card itself. A Birthday Pikachu prints `#25` the same
+ * way. The tell is the layout: a Wizards card writes `LV. <n> #<pokedex>`
+ * together, so a `#` that follows a level is never a card number.
+ *
+ * THE SET COMES FROM THE LABEL, and without it a bare number names nothing —
+ * `lookupCards("9")` returns no card at all, while `lookupCards("basep-9")`
+ * returns exactly one. Ten sets are called "Black Star Promos"; the other nine
+ * print a prefixed code (SWSH262, XY182, DP56) that PKM_PROMO already reads.
+ * Only the Wizards one prints a bare number, and only it says "Wizards" — a
+ * word on every card of that era, which is why BOTH tokens are required. "Black
+ * Star" alone is a family of ten; "Wizards" alone is every Base Set card ever
+ * printed.
+ *
+ * IT NEEDS A SLAB, and that is a limit rather than an oversight: the star on a
+ * raw promo is a symbol, not text, so "Black Star" appears only on a grader's
+ * label. A raw Birthday Pikachu prints its `24` in the corner with no marker at
+ * all, indistinguishable from the 50, the 30 and the 17 around it.
+ */
+function wizardsPromoNumbers(text: string): string[] {
+  if (!/\bblack\s*star\b/i.test(text) || !/\bwizards\b/i.test(text)) return [];
+  // Drop `LV. 23 #151` before looking, so the Pokedex number is never read.
+  const withoutPokedex = text.replace(/\bLV\.?\s*\d{1,3}\s*#\s*\d{1,3}/gi, " ");
+  return [...new Set([...withoutPokedex.matchAll(/#\s*(\d{1,3})\b/g)].map((m) => String(Number(m[1]))))];
+}
+
 export async function POST(request: Request) {
   if (!visionConfigured()) {
     // 501, not 500: nothing is broken, the feature simply is not set up. The
@@ -613,10 +652,35 @@ export async function POST(request: Request) {
      */
     const language = JAPANESE_SCRIPT.test(text) ? "ja" : undefined;
 
+    /**
+     * THE CATALOGUE THE READER PICKED ON SCREEN, which this route was ignoring.
+     *
+     * Both lookups below passed `undefined` for the game, so every scan searched
+     * both catalogues. For a CODE that is harmless — a Pokemon number cannot
+     * name a One Piece card — but the name fallback searches by NAME, and a name
+     * carries no game in it. A photographed Pikachu filtered to POKEMON came
+     * back with `040 Thunder Lance Flip Caliber Phoenix Shot, OP-09` sitting
+     * among the Pikachus, because the reader had seen the word "Lance".
+     *
+     * The panel says this control narrows the search. Until now it narrowed only
+     * what the on-device matcher looked at, and the server ignored it.
+     *
+     * An absent or unknown value searches everything, as before: the filter can
+     * only ever narrow, and a client that does not send one loses nothing.
+     */
+    const asked = new URL(request.url).searchParams.get("game");
+    const game = asked === "pokemon" || asked === "onepiece" ? asked : undefined;
+
+    // Added to the candidate list rather than resolved apart from it, so the
+    // page explains this reading the same way it explains every other one.
+    for (const number of wizardsPromoNumbers(text)) {
+      candidates.push({ value: `basep-${number}`, kind: "pokemon-number", raw: `#${number}` });
+    }
+
     const cards: CardView[] = [];
     const seen = new Set<string>();
     for (const candidate of candidates) {
-      for (const match of lookupCards(candidate.value, undefined, language).matches.slice(0, 6)) {
+      for (const match of lookupCards(candidate.value, game, language).matches.slice(0, 6)) {
         const id = `${match.tcg}:${match.code}`;
         if (seen.has(id)) continue;
         seen.add(id);
@@ -643,7 +707,7 @@ export async function POST(request: Request) {
     let byNameOnly = false;
     if (cards.length === 0) {
       for (const hit of namesInText(text)) {
-        for (const match of lookupCards(hit.name, undefined, language).matches.slice(0, 6)) {
+        for (const match of lookupCards(hit.name, game, language).matches.slice(0, 6)) {
           const id = `${match.tcg}:${match.code}`;
           if (seen.has(id)) continue;
           seen.add(id);
