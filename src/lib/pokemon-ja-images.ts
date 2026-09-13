@@ -12,8 +12,19 @@ import path from "node:path";
  * is an absence at the source, not an ingestion gap, and a card with no picture
  * cannot be scanned, cannot be compared, and ranks behind anything that can.
  *
- * They were downloaded once (scripts/tcgc-japanese.mts) rather than
- * proxied, so nothing at request time depends on a donation-supported server.
+ * WHERE THEY CAME FROM, AND WHY NO MORE ARE COMING. These 2,308 files were
+ * fetched once from tcgcollector.com, in September 2026. During that run their
+ * origin server began returning 502s, and while nothing proves we caused it,
+ * the first pass ran at roughly 1.4 requests a second for hours against a
+ * donation-funded community site, which is fast enough that we cannot prove we
+ * did not. The decision taken was to stop entirely: the scraper, the set join
+ * and the page cache were all deleted rather than slowed down, because a tool
+ * that still exists is a tool that gets run again.
+ *
+ * So this store is FIXED. It will not grow. 386 Japanese cards still have no
+ * picture anywhere we can reach, and that stays true until a source appears
+ * that publishes them freely — TCGdex itself accepts contributions, which is
+ * the honest route.
  *
  * WHY A DIRECTORY LISTING RATHER THAN A MANIFEST — the same reason as
  * lib/one-piece-images.ts, which this deliberately mirrors: the files ARE the
@@ -26,7 +37,7 @@ import path from "node:path";
 
 const DIR = path.join(process.cwd(), "public", "card-images", "pokemon-ja");
 
-/** Matches where the fetch script writes, and the URL `public/` implies. */
+/** Where the files sit, and the URL `public/` implies. */
 const PUBLIC_PREFIX = "/card-images/pokemon-ja";
 
 let index: Set<string> | undefined;
