@@ -789,14 +789,38 @@ export function ScanClient() {
           const ids = cards.map((card) => (card.code.startsWith("ja~") ? card.code.slice(3) : card.code));
           const ranked = await matchCard(source, { x: 0, y: 0, width, height }, indexes, { only: ids });
           const order = new Map(ranked.hits.map((hit, at) => [hit.id, at]));
-          // A candidate the index does not hold keeps its place at the end
-          // rather than being dropped — the number found it, and no picture of
-          // it existing is not evidence against it.
-          cards = [...cards].sort(
-            (a, b) =>
-              (order.get(a.code.replace(/^ja~/, "")) ?? Number.MAX_SAFE_INTEGER) -
-              (order.get(b.code.replace(/^ja~/, "")) ?? Number.MAX_SAFE_INTEGER)
-          );
+          const scored = (card: CardView) => order.get(card.code.replace(/^ja~/, ""));
+
+          /**
+           * ONLY THE CANDIDATES IT COULD ACTUALLY SEE MOVE.
+           *
+           * This used to sort every candidate and give the ones the index does
+           * not hold `Number.MAX_SAFE_INTEGER` — which sorted them last. The
+           * comment above it said that keeping them was the honest thing, and
+           * it was; sending them to the back was not. "I cannot compare this"
+           * became "this is the worst of these", and the two are not the same
+           * claim.
+           *
+           * IT OVERRULED BETTER EVIDENCE. A CGC-slabbed Japanese Lugia,
+           * `090/087`, names two cards: ja~E3-090 Lugia and ja~CP6-090
+           * Charizard ex. The slab's own label says "Lugia", so the server puts
+           * the Lugia first — orderCandidates ranks a card whose NAME appears in
+           * the text above every other kind of match. But the E3 Lugia is one of
+           * the printings nobody has published a picture of, so it is not in the
+           * index, so this line sent it to the back and the page announced
+           * Charizard ex.
+           *
+           * The picture is a guess and the name is evidence. A guess that cannot
+           * even be made must not outrank one.
+           *
+           * SO THE SCORED ONES ARE REORDERED AMONG THEMSELVES, into the slots
+           * they already occupy, and everything else stays exactly where the
+           * server put it. That is the same shape as rankPokemonCards' own
+           * rewrite, for the same reason.
+           */
+          const reordered = cards.filter((card) => scored(card) !== undefined).sort((a, b) => scored(a)! - scored(b)!);
+          let next = 0;
+          cards = cards.map((card) => (scored(card) === undefined ? card : reordered[next++]));
         } finally {
           source.close();
         }

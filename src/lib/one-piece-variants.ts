@@ -256,12 +256,31 @@ export function treatmentsOf(name: string): string[] {
  * nothing instead of selecting wrongly.
  */
 export function treatmentsInText(text: string): string[] {
-  const ids = TREATMENTS.filter((t) => t.match.test(text)).map((t) => t.id);
+  const ids = TREATMENTS.filter((t) => t.match.test(text) && !RARITY_CODE.has(t.id)).map((t) => t.id);
   // Not a TREATMENTS entry — treatmentsOf special-cases it too — but it IS a
   // printing label, and a slab label says it.
   if (/\breprint\b/i.test(text)) ids.push("reprint");
   return ids;
 }
+
+/**
+ * Treatment ids that are ALSO what Bandai prints in the rarity corner.
+ *
+ * `sp` is the collision, and on a card face it is the rarity every time: One
+ * Piece prints SEC, SP, SR, L, UC and R down there, and `rarityFromText`
+ * already owns that vocabulary. Reading it here as a treatment took a letter
+ * pair that means "this card's rarity" and spent it claiming "this is the SP
+ * printing".
+ *
+ * Measured on a photographed Wanted Poster OP05-119, whose own corner reads
+ * `SP OP05-119 SEC 2`: free-text reading returned `['sp']` and boosted the
+ * OP-11 SP printing, which is a different card with different artwork.
+ *
+ * A PARENTHETICAL IS STILL SAFE, which is why `treatmentsOf` keeps it: inside
+ * `Monkey.D.Luffy (SP)` the letters cannot be a rarity corner, because a rarity
+ * corner is not written in brackets in a catalogue row.
+ */
+const RARITY_CODE = new Set(["sp"]);
 
 /**
  * The PRODUCT a row names, when it names one — the parentheticals that are not

@@ -85,6 +85,33 @@ const OP_PROMO = /\bP\s*[-–—_ ]\s*([0-9OoQDIlSsBZGT]{3})\b/gi;
 const PKM_NUMBER = /\b([0-9OoQDIlSsBZGT]{1,3})\s*\/\s*([0-9OoQDIlSsBZGT]{1,3})\b/g;
 
 /**
+ * The same number with something stuck to the front of it: `560003/069`.
+ *
+ * `PKM_NUMBER` opens with `\b`, so a numerator glued to preceding digits cannot
+ * match anywhere — not at the run's start, where `560` is not followed by a
+ * slash, and not inside it, where there is no word boundary to anchor to. The
+ * number is right there in the text and the reader returns nothing.
+ *
+ * That is not hypothetical. Vision's output for img test/pokemon
+ * japanese/leapheon vmax 003-069.jpeg, a holo photographed at an angle, reads
+ *
+ *   ...VMAXIU-J UNT PLANETA The 560003/069 RRR MAX...
+ *
+ * and `003/069` resolves to ja~S6a-003, Leafeon VMAX — the card in the picture.
+ * The scan told its owner it had found no card number at all.
+ *
+ * FOUR DIGITS IS THE TELL. No Pokémon card carries a numerator longer than
+ * three, so a longer run is glue by definition and its last three digits are
+ * the number. Shorter runs are left to `PKM_NUMBER`, which reads them exactly.
+ *
+ * OVER-GENERATING IS THE DESIGNED FAILURE HERE, as the denominator comment in
+ * the loop below already sets out: a wrong split resolves to nothing, ranks
+ * last and costs a line on screen, while a missed one costs the whole scan.
+ * `12345/678` becomes `345/678`, which no set with 678 cards can answer.
+ */
+const PKM_GLUED = /([0-9OoQDIlSsBZGT]{4,})\s*\/\s*([0-9OoQDIlSsBZGT]{1,3})\b/g;
+
+/**
  * The printed number of a SUBSET card: `GG30/GG70`, `TG12/TG30`, `SV30/SV94`.
  *
  * WHY `PKM_NUMBER` CANNOT READ THESE, and it was read as a mystery rather than
@@ -177,6 +204,16 @@ export function extractCardCodes(text: string): CodeCandidate[] {
     // "2/3 of remaining damage" survives as a candidate. That is the right way
     // to be wrong here -- it ranks last, resolves to nothing, and the page
     // falls back to typing, which is the designed behaviour rather than a leak.
+    add(`${numerator}/${denominator}`, "pokemon-number", m[0].trim());
+  }
+
+  // AFTER the exact readings, so a clean number always ranks above a salvaged
+  // one. `add` keeps the first spelling it sees, so a run that both patterns
+  // can read is never listed twice.
+  for (const m of text.matchAll(PKM_GLUED)) {
+    const numerator = asDigits(m[1]).slice(-3);
+    const denominator = asDigits(m[2]);
+    if (Number(numerator) === 0 || Number(denominator) === 0) continue;
     add(`${numerator}/${denominator}`, "pokemon-number", m[0].trim());
   }
 

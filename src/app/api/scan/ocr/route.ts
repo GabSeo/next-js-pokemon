@@ -373,9 +373,56 @@ async function rankPrintings(cards: CardView[], image: Buffer, text: string): Pr
     // (a set AND a treatment) beat one, and a printing the text says nothing
     // about keeps its artwork distance untouched.
     const printed = printedEvidence(text, card.code);
+
+    /**
+     * A FACT THAT MOST PRINTINGS SHARE IS NOT EVIDENCE ABOUT ANY OF THEM.
+     *
+     * The bonus is a whole point, far larger than any artwork gap, which is
+     * right when a rarity picks ONE printing out of twelve and wrong when it
+     * picks seven. Measured on a photographed Wanted Poster OP05-119: its
+     * corner reads SEC, seven of its twelve printings are SecretRare, and the
+     * Wanted Poster is not one of them — it is Special. So a bonus meant to
+     * discriminate rewarded the majority and pushed the card in hand from
+     * second place to seventh, behind six printings it does not look like.
+     *
+     * Requiring a strict minority is the cheapest honest test: a fact that
+     * separates nothing gets no weight, and one that separates a few keeps the
+     * full bonus it has earned. Nothing is filtered either way — see below.
+     */
+    const sharing = scored.filter((entry) => entry.print.rarity === rarity).length;
+    const rarityDiscriminates = rarity !== undefined && sharing > 0 && sharing * 2 < scored.length;
+
+    /**
+     * THE LANGUAGE ON THE CARD, WHICH THE ARTWORK CANNOT SEE.
+     *
+     * A Japanese printing and its Western release are the same picture. The
+     * signature therefore cannot tell them apart, and on a photographed Wanted
+     * Poster OP05-119 it put `JP · OP-09` at 0.309 ahead of the English OP-09
+     * at 0.383 — a card whose every sentence Vision read in English.
+     *
+     * Rules text is evidence the picture does not carry. BOTH DIRECTIONS ARE
+     * POSITIVE, which is the lesson from the catalogue-language bug above:
+     * kana present says Japanese, and a page of Latin words says Western.
+     * Neither is inferred from the other's absence, so an OCR that reads
+     * nothing says nothing and the artwork keeps its verdict. Measured:
+     *
+     *   FR card 44 Latin words   EN card 42   EN slab 34   Wanted Poster 40
+     *   JA card whose OCR failed  0
+     *
+     * The threshold sits far below every Western sample and far above the
+     * failed one, so it is a gap rather than a fitted constant.
+     *
+     * A PENALTY, NOT A FILTER, like everything else here: the mismatched
+     * printing stays on screen and stays reachable, it simply stops leading.
+     */
+    const westernText = (text.match(/[A-Za-zÀ-ÿ]{4,}/g) ?? []).length >= 12;
+    const japaneseText = JAPANESE_SCRIPT.test(text);
+
     for (const entry of scored) {
-      if (rarity && entry.print.rarity === rarity) entry.distance -= 1;
+      if (rarityDiscriminates && entry.print.rarity === rarity) entry.distance -= 1;
       entry.distance -= evidenceFor(entry.print, printed);
+      const isJapanesePrint = entry.print.origin.startsWith("JP ");
+      if (japaneseText !== isJapanesePrint && (japaneseText || westernText)) entry.distance += 1;
     }
 
     scored.sort((a, b) => a.distance - b.distance);
