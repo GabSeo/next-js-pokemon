@@ -5,32 +5,53 @@ references come from; this one explains what happens to a photograph, why each
 threshold is the number it is, and what breaks first when this grows.
 
 Every figure is measured, and the script that measured it is named. Measured
-2026-09-09; §2b added 2026-09-13.
+2026-09-09; §2b added 2026-09-13; §1 and §2 corrected 2026-09-13,
+where they described the reader as a fallback and had done since the order was
+reversed.
 
 ---
 
 ## 1. The whole thing, in one paragraph
 
-You point a camera at a card. The browser crops a card-shaped region, turns it
-into 512 numbers with a model it downloaded once, and compares those numbers
-against 51,000 reference cards it also downloaded once. The nearest match is the
-card. **Nothing is uploaded, nothing is metered, and there is no server in the
-loop** — the only network call is fetching the card's own details once it has
+**There are two scans and they work in opposite directions.** Conflating them is
+the mistake this document itself made for weeks — see §2a, which is the rule, and
+§2, which contradicted it three lines above.
+
+**The live camera.** You point it at a card. The browser crops a card-shaped
+region, turns it into 512 numbers with a model it downloaded once, and compares
+those numbers against 51,000 reference cards it also downloaded once. The nearest
+match is the card. Nothing is uploaded, nothing is metered, and there is no server
+in the loop — the only network call fetches the card's own details once it has
 been named.
+
+**A photograph.** The image is uploaded and read by Google Vision FIRST, every
+time, because the number printed in the corner is evidence and the artwork is a
+guess. That path is **metered at 33/day** and is the only metered thing anywhere
+near the scan. The pipeline below then runs on the candidates that number
+produced — a comparison between four cards rather than a search through 51,000 —
+because a printed number is not an identity: measured, **58.9% of English cards
+and 66.7% of Japanese ones share their `number/total` with another card**, and
+`93/108` names four real cards in four different sets. The artwork is consulted
+as an ANSWER only when Vision comes back with nothing.
 
 ---
 
 ## 2. The pipeline
 
+This is the live camera's pipeline in full. A photograph reaches it only after
+Vision, and enters at a different width — see the two annotations.
+
 ```
-camera frame  ─┐
-photo upload  ─┴─→  crop to a card-shaped region      (browser, ~0 ms)
+camera frame  ────→  crop to a card-shaped region      (browser, ~0 ms)
+photo upload  ──→ Google Vision → candidates → (no crop: the whole image)
                     ↓
                     resize 256x256, rescale 0..1      (canvas)
                     ↓
                     MobileCLIP-S2 fp16  →  512 floats (WASM, ~450 ms)
                     ↓
                     cosine against 20k int8 vectors   (plain JS, ~8 ms)
+                      a photo compares only Vision's 2-14 candidates,
+                      which is why it cannot miss one a search would rank #184
                     ↓
                     score floor + margin  →  a verdict
                     ↓
@@ -40,9 +61,16 @@ photo upload  ─┴─→  crop to a card-shaped region      (browser, ~0 ms)
         card"          frame"      (/api/scan/resolve)
 ```
 
-The fallback, when the artwork cannot place a picture: Google Vision reads the
-printed code and the catalogue looks it up. That path is **metered at 33/day** and
-is the only metered thing anywhere near the scan.
+**This said the opposite, and said it for months.** It read "the fallback, when
+the artwork cannot place a picture: Google Vision reads the printed code" — the
+arrangement before the reader was made to lead, sitting three lines above §2a,
+which states the reverse as the most important rule in the scan. A reader who
+got as far as the diagram had already been told the wrong thing twice.
+
+The verdict states above — `empty`, `unsure`, `identified` — belong to the live
+camera. On a photograph whose number Vision read, there is no floor and no margin
+to clear: the candidates are simply put in order, and the ordering cannot fail
+because every candidate is scored.
 
 ---
 

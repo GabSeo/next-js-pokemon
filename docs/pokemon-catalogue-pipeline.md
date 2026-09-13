@@ -271,6 +271,16 @@ the artwork cannot place, not the first move — which takes the only metered ca
 the product off the critical path and means the photograph never leaves the device
 on the common path.
 
+> **Superseded 2026-09-13, and the reversal is the point.** The order above was
+> turned around: a photograph now goes to Vision FIRST, every time, and the
+> artwork answers only when the number comes back with nothing. The reason is
+> measured — 58.9% of English cards and 66.7% of Japanese ones share their
+> printed `number/total` with another card, so the artwork was being asked to
+> settle what it is worst at while the evidence went unread. So the photograph
+> DOES leave the device on the common path, and the metered call IS on the
+> critical path. The paragraph stands as the record of what was true that day;
+> `docs/how-the-scan-works.md` §2a is what is true now.
+
 **Browser inference is no longer an estimate.** ~500 ms per frame once the model is
 warm, on a desktop CPU. That is ~2 fps: enough for a photo scan, not yet enough for
 a video feed. WebGPU and a smaller input are the obvious levers, and both should

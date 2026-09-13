@@ -520,6 +520,14 @@ all. Tesseract runs on the visitor's machine, so capacity scales with users
 rather than against them. The engine is imported lazily into its own 16 KB
 chunk, so nobody pays for wasm to read the instructions.
 
+> **Superseded 2026-09-13. Every sentence above about the reader is now wrong.**
+> Tesseract was removed entirely — one reader, not two — and a photograph is
+> uploaded and read by Google Vision first, every time. The photo DOES leave the
+> device, and the metered call IS on the critical path. The free tier survives it
+> for a reason this page could not have known: the scan is account-gated and the
+> real volume is roughly 150 scans in total, so there is no quota to protect and
+> the second engine bought nothing. See `docs/how-the-scan-works.md` §1 and §2a.
+
 **The testable core is `src/lib/card-code-ocr.ts`**, kept pure and free of DOM.
 A camera, a wasm engine and a browser can all be swapped; what decides whether a
 scan works is whether the right code comes out of noisy text, and that is
