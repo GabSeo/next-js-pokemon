@@ -532,13 +532,39 @@ export async function POST(request: Request) {
     // Resolve to real cards here rather than in a second round trip: the photo
     // is already uploaded, and asking the client to send it twice to rank the
     // printings would double the slowest part of the scan.
-    // THE SCRIPT PICKS THE CATALOGUE. Vision read the card face; a face written
-    // in kana is not an English card. Scoping the lookup halves the candidates
-    // and removes a whole class of wrong answer — a photographed Japanese Lugia
-    // was returning Kangaskhan, because S12 and SV10 both declare 98 cards and
-    // both have a 110. 53% of English and 57% of Japanese printed numbers name
-    // more than one card, so this is not an edge case.
-    const language = JAPANESE_SCRIPT.test(text) ? "ja" : "en";
+    /**
+     * KANA IS EVIDENCE. ITS ABSENCE IS NOT.
+     *
+     * A face written in kana is not an English card, and scoping on that is
+     * worth keeping: it halves the candidates and removes a whole class of
+     * wrong answer — a photographed Japanese Lugia was returning Kangaskhan,
+     * because S12 and SV10 both declare 98 cards and both have a 110. 53% of
+     * English and 57% of Japanese printed numbers name more than one card.
+     *
+     * The other half of that line was an assumption dressed as a deduction.
+     * `: "en"` read "no kana was found" as "this is an English card", when what
+     * it actually means is "no kana was READ" — and Vision does not always read
+     * it. Measured on 2026-09-13 for img test/pokemon japanese/aerodactyl
+     * v 106-100.jpg, a card whose face is entirely Japanese, Vision returned
+     *
+     *   ta | *755V | DA | MP | 210 | 40 | 120 | S
+     *
+     * with not one kana in it. The number came back perfectly — "106/100" —
+     * and was then looked up in the English catalogue, which has no 100-card
+     * set with a 106. The scan told its owner "no card in the catalogue has
+     * that number" about a card whose page it can render.
+     *
+     * WHAT IT COSTS TO STOP ASSUMING, measured across the twelve numbers in
+     * img test/: four are findable ONLY this way — every Japanese one, all
+     * returning nothing under "en" — and eight English ones widen by between
+     * zero and five candidates.
+     *
+     * That widening is not a regression, it is the case `rankPokemonCards`
+     * below exists for: the number says which number, the artwork says which
+     * set. An extra candidate it can order is a better outcome than a right
+     * answer that was never a candidate.
+     */
+    const language = JAPANESE_SCRIPT.test(text) ? "ja" : undefined;
 
     const cards: CardView[] = [];
     const seen = new Set<string>();

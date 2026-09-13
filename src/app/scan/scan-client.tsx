@@ -727,10 +727,32 @@ export function ScanClient() {
       return undefined;
     });
 
-    // Even a CONFIDENT artwork answer is only the fallback now: on an index
-    // built from watermarked pictures its confidence is not evidence.
-    const [local] = await Promise.all([artwork, readPrintedCode()]);
-    if (local) unsure = { cards: local.cards, route: local.route };
+    /**
+     * STARTED IN PARALLEL, AWAITED ONLY IF THE NUMBER FAILS.
+     *
+     * Even a CONFIDENT artwork answer is only the fallback here: on an index
+     * built from watermarked pictures its confidence is not evidence, and a
+     * photo scan leads with the printed code by design. So when the reader
+     * comes back with a card — the ordinary, successful case — nothing below
+     * ever looks at `artwork` again.
+     *
+     * It used to be awaited anyway, in a `Promise.all`, and that made every
+     * successful scan wait for the slowest thing on the page. Measured on
+     * 2026-09-13, a cold browser fetches
+     *
+     *   MobileCLIP-S2 fp16   71.7 MB   4.8 s on a fast connection
+     *   the op-en index       3.0 MB   1.0 s
+     *   the Vision call                2.1 s
+     *
+     * so the answer arrived at the speed of a 71.7 MB download rather than at
+     * the speed of the request that actually produced it. The reader had
+     * finished and was waiting on a result that was about to be discarded.
+     *
+     * NOT CANCELLED, AND THAT IS THE POINT of leaving it running: the model
+     * lands in the browser cache regardless, so the fallback path and the live
+     * view are warm for free. The same bytes move; only the wait is gone.
+     */
+    await readPrintedCode();
 
     /**
      * THE NUMBER SAYS WHICH NUMBER; THE ARTWORK SAYS WHICH SET.
@@ -808,6 +830,16 @@ export function ScanClient() {
     // THE PRINTED NUMBER WINS WHEN IT EXISTS, because it is the only evidence in
     // the picture that is unambiguous — artwork is shared between reprints and
     // between a card and its Japanese release; the number in the corner is not.
+    //
+    // HERE is where the on-device match is finally waited for, and only here:
+    // the number has already failed, so its answer is the last one available.
+    // On the successful path this line never runs and nothing waits on a 71.7 MB
+    // model — see the `artwork` promise above.
+    if (cards.length === 0) {
+      const local = await artwork;
+      if (local) unsure = { cards: local.cards, route: local.route };
+    }
+
     if (cards.length === 0 && unsure) {
       setStatus({
         phase: "done",
@@ -1063,7 +1095,12 @@ export function ScanClient() {
                     : `on device · ${status.route.tied} closest guesses, none confident · photo never left the phone`
                   : status.route.via === "name"
                     ? "the number was unreadable — these share the name that was read"
-                    : "the artwork was unclear, so the photo was sent once to be read"}
+                    : // NOT "the artwork was unclear", which this said and which
+                      // stopped being true. A photo scan reads the printed code
+                      // FIRST, every time, because the number is evidence and the
+                      // picture is a guess — the artwork is not consulted at all
+                      // unless the number comes back with nothing.
+                      "the number in the corner is evidence, so a photo is read before it is compared"}
             </span>
           </div>
         ) : null}
