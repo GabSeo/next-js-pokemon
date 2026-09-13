@@ -5,7 +5,7 @@ references come from; this one explains what happens to a photograph, why each
 threshold is the number it is, and what breaks first when this grows.
 
 Every figure is measured, and the script that measured it is named. Measured
-2026-09-09.
+2026-09-09; §2b added 2026-09-13.
 
 ---
 
@@ -117,6 +117,155 @@ One call per card scanned, not per frame. On the Eustass Kid that would have
 turned Kalgara into `OP05-074`.
 
 It is not built, and the argument against it was weaker than it looked.
+
+---
+
+## 2b. What counts as evidence — the rules learned by breaking them
+
+§2a says the printed code leads. This section is the rest of that argument: once
+a code has named several cards, or one card several printings, **something has to
+choose between them**, and every rule below was written after a wrong choice
+reached a screen.
+
+They are listed as rules because that is how they have to be re-read. Each one is
+a line in `lib/scan-order.ts`, `lib/card-code-ocr.ts` or `api/scan/ocr/route.ts`
+that looks arbitrary and is not.
+
+### The rules
+
+**1. Presence is evidence; absence is not.**
+`JAPANESE_SCRIPT.test(text) ? "ja" : "en"` read *no kana was found* as *this is an
+English card*. It means no kana was **read** — and on a Japanese Aerodactyl V,
+Vision returned `ta | *755V | DA | MP | 210` with not one kana in it. The number
+came back perfectly and was looked up in a catalogue that cannot contain it. Now:
+kana → Japanese, no kana → search everything. Measured across the twelve numbers
+in `img test/`: four are findable only this way, eight English ones widen by
+between nothing and five candidates.
+
+**2. Evidence that does not discriminate is not evidence.**
+A photographed Wanted Poster `OP05-119` reads `SEC`. Seven of its twelve
+printings are SecretRare and the Wanted Poster is `Special`, so a one-point bonus
+meant to discriminate rewarded the majority and pushed the card in hand from
+second place to seventh. The bonus now requires a strict minority.
+
+**3. A picture cannot see what language a card is in.**
+A Japanese printing and its Western release are the same artwork. The signature
+put `JP · OP-09` at 0.309 ahead of the English OP-09 at 0.383 on a card whose
+every sentence was read in English. Rules text is evidence the picture does not
+carry, and both directions are positive — kana says Japanese, a page of Latin
+words says Western. Measured: 34 to 44 Latin words on four Western photographs,
+**0** on the Japanese one whose OCR failed.
+
+**4. "I cannot compare this" is not "this is the worst of these."**
+The client sorted unscoreable candidates with `?? Number.MAX_SAFE_INTEGER`. A
+CGC-slabbed Lugia `090/087` names `ja~E3-090` and `ja~CP6-090` Charizard ex; the
+slab label says "Lugia" so the server ranked the Lugia first, but E3 is pictured
+nowhere, so the client sent it to the back and the page announced Charizard ex.
+Only scoreable candidates are reordered now, into the slots they already occupy.
+
+**5. A card does not print its name as one string.**
+The catalogue says "Charizard VMAX"; the card prints `VMAX Charizard VY Evolves
+from Charizard V`, because the badge sits above the name. `text.includes` was
+false, the name signal was lost entirely, and Tropius led on a photograph of an
+orange dragon — 0.779 against 0.812, all three candidates above 0.77, which is a
+guess rather than a choice. Matched word by word now, in whole words.
+
+**6. The script band goes first; the name goes last.**
+Both live in `orderCandidates` and they are not the same kind of claim. Running
+the whole function after the picture let the script band — which contains no name
+evidence — overrule a verdict the picture had earned: an N's Reshiram `SV9
+109/100` became a Wooper, purely because the Wooper is English. The order is
+script (a tie-break) → picture → name (evidence, alone).
+
+**7. `\b` cannot see inside a glued run.**
+OCR welds neighbouring glyphs. `560003/069` hid a real `003/069`; `FSWSH286` hid
+`SWSH286`, the set symbol having come back as a letter. Both patterns therefore
+refuse a leading word boundary and let the catalogue validate instead — measured,
+every adversarial token a real card prints (`HP90`, `HP310`, `LV23`, `V717`,
+`PV60`, `GEM10`) resolves to no card.
+
+**8. A Pokémon number is a fraction — except for 658 cards.**
+42,791 cards print `074/073`. 1,536 print a prefixed code. **658 print a bare
+number, because their set has no official total**, and those are the promos. A
+bare number is not a card number anywhere else.
+
+**9. The same `#` means two things on one card.**
+On a slab label `#9` is the card number. On the card face `#151` is the Pokédex
+number — a Wizards Mew prints `#151`, a Birthday Pikachu `#25`. The tell is the
+layout: `LV. <n> #<pokédex>` are written together, so a `#` following a level is
+never a card number.
+
+**10. A grading label states the grade, not the grader.**
+`\bPSA\b` is **false** on both real PSA slabs measured: the company sets its name
+as a logo, so there is no text to read. `GEM MT` is read on both. A grade phrase
+also describes the slab rather than the card, which is why none of the four
+occurs in any of the 44,985 card names.
+
+**11. A grader's name can collide with the game's own vocabulary.**
+TAG Grading and ACE Grading are deliberately absent from that list. Pokémon
+prints **TAG TEAM** and **ACE SPEC** on real cards, and Vision does read `TAG`
+out of `megasableye-tyranitargx-226-236.jpg`. Listing it reported a grading label
+on a raw card and defeated the only gate the finish reader has.
+
+**12. `SP` in a One Piece corner is the rarity.**
+Bandai prints SEC, SP, SR, L, UC and R down there, and `rarityFromText` owns that
+vocabulary. Reading the same letters as a *treatment* boosted the OP-11 SP
+printing, a different card with different artwork. Inside a parenthetical, `(SP)`
+stays safe — a rarity corner is not written in brackets.
+
+**13. A set code in front of a fraction is labelling that fraction.**
+`SV9 109/100` is not a card called `SV9`. Without that guard it resolved to
+`sma-SV9`, a Wooper.
+
+**14. A filter the reader set must reach the server.**
+Both lookups passed `undefined` for the game, so a Pokémon scan searched both
+catalogues. Harmless for a code — a Pokémon number cannot name a One Piece card —
+but the name fallback searches by NAME, and a name carries no game in it. A
+photographed Pikachu came back with `OP-09 Thunder Lance` among the Pikachus,
+because Vision had read the word "Lance".
+
+**15. A cap on work skips the cards that need the work most.**
+`MAX_RANKED_PRINTINGS = 10` excluded 30 codes from printing-order ranking — the
+chase cards, the ones photographed *because* they have sixteen versions at wildly
+different prices. Written when each reference was fetched and hashed per scan; by
+the time it was found, signatures were precomputed and one comparison cost
+**0.24 µs**.
+
+### The shape underneath all of them
+
+Three sentences the whole scan obeys. Every rule above is one of them applied
+somewhere specific, so a new rule that contradicts one of these is almost
+certainly wrong.
+
+1. **The artwork is a guess; printed text is evidence.** §2a says this about the
+   code. It holds one level down too — between printings, between candidates,
+   between languages.
+2. **Evidence that does not discriminate is not evidence.** A rarity seven of
+   twelve printings share, a word printed on every card of an era, a fact every
+   candidate satisfies: none of them chooses, so none may outrank something that
+   does.
+3. **Absence is not evidence of absence.** No kana read, no signature on file, no
+   picture published — each means *we cannot tell*, never *it is not this one*.
+
+### What is still unfixed
+
+**A raw promo's bare number.** A Birthday Pikachu prints `24` in the corner with
+no marker. Nothing on an unslabbed card names its set, so that `24` is
+indistinguishable from the 50, the 30 and the 17 around it. Reaching it means
+emitting every bare number scoped to a set — around eight candidates for one
+right answer.
+
+**3,465 cards with no reference at all.** Whole Japanese sets from 1996–2004:
+`VS1` 143 cards, `E1` 128, `E3` 90 (the Wind from the Sea Lugia), `PCG2` 82 (the
+Clash of the Blue Sky Rayquaza). TCGdex publishes those sets and no images for
+them; Limitless Japanese starts at September 2010; the official Japanese site
+covers modern formats only and forbids reproduction. TCG Collector has all of it,
+under terms granting personal non-commercial use — and it cannot grant what
+Nintendo, Creatures and GAME FREAK own.
+
+**The client's own CLIP re-rank.** It runs in the browser after everything above,
+for candidates the number left ambiguous, and it is the last word on screen.
+Nothing in this document describes it.
 
 ---
 

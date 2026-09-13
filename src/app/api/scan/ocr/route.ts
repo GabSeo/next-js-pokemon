@@ -1,11 +1,7 @@
 import { artDistance, artSignature, rarityFromText, referenceSignatures } from "@/lib/art-rank";
+import { JAPANESE_SCRIPT, resolveCards } from "@/lib/scan-order";
 import { treatmentsInText } from "@/lib/one-piece-variants";
-import { extractCardCodes } from "@/lib/card-code-ocr";
-import { namesInText } from "@/lib/card-name-match";
-import { japaneseName } from "@/lib/pokemon-ja-official";
-import { pokemonSignature } from "@/lib/pokemon-art";
-import { lookupCards } from "@/lib/card-lookup";
-import { getCardView, type CardPrint, type CardView } from "@/lib/card-view";
+import type { CardPrint, CardView } from "@/lib/card-view";
 import { readTextFromImage, visionConfigured, VisionNotConfiguredError } from "@/lib/vision";
 
 /**
@@ -430,204 +426,9 @@ async function rankPrintings(cards: CardView[], image: Buffer, text: string): Pr
   }
 }
 
-/** Kana and kanji. Latin-only text has none; a Japanese card face is full of them. */
-const JAPANESE_SCRIPT = /[぀-ゟ゠-ヿ一-鿿]/;
+// The four ordering passes live in lib/scan-order.ts so a build can replay
+// them against frozen fixtures — see that file's own comment.
 
-/** Every word of `name`, present in an already-tokenised text. */
-function nameIsInText(name: string | undefined, words: Set<string>): boolean {
-  const parts = (name ?? "").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
-  return parts.length > 0 && parts.every((part) => words.has(part));
-}
-
-/**
- * Move the candidates the text NAMES to the front, and touch nothing else.
- *
- * The name-matching half of `orderCandidates`, on its own, to run after the
- * artwork. It is the half that is evidence: a card whose name Vision read off
- * the photograph is that card far more often than a card that merely resembles
- * it. The script half is a tie-break, so it stays where it was — see the call
- * site for what happened when both ran late.
- *
- * A STABLE PARTITION, not a sort, so the picture's ranking survives inside both
- * groups and a photograph that names nothing comes out exactly as it went in.
- */
-function liftNamedCandidates(cards: CardView[], text: string): void {
-  const words = new Set(text.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
-  const isNamed = (card: CardView) =>
-    (card.tcg === "pokemon" && japanesePrintedName(card.code) !== undefined && text.includes(japanesePrintedName(card.code)!)) ||
-    nameIsInText(card.name, words);
-  const named = cards.filter(isNamed);
-  if (named.length === 0 || named.length === cards.length) return;
-  const rest = cards.filter((card) => !isNamed(card));
-  cards.length = 0;
-  cards.push(...named, ...rest);
-}
-
-/**
- * Put the candidate that best matches what Vision actually read first.
- *
- * WHY ORDERING IS THE ANSWER. What is printed on a Pokemon card is `048/082` —
- * a number and a set size, never the set, which is carried by a symbol no OCR
- * reads. 154 of 216 English sets share their printed total with another English
- * set and 152 of 182 Japanese ones do, so one photographed number genuinely
- * names several cards. The scan shows the FIRST as "your card", so the order is
- * the answer, and both signals below were already in hand and thrown away.
- *
- * THE NAME, the stronger of the two: a candidate whose name appears in the text
- * Vision returned is the card, not a card with the same number. The Japanese
- * corpus holds names AS PRINTED for exactly this — the labels on screen stay
- * romanised, but `ゲンガーex` is what the camera sees.
- *
- * THE SCRIPT, for the 4,330 Japanese cards no source names in Japanese: a card
- * face written in kana is not an English Team Rocket card.
- *
- * ORDERS, NEVER FILTERS — the same rule as the rarity boost. Vision misreads,
- * cards carry both scripts, and a card can be photographed beside other text. A
- * wrong guess costs position, which a person can see past; filtering would cost
- * availability, which they cannot.
- */
-function orderCandidates(cards: CardView[], text: string): void {
-  const japanese = JAPANESE_SCRIPT.test(text);
-  // Tokenised once: a name match is checked per candidate and the text is long.
-  const words = new Set(text.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
-
-  /**
-   * Does the text carry this card's name — EVERY WORD OF IT, in any order?
-   *
-   * A CARD DOES NOT PRINT ITS NAME AS ONE STRING, and matching it as one was
-   * costing the name signal entirely on the cards that need it most. Vision's
-   * output for a photographed Champion's Path Charizard VMAX begins
-   *
-   *   VMAX Charizard VY Evolves from Charizard V Gigantamax 330 Claw Slash ...
-   *
-   * because the VMAX badge sits above the name rather than after it. The
-   * catalogue calls that card "Charizard VMAX", `text.includes("Charizard
-   * VMAX")` is false, and the whole candidate list fell through to the artwork —
-   * which put Tropius first, at 0.779 against 0.812 for the Charizard, on a
-   * photograph of an orange dragon. All three distances were above 0.77: the
-   * signature was not choosing, it was guessing.
-   *
-   * WHOLE WORDS, NOT SUBSTRINGS, so a one-letter suffix cannot match on nothing:
-   * "Charizard V" needs a standalone `V` in the text, and gets one here from
-   * "Evolves from Charizard V". That is correct — both printings are genuinely
-   * plausible readings of this photograph, and the artwork ranks between them.
-   * What is not acceptable is a card sharing neither word leading both.
-   *
-   * Unchanged for the single-word names that are most of the catalogue: the old
-   * substring test and this one agree on "Pikachu".
-   */
-  const named = (name: string | undefined): boolean => nameIsInText(name, words);
-
-  const rank = (card: CardView): number => {
-    // 0 — the name Vision read is this card's name, in either spelling.
-    const printed = card.tcg === "pokemon" ? japanesePrintedName(card.code) : undefined;
-    if (printed && text.includes(printed)) return 0;
-    if (named(card.name)) return 0;
-    if (card.tcg !== "pokemon") return 1;
-    // 1 — written in the script Vision read. 2 — written in the other one.
-    return card.code.startsWith("ja~") === japanese ? 1 : 2;
-  };
-
-  // Stable: equal ranks keep the order the catalogue gave them.
-  cards.sort((a, b) => rank(a) - rank(b));
-}
-
-/**
- * The name printed on a Japanese card, for a `ja~<tcgdexId>` code.
- *
- * The catalogue romanises it and the UI keeps that romanisation; this is the
- * spelling the camera actually sees, and it lives here rather than on screen.
- */
-function japanesePrintedName(code: string): string | undefined {
-  if (!code.startsWith("ja~")) return undefined;
-  const id = code.slice(3);
-  const dash = id.lastIndexOf("-");
-  if (dash <= 0) return undefined;
-  return japaneseName(id.slice(0, dash), id.slice(dash + 1));
-}
-
-/**
- * Order the Pokemon candidates by how much each LOOKS like the photograph.
- *
- * WHY THIS IS THE RIGHT SIGNAL. What is printed on a Pokemon card is `048/082`
- * — a number and a set size, never the set, which is carried by a symbol no OCR
- * reads. 154 of 216 English sets share their printed total with another English
- * set, so one photographed number genuinely names several cards. Until now the
- * only thing separating them was the script the text was written in, which
- * answers "which catalogue" and not "which card".
- *
- * ALL OR NOTHING, like the One Piece ranker and for the same reason: a
- * candidate with no signature cannot lose a comparison it never entered, so
- * ranking a partial set would quietly promote whichever cards happen to be
- * covered. 4,330 Japanese cards are pictured nowhere public; when one of them
- * is a candidate, the whole group keeps the order the name and script gave it.
- *
- * THE CARD, NEVER THE PRINTING. 0 of 10,110 multi-variant Pokemon cards have a
- * distinct image, so this cannot tell a normal from its reverse holo. That is
- * Vision's job, once, on confirmation.
- */
-async function rankPokemonCards(cards: CardView[], image: Buffer): Promise<void> {
-  const pokemon = cards.filter((card) => card.tcg === "pokemon");
-  if (pokemon.length < 2) return;
-
-  // Every candidate first: one unsigned card leaves the whole group alone.
-  const signatures = pokemon.map((card) => pokemonSignature(card.code));
-  if (signatures.some((signature) => signature === undefined)) return;
-
-  const photo = await artSignature(image);
-  if (!photo) return;
-
-  const scored = pokemon
-    .map((card, index) => ({ card, distance: artDistance(photo, signatures[index]!) }))
-    .sort((a, b) => a.distance - b.distance);
-
-  // Rewrite only the Pokemon slots, in place, so One Piece candidates keep the
-  // position `orderCandidates` gave them.
-  const ordered = scored.map((entry) => entry.card);
-  let next = 0;
-  for (let i = 0; i < cards.length; i++) {
-    if (cards[i].tcg === "pokemon") cards[i] = ordered[next++];
-  }
-}
-
-/**
- * A WIZARDS-ERA PROMO NUMBER, which is bare and therefore needs its set named.
- *
- * `#9` is the whole of what a Wizards Black Star Promo prints. Every pattern in
- * lib/card-code-ocr.ts wants either a fraction or a prefixed code, so this one
- * produced nothing and a photographed Mew fell through to matching by name.
- *
- * THE SAME `#` MEANS TWO DIFFERENT THINGS ON ONE CARD, which is why this cannot
- * be a wider regex. Measured on a real PSA slab, Vision returns
- *
- *   2000 POKEMON PROMO MEW HOLO BLACK STAR ... Mew #9 GEM MT 10 ...
- *   ... LV. 23 #151 Illus. Ken Sugimori ... 01999-2000 Wizards
- *
- * `#9` is the card number, off the grading label. `#151` is Mew's Pokedex
- * number, printed on the card itself. A Birthday Pikachu prints `#25` the same
- * way. The tell is the layout: a Wizards card writes `LV. <n> #<pokedex>`
- * together, so a `#` that follows a level is never a card number.
- *
- * THE SET COMES FROM THE LABEL, and without it a bare number names nothing —
- * `lookupCards("9")` returns no card at all, while `lookupCards("basep-9")`
- * returns exactly one. Ten sets are called "Black Star Promos"; the other nine
- * print a prefixed code (SWSH262, XY182, DP56) that PKM_PROMO already reads.
- * Only the Wizards one prints a bare number, and only it says "Wizards" — a
- * word on every card of that era, which is why BOTH tokens are required. "Black
- * Star" alone is a family of ten; "Wizards" alone is every Base Set card ever
- * printed.
- *
- * IT NEEDS A SLAB, and that is a limit rather than an oversight: the star on a
- * raw promo is a symbol, not text, so "Black Star" appears only on a grader's
- * label. A raw Birthday Pikachu prints its `24` in the corner with no marker at
- * all, indistinguishable from the 50, the 30 and the 17 around it.
- */
-function wizardsPromoNumbers(text: string): string[] {
-  if (!/\bblack\s*star\b/i.test(text) || !/\bwizards\b/i.test(text)) return [];
-  // Drop `LV. 23 #151` before looking, so the Pokedex number is never read.
-  const withoutPokedex = text.replace(/\bLV\.?\s*\d{1,3}\s*#\s*\d{1,3}/gi, " ");
-  return [...new Set([...withoutPokedex.matchAll(/#\s*(\d{1,3})\b/g)].map((m) => String(Number(m[1]))))];
-}
 
 export async function POST(request: Request) {
   if (!visionConfigured()) {
@@ -668,9 +469,6 @@ export async function POST(request: Request) {
 
   try {
     const text = await readTextFromImage(image);
-    // The SAME extractor the client uses. An engine swap must not change what
-    // counts as a card code, and this one is measured against real OCR noise.
-    const candidates = extractCardCodes(text);
 
     // Resolve to real cards here rather than in a second round trip: the photo
     // is already uploaded, and asking the client to send it twice to rank the
@@ -707,7 +505,6 @@ export async function POST(request: Request) {
      * set. An extra candidate it can order is a better outcome than a right
      * answer that was never a candidate.
      */
-    const language = JAPANESE_SCRIPT.test(text) ? "ja" : undefined;
 
     /**
      * THE CATALOGUE THE READER PICKED ON SCREEN, which this route was ignoring.
@@ -728,89 +525,19 @@ export async function POST(request: Request) {
     const asked = new URL(request.url).searchParams.get("game");
     const game = asked === "pokemon" || asked === "onepiece" ? asked : undefined;
 
-    // Added to the candidate list rather than resolved apart from it, so the
-    // page explains this reading the same way it explains every other one.
-    for (const number of wizardsPromoNumbers(text)) {
-      candidates.push({ value: `basep-${number}`, kind: "pokemon-number", raw: `#${number}` });
-    }
-
-    const cards: CardView[] = [];
-    const seen = new Set<string>();
-    for (const candidate of candidates) {
-      for (const match of lookupCards(candidate.value, game, language).matches.slice(0, 6)) {
-        const id = `${match.tcg}:${match.code}`;
-        if (seen.has(id)) continue;
-        seen.add(id);
-        const view = await getCardView(match.tcg, match.code);
-        if (view) cards.push(view);
-      }
-    }
-
-    // NO CODE RESOLVED. A blurred or cropped number leaves nothing to look up,
-    // but the name is usually the largest text on the card and survives. This
-    // runs only in that case: when a number DID resolve, the name is used to
-    // order those candidates rather than to invent more.
-    //
-    // AND THE CALLER IS TOLD IT HAPPENED. These cards were chosen because they
-    // share a NAME, which for a Pikachu means an arbitrary six of the 166 that
-    // exist — the photographed one is very likely not among them. Rendered
-    // under the same heading as a resolved number, that reads as six confident
-    // answers; observed exactly that way on a Galarian Gallery Pikachu, whose
-    // number the extractor could not parse at the time.
-    //
-    // The cards are still returned, because a name is real evidence and one of
-    // them may be right. What changes is that the page can now say which kind
-    // of answer it is holding.
-    let byNameOnly = false;
-    if (cards.length === 0) {
-      for (const hit of namesInText(text)) {
-        for (const match of lookupCards(hit.name, game, language).matches.slice(0, 6)) {
-          const id = `${match.tcg}:${match.code}`;
-          if (seen.has(id)) continue;
-          seen.add(id);
-          const view = await getCardView(match.tcg, match.code);
-          if (view) cards.push(view);
-        }
-      }
-      byNameOnly = cards.length > 0;
-    }
-
-    /**
-     * ORDER, THEN LOOK, THEN LET THE NAME HAVE THE LAST WORD.
-     *
-     * `orderCandidates` ran first and `rankPokemonCards` re-sorted every Pokemon
-     * candidate by picture straight afterwards, so a name match survived only
-     * when the artwork ranker happened to bail — which it does on a missing
-     * signature. That is why a CGC Lugia was ordered by its label and a
-     * Champion's Path Charizard VMAX was not: all three of its candidates had
-     * signatures, all three scored above 0.77 — the picture was not choosing,
-     * it was guessing — and Tropius led on a photograph of an orange dragon.
-     *
-     * SWAPPING THE TWO WAS THE WRONG FIX, and the sweep across all 35 Pokemon
-     * photographs in img test/ caught it: `orderCandidates` also sorts by SCRIPT
-     * — a card written in the language Vision read outranks one that is not —
-     * and running that after the picture let a band with no name evidence in it
-     * overrule a verdict the picture had earned. An N's Reshiram, `SV9 109/100`,
-     * went from ja~SV9-109 to a Wooper, purely because the Wooper is English and
-     * the OCR had read no kana off a Japanese card.
-     *
-     * So both passes run, each where it belongs. The script band goes first,
-     * where it breaks ties the picture cannot see and costs nothing when the
-     * picture can. The NAME goes last and alone: it lifts what it recognises and
-     * touches nothing else, so the picture's order survives underneath it.
-     * Stable sorts throughout, so every band keeps the order it arrived with.
-     *
-     * The picture is a guess and the name is evidence. Evidence goes last
-     * because the last word is the one that counts — but only the half of that
-     * function which IS evidence.
-     */
-    orderCandidates(cards, text);
-    await rankPokemonCards(cards, image);
-    liftNamedCandidates(cards, text);
+    // The whole of it — candidates, lookup, name fallback, the three ordering
+    // passes — lives in lib/scan-order.ts so scripts/check-scan-order.mts runs
+    // exactly this against frozen fixtures rather than an approximation of it.
+    const photo = await artSignature(image);
+    const { candidates: allCandidates, cards, byNameOnly } = await resolveCards({
+      text,
+      photo,
+      game,
+    });
     await rankPrintings(cards, image, text);
     orderPokemonPrintings(cards, text);
 
-    return Response.json({ text, candidates, cards, byNameOnly });
+    return Response.json({ text, candidates: allCandidates, cards, byNameOnly });
   } catch (error) {
     if (error instanceof VisionNotConfiguredError) {
       return Response.json({ error: "Vision is not configured." }, { status: 501 });
