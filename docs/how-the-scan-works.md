@@ -1,93 +1,80 @@
-# How the scan works — and how to scale with it
+# How a photo scan works — and how to scale with it
 
 The companion to `docs/pokemon-catalogue-pipeline.md`. That one explains where the
 references come from; this one explains what happens to a photograph, why each
 threshold is the number it is, and what breaks first when this grows.
 
+**This document is about the PHOTO scan only.** The live camera view was parked
+in September 2026; everything specific to it — the per-frame loop, the card
+detector, the three viewfinder states — now lives in `docs/live-scan-parked.md`,
+unchanged, because it is a record of measurements that were real.
+
+Three pieces of it stayed here, and the reason is worth stating: they were filed
+under the camera and the photograph depends on them. §6's thresholds are imported
+by `scan-client.tsx`. §7's resampling test is what says a browser's `drawImage`
+may query an index built with sharp. §10's "twenty real cards, one match" was
+measured on photographs taken with a phone.
+
 Every figure is measured, and the script that measured it is named. Measured
-2026-09-09; §2b added 2026-09-13; §1 and §2 corrected 2026-09-13,
-where they described the reader as a fallback and had done since the order was
-reversed.
+2026-09-09; the evidence rules added 2026-09-13; restructured around the photo
+scan 2026-09-13, when §1, §2 and §9 were each found to describe the opposite of
+what the code does.
 
 ---
 
 ## 1. The whole thing, in one paragraph
 
-**There are two scans and they work in opposite directions.** Conflating them is
-the mistake this document itself made for weeks — see §2a, which is the rule, and
-§2, which contradicted it three lines above.
+You photograph a card. **The image is uploaded and read by Google Cloud Vision
+first, every time**, because the number printed in the corner is evidence and the
+artwork is only a guess. The catalogue turns that number into candidates — rarely
+one, as §5 shows — and a model already in your browser scores each candidate
+against the photograph to put them in order. The card at the top is the answer.
+The artwork answers *alone* only when Vision comes back with nothing.
 
-**The live camera.** You point it at a card. The browser crops a card-shaped
-region, turns it into 512 numbers with a model it downloaded once, and compares
-those numbers against 51,000 reference cards it also downloaded once. The nearest
-match is the card. Nothing is uploaded, nothing is metered, and there is no server
-in the loop — the only network call fetches the card's own details once it has
-been named.
-
-**A photograph.** The image is uploaded and read by Google Vision FIRST, every
-time, because the number printed in the corner is evidence and the artwork is a
-guess. That path is **metered at 33/day** and is the only metered thing anywhere
-near the scan. The pipeline below then runs on the candidates that number
-produced — a comparison between four cards rather than a search through 51,000 —
-because a printed number is not an identity: measured, **58.9% of English cards
-and 66.7% of Japanese ones share their `number/total` with another card**, and
-`93/108` names four real cards in four different sets. The artwork is consulted
-as an ANSWER only when Vision comes back with nothing.
+The Vision call is **metered at 33/day** and is the only metered thing anywhere
+near the scan. Everything after it is free and local.
 
 ---
 
 ## 2. The pipeline
 
-This is the live camera's pipeline in full. A photograph reaches it only after
-Vision, and enters at a different width — see the two annotations.
-
 ```
-camera frame  ────→  crop to a card-shaped region      (browser, ~0 ms)
-photo upload  ──→ Google Vision → candidates → (no crop: the whole image)
-                    ↓
-                    resize 256x256, rescale 0..1      (canvas)
-                    ↓
-                    MobileCLIP-S2 fp16  →  512 floats (WASM, ~450 ms)
-                    ↓
-                    cosine against 20k int8 vectors   (plain JS, ~8 ms)
-                      a photo compares only Vision's 2-14 candidates,
-                      which is why it cannot miss one a search would rank #184
-                    ↓
-                    score floor + margin  →  a verdict
-                    ↓
-              ┌─────┴─────┬──────────────┐
-           empty        unsure       identified
-      "point at a    "fill the     resolve the card
-        card"          frame"      (/api/scan/resolve)
+photo upload
+    ↓
+POST /api/scan/ocr          the image leaves the device here   (~2.1 s)
+    ↓
+Google Cloud Vision  →  raw text
+    ↓
+lib/card-code-ocr.ts  →  the printed number, repaired          (§4, rules 7-13)
+    ↓
+lib/card-lookup.ts    →  every card that number could name
+    ↓
+        ┌───────────────┴───────────────┐
+   2 or more candidates            0 candidates
+        ↓                               ↓
+   MobileCLIP-S2 fp16, in the      the artwork answers alone:
+   browser, scored against ONLY    a search through 54,637
+   those candidates                vectors, floor + margin
+        ↓                               ↓
+   an ORDER — it cannot miss       a verdict — it can decline
+        ↓                               ↓
+        └───────────────┬───────────────┘
+                        ↓
+                  the card, and every printing of it
 ```
 
-**This said the opposite, and said it for months.** It read "the fallback, when
-the artwork cannot place a picture: Google Vision reads the printed code" — the
-arrangement before the reader was made to lead, sitting three lines above §2a,
-which states the reverse as the most important rule in the scan. A reader who
-got as far as the diagram had already been told the wrong thing twice.
-
-The verdict states above — `empty`, `unsure`, `identified` — belong to the live
-camera. On a photograph whose number Vision read, there is no floor and no margin
-to clear: the candidates are simply put in order, and the ordering cannot fail
-because every candidate is scored.
+The two branches are not the same operation, and conflating them is how a scan
+goes confidently wrong. The left is a **comparison** between four things, and it
+cannot fail to contain the right answer because the number already proposed it.
+The right is a **search** through everything, and it can — measured, a correct
+card has sat at rank #184.
 
 ---
 
-## 2a. The rule: a photo reads the code, the camera reads the artwork
+## 3. The rule: printed text is evidence, the artwork is a guess
 
 **This is the most important rule in the scan, and it was broken for weeks
 without anyone noticing.**
-
-| | a photograph | the live camera, today |
-|---|---|---|
-| leads with | the **printed code**, via Vision | the **artwork**, on device |
-| falls back to | the artwork match | nothing — it says so instead |
-| why | one image, chosen, one metered call it can afford | no reader is wired in yet |
-
-The photo half is a decided rule. The camera half is a **description of the
-current code**, not a decision — see the open question at the end of this
-section.
 
 ### How it broke
 
@@ -133,24 +120,11 @@ through the plastic.
 
 Both run in parallel on a photo, so the rule costs no time.
 
-### The open question: should the live view read the code too?
-
-The reasoning that kept it out was "a metered per-image call cannot run thirty
-times a second", and that is true and beside the point. **The live view does not
-need a reader per FRAME.** It already decides when its evidence has settled —
-that is what the vote is for — and at that single moment it could send one image
-to be read, exactly as the photo path does.
-
-One call per card scanned, not per frame. On the Eustass Kid that would have
-turned Kalgara into `OP05-074`.
-
-It is not built, and the argument against it was weaker than it looked.
-
 ---
 
-## 2b. What counts as evidence — the rules learned by breaking them
+## 4. What counts as evidence — the rules learned by breaking them
 
-§2a says the printed code leads. This section is the rest of that argument: once
+§3 says the printed code leads. This section is the rest of that argument: once
 a code has named several cards, or one card several printings, **something has to
 choose between them**, and every rule below was written after a wrong choice
 reached a screen.
@@ -276,7 +250,7 @@ Three sentences the whole scan obeys. Every rule above is one of them applied
 somewhere specific, so a new rule that contradicts one of these is almost
 certainly wrong.
 
-1. **The artwork is a guess; printed text is evidence.** §2a says this about the
+1. **The artwork is a guess; printed text is evidence.** §3 says this about the
    code. It holds one level down too — between printings, between candidates,
    between languages.
 2. **Evidence that does not discriminate is not evidence.** A rarity seven of
@@ -294,60 +268,70 @@ indistinguishable from the 50, the 30 and the 17 around it. Reaching it means
 emitting every bare number scoped to a set — around eight candidates for one
 right answer.
 
-**3,465 cards with no reference at all.** Whole Japanese sets from 1996–2004:
-`VS1` 143 cards, `E1` 128, `E3` 90 (the Wind from the Sea Lugia), `PCG2` 82 (the
-Clash of the Blue Sky Rayquaza). TCGdex publishes those sets and no images for
-them; Limitless Japanese starts at September 2010; the official Japanese site
-covers modern formats only and forbids reproduction. TCG Collector has all of it,
-under terms granting personal non-commercial use — and it cannot grant what
-Nintendo, Creatures and GAME FREAK own.
+**386 cards with no reference at all** — down from 3,465, and the remainder is
+now understood rather than merely counted. 201 are in `VS1` and `neo2`, printed
+2000–2001, before the publisher's own card search reaches. 79 are secret rares
+numbered past the total printed on the card, which every free source stops at:
+Limitless lists exactly 173 cards for `SM12a`, and the blind ones are 211 to 226.
+98 are in the `#DPBP` sets, which carry no release date, which Limitless does not
+know at all, and which may well be phantoms like the fifteen `CS` sets deleted in
+567ce73 — unverified either way. 8 are basic energies.
 
-**The client's own CLIP re-rank.** It runs in the browser after everything above,
-for candidates the number left ambiguous, and it is the last word on screen.
-Nothing in this document describes it.
+The 3,079 that were fixed came from tcgcollector.com in September 2026, and that
+door is now closed: their origin began returning 502 during the run, and the
+scraper was deleted rather than slowed (42751f7). The honest route to the last
+386 is TCGdex itself, which is open source and takes contributions.
+
+**The client's own CLIP re-rank** is now described — §5 says why it exists, §6
+what it leans on. It remains the last word on screen, and the step most likely to
+be wrong without anyone noticing, because its output is an ORDER rather than a
+claim: nothing about it fails loudly.
 
 ---
 
-## 3. Why the model runs in the browser
+## 5. Why a number is not an identity
 
-The model is **68 MB** of ONNX weights. On Vercel that is re-downloaded on every
-cold start of a serverless function, which puts an unpredictable multi-second
-penalty in front of a feature whose entire proposition is speed.
+**A Pokémon card does not print its set.** It prints `093/108` — a number and a
+set SIZE, which is not the same fact. The symbol that names the set is a picture,
+and no reader names it.
 
-In a browser it is fetched once and cached. And it has to be there anyway: **a
-video feed cannot post thirty frames a second to a server.**
+So Vision reading the number perfectly still leaves the question open, and not
+rarely. Measured across the whole catalogue:
 
-What ships to the client:
-
-| | size | when |
+| | cards with a readable printed number | share their `number/total` with another card |
 |---|---|---|
-| MobileCLIP-S2 (fp16) | 68 MB | once per browser, cached |
-| one index | 2.5 – 10 MB | once per catalogue, `immutable` |
+| English | 19,372 | **11,408 — 58.9%** |
+| Japanese | 23,419 | **15,610 — 66.7%** |
 
-Nothing is loaded until something asks for a match, so a visitor who only reads
-the page downloads none of it.
+Worst case in each: `1/30` names 14 different English cards, `1/21` names 14
+Japanese ones. `93/108` is Dark Patch, Ultra Ball, Claydol ex and a Water Energy,
+in four different sets, all genuinely numbered 93.
 
-### The one thing that could have made this wrong
+**This is the entire reason the model still runs on a successful scan.** The
+reader is unambiguous about the number and blind to the set; the comparison
+cannot read a number and is very good at telling four pictures apart. Neither
+answers alone, and together they do.
 
-The index was built with sharp resizing at 256px with a **cubic** kernel. A
-browser has no sharp — it has `canvas.drawImage`, whose scaling is
-implementation-defined. So a client-side query is not computed the way the
-references were, and nothing about the embedding space promises that is harmless.
+**And it is restricted to the candidates on purpose.** A top-N search over 54,637
+vectors need not contain a card the number proposed — measured, a correct card
+has sat at rank #184 — so a lookup would often find nothing to sort by. Scored
+against the candidates it is a comparison rather than a search, and a comparison
+cannot miss.
 
-Measured before building anything on it (`scripts/clip-resample-lab.mts`):
-
-```
-kernel      cubic     mitchell   lanczos3   nearest
-result       3/5        3/5        3/5       3/5     — identical
-margins    within 0.003 of each other
-```
-
-Even `nearest`, which no browser does and which is there to bracket the answer,
-keeps every hit. The gap is real and does not matter.
+The scans where the model contributes nothing are worth naming too: roughly four
+in ten, where the number resolves to exactly one card, and every One Piece scan
+with a clean code, because Bandai prints the set on the card and Pokémon does
+not. That is also why One Piece was solved first.
 
 ---
 
-## 4. The two thresholds, and why one is not enough
+## 6. The two thresholds, and why a photograph needs them too
+
+These were measured for the live camera and they are load-bearing here:
+`scan-client.tsx` imports `clipVerdict`, `clipTied` and `CLIP_MAX_TIED`, and the
+failure that rewrote the entire photo path was a margin of **0.016 against a
+threshold of 0.015**. Deleting this section would delete the only written
+justification for constants a photograph still depends on.
 
 A cosine search **always** returns a nearest neighbour. Point a phone at a grey
 wall and the index names its closest card and hands back a number; nothing in the
@@ -381,141 +365,63 @@ So there are two:
 from `lib/clip-search.ts` so it can be fitted properly once there are enough
 labelled photographs, and so a caller can see what it is trusting.
 
-The two produce three honest states, and the live view says all three:
+**A photograph uses them differently, and that difference is the whole of §5.**
+Once Vision has produced candidates the match is restricted to them: every
+candidate is scored, nothing has to clear a floor, and the output is an order
+rather than a verdict. The thresholds then decide one thing only — whether the
+artwork may answer ALONE, which happens when the number came back with nothing.
 
-```
-score < 0.50                    "Point the camera at a card"
-score high, margin < 0.015      "Hold steady — fill the frame"
-both above                      the card
-```
-
----
-
-## 5. Finding the card
-
-The live view locates the card itself: gradient, threshold, convex hull,
-simplify to four points, then a homography that straightens it. No model, no
-download, no licence — `lib/card-detect.ts`.
-
-### It was graded properly, and that changed it
-
-The first two versions were built and graded on **four** photographs with
-corners read off by eye, and both measured worse than doing nothing. That is a
-useful result at n=4 and not a trustworthy one.
-
-"Pokemon Card Detection 3" (Roboflow Universe, **CC BY 4.0**) is 1,509 images
-with a `Card` polygon on each — the same ground truth, three hundred times over.
-`scripts/detect-grade.mts` scores the found quadrilateral against the annotated
-one by IoU, over every image including the ones it declines.
-
-**The single most useful thing it produced was proving a hypothesis backwards.**
-A card's border is under 1% of a frame's pixels, so the obvious move was to keep
-fewer and stronger edges. Every step that way made it worse:
-
-| edge pixels kept | found a quad | IoU ≥ 0.8 | IoU ≥ 0.5 | median |
-|---|---|---|---|---|
-| 1% | 3% | 0% | 0% | 0.374 |
-| 10% *(the original guess)* | 69% | 27% | 47% | 0.689 |
-| **24%** | **91%** | **45%** | **81%** | **0.804** |
-| 50% | 95% | 20% | 69% | 0.594 |
-
-More edge pixels give a more complete hull, and a complete hull is what the
-corner search needs. Confirmed on the held-out `test` split at the tuned value:
-**90% found, 71% IoU ≥ 0.5, median 0.784** — close enough to the tuning split to
-say it generalises rather than memorises.
-
-### What the export can and cannot say
-
-Every image is stretched to 432×432 and converted to greyscale. So it grades
-**corner-finding** and can say nothing about **identification** — a colour
-matcher cannot be tested on grey pictures. The stretch also means a card in it
-has an aspect near 1.0, so the shape test has to be switched off to measure at
-all, which the grader does explicitly rather than by quietly widening a default.
-
-### Someone else walked this exact path and ended up somewhere else
-
-From ankush.one's write-up of building a Pokémon scanner:
-
-> the opencv rectangle contour thingie to crop out cards works okay for still
-> images, [but] it failed drastically for video streams … so I ended up training
-> a YOLO11n model on a pokemon cards dataset, and it worked pretty well and
-> really fast, while also being around 5mb
-
-That is the same split this measured from the other side: **90% on still
-images**, and a live view that could not hold an answer. Stills and video are
-not the same problem, and grading on a dataset of stills cannot tell you which
-one you have.
-
-So a small trained detector is very likely the answer. One caveat that decides
-*which* one: **YOLO11 is Ultralytics, and Ultralytics is AGPL-3.0** — viral
-across a network service, which this is. RF-DETR, RT-DETR, D-FINE and YOLOX are
-Apache-2.0 and do the same job. The dataset is CC BY 4.0 either way, so the
-licence question is entirely about the model, not the data.
-
-### The guide is still there, as the fallback
-
-The detector declines on about one frame in ten, and the centre crop is a better
-guess than nothing on those. It fades when the detector is answering, so nobody
-lines up a rectangle that nothing is reading.
-
-## 6. What the live view does per frame
-
-- **One frame at a time.** The loop reads a frame only when the previous match has
-  finished, so it self-paces. Firing on a timer would queue work faster than it
-  completes and fall further behind the camera every second.
-- **Evidence accumulates; no single frame has to be confident.** Three versions
-  before this one asked whether THIS frame, alone, cleared both thresholds —
-  first two consecutive frames had to, then two of the last six. Both were a
-  conjunction of two rare events on a moving camera: sharp enough to clear the
-  score floor AND separated enough to clear the margin. Reported as impossible
-  to use, and it was. Every frame now adds each candidate's similarity to a
-  running total, and the card actually present pulls ahead over a second or two
-  without any frame ever settling it. Noise does not accumulate: a blurred
-  frame's spurious best is a different card each time, and scattered votes
-  cancel where a consistent one compounds.
-- **The match runs on another thread.** The first version ran it where React
-  runs, and the camera preview stuttered — reported from a real phone as
-  "everything seems laggy". A 60 ms yield between frames was tried and did not
-  help, because the block is the 450 ms match itself, not the gap between
-  matches. The main thread now decodes one bitmap per frame and waits.
-- **Found means stop.** Leaving the camera running behind a result keeps the phone
-  warm and invites the next frame to overwrite an answer someone is still reading.
-- **Hold: keep scanning, never conclude.** The vote settles in about a second and
-  a half, which is the point of it and also why a scan that lands on the wrong
-  card is impossible to study — the answer sheet covers the viewfinder before
-  anyone can see what the frames were saying. Reported exactly that way. `Hold`
-  stops the loop accepting and nothing else: frames are read, the vote
-  accumulates and decays identically, and the standings go on screen instead of
-  an answer. A debug view that scanned differently would be measuring itself.
-  `Take the leader` accepts by hand, through the same resolve path the loop uses;
-  `Clear` forgets the vote without reopening the camera, for comparing two cards
-  back to back.
-
-**Reading the hold panel.** It answers the one question this project keeps
-needing to ask, and the same one a person with a card that will not scan is
-asking:
-
-| what it shows | what it means |
-|---|---|
-| the right card is **nowhere** in the five | the crop is wrong, or the card is not in the index — check the thumbnail top-left, which is the exact square being matched |
-| the right card is there but **second or third** | the artwork is being separated and losing; the `−0.00x` column is by how much |
-| every row is a different card each frame | nothing card-like is in the square at all |
-
-Scores are shown as the running **average** per frame, not the sum: the sum
-grows with the number of frames and shrinks with the decay, so its absolute value
-says more about how long the camera has been open than about the card. Averaged,
-it is directly comparable to the per-frame score in the corner panel.
-
-Measured in a browser, driving the loop with a synthetic camera:
-
-```
-2.1 frames a second
-identified swsh12-150 in 574 ms
-```
+Which is why a margin of 0.016 was so expensive. It let the artwork call itself
+certain on a photograph whose printed code had never been read.
 
 ---
 
-## 7. The identity problem, per game
+## 7. Why the model runs in the browser
+
+The model is **68 MB** of ONNX weights. On Vercel that is re-downloaded on every
+cold start of a serverless function, which puts an unpredictable multi-second
+penalty in front of a feature whose entire proposition is speed.
+
+In a browser it is fetched once and cached, and the comparison in §5 then costs
+one inference on a device that already holds the index.
+
+**It is downloaded even on the scans that never use it**, deliberately. The photo
+path starts the match and the reader together and awaits only the reader, so a
+scan whose number names a single card never waits on the model. It is not
+cancelled either: the bytes land in the browser cache and make the next scan warm
+for free. The same bytes move; only the wait is gone.
+
+What ships to the client:
+
+| | size | when |
+|---|---|---|
+| MobileCLIP-S2 (fp16) | 68 MB | once per browser, cached |
+| one index | 2.5 – 10 MB | once per catalogue, `immutable` |
+
+Nothing is loaded until something asks for a match, so a visitor who only reads
+the page downloads none of it.
+
+### The one thing that could have made this wrong
+
+The index was built with sharp resizing at 256px with a **cubic** kernel. A
+browser has no sharp — it has `canvas.drawImage`, whose scaling is
+implementation-defined. So a client-side query is not computed the way the
+references were, and nothing about the embedding space promises that is harmless.
+
+Measured before building anything on it (`scripts/clip-resample-lab.mts`):
+
+```
+kernel      cubic     mitchell   lanczos3   nearest
+result       3/5        3/5        3/5       3/5     — identical
+margins    within 0.003 of each other
+```
+
+Even `nearest`, which no browser does and which is there to bracket the answer,
+keeps every hit. The gap is real and does not matter.
+
+---
+
+## 8. The identity problem, per game
 
 This is the part that surprises people, and it is opposite in the two games.
 
@@ -570,17 +476,27 @@ for when the reader comes back empty.
 
 ---
 
-## 8. Nothing is asked any more
+## 9. The catalogue filter, and what searching everything costs
 
-Two questions used to stand in front of the camera — **which game** and **which
-language** — and the reasoning was sound. Nothing in a picture answers either;
-when One Piece had no index a photographed Luffy came back a Koffing; an English
-card and its Japanese release share artwork exactly.
+**This was titled "Nothing is asked any more", and the page has asked all
+along.** Two controls sit above the capture panel — which game, which language —
+under the words "the matcher searches every catalogue on its own; narrow it only
+if you already know". What was removed was the REQUIREMENT, not the question:
+nobody is held at a gate, and a scan with nothing chosen searches everything.
 
-They are gone, because the person cannot answer them any faster than the machine
-can, and two taps in front of "point the camera at a card" is the feature arguing
-with its own proposition. All four catalogues are searched at once — 52,328
-vectors instead of 20,276, about 12 ms instead of 8, and 26 MB of index instead
+That stopped being a cosmetic distinction when the filter was finally wired
+through to the server. Both lookups had been passing `undefined` for the game, so
+the panel's promise that the control narrows the search was true of the
+on-device matcher and false of the reader — and the reader's NAME fallback
+searches by name, which carries no game in it. A photographed Pikachu filtered to
+Pokémon came back with One Piece's `OP-09 Thunder Lance` among the Pikachus,
+because Vision had read the word "Lance".
+
+Searching everything remains the default, because the person cannot answer faster
+than the machine can.
+
+ All four catalogues are searched at once — 52,328
+vectors instead of 20,276, about 12 ms instead of 8, and 28 MB of index instead
 of 10 next to a model that is 68 MB on its own.
 
 **What the change costs, measured rather than assumed.** Two tests, and they
@@ -637,7 +553,7 @@ two catalogues in one search is two chances to be confidently wrong.
 
 ---
 
-## 9. What real use says, and it is not what the tests said
+## 10. What real use says, and it is not what the tests said
 
 Twenty real cards, laid flat in slabs, on a phone: **one match**. Against
 synthetic frames the same pipeline is near-perfect. That gap is the finding —
@@ -657,58 +573,43 @@ what a failure count cannot.
 
 ---
 
-## 10. Where this is now
+## 11. Where this is now
 
 | | |
 |---|---|
-| cards indexed | **51,528** across four indexes |
-| Pokémon EN / JA | 20,276 / 21,224 |
+| cards indexed | **54,637** across four indexes |
+| Pokémon EN / JA | 20,276 / **23,533** |
 | One Piece EN / JA | 5,809 / 5,019 |
-| index size on the wire | 2.5 – 10 MB each |
-| search across 20k vectors | ~8 ms, plain JS |
-| match end to end | **70 ms** (WebGPU) · 530 ms (WASM) |
-| live frame rate | **11.8 fps** (WebGPU) · 2.1 (WASM) |
-| main-thread delay while scanning | **0 ms median, 0.1 ms p95** |
-| metered calls on the fast path | **0** |
+| index size on the wire | 2.6 – 12 MB each |
+| a printed number that names one card | **41% EN, 33% JA** (§5) |
+| comparison against the candidates | ~8 ms, plain JS |
+| one inference | **70 ms** (WebGPU) · 530 ms (WASM) |
+| **metered calls per photo scan** | **1** — Vision, capped at 33/day |
 
-Verified in a browser: photo scan, tie chooser, live camera, and all three live
-states.
+**That last row said `0` until 2026-09-13**, left over from the arrangement where
+the reader was a fallback. A photo scan spends a metered unit every time. The
+budget survives it because the scan is account-gated and the real volume is
+roughly 150 scans in total — there is no quota to protect, which is also why the
+second OCR engine was removed rather than kept.
+
+Verified in a browser by driving the page's own file input: the reader path, the
+tie chooser, and the four states of the Vision chip.
 
 ---
 
-## 11. How to scale with it — in the order that will actually bite
+## 12. How to scale with it — in the order that will actually bite
 
-**1. ~~The main thread~~ — done.** Inference used to block it; it now runs in a
-Web Worker (`lib/clip.worker.ts`). Measured on the page with a MessageChannel
-probe, 388,087 samples over five seconds while the loop ran: **median main-thread
-delay 0 ms, p95 0.1 ms**. One 634 ms outlier, which is the worker's first model
-load rather than a per-frame cost.
+**1. The margin threshold, before anything else.** n = 5. Every confidence
+decision the product makes rests on it, and the one failure that rewrote the
+photo path was a wrong card clearing it by a thousandth — 0.016 against 0.015.
+Twenty labelled photographs would turn a hypothesis into a number, and that is an
+afternoon with a phone.
 
-A note on how that was nearly measured wrong: the same probe using `setTimeout`
-reported a 683 ms median, which looked exactly like the bug still being there. It
-was Chrome throttling timers in a hidden tab to roughly one a second. A
-measurement taken through a throttled clock says nothing about the thing being
-measured.
-
-**2. ~~Speed~~ — done, and it was worth more than expected.** The same ~500 ms on
-desktop and phone was the signature of a WASM runtime rather than a CPU, and
-WebGPU is a different execution path rather than a faster one of the same kind:
-
-```
-              per match     frames / second
-  WASM          530 ms          2.1
-  WebGPU         70 ms         11.8
-```
-
-**And speed is accuracy here, not just smoothness.** The live view accumulates
-evidence across frames, so frames per second and confidence are the same
-quantity — three frames of evidence took a second and a half and now take a
-quarter of one.
-
-Verified alongside: the GPU's vectors still match an index built on a CPU (the
-card identifies), and an empty scene still names nothing (the thresholds behave
-the same). WASM remains the fallback — WebGPU is absent on most iOS and can fail
-at adapter request even where the API exists.
+**2. The 386 cards with no picture**, and specifically the 98 `#DPBP` ones, which
+have never been checked and may not be cards at all. That check costs nothing and
+no third party a single request — it is a question for TCGdex's own API. If they
+are phantoms like the fifteen `CS` sets, a quarter of the problem disappears
+without anyone fetching anything.
 
 **3. Index size, at about 4× from here.** 20k × 512 int8 is 10 MB and searches in
 8 ms. Both scale linearly, so 200k cards is 100 MB and 80 ms — the download breaks
@@ -717,17 +618,31 @@ network hop of 20–50 ms against a search of 8), it is **shipping fewer dimensi
 or fewer cards**: PCA to 128 dimensions is a 4× cut, and most scans only ever need
 the sets people actually own.
 
-**4. The detector, which is a data problem before it is a model problem.** The
-ceiling measurement says corners are worth 3/4 → 4/4. The available Roboflow
-datasets are cards **lying flat**, often slabbed — not cards held in a hand, which
-is every real photograph. Training on them would produce a detector good at the
-wrong thing. Getting there needs our own annotated photographs first.
+**4. ~~Speed~~ — done, and it matters here too.** The same ~500 ms on desktop and
+phone was the signature of a WASM runtime rather than a CPU, and WebGPU is a
+different execution path rather than a faster one of the same kind:
 
-**5. The margin threshold, before any of the above.** n = 5. Every confidence
-decision the product makes rests on it. Twenty labelled photographs would turn a
-hypothesis into a number, and that is an afternoon with a phone.
+```
+              per match
+  WASM          530 ms
+  WebGPU         70 ms
+```
 
-**What does NOT need to change:** the search (8 ms is not a bottleneck at any size
-this product will reach), the storage (int8 vectors on disk, no database), or the
-free-tier discipline (nothing on the fast path is metered, and
-`scripts/check-free-tier.mts` fails the build if that stops being true).
+On a photograph that is one inference, not thirty a second, so it is felt as
+latency rather than as frame rate. WASM remains the fallback — WebGPU is absent
+on most iOS and can fail at adapter request even where the API exists.
+
+**5. The two photographs that still fail.** A Greninja ex and a slabbed Gengar ex,
+both in `img test/`, and in both the wrong card at rank one was already indexed
+before any of this year's work. They are the only labelled failures on file, which
+makes them worth more than their number suggests.
+
+**What does NOT need to change:** the comparison (8 ms against a handful of
+candidates is not a bottleneck at any size this product will reach), the storage
+(int8 vectors on disk, no database), or the free-tier discipline everywhere except
+the reader — `scripts/check-free-tier.mts` fails the build if anything else starts
+spending quota.
+
+**Parked, not abandoned:** the live camera view, and with it the per-frame vote,
+the card detector and the main-thread work. See `docs/live-scan-parked.md`, which
+holds the measurements those needed.

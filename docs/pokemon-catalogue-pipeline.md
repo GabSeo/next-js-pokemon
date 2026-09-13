@@ -70,14 +70,15 @@ limitlessImageUrl(set, localId)→ Limitless CDN
 undefined                      → "No picture published"
 ```
 
-**`undefined` is a real answer, not a failure to handle.** 3,465 cards are pictured
-nowhere public. Rendering a blank is honest; rendering a different card's artwork
+**`undefined` is a real answer, not a failure to handle.** 386 cards are pictured
+nowhere public — 3,465 until September 2026, when the rest were fetched into
+`public/card-images/pokemon-ja` and became a fourth source. Rendering a blank is honest; rendering a different card's artwork
 is a confident lie, and confident lies are the failure mode this whole codebase is
 built to avoid.
 
 The cascade used to be copy-pasted in three files (the card page, the search grid,
 the scan lookup). That duplication is how the `&w=320` bug shipped twice. It is now
-one function, and a fourth source is a change to one file.
+one function, and a fourth source was exactly that: one change, to one file.
 
 ---
 
@@ -279,7 +280,7 @@ on the common path.
 > settle what it is worst at while the evidence went unread. So the photograph
 > DOES leave the device on the common path, and the metered call IS on the
 > critical path. The paragraph stands as the record of what was true that day;
-> `docs/how-the-scan-works.md` §2a is what is true now.
+> `docs/how-the-scan-works.md` §3 is what is true now.
 
 **Browser inference is no longer an estimate.** ~500 ms per frame once the model is
 warm, on a desktop CPU. That is ~2 fps: enough for a photo scan, not yet enough for

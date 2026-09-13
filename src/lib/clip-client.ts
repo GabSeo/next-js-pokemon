@@ -8,7 +8,7 @@ import { CLIP_DIM, clipIndexFrom, clipSearch, type ClipHit, type ClipIndex, type
  * the printed number out of the text, and ask the catalogue which cards carry
  * that number — a metered call on the critical path, and a number that names
  * more than one card 53% of the time. This looks at the artwork instead, on the
- * device, against 51,528 reference vectors, and spends nothing.
+ * device, against 54,637 reference vectors, and spends nothing.
  *
  * IT RUNS IN A WORKER, AND THAT IS NOT AN OPTIMISATION. Inference takes ~450 ms
  * and used to run where React runs, so the camera preview stuttered and the page

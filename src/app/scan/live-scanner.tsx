@@ -489,7 +489,7 @@ export function LiveScanner({
                * scores 0.82, so no threshold separates them, and on the One Piece
                * index — 83% of it built from pictures Bandai stamps "SAMPLE"
                * across — the guess is usually wrong. The number in the corner
-               * names one card. See docs/how-the-scan-works.md §2a.
+               * names one card. See docs/how-the-scan-works.md §3.
                *
                * NOBODY WAITS FOR IT. The artwork answer is on screen before the
                * request leaves, and the reader either confirms it or replaces

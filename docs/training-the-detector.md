@@ -12,7 +12,7 @@ A neural network of a few megabytes that takes an image and returns coordinates:
 the card, only finds it.
 
 It matters because **the crop decides everything downstream**. The matcher
-compares a 256×256 square against 51,528 reference scans, and those references
+compares a 256×256 square against 54,637 reference scans, and those references
 are clean, tightly-cropped card faces. If the square it receives contains a
 table, a slab label, or a card that is off-centre and rotated, it is comparing
 the wrong picture and the answer is wrong — which is exactly the symptom now:
