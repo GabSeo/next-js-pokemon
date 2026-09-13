@@ -187,6 +187,39 @@ function byPrintedNumber(
     if (hit) out.push(pokemonMatch(hit, `#${prefix}${localId}/${prefix}${total}`));
   }
 
+  /**
+   * EXCEPT WHEN THE SUBSET IS NOT ITS OWN SET, which the comment above assumed
+   * and which is true of some subsets and not others.
+   *
+   * `GG30/GG70` works because Crown Zenith's Galarian Gallery is filed as
+   * `swsh12.5gg` with 70 cards of its own. `H9/H32` does not: the e-Card holo
+   * subset lives inside Skyridge, which declares 144, so nothing in the loop
+   * above ever has a total of 32 and a photographed Gengar came back as twelve
+   * Gengars and Haunters matched by name.
+   *
+   * Measured across the catalogue, 159 cards are filed this way — 64 under `H`
+   * in ecard2 and ecard3, 57 under `RC`, and the rest under AR, RT, SH and SL —
+   * against the GG, TG, CC, DP, HGSS and XY subsets that are their own sets and
+   * resolve correctly today.
+   *
+   * THE PREFIX ALONE IS ENOUGH TO FIND THEM, because a prefixed localId is
+   * nearly unique on its own: `H09` names exactly two cards in the whole
+   * catalogue, one in each e-Card set. So when the printed total finds nothing,
+   * fall back to the id and let the picture and the name choose between the few
+   * that come back — which is the same shape as every other ambiguity here.
+   *
+   * A FALLBACK, not a replacement: it runs only when the total matched nothing,
+   * so every subset that works today takes exactly the path it took before.
+   */
+  if (out.length === 0 && wantedPrefix) {
+    for (const set of getCatalogSets({ language: language ?? "all" })) {
+      for (const entry of getCatalogSetCards(set.id, set.language)) {
+        if (indexOf(entry.card.localId) !== wanted) continue;
+        out.push(pokemonMatch(entry, `#${prefix}${localId} (the set's own total is ${set.cardCount?.official ?? "unknown"}, not ${total})`));
+      }
+    }
+  }
+
   return out;
 }
 
