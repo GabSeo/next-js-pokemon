@@ -1,6 +1,7 @@
 import type { CatalogCard, CatalogSet } from "@/lib/catalog";
 import { limitlessImageUrl, limitlessLargeUrl, limitlessSet } from "@/lib/limitless";
 import { japaneseImageUrl } from "@/lib/pokemon-ja-official";
+import { pokemonJapaneseStoredImage } from "@/lib/pokemon-ja-images";
 
 /**
  * Where a Pokemon card's picture comes from. The only place that decides.
@@ -20,6 +21,10 @@ import { japaneseImageUrl } from "@/lib/pokemon-ja-official";
  *   3  Limitless     +2,521 cards nothing else pictures at all — Crown Zenith's
  *                    Galarian Gallery, SM Black Star Promos, and the whole
  *                    2025-26 Japanese Mega block
+ *   4  this repo     the Japanese sets of 1996-2004, which none of the three
+ *                    above publishes at all. Files, not a service — so they go
+ *                    last: a source that owes us nothing still beats one we
+ *                    have to carry.
  *
  * UNDEFINED IS A REAL ANSWER, and the reason the fallbacks stop rather than
  * degrade: 2,464 cards are pictured nowhere public. Showing a blank beats
@@ -44,7 +49,7 @@ export function pokemonImageUrl(
   }
 
   const limitless = limitlessImageUrl(set, card.localId, japanese ? "ja" : "en");
-  if (!limitless) return undefined;
+  if (!limitless) return japanese ? pokemonJapaneseStoredImage(set.id, card.localId) : undefined;
 
   // THEIR TWO SIZES ARE 274x381 (59 KB) AND 600x838 (144 KB), and the switch
   // sits at 320 rather than at 274 on purpose. A grid tile asks for 320 and

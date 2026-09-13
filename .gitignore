@@ -54,3 +54,9 @@ src/app/favicon.ico
 
 # Scratch space for one-off API dumps during investigation.
 .cache/
+
+# The set pages scraped from TCG Collector, kept so a re-run costs them
+# nothing. 67 MB of HTML that only the import scripts read, and that they
+# re-fetch when it is absent — the cards and pictures extracted FROM it are
+# what belongs in the repository.
+data/catalog/tcgc-pages/
