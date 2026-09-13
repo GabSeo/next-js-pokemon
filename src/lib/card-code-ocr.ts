@@ -112,6 +112,62 @@ const PKM_NUMBER = /\b([0-9OoQDIlSsBZGT]{1,3})\s*\/\s*([0-9OoQDIlSsBZGT]{1,3})\b
 const PKM_GLUED = /([0-9OoQDIlSsBZGT]{4,})\s*\/\s*([0-9OoQDIlSsBZGT]{1,3})\b/g;
 
 /**
+ * A PROMO CODE, WHICH IS A WHOLE NUMBER WITH NO DENOMINATOR: `SWSH262`.
+ *
+ * Every pattern above wants a fraction, because that is what a Pokémon card
+ * prints — 42,791 of them do. A promo does not: a SWSH Black Star Promo prints
+ * `SWSH262` and nothing else, and the set total our catalogue knows (307) was
+ * never printed on the cardboard. So the reader returned no code at all and the
+ * scan fell through to matching by name, which for a Charizard means twelve
+ * Charizards.
+ *
+ * 1,536 cards carry a prefixed id of this shape. Their prefixes are a CLOSED
+ * SET OF SIXTEEN, measured from the catalogue rather than guessed — AR, BW, CC,
+ * DP, GG, H, HGSS, RC, RT, SH, SL, SM, SV, SWSH, TG, XY — and each lives in an
+ * identifiable set: SWSH in swshp, XY in xyp, TG in the Trainer Gallery
+ * subsets, and so on. Some of those DO print a denominator (`GG30/GG70`) and
+ * PKM_SUBSET above reads them first; this catches the ones that do not.
+ *
+ * THE LOOKUP IS THE VALIDATOR, which is what makes reading a bare token safe
+ * here. `lookupCards` resolves `SWSH262` to swshp-SWSH262 exactly, and every
+ * adversarial token a real card face prints resolves to nothing — measured:
+ * `HP90`, `HP310`, `LV23`, `SP2`, `V717`, `AU7`, `PV60`, `NM10` and `GEM10`
+ * each return no card. A false reading costs a line that ranks last, which is
+ * the failure this file already chooses everywhere else.
+ *
+ * A BARE `#9` IS NOT HANDLED and must not be. On a slab label it is the card
+ * number; on the card face it is the Pokédex number — a Wizards promo Mew
+ * prints `#151` and a Birthday Pikachu prints `#25`, neither of which is its
+ * card number. Separating those needs the set name off the grading label, not
+ * a wider regex.
+ *
+ * NEVER BESIDE A SLASH, and leaving that out was a real regression rather than
+ * a theoretical one. `GG30/GG70` is one number that PKM_SUBSET already reads
+ * correctly, and without the guards this pattern also read its two halves —
+ * emitting `GG70`, which resolves to swsh12.5gg-GG70, a real card that is not
+ * the one in the photograph. A token touching a slash is part of a fraction
+ * somebody else has already read.
+ *
+ * AND NO LEADING `\b`, for the reason PKM_GLUED exists. Vision's output for
+ * img test/pokemon english/not working/71JwDRIWAqL.jpg — a Pikachu VMAX —
+ * contains `FSWSH286`: the set symbol beside the code came back as a letter and
+ * glued itself to the front. A word boundary cannot see inside a run of
+ * letters, so the code was invisible for the same reason `560003/069` was.
+ *
+ * `H` IS DELIBERATELY ABSENT from the vocabulary even though 64 e-Card cards
+ * use it. A one-letter prefix with no boundary in front of it matches inside
+ * ordinary words — `MATCH12` would read as `H12`, which resolves to a real
+ * card — and one letter carries no distinctiveness to survive that. The other
+ * fifteen prefixes are two characters or more.
+ *
+ * TWO LETTERS IS NOT IMMUNITY, only a much smaller target: `PRISM158` still
+ * reads as `SM158`. That is the price of reading a glued code at all, it is
+ * paid in a candidate that ranks last, and it buys the 305 SWSH promos, 248 SM
+ * and 211 XY that were unreadable before.
+ */
+const PKM_PROMO = /(?<![/\d])(AR|BW|CC|DP|GG|HGSS|RC|RT|SH|SL|SM|SWSH|TG|XY|SV)[- ]?(\d{1,3})\b(?!\s*\/)/gi;
+
+/**
  * The printed number of a SUBSET card: `GG30/GG70`, `TG12/TG30`, `SV30/SV94`.
  *
  * WHY `PKM_NUMBER` CANNOT READ THESE, and it was read as a mystery rather than
@@ -215,6 +271,18 @@ export function extractCardCodes(text: string): CodeCandidate[] {
     const denominator = asDigits(m[2]);
     if (Number(numerator) === 0 || Number(denominator) === 0) continue;
     add(`${numerator}/${denominator}`, "pokemon-number", m[0].trim());
+  }
+
+  // LAST, because a promo code is the weakest of these readings: it is a token
+  // rather than a fraction, so only the catalogue can tell a real one from a
+  // coincidence. Everything a fraction produced ranks above it.
+  for (const m of text.matchAll(PKM_PROMO)) {
+    const digits = asDigits(m[2]);
+    if (Number(digits) === 0) continue;
+    // Upper case and joined, which is how the catalogue stores it: `SWSH262`,
+    // never `swsh-262`. A reading that does not match a real id resolves to
+    // nothing, which is the intended cost.
+    add(`${m[1].toUpperCase()}${digits}`, "pokemon-number", m[0].trim());
   }
 
   return out;
