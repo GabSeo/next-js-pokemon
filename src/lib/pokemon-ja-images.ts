@@ -74,6 +74,19 @@ export function pokemonJapaneseStoredImage(setId: string, localId: string): stri
   return load().has(key) ? `${PUBLIC_PREFIX}/${encodeURIComponent(key)}.webp` : undefined;
 }
 
+/**
+ * Where one stored picture sits on disk, for the scripts that must READ it.
+ *
+ * The scan does not compare pictures at request time; it compares vectors and
+ * signatures computed ahead of it. Those generators fetch from a URL, and a
+ * file in this repository has none — so without this a stored image renders on
+ * a card page and stays invisible to the scanner, which is the half that
+ * matters. Measured when it was missed: all 2,308 of them.
+ */
+export function pokemonJapaneseStoredFile(setId: string, localId: string): string | undefined {
+  const key = `${setId}-${localId}`;
+  return load().has(key) ? path.join(DIR, `${key}.webp`) : undefined;
+}
 export function pokemonJapaneseStoredCount(): number {
   return load().size;
 }

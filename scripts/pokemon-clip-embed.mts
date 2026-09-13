@@ -51,6 +51,7 @@ import sharp from "sharp";
 import { getCatalogEntries, type CatalogLanguage } from "../src/lib/catalog";
 import { limitlessImageUrl } from "../src/lib/limitless";
 import { japaneseOfficialCard } from "../src/lib/pokemon-ja-official";
+import { pokemonJapaneseStoredFile } from "../src/lib/pokemon-ja-images";
 
 const OUT_DIR = path.join(process.cwd(), "data", "catalog", "pokemon-clip");
 
@@ -136,7 +137,8 @@ async function embed(image: Buffer): Promise<Float32Array | undefined> {
   }
 }
 
-type Target = { id: string; urls: string[]; publisher: boolean };
+/** `file` is a picture this repository holds; `urls` is one somebody serves. */
+type Target = { id: string; urls: string[]; publisher: boolean; file?: string };
 
 /**
  * TCGdex quality tiers, best first.
@@ -212,6 +214,16 @@ for (const language of languages) {
       continue;
     }
 
+    // FOURTH, AND IT COSTS NOBODY A REQUEST: the pictures this repository
+    // holds, for the 2,308 Japanese cards none of the three above publishes.
+    // They were reaching `unpictured` and being embedded not at all, which
+    // meant a card could render on its page and remain invisible to the scan.
+    const stored = language === "ja" ? pokemonJapaneseStoredFile(set.id, card.localId) : undefined;
+    if (stored) {
+      targets.push({ id: card.tcgdexId, urls: [], publisher: false, file: stored });
+      continue;
+    }
+
     unpictured++;
   }
 
@@ -227,7 +239,8 @@ for (const language of languages) {
   const run = async (target: Target) => {
     try {
       let bytes: Buffer | undefined;
-      for (const url of target.urls) {
+      if (target.file) bytes = readFileSync(target.file);
+      for (const url of bytes ? [] : target.urls) {
         const response = await fetch(url, { headers: { Accept: "image/webp,image/jpeg,*/*" } });
         if (response.ok) {
           bytes = Buffer.from(await response.arrayBuffer());

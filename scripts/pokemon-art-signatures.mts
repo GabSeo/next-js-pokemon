@@ -45,6 +45,7 @@ import { artSignature } from "../src/lib/art-rank";
 import { getCatalogEntries, type CatalogLanguage } from "../src/lib/catalog";
 import { limitlessImageUrl } from "../src/lib/limitless";
 import { japaneseOfficialCard } from "../src/lib/pokemon-ja-official";
+import { pokemonJapaneseStoredFile } from "../src/lib/pokemon-ja-images";
 
 const OUT_DIR = path.join(process.cwd(), "data", "catalog", "pokemon-art");
 
@@ -84,7 +85,8 @@ async function pooled<T>(items: T[], limit: number, worker: (item: T) => Promise
   );
 }
 
-type Target = { key: string; url: string; publisher: boolean };
+/** `file` is a picture this repository holds; `url` is one somebody serves. */
+type Target = { key: string; url: string; publisher: boolean; file?: string };
 
 for (const language of languages) {
   const file = path.join(OUT_DIR, `${language}.json`);
@@ -123,15 +125,25 @@ for (const language of languages) {
       continue;
     }
 
+    // Fourth, and it costs nobody a request: the 2,308 pictures this
+    // repository holds because none of the three above publishes them.
+    const stored = language === "ja" ? pokemonJapaneseStoredFile(set.id, card.localId) : undefined;
+    if (stored) {
+      targets.push({ key, url: "", publisher: false, file: stored });
+      continue;
+    }
+
     unpictured++;
   }
 
-  const cdn = targets.filter((t) => !t.publisher);
+  const local = targets.filter((t) => t.file);
+  const cdn = targets.filter((t) => !t.publisher && !t.file);
   const publisher = targets.filter((t) => t.publisher);
 
   console.log(
     `[art] ${language}: ${Object.keys(previous).length} already signed, ${targets.length} to do ` +
-      `(${cdn.length} from TCGdex, ${publisher.length} from the publisher), ${unpictured} pictured nowhere`
+      `(${cdn.length} from TCGdex, ${publisher.length} from the publisher, ${local.length} from this repo), ` +
+      `${unpictured} pictured nowhere`
   );
 
   let done = 0;
@@ -140,14 +152,20 @@ for (const language of languages) {
 
   const sign = async (target: Target) => {
     try {
-      const response = await fetch(target.url, { headers: { Accept: "image/webp,image/jpeg,*/*" } });
-      if (!response.ok) {
-        failed++;
-        return;
+      let bytes: Buffer;
+      if (target.file) {
+        bytes = readFileSync(target.file);
+      } else {
+        const response = await fetch(target.url, { headers: { Accept: "image/webp,image/jpeg,*/*" } });
+        if (!response.ok) {
+          failed++;
+          return;
+        }
+        bytes = Buffer.from(await response.arrayBuffer());
       }
       // `alreadyCardShaped`: these are card scans, with no surrounding
       // photograph to crop away.
-      const signature = await artSignature(Buffer.from(await response.arrayBuffer()), true);
+      const signature = await artSignature(bytes, true);
       if (!signature) {
         failed++;
         return;

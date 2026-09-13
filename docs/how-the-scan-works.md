@@ -231,6 +231,17 @@ different prices. Written when each reference was fetched and hashed per scan; b
 the time it was found, signatures were precomputed and one comparison cost
 **0.24 µs**.
 
+**16. A picture on a page is not a picture the scan can use.**
+An image reaches a card page through `pokemonImageUrl`, and it reaches the
+scan through a vector and a signature computed ahead of time. Those are two
+different paths, and 2,308 Japanese images travelled only the first: the
+generators knew three sources and all three answer with a URL, so a file held
+in this repository fell through to `unpictured` and was embedded not at all.
+The cards rendered perfectly and were invisible to every comparison. The tell
+is exact and worth knowing — a reference image that does not match ITSELF has
+no vector, which is how it was found. One Piece never had the bug: its two
+generators read `public/card-images/one-piece` from the first line, 970 of 970.
+
 ### The shape underneath all of them
 
 Three sentences the whole scan obeys. Every rule above is one of them applied
