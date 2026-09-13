@@ -88,11 +88,40 @@ type Route =
    */
   | { via: "name" };
 
+/**
+ * WHAT THE CLOUD READER DID, which is not the same question as who answered.
+ *
+ * `route` says which signal produced the card. This says whether the photograph
+ * was sent to Google Vision, and it is a different promise — the two come
+ * apart on exactly the case that matters: Vision runs, finds nothing usable,
+ * and the artwork answers instead. The banner then said "Matched by artwork ·
+ * photo never left the phone" about a photograph that had already been
+ * uploaded and forwarded to Google.
+ *
+ * On this screen the reader ALWAYS runs first (see `readPrintedCode`), so
+ * "off" and "failed" are the only states in which the image reaches nobody
+ * outside this deployment — and even then it reached this deployment.
+ */
+type VisionUse =
+  /** Vision read text, whether or not a card came out of it. */
+  | { ran: true; found: boolean }
+  /** No key on this deployment: the request was refused before Google saw anything. */
+  | { ran: false; why: "off" }
+  /** Quota, a refused key, a network fault. */
+  | { ran: false; why: "failed" };
+
 type Status =
   | { phase: "idle" }
   | { phase: "matching" }
   | { phase: "reading" }
-  | { phase: "done"; candidates: CodeCandidate[]; cards: CardView[]; note?: string; route?: Route };
+  | {
+      phase: "done";
+      candidates: CodeCandidate[];
+      cards: CardView[];
+      note?: string;
+      route?: Route;
+      vision?: VisionUse;
+    };
 
 /** Long edge in pixels. Comfortably more detail than a card code needs. */
 const UPLOAD_MAX_EDGE = 1600;
@@ -670,6 +699,9 @@ export function ScanClient() {
     let note: string | undefined;
     let byNameOnly = false;
     let read = "";
+    // Undefined until the reader has been called at all, so a state that
+    // forgets to set it renders nothing rather than a confident wrong claim.
+    let vision: VisionUse | undefined;
 
     /** The printed-number reader, as one call. Returns nothing and sets `note` on failure. */
     async function readPrintedCode(): Promise<void> {
@@ -689,10 +721,12 @@ export function ScanClient() {
         });
 
         if (response.status === 501) {
+          vision = { ran: false, why: "off" };
           note = "The card reader is not configured on this deployment.";
           return;
         }
         if (!response.ok) {
+          vision = { ran: false, why: "failed" };
           const { error } = (await response.json().catch(() => ({}))) as { error?: string };
           note = `The card reader failed: ${error ?? response.status}`;
           return;
@@ -713,7 +747,13 @@ export function ScanClient() {
         // difference between "it saw nothing" and "it saw the card and the code
         // was not among what we extracted" is the whole diagnosis.
         read = payload.text ?? "";
+        // FOUND means Vision returned text, not that the text named a card.
+        // The banner has to separate "it read the card and we could not place
+        // it" from "it read nothing at all" — they call for different actions:
+        // one is ours to fix, the other means take the photo again.
+        vision = { ran: true, found: read.trim().length > 0 };
       } catch {
+        vision = { ran: false, why: "failed" };
         note = "Could not reach the card reader. Check your connection, or type the code below.";
       }
     }
@@ -894,6 +934,7 @@ export function ScanClient() {
               : "The reader found no text at all in this photo, so these are the closest artwork matches " +
                 "rather than an answer. The number sits in the bottom corner."),
         route: unsure.route,
+        vision,
       });
       return;
     }
@@ -904,6 +945,7 @@ export function ScanClient() {
       cards,
       note,
       route: { via: byNameOnly ? "name" : "text" },
+      vision,
     });
   }
 
@@ -1118,12 +1160,19 @@ export function ScanClient() {
                     : "Read the printed code"}
             </span>
             <span className="text-[11px] font-bold tracking-[0.3px] text-white/60">
+              {/* NO PRIVACY CLAIM HERE ANY MORE. These three lines each ended
+                  with "photo never left the phone", and on this screen that was
+                  never true: `readPrintedCode` runs BEFORE the artwork is ever
+                  awaited, so by the time an artwork verdict is shown the
+                  photograph has already gone to this deployment and on to
+                  Google. The comparison is genuinely on-device; the scan around
+                  it is not, and the chip below now says which. */}
               {status.route.via === "artwork"
-                ? `on device · ${Math.round(status.route.elapsed)} ms · margin ${status.route.margin.toFixed(3)} · photo never left the phone`
+                ? `compared on device · ${Math.round(status.route.elapsed)} ms · margin ${status.route.margin.toFixed(3)}`
                 : status.route.via === "artwork-tie"
                   ? status.route.kind === "reprint"
-                    ? `on device · ${status.route.tied} cards carry this exact picture · photo never left the phone`
-                    : `on device · ${status.route.tied} closest guesses, none confident · photo never left the phone`
+                    ? `compared on device · ${status.route.tied} cards carry this exact picture`
+                    : `compared on device · ${status.route.tied} closest guesses, none confident`
                   : status.route.via === "name"
                     ? "the number was unreadable — these share the name that was read"
                     : // NOT "the artwork was unclear", which this said and which
@@ -1133,6 +1182,52 @@ export function ScanClient() {
                       // unless the number comes back with nothing.
                       "the number in the corner is evidence, so a photo is read before it is compared"}
             </span>
+            {/*
+              WHETHER THE CLOUD READER RAN, SAID OUT LOUD.
+
+              The verdict beside it says which signal named the card, and a
+              reader was decoding the cloud question from it: "Matched by
+              artwork" happens to mean Vision came back empty. That is a fact
+              about our architecture, not something a label should require
+              knowing — and it is the fact that decides whether a photograph
+              was sent to Google, which is the one people actually want.
+
+              ALWAYS RENDERED, including when Vision succeeded. A chip that
+              only appears on failure teaches nothing: its absence has to be
+              read as a claim, and an absent element is the one thing a person
+              cannot tell apart from a bug.
+            */}
+            {status.vision ? (
+              <span
+                className="inline-flex items-center gap-2 rounded border-2 px-2 py-1 text-[10px] font-black uppercase tracking-[0.8px]"
+                style={{ borderColor: "rgba(255,255,255,0.35)" }}
+                title={
+                  status.vision.ran
+                    ? "This photograph was uploaded and read by Google Cloud Vision."
+                    : "Google Cloud Vision was not reached. The photograph still left this device."
+                }
+              >
+                <span
+                  className="h-2 w-2 rounded-full"
+                  style={{
+                    // Yellow, not the palette blue: #3d5ca4 on the #121212
+                    // banner is 2.1:1 against its own background and reads as
+                    // a smudge. The dot has to be legible at 8px on a phone in
+                    // daylight or it says nothing at all.
+                    background: status.vision.ran
+                      ? "var(--pokemon-yellow)"
+                      : "rgba(255,255,255,0.45)",
+                  }}
+                />
+                {status.vision.ran
+                  ? status.vision.found
+                    ? "Vision read this photo"
+                    : "Vision found no text"
+                  : status.vision.why === "off"
+                    ? "Vision is off here"
+                    : "Vision unavailable"}
+              </span>
+            ) : null}
           </div>
         ) : null}
         {/* THE LIVE VIEW OWNS THE RIGHT COLUMN while it is open. Running it
@@ -1227,17 +1322,22 @@ export function ScanClient() {
                       rather than an answer. If none is yours, type the number from the bottom corner instead.
                     </>
                   )}{" "}
-                  Matched on your device in {Math.round(status.route.elapsed)} ms; the photo was not uploaded.
+                  Compared on your device in {Math.round(status.route.elapsed)} ms.
                 </p>
               ) : null}
 
-              {/* HOW IT WAS FOUND, said plainly. One route kept the photo on the
-                  device and one sent it to Google — that difference belongs to
-                  the person who took the picture, not in a log. */}
+              {/* HOW IT WAS FOUND, said plainly — and no longer where the photo
+                  went, which this got wrong. Both lines here ended "the photo
+                  was not uploaded", and on this screen the upload has ALREADY
+                  happened by the time an artwork verdict exists: the cloud
+                  reader is awaited first and the artwork is consulted only
+                  when it comes back with nothing. The comparison is on-device;
+                  the scan is not. Where the photograph went is now one chip in
+                  the banner, stated once, for every route. */}
               {status.route?.via === "artwork" ? (
                 <p className="mt-1 text-[11px] text-muted-text">
-                  Matched by artwork on your device in {Math.round(status.route.elapsed)} ms · margin{" "}
-                  {status.route.margin.toFixed(3)} · the photo was not uploaded
+                  Matched by artwork, compared on your device in {Math.round(status.route.elapsed)} ms ·{" "}
+                  margin {status.route.margin.toFixed(3)}
                 </p>
               ) : null}
 

@@ -47,8 +47,15 @@ export default function ScanPage() {
           </span>
           <h1 className="text-[40px] font-black leading-[42px] tracking-[-1.1px]">Scan a card</h1>
           <p className="text-[15px] leading-[22px] text-muted-text">
-            Artwork is matched on your device. The photo only leaves your phone if that fails and we fall back
-            to reading the printed code — or you can{" "}
+            {/* THIS DESCRIBED THE OPPOSITE OF WHAT HAPPENS. It said the photo
+                leaves the phone only if the on-device match fails — the order
+                before the reader was made to lead. A photo now goes to Google
+                Vision FIRST, every time, because the printed number is evidence
+                and the artwork is a guess; the comparison is consulted only
+                when the number comes back with nothing. Getting that backwards
+                is not a wording slip, it is a privacy claim in reverse. */}
+            A photo is read by Google Cloud Vision — the number in the corner is evidence, the artwork only a
+            guess. The live camera scan never leaves your device. Or you can{" "}
             <Link href="/lookup" className="font-black underline underline-offset-4">
               type it instead
             </Link>
@@ -57,8 +64,14 @@ export default function ScanPage() {
         </div>
         {/* THE PRIVACY CLAIM AS A BADGE, because it is the single most
             surprising thing about this feature and it was buried mid-paragraph.
-            The pulsing dot is the only decoration on it and it is earned: the
-            matcher genuinely is running locally. */}
+            The pulsing dot is earned: the matcher genuinely does run locally.
+
+            IT NAMES THE LIVE SCAN NOW, and that is the whole correction. It
+            read "ON-DEVICE · NOTHING UPLOADED" over a page whose photo button
+            uploads every shot to Google Vision — true of one of the two things
+            here and a flat falsehood about the other, in the largest, greenest,
+            most reassuring type on the screen. A claim that broad has to be
+            true of everything below it or scoped to what it is true of. */}
         <span
           className="inline-flex items-center gap-2 rounded-full border-2 border-foreground px-3.5 py-2 text-[11px] font-black tracking-[0.6px]"
           style={{
@@ -71,7 +84,7 @@ export default function ScanPage() {
             className="h-2 w-2 rounded-full"
             style={{ background: "var(--success-green)", animation: "livepulse 2s ease-in-out infinite" }}
           />
-          ON-DEVICE · NOTHING UPLOADED
+          LIVE SCAN · NOTHING UPLOADED
         </span>
       </header>
 
